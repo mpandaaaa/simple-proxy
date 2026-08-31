@@ -295,124 +295,216 @@ available through `@expo-google-fonts`.
 
 ---
 
-## 7. Proposed project structure
+## 7. Decisions taken
 
-The one rule that matters: **`src/engine` and `src/data` import nothing from
-React or React Native.** Plain JavaScript modules. That is what makes the
-Phase 2 headless season test possible, and it is what keeps the tuned maths
-away from UI churn forever.
+Confirmed 31 Aug 2026.
+
+| Question | Decision |
+|---|---|
+| Blitz | Stays a toggle on the setup screen, not a mode tile. |
+| Duels and Versus | Merged into one thing in the PLAY tab. |
+| Player counts in copy | Use the real figures: 712 club seasons, 3,003 players. |
+| Online leaderboard and 1v1 | **Added to scope.** Supabase for both, Game Center layered on top. |
+| Launch timing | Version 1.0 waits for online. No offline-only ship. |
+
+### A correction to the original brief
+
+The brief said Game Center "solves verified leaderboards with NO backend". The
+no backend half is true. The verified half is not. Game Center scores are
+submitted by the phone, so they can be faked. It is harder than faking a plain
+web request, but it is not verification.
+
+What makes this fixable is a property this game happens to have: **Perfect XI is
+fully deterministic.** A seed, a config and eleven picks completely determine
+the 38 game season. Nothing else touches it. So a server can replay any
+submitted run and check the score rather than trust it.
+
+Because the engine is being built as plain JavaScript with no React in it, the
+identical engine file runs unchanged inside a Supabase edge function. Replay
+validation therefore costs almost nothing to build. It is a free consequence of
+the Phase 2 structure.
+
+---
+
+## 8. The online layer
+
+Everything single player still runs with no network at all. Online features
+degrade quietly: the leaderboard shows the last cached board, duels say they
+need a connection. The offline promise survives intact.
+
+### Identity, with no sign up screen
+
+Supabase anonymous auth issues a stable id on first launch, held in MMKV. The
+player picks a display name, exactly as the web game already does with its
+`pxi-handle` key. No email, no password, no sign up screen, nothing to forget.
+The App Store copy can still say no accounts, truthfully.
+
+Game Center sign in is layered on when available and silently skipped when not.
+
+### Leaderboard, actually verified
+
+The client submits the seed, the config, the eleven picks and its claimed
+points. An edge function replays the run with the same engine and compares. A
+mismatch is rejected, not stored. Only validated runs reach the board.
+
+Boards: Daily Challenge per day, current Weekly Event, all time best season,
+and Dynasty measured on trophies and seasons survived.
+
+**One thing that will silently break this if we do not handle it now.** Client
+and server must replay with the *same* engine build, or an app update starts
+rejecting honest players. So the engine carries an `ENGINE_VERSION`, every
+submission carries it, and the server keeps recent versions and replays with the
+matching one. This is cheap to build now and very expensive to retrofit after
+the board has real scores on it.
+
+### Live 1v1
+
+The whole match rides on determinism, which makes it far simpler than it sounds:
+
+1. Server pairs two players and picks one seed.
+2. Both phones derive the identical eleven boards from that seed.
+3. Each round has a 15 second pick timer. Picks reveal together, with a haptic.
+4. After eleven rounds both phones simulate the same fixtures from the same
+   seed, so both arrive at the same result with nothing to sync.
+5. Head to head result card, native share sheet.
+
+Disconnects do not hang the match: the missing player auto-picks the best
+available and the game finishes.
+
+**The empty lobby problem, designed out.** A new app has nobody queueing.
+Three defences, in order: invite a friend by code, which the web build already
+generates; the Machine as an instant opponent after 20 seconds of no match,
+clearly labelled, using the already tuned `pxMachineXI`; and the existing
+seeded async duel as the always works fallback.
+
+### One App Store risk worth knowing now
+
+A free text display name shown to other players counts as user generated
+content, and Apple asks for moderation tooling under guideline 1.2. Cheap to
+satisfy if we do it up front: a profanity filter on names, a report button on
+the duel result screen, and a block list. Expensive as a rejection three days
+before launch.
+
+---
+
+## 9. Project structure
+
+The one rule that matters most:
+
+> **`src/engine` and `src/data` import nothing from React or React Native.**
+
+That is what makes the Phase 2 headless test possible, what keeps the tuned
+maths safe from UI churn, and now also what lets the same engine run on the
+server for replay validation. One rule, three payoffs.
 
 ```
 perfectxi/
-  app/                        expo-router. Routes only, thin.
-    _layout.tsx
-    (tabs)/_layout.tsx
-    (tabs)/today.tsx
-    (tabs)/play.tsx
-    (tabs)/career.tsx
-    (tabs)/you.tsx
-    draft/setup.tsx  draft/spin.tsx  draft/complete.tsx
-    draft/season.tsx  draft/results.tsx
-    dynasty/...       ten routes mirroring the ten Dynasty screens
-    worldcup/...      four routes
-    versus/...
+  app/                        expo-router. Routes only, kept thin.
+    (tabs)/today.tsx  play.tsx  career.tsx  you.tsx
+    draft/  dynasty/  worldcup/  duels/
 
-  src/
-    engine/                   PURE. No React, no RN. Node-runnable.
-      rng.ts                  mulberry32, seeds, daily ids
-      constants.ts            DC, thresholds
-      formations.ts           FM
-      match/dixonColes.ts     dcTau dcPois dcParams dcMatrix dcDraw dcExpected
-      match/simulate.ts       doMatch, playOneMatch, genScorers, season loop
-      match/odds.ts           calcOdds, strFromAvg, squadAvg
-      draft/pool.ts           spin pools, era filters, event filters
-      draft/chemistry.ts      pxSquadChem, pxChemBonus
-      draft/machine.ts        pxMachineXI, pxMachineSeason
-      dynasty/ageing.ts       dySeedTracks dyTrackStep dyAgeOne dyRetireOdds
-      dynasty/value.ts        dyValue dyPlayerValue dyWage
-      dynasty/finance.ts      dyRevenue dyFinanceSeason dyBudgetFrom
-      dynasty/staff.ts        DY_STAFF and multipliers
-      dynasty/infra.ts        stadium and facilities
-      dynasty/tactics.ts      DY_STYLE, DY_MENT, dyTacticalDeltas maths
-      dynasty/youth.ts        dyMakeYouth, scouting
-      dynasty/contracts.ts    dyExpiring, dyRenewCost
-      dynasty/market.ts       dyMarketPool, dySignPlayer, dySellPlayer
-      dynasty/season.ts       dyProcessSeasonEnd, dyStartCareer
-      dynasty/scenarios.ts    DY_SCEN, dyClubOptions
-      worldcup/               tournament, matches, shootouts
-      cups/                   simulateCups
-      progression/            PXP, missions, streak, collection, ascension
-      versus/                 simVersus, encodeXI, decodeXI
+  src/engine/                 PURE. No React, no RN. Runs in Node and Deno.
+    version.ts                ENGINE_VERSION. Load bearing, see section 8.
+    rng.ts                    mulberry32, seeds, daily ids
+    constants.ts              DC, thresholds
+    formations.ts             FM
+    match/dixonColes.ts       dcTau dcPois dcParams dcMatrix dcDraw dcExpected
+    match/simulate.ts         doMatch, genScorers, the season loop
+    match/odds.ts             calcOdds, strFromAvg, squadAvg
+    draft/pool.ts             spin pools, era and event filters
+    draft/chemistry.ts        draft/machine.ts (also the 1v1 bot)
+    dynasty/ageing.ts value.ts finance.ts staff.ts infra.ts
+    dynasty/tactics.ts youth.ts contracts.ts market.ts season.ts scenarios.ts
+    worldcup/  cups/  progression/  versus/
+    replay.ts                 rebuild a run from seed plus picks
 
-    data/                     BAKED at build time. Never corrected on device.
-      squads.json             712 club seasons, corrections already applied
-      wcSquads.json  wcTeams.json
-      clubColours.json  plSeasons.json  achievements.ts
-      index.ts                typed loaders
+  src/data/                   BAKED at build time. Never corrected on device.
+    squads.json               712 club seasons, corrections already applied
+    wcSquads.json  wcTeams.json  clubColours.json  achievements.ts
 
-    save/                     migration safe from day one
-      storage.ts              MMKV wrapper
-      schema.ts               SCHEMA_VERSION, typed shapes
-      migrations/             one file per version bump
-      slices/                 run, dynasty, progression, history, cabinet, settings
+  src/save/                   migration safe from day one
+    storage.ts  schema.ts  migrations/  slices/
 
-    ui/
-      tokens.ts               the pine emerald palette, spacing, radius, motion
-      type.ts                 Barlow Condensed / Inter / Anton, tabular numerals
-      components/             Button, Card, Pill, StatSlot, NumberSlot, Sheet,
-                              PitchSlot, FormStrip, TableRow, Countdown
-      NumberSlot has a built in overflow guard. Word values use Pill. Always.
+  src/online/
+    client.ts                 supabase client, anonymous session
+    identity.ts               player id, display name, profanity filter
+    leaderboard.ts            submit, fetch, cache
+    duel/matchmaking.ts       queue, pairing, bot fallback
+    duel/channel.ts           realtime wire
+    duel/protocol.ts          typed messages, shared with the server
+    moderation.ts             report, block
+    sync.ts                   offline queue and retry
 
-    native/
-      haptics.ts  share.ts  notifications.ts  gameCenter.ts  widget.ts
+  src/ui/
+    tokens.ts  type.ts
+    components/               Button Card Pill StatSlot NumberSlot Sheet
+                              PitchSlot FormStrip TableRow Countdown
+                              NumberSlot has the overflow guard built in.
+                              Word values use Pill. Always.
 
-    features/                 screen level logic, hooks, view models
-      today/ draft/ dynasty/ worldcup/ duels/ progress/
+  src/native/                 haptics share notifications gameCenter widget
+  src/features/               today draft dynasty worldcup duels progress online
+
+  supabase/
+    migrations/               the SQL schema
+    functions/validate-run/   replays with the pinned engine version
+    functions/matchmake/      pairs two waiting players
 
   scripts/
     extract-db.mjs            rebuilds src/data/*.json from index.html
-    sim-season.mjs            Phase 2 proof: simulate a season, print a table
+    sim-season.mjs            Phase 2 proof: simulate, print a table
+    bundle-engine.mjs         copies the versioned engine into the functions
 
-  __tests__/
-    engine/                   golden number tests, see below
-
-  widget/                     iOS widget extension, added in Phase 5
+  __tests__/engine/           the golden number tests
+  widget/                     iOS widget extension, added at Phase 5
 ```
 
-**Why `scripts/extract-db.mjs` matters.** When you update ratings for 27/28
-next summer, you edit the source and re-run one command. You do not hand edit
-a 800KB JSON file. This is a five minute job now that saves a day later.
+### Two pieces worth explaining
 
-**The golden number tests.** Before we change a single line of the engine, I
-will write tests that lock in the tuned behaviour: 2.75 goals per game across a
-large simulated sample, champions landing near 90 points, a 92 rated 23 year
-old valued near 125 million pounds. If a refactor moves any of those, the test
-goes red and I stop. That is how we guarantee the maths you tuned survives the
-port.
+**`scripts/extract-db.mjs`.** When ratings get updated for 27/28 next summer,
+the source is edited and one command is run. Nobody hand edits an 800KB JSON
+file. Five minutes now, a day saved later.
 
----
+**`scripts/bundle-engine.mjs`.** Copies the engine into the edge functions with
+its version stamped, so client and server can never drift apart. This is the
+thing that stops replay validation quietly rejecting real players after an
+update.
 
-## 8. Three things I need you to decide
+### The golden number tests
 
-**1. Blitz.** In the web build it is a toggle on the setup screen, not a mode.
-Your app spec lists it as its own tile in the PLAY tab. I would build it as a
-proper mode tile, since a tab of five modes reads better than a tab of four
-with a hidden toggle. Confirm.
-
-**2. The Versus mode.** Your four tab spec lists "Friend Duels" under PLAY but
-the web build has two separate things: Duels (seeded code, same spins) and
-Versus (async, two saved XIs, head to head). Do you want both, or should Versus
-fold into Duels?
-
-**3. The player count in copy.** Real numbers are 712 club seasons and 3,003
-players, not 714 and 3,008. I will use the real ones everywhere in the app and
-the store listing unless you say otherwise.
+Before a line of the engine is touched, tests lock in the tuned behaviour:
+2.75 goals per game across a large sample, champions landing near 90 points, a
+92 rated 23 year old valued near 125 million. If a refactor moves any of those,
+the test goes red and work stops. That is the guarantee the balance survives
+the port, and it is also what makes replay validation trustworthy.
 
 ---
 
-## 9. What happens next, once you confirm section 7
+## 10. Build order
 
-Phase 1: new Expo project, four tab shell, design tokens, three fonts, EAS dev
-build on your phone so you can judge it before anything else is built.
+Ten phases. Version 1.0 ships at the end of phase 10.
 
-Nothing gets written until you say the structure is right.
+| Phase | What |
+|---|---|
+| 1 | New Expo project, four tab shell, design tokens, three fonts, EAS dev build on the phone. |
+| 2 | Engine and database as plain modules. `ENGINE_VERSION`. Headless season test and the golden number tests. |
+| 3 | Draft end to end: spin, pick, simulate, results, share card. |
+| 4 | Dynasty. The biggest single piece. |
+| 5 | Today tab, Daily Challenge, streaks, push notification, home screen widget. |
+| 6 | Blitz toggle, Beat the Machine, World Cup, Duels with Versus merged in. |
+| 7 | Online spine: Supabase project, schema, anonymous identity, replay validation, global leaderboards, moderation tooling. |
+| 8 | Live 1v1: matchmaking, realtime draft, pick timers, bot fallback, disconnect handling. |
+| 9 | Game Center: achievements, friends leaderboard, the native module. |
+| 10 | App Store assets, review preparation, submission. |
+
+Guideline 4.2 is comfortably answered by the end of this: native navigation,
+haptics, push, a home screen widget, Game Center, and online multiplayer.
+Nothing about this reads as a repackaged website.
+
+---
+
+## 11. Next step
+
+Phase 1, on your confirmation of section 9: new Expo project, the four tab
+shell, the design tokens, the three fonts, and an EAS dev build on your phone
+so you can judge the feel before anything else is built.
