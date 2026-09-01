@@ -18,5 +18,6 @@ export { Rise } from './Rise';
 export { OptionGroup } from './OptionGroup';
 export type { GroupOption, OptionTone } from './OptionGroup';
 export { PlayerCard } from './PlayerCard';
-export { SpinWheel } from './SpinWheel';
+export { SpinReel } from './SpinReel';
+export { EraCard } from './EraCard';
 export { ClubDisc, lighten, darken } from './ClubDisc';

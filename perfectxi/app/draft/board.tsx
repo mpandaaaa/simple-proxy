@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -14,8 +14,8 @@ import {
   Press,
   Pitch,
   PlayerCard,
-  SpinWheel,
-  ClubDisc,
+  SpinReel,
+  EraCard,
 } from '../../src/ui/components';
 import {
   color,
@@ -33,7 +33,6 @@ import {
   canPlay,
   chemBonus,
   clubSeasons,
-  eraOf,
   lastName,
   slotsForPlayer,
   squadAvg,
@@ -54,8 +53,8 @@ export default function DraftBoard() {
   const [chooser, setChooser] = useState<{ player: Pick; slots: number[] } | null>(null);
   const [reveal, setReveal] = useState<{ player: Pick; pos: Position } | null>(null);
 
-  // Scenery for the reel: every club-season in the era being drafted, so the
-  // strips flying past are real sides rather than invented ones.
+  // Scenery for the reel: every club-season in the era being drafted, so
+  // the cards flying past are real sides rather than invented ones.
   const cfg = run?.state.config;
   const pool = useMemo(
     () => (cfg ? clubSeasons(cfg.eraFrom, cfg.eraTo) : []),
@@ -70,7 +69,8 @@ export default function DraftBoard() {
   }, [run]);
 
   // The club is decided before the reel draws a single frame. The spin is
-  // how it is shown, never how it is chosen.
+  // how the result is shown, never how it is chosen, so a seeded run still
+  // replays exactly.
   const onSpin = useCallback(() => {
     const result = doSpin();
     if (!result) return;
@@ -126,7 +126,6 @@ export default function DraftBoard() {
   const boardAvg = shown.length
     ? Math.round(shown.reduce((n, p) => n + p.rtg, 0) / shown.length)
     : 0;
-  const era = eraOf(season ?? '');
 
   const renderRow = ({ item }: ListRenderItemInfo<Pick>) => {
     const playable = canPlay(state, item);
@@ -168,9 +167,7 @@ export default function DraftBoard() {
               : { backgroundColor: rt + '1f', borderColor: rt + '77' },
           ]}
         >
-          <Text
-            style={[styles.ratingText, { color: hideRatings ? color.text3 : rt }]}
-          >
+          <Text style={[styles.ratingText, { color: hideRatings ? color.text3 : rt }]}>
             {hideRatings ? '?' : item.rtg}
           </Text>
         </View>
@@ -211,119 +208,90 @@ export default function DraftBoard() {
             onPress={() => router.push('/draft/season')}
           />
         </View>
-      ) : board ? (
-        <>
-          <View
-            style={[
-              styles.clubCard,
-              { borderColor: hexA(era.tint, 0.4) },
-            ]}
-          >
-            <View
-              style={[
-                styles.clubGlow,
-                {
-                  experimental_backgroundImage: `linear-gradient(135deg, ${hexA(era.tint, 0.16)} 0%, rgba(0,0,0,0) 62%)`,
-                },
-              ]}
-              pointerEvents="none"
-            />
-
-            <ClubDisc club={club} size={54} />
-
-            <View style={styles.clubBody}>
-              <View style={styles.clubTop}>
-                <Text style={[styles.pickLabel, { color: era.tint }]}>
-                  Pick {state.filled + 1} of {state.total}
-                </Text>
-                <View
-                  style={[
-                    styles.eraPill,
-                    { borderColor: hexA(era.tint, 0.45), backgroundColor: hexA(era.tint, 0.12) },
-                  ]}
-                >
-                  <Text style={[styles.eraText, { color: era.tint }]}>{era.label}</Text>
-                </View>
-              </View>
-              <Text style={styles.clubName} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-                {club}
-              </Text>
-              <Text style={styles.clubSeason}>
-                {season}
-                {boardAvg ? `  ·  squad average ${boardAvg}` : ''}
-              </Text>
-            </View>
-
-            {rerollsLeft > 0 ? (
-              <Press
-                onPress={() => {
-                  if (spendReroll()) haptic('warning');
-                }}
-                feel="none"
-                scaleTo={0.93}
-                style={styles.reroll}
-              >
-                <Text style={styles.rerollText}>Reroll</Text>
-                <View style={styles.dots}>
-                  {Array.from({ length: state.rerollsMax }).map((_, i) => (
-                    <View
-                      key={i}
-                      style={[styles.dot, i >= rerollsLeft && styles.dotUsed]}
-                    />
-                  ))}
-                </View>
-              </Press>
-            ) : null}
-          </View>
-
-          <View style={styles.listHead}>
-            <Text style={styles.listTitle}>Pick a player</Text>
-            <Text style={styles.listCount}>{shown.length} in squad</Text>
-          </View>
-
-          <FlatList
-            data={shown}
-            keyExtractor={(p) => p.n + p.club + p.season}
-            renderItem={renderRow}
-            style={styles.list}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-            bounces={false}
-            initialNumToRender={12}
-            windowSize={9}
-            removeClippedSubviews
-            getItemLayout={(_, index) => ({
-              length: ROW_HEIGHT,
-              offset: ROW_HEIGHT * index,
-              index,
-            })}
-            ListEmptyComponent={
-              <Text style={[text.small, styles.emptyBoard]}>
-                Nobody left from this squad who fits. Spin again.
-              </Text>
-            }
-          />
-        </>
       ) : (
         <>
-          <View style={styles.stage}>
-            <Text style={styles.stageLabel}>
-              {pending ? 'Finding a club' : `Pick ${state.filled + 1} of ${state.total}`}
-            </Text>
-            <SpinWheel
-              target={
-                pending ? { club: pending.club, season: pending.season } : null
-              }
-              pool={pool}
-              onSettled={onSettled}
-              hint={`${pool.length} club-seasons in the wheel`}
+          {/* The reel only exists while there is a spin to show. Once the
+              board has landed the era card carries the club instead. */}
+          {!board ? (
+            <View style={styles.reelWrap}>
+              <SpinReel
+                target={pending ? { club: pending.club, season: pending.season } : null}
+                pool={pool}
+                allTime={state.config.mode === 'alltime'}
+                onSettled={onSettled}
+              />
+            </View>
+          ) : null}
+
+          <View style={styles.eraWrap}>
+            <EraCard
+              pick={state.filled + 1}
+              total={state.total}
+              club={board ? club : null}
+              season={board ? season : null}
+              strength={boardAvg}
             />
           </View>
-          <Button
-            label={pending ? 'Spinning' : 'Spin'}
-            onPress={onSpin}
-            style={styles.spinBtn}
-          />
+
+          {board ? (
+            <>
+              <View style={styles.listHead}>
+                <Text style={styles.listTitle}>Pick a player</Text>
+                <View style={styles.listRight}>
+                  {rerollsLeft > 0 ? (
+                    <Press
+                      onPress={() => {
+                        if (spendReroll()) haptic('warning');
+                      }}
+                      feel="none"
+                      scaleTo={0.93}
+                      style={styles.reroll}
+                    >
+                      <Text style={styles.rerollText}>Reroll</Text>
+                      <View style={styles.dots}>
+                        {Array.from({ length: state.rerollsMax }).map((_, i) => (
+                          <View
+                            key={i}
+                            style={[styles.dot, i >= rerollsLeft && styles.dotUsed]}
+                          />
+                        ))}
+                      </View>
+                    </Press>
+                  ) : null}
+                  <Text style={styles.listCount}>{shown.length} in squad</Text>
+                </View>
+              </View>
+
+              <FlatList
+                data={shown}
+                keyExtractor={(p) => p.n + p.club + p.season}
+                renderItem={renderRow}
+                style={styles.list}
+                contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
+                bounces={false}
+                initialNumToRender={12}
+                windowSize={9}
+                removeClippedSubviews
+                getItemLayout={(_, index) => ({
+                  length: ROW_HEIGHT,
+                  offset: ROW_HEIGHT * index,
+                  index,
+                })}
+                ListEmptyComponent={
+                  <Text style={[text.small, styles.emptyBoard]}>
+                    No players left from this squad. Spin again.
+                  </Text>
+                }
+              />
+            </>
+          ) : (
+            <Button
+              label={pending ? 'Spinning' : 'Spin'}
+              onPress={onSpin}
+              style={styles.spinBtn}
+            />
+          )}
         </>
       )}
 
@@ -390,12 +358,6 @@ export default function DraftBoard() {
   );
 }
 
-/** #RRGGBB plus an alpha, for tints that follow the era colour. */
-function hexA(hex: string, a: number): string {
-  const h = hex.replace('#', '');
-  return `rgba(${parseInt(h.slice(0, 2), 16)},${parseInt(h.slice(2, 4), 16)},${parseInt(h.slice(4, 6), 16)},${a})`;
-}
-
 /** Gold for the ones worth shouting about, green for the rest. */
 function ratingTint(rtg: number): string {
   if (rtg >= 88) return color.gold;
@@ -421,84 +383,35 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
 
-  // The wheel owns the middle of the screen. The pitch sits above it as a
-  // readout and the action is pinned below, so there is no dead band.
-  stage: {
-    flex: 1,
-    justifyContent: 'center',
-    gap: space.s3,
-    paddingVertical: space.s4,
-  },
-  stageLabel: { ...text.key, color: color.text3, textAlign: 'center' },
-  spinBtn: { alignSelf: 'stretch', marginBottom: space.s4 },
+  reelWrap: { marginTop: space.s3 },
+  eraWrap: { marginTop: space.s3 },
+  spinBtn: { marginTop: space.s4, marginBottom: space.s4 },
 
-  clubCard: {
+  listHead: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: space.s4,
+    justifyContent: 'space-between',
     marginTop: space.s4,
-    marginBottom: space.s3,
-    padding: space.s4,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    backgroundColor: '#101A14',
-    experimental_backgroundImage: gradient.cardLift,
-    boxShadow: shadow.lift,
-    overflow: 'hidden',
+    marginBottom: space.s2,
   },
-  clubGlow: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  clubBody: { flex: 1, minWidth: 0 },
-  clubTop: { flexDirection: 'row', alignItems: 'center', gap: space.s2 },
-  pickLabel: { ...text.key, fontSize: 10 },
-  eraPill: {
-    paddingHorizontal: space.s2,
-    paddingVertical: 1,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-  },
-  eraText: {
-    fontFamily: font.displaySemi,
-    fontSize: 9,
-    letterSpacing: 1.4,
-    textTransform: 'uppercase',
-  },
-  clubName: {
-    fontFamily: font.displayBlack,
-    fontSize: 28,
-    lineHeight: 31,
-    letterSpacing: 0.3,
-    color: color.text1,
-    marginTop: 2,
-  },
-  clubSeason: {
-    fontFamily: font.bodySemi,
-    fontSize: 12,
-    color: color.text3,
-    marginTop: 1,
-  },
+  listTitle: { ...text.label, color: color.accent, fontSize: 12.5 },
+  listRight: { flexDirection: 'row', alignItems: 'center', gap: space.s3 },
+  listCount: { ...text.key, fontSize: 10.5, color: color.text3 },
   reroll: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: space.s2,
     paddingHorizontal: space.s3,
-    paddingVertical: space.s2,
-    borderRadius: radius.sm,
+    paddingVertical: space.s1 + 2,
+    borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: line.gold,
     backgroundColor: 'rgba(214,178,94,0.10)',
   },
   rerollText: { ...text.key, fontSize: 10, color: color.gold },
   dots: { flexDirection: 'row', gap: 3 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: color.gold },
+  dot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: color.gold },
   dotUsed: { backgroundColor: 'rgba(214,178,94,0.25)' },
-
-  listHead: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    marginBottom: space.s2,
-  },
-  listTitle: { ...text.label, color: color.accent, fontSize: 12.5 },
-  listCount: { ...text.key, fontSize: 10.5, color: color.text3 },
 
   list: { flex: 1, marginHorizontal: -space.s1 },
   listContent: { paddingBottom: space.s5 },

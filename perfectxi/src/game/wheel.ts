@@ -1,8 +1,8 @@
 /**
- * The spin wheel's maths, kept apart from the component that draws it.
+ * The spin reel's maths, kept apart from the component that draws it.
  *
- * Everything about how the reel feels is a number in here, so tuning the
- * spin means editing this file and nothing else. It is also why the haptic
+ * Everything about how the spin feels is a number in here, so tuning it
+ * means editing this file and nothing else. It is also why the haptic
  * schedule can be printed and read in a terminal rather than guessed at by
  * holding a phone: see scripts/wheel-ticks.mjs.
  *
@@ -10,37 +10,50 @@
  */
 
 export const WHEEL = {
-  /** height of one club-season strip, in points */
-  ITEM: 56,
-  /** strips visible through the window; odd, so one is centred */
-  VISIBLE: 5,
-  /** how many strips cross the centre line before the winner does */
-  TRAVEL: 30,
+  /** one card plus its gap, in points; the reel travels in these units */
+  CARD: 124,
+  /** the card itself, the rest of CARD being the gap */
+  CARD_W: 112,
+  CARD_H: 132,
 
-  /** the long decelerating run, in ms */
-  SPIN_MS: 1800,
-  /** how far past the winner the reel carries before coming back */
-  OVERSHOOT: 40,
-  /** the spring back down onto the winner, in ms */
-  SNAP_MS: 320,
+  /** how many cards cross the centre before the winner does */
+  TRAVEL: 10,
+
+  /** the reel easing back before it goes, in ms */
+  CREEP_MS: 150,
+  /** how far it eases back, in points */
+  CREEP: 16,
+
+  /** the decelerating run, in ms. The web build uses 900. */
+  SPIN_MS: 900,
+  /** All Time XI runs slightly longer, as it does on the site */
+  SPIN_MS_ALLTIME: 1000,
+
+  /** carried past the winner by half a card before it comes back */
+  OVERSHOOT: 62,
+  /** the spring back onto the winner, in ms */
+  SNAP_MS: 260,
 
   /**
-   * The Taptic Engine cannot resolve taps much closer than this, and
-   * trying turns a run of ticks into one buzz.
+   * The floor for two taps to read as two taps rather than one buzz.
+   * Over 900ms this is what decides the tick count, so it is the number to
+   * move if the ticking feels sparse.
    */
-  MIN_TICK_GAP: 58,
+  MIN_TICK_GAP: 42,
 } as const;
 
-/** Total travel of the long run, overshoot included. */
-export const travelDistance = WHEEL.TRAVEL * WHEEL.ITEM + WHEEL.OVERSHOOT;
+export function spinMs(allTime: boolean): number {
+  return allTime ? WHEEL.SPIN_MS_ALLTIME : WHEEL.SPIN_MS;
+}
+
+/** Total travel of the run, overshoot included. */
+export const travelDistance = WHEEL.TRAVEL * WHEEL.CARD + WHEEL.OVERSHOOT;
 
 /**
  * Deceleration curve.
  *
- * Quadratic out, not cubic. Cubic spends the last quarter of its time
- * covering two percent of the distance, which reads as the reel giving up
- * rather than slowing down, and it leaves a second of silence after the
- * final tick. Quadratic keeps the reel visibly moving into the overshoot.
+ * Quadratic out. Its velocity falls off linearly, which is what lets the
+ * motion smear ride a plain linear ramp instead of sampling the animation.
  */
 export function ease(p: number): number {
   return 1 - (1 - p) * (1 - p);
@@ -54,29 +67,29 @@ export function easeInverse(f: number): number {
 export type Tick = { at: number; index: number; strong: boolean };
 
 /**
- * When each strip crosses the centre line, thinned to what a thumb can
- * feel, and to a rhythm that only ever slows.
+ * When each card boundary crosses the centre line.
  *
- * Two rules. A tick must be at least MIN_TICK_GAP after the last one, and
- * it must not come sooner after it than the previous gap did. Without the
- * second rule the thinning leaves gaps that jump about (103ms, then 57ms,
- * then 63ms) and the reel sounds like it is speeding up again just as it
- * is meant to be settling.
+ * Solved from the curve rather than sampled off the running animation.
+ * That is not a shortcut: it is exact, it cannot be thrown off by a
+ * dropped frame, and it does not need a value bridged back into JavaScript
+ * sixty times a second while the reel is the only thing on screen.
  *
- * The winner's own crossing is always kept, and is the firm one.
+ * Two rules thin it: at least MIN_TICK_GAP apart, and never a shorter gap
+ * than the one before, so the rhythm only ever slows. The winner's own
+ * crossing is always kept, and is the firm one.
  */
-export function tickSchedule(): Tick[] {
+export function tickSchedule(allTime = false): Tick[] {
   const out: Tick[] = [];
-  // Both start at zero, measured from the moment the reel is released.
-  // Seeding `last` with -Infinity makes the first gap infinite, which then
-  // becomes the floor every later gap is compared against, and nothing
-  // after the first tick ever qualifies.
-  let last = 0;
+  const D = spinMs(allTime);
+  // Measured from when the reel is released, not from the button press.
+  // Starting at zero makes the first gap include the creep, and the
+  // monotonic rule then treats that as the floor and drops everything.
+  let last: number = WHEEL.CREEP_MS;
   let lastGap = 0;
 
   for (let k = 1; k <= WHEEL.TRAVEL; k++) {
-    const f = (k * WHEEL.ITEM) / travelDistance;
-    const at = WHEEL.SPIN_MS * easeInverse(f);
+    const f = (k * WHEEL.CARD) / travelDistance;
+    const at = WHEEL.CREEP_MS + D * easeInverse(f);
     const winner = k === WHEEL.TRAVEL;
 
     if (!winner) {
@@ -93,19 +106,27 @@ export function tickSchedule(): Tick[] {
 }
 
 /** When the winner reaches the centre line. */
-export function landingAt(): number {
+export function landingAt(allTime = false): number {
   return Math.round(
-    WHEEL.SPIN_MS * easeInverse((WHEEL.TRAVEL * WHEEL.ITEM) / travelDistance),
+    WHEEL.CREEP_MS +
+      spinMs(allTime) * easeInverse((WHEEL.TRAVEL * WHEEL.CARD) / travelDistance),
   );
 }
 
-/** Total time from pressing spin to the reel being still. */
-export const spinDuration = WHEEL.SPIN_MS + WHEEL.SNAP_MS;
+/** Creep, run and snap: press to still. */
+export function spinDuration(allTime = false): number {
+  return WHEEL.CREEP_MS + spinMs(allTime) + WHEEL.SNAP_MS;
+}
+
+/** Peak speed off the line, in points per second. */
+export function peakVelocity(allTime = false): number {
+  return (2 * travelDistance) / (spinMs(allTime) / 1000);
+}
 
 export type ReelItem = { club: string; season: string };
 
 /**
- * The strip of club-seasons the reel scrolls through.
+ * The strip of club-seasons the reel travels through.
  *
  * The winner sits at index TRAVEL, with a few behind it so the window is
  * never short of something to draw. The decoys come from Math.random on
@@ -121,7 +142,7 @@ export function buildReel(
     strip.push(pool[Math.floor(Math.random() * pool.length)]);
   }
   strip.push(winner);
-  for (let i = 0; i < WHEEL.VISIBLE; i++) {
+  for (let i = 0; i < 3; i++) {
     strip.push(pool[Math.floor(Math.random() * pool.length)]);
   }
   return strip;
