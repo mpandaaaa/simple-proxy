@@ -39,3 +39,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# headless engine build, produced by npm run sim
+.headless/
+
+# the web build the database is extracted from
+vendor/

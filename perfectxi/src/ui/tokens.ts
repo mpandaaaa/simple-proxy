@@ -72,6 +72,15 @@ export const space = {
   s8: 48,
 } as const;
 
+/**
+ * Semantic gaps, so a screen asks for the meaning rather than the number.
+ * Related things sit close; separate groups get real air.
+ */
+export const gap = {
+  related: space.s4,
+  group: 34,
+} as const;
+
 export const radius = {
   xs: 6,
   sm: 10,

@@ -1,21 +1,21 @@
 import { ReactNode } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { color, space } from '../tokens';
+import { color, space, gap } from '../tokens';
 import { text } from '../type';
 
 /**
- * Every tab sits on this. Handles the notch, the home indicator and the
- * space the tab bar takes out of the bottom of the scroll view.
+ * The plain scrolling page. Handles the notch and the home indicator.
+ *
+ * There is no bottom tab bar to leave room for: navigation is a stack
+ * rooted at Home, and a mode screen fills the display on its own.
  */
 export function Screen({
-  title,
-  kicker,
   children,
+  contentTop = space.s4,
 }: {
-  title: string;
-  kicker?: string;
   children: ReactNode;
+  contentTop?: number;
 }) {
   const insets = useSafeAreaInsets();
   return (
@@ -23,33 +23,33 @@ export function Screen({
       <ScrollView
         style={styles.root}
         contentContainerStyle={{
-          paddingTop: insets.top + space.s4,
-          paddingBottom: insets.bottom + space.s8 + space.s7,
+          paddingTop: insets.top + contentTop,
+          paddingBottom: insets.bottom + space.s7,
           paddingHorizontal: space.s4,
         }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.head}>
-          {kicker ? <Text style={text.label}>{kicker}</Text> : null}
-          <Text style={[text.title, styles.title]}>{title}</Text>
-        </View>
         {children}
       </ScrollView>
     </View>
   );
 }
 
-/** A group separator. Real air between groups, per the 8pt rule. */
+/** A group separator. Real air between groups, a tight stack within one. */
 export function Section({
   label,
   children,
+  first,
 }: {
   label?: string;
   children: ReactNode;
+  first?: boolean;
 }) {
   return (
-    <View style={styles.section}>
-      {label ? <Text style={[text.label, styles.sectionLabel]}>{label}</Text> : null}
+    <View style={[styles.section, first && styles.sectionFirst]}>
+      {label ? (
+        <Text style={[text.label, styles.sectionLabel]}>{label}</Text>
+      ) : null}
       {children}
     </View>
   );
@@ -57,8 +57,7 @@ export function Section({
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: color.bg },
-  head: { marginBottom: space.s5 },
-  title: { marginTop: space.s1 },
-  section: { marginTop: space.s7 },
-  sectionLabel: { marginBottom: space.s3 },
+  section: { marginTop: gap.group },
+  sectionFirst: { marginTop: 0 },
+  sectionLabel: { marginBottom: space.s2 },
 });

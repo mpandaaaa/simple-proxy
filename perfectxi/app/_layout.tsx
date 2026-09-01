@@ -16,9 +16,18 @@ import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
 import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
 import { Anton_400Regular } from '@expo-google-fonts/anton/400Regular';
 import { color } from '../src/ui/tokens';
+import { useReduceMotion } from '../src/ui/feel';
 
 SplashScreen.preventAutoHideAsync();
 
+/**
+ * Navigation is one native stack rooted at Home. No tabs, no drawer, no
+ * persistent chrome of any kind.
+ *
+ * Because this is the native stack rather than the JS one, the push and pop
+ * are the real UIKit slide and the interactive edge swipe back is the real
+ * gesture, with the physics iOS users already have in their thumbs.
+ */
 export default function RootLayout() {
   const [ready, error] = useFonts({
     Anton_400Regular,
@@ -30,6 +39,7 @@ export default function RootLayout() {
     Inter_600SemiBold,
     Inter_700Bold,
   });
+  const reduceMotion = useReduceMotion();
 
   useEffect(() => {
     // Show the app once the faces are in. If a font fails outright we still
@@ -46,6 +56,12 @@ export default function RootLayout() {
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: color.bg },
+          // Reduce Motion turns the slide into a cross fade. The gesture
+          // stays: taking someone's back swipe away is not an accessibility
+          // win, it just makes the app harder to leave.
+          animation: reduceMotion ? 'fade' : 'slide_from_right',
+          gestureEnabled: true,
+          fullScreenGestureEnabled: true,
         }}
       />
     </SafeAreaProvider>

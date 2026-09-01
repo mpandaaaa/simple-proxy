@@ -32,7 +32,11 @@
     "ios": "expo start --ios",
     "android": "expo start --android",
     "typecheck": "tsc --noEmit",
-    "doctor": "npx expo-doctor"
+    "doctor": "npx expo-doctor",
+    "extract-db": "node scripts/extract-db.mjs",
+    "build-engine": "tsc -p tsconfig.headless.json",
+    "sim": "tsc -p tsconfig.headless.json && node scripts/sim-season.mjs",
+    "golden": "tsc -p tsconfig.headless.json && node scripts/golden.mjs"
   },
   "private": true
 }
