@@ -6,6 +6,7 @@
     "@expo-google-fonts/anton": "^0.4.2",
     "@expo-google-fonts/barlow-condensed": "^0.4.1",
     "@expo-google-fonts/inter": "^0.4.2",
+    "@shopify/flash-list": "2.0.2",
     "expo": "~57.0.19",
     "expo-constants": "~57.0.16",
     "expo-dev-client": "~57.0.18",
@@ -17,11 +18,14 @@
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
     "react-native": "0.86.3",
+    "react-native-gesture-handler": "~2.32.0",
     "react-native-mmkv": "^4.3.2",
     "react-native-nitro-modules": "^0.37.1",
+    "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
-    "react-native-svg": "^15.15.4"
+    "react-native-svg": "^15.15.4",
+    "react-native-worklets": "0.10.1"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",

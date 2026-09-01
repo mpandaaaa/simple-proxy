@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 // Imported per weight, not from the package root. Importing the root pulls
@@ -50,20 +51,25 @@ export default function RootLayout() {
   if (!ready && !error) return null;
 
   return (
-    <SafeAreaProvider>
-      <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: color.bg },
-          // Reduce Motion turns the slide into a cross fade. The gesture
-          // stays: taking someone's back swipe away is not an accessibility
-          // win, it just makes the app harder to leave.
-          animation: reduceMotion ? 'fade' : 'slide_from_right',
-          gestureEnabled: true,
-          fullScreenGestureEnabled: true,
-        }}
-      />
-    </SafeAreaProvider>
+    // Gesture handler wants to own the root view. It is not used yet, but
+    // it has to be the outermost view from the moment it is installed or
+    // the first gesture added later silently does nothing.
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <StatusBar style="light" />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: color.bg },
+            // Reduce Motion turns the slide into a cross fade. The gesture
+            // stays: taking someone's back swipe away is not an
+            // accessibility win, it just makes the app harder to leave.
+            animation: reduceMotion ? 'fade' : 'slide_from_right',
+            gestureEnabled: true,
+            fullScreenGestureEnabled: true,
+          }}
+        />
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
