@@ -37,8 +37,10 @@ export function ModeScreen({
   const insets = useSafeAreaInsets();
   const headerHeight = insets.top + BAR;
 
+  // A non scrolling screen has to pass its height down, or a child asking
+  // for flex:1 (a list, a centred block) collapses to nothing.
   const body = (
-    <View style={styles.pad}>{children}</View>
+    <View style={[styles.pad, !scroll && styles.padFill]}>{children}</View>
   );
 
   return (
@@ -87,6 +89,7 @@ export function ModeScreen({
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: color.bg },
   pad: { paddingHorizontal: space.s4 },
+  padFill: { flex: 1 },
   bar: {
     position: 'absolute',
     top: 0,

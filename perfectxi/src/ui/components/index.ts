@@ -13,3 +13,7 @@ export { Hero } from './Hero';
 export { Choice } from './Choice';
 export type { Option } from './Choice';
 export { Pitch, surname } from './Pitch';
+export { ModeCard } from './ModeCard';
+export type { ModeTone } from './ModeCard';
+export { Collapse } from './Collapse';
+export { Rise } from './Rise';

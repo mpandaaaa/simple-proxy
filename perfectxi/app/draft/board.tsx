@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { ModeScreen, Button, Press, Pitch, surname } from '../../src/ui/components';
-import { color, space, radius, positionColor } from '../../src/ui/tokens';
+import { color, space, radius, positionColor, gradient, shadow, line } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic, useReduceMotion } from '../../src/ui/feel';
 import {
@@ -301,11 +301,12 @@ const styles = StyleSheet.create({
   spinWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.s5 },
   reelText: {
     fontFamily: font.displayBlack,
-    fontSize: 30,
-    lineHeight: 34,
+    fontSize: 38,
+    lineHeight: 42,
     letterSpacing: 0.4,
     color: color.text1,
-    minHeight: 34,
+    minHeight: 42,
+    textAlign: 'center',
   },
   spinBtn: { alignSelf: 'stretch' },
 
@@ -327,12 +328,14 @@ const styles = StyleSheet.create({
   },
   boardSeason: { ...text.key, color: color.accent, marginTop: 1 },
   reroll: {
-    paddingHorizontal: space.s3,
-    paddingVertical: space.s2,
+    paddingHorizontal: space.s4,
+    paddingVertical: space.s2 + 2,
     borderRadius: radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.borderStrong,
-    backgroundColor: color.surface2,
+    borderWidth: 1,
+    borderColor: line.cardHot,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.cardLift,
+    boxShadow: shadow.card,
   },
   rerollText: { ...text.key, color: color.text2 },
 
@@ -348,11 +351,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space.s3,
     paddingHorizontal: space.s3,
-    borderRadius: radius.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.border,
-    borderTopColor: color.topHighlight,
-    backgroundColor: color.surface1,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
+    boxShadow: shadow.card,
   },
   playerOff: { opacity: 0.34 },
   posBadge: {

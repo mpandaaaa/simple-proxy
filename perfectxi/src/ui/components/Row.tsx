@@ -1,19 +1,19 @@
 import { ReactNode } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { color, radius, space, hit } from '../tokens';
+import { color, radius, space, hit, gradient, shadow, line } from '../tokens';
 import { text } from '../type';
 import { IconChevron } from '../icons';
 import { Press } from './Press';
 
 export type RowTone = 'accent' | 'gold' | 'blue' | 'danger' | 'purple' | 'neutral';
 
-const TONES: Record<RowTone, { fg: string; bg: string }> = {
-  accent: { fg: color.accent, bg: 'rgba(31,197,126,0.13)' },
-  gold: { fg: color.gold, bg: 'rgba(214,178,94,0.13)' },
-  blue: { fg: color.blue, bg: 'rgba(76,160,255,0.13)' },
-  danger: { fg: color.danger, bg: 'rgba(229,72,77,0.13)' },
-  purple: { fg: color.purple, bg: 'rgba(185,140,242,0.13)' },
-  neutral: { fg: color.text2, bg: color.surface3 },
+const TONES: Record<RowTone, { fg: string; bg: string; edge: string }> = {
+  accent: { fg: color.accent, bg: 'rgba(31,197,126,0.13)', edge: line.accent },
+  gold: { fg: color.gold, bg: 'rgba(214,178,94,0.13)', edge: line.gold },
+  blue: { fg: color.blue, bg: 'rgba(76,160,255,0.13)', edge: line.blue },
+  danger: { fg: color.danger, bg: 'rgba(229,72,77,0.13)', edge: line.danger },
+  purple: { fg: color.purple, bg: 'rgba(185,140,242,0.13)', edge: line.purple },
+  neutral: { fg: color.text2, bg: 'rgba(255,255,255,0.06)', edge: line.card },
 };
 
 /**
@@ -48,7 +48,7 @@ export function Row({
       style={styles.row}
       accessibilityLabel={`${title}. ${subtitle}`}
     >
-      <View style={[styles.badge, { backgroundColor: t.bg }]}>
+      <View style={[styles.badge, { backgroundColor: t.bg, borderColor: t.edge }]}>
         {icon({ color: t.fg, size: 20 })}
       </View>
 
@@ -79,19 +79,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space.s3,
     minHeight: hit.button + space.s3,
-    backgroundColor: color.surface1,
+    // Solid fill first, gradient over it. If the gradient does not draw the
+    // row is still a row.
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
+    boxShadow: shadow.card,
     borderRadius: radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.border,
-    borderTopColor: color.topHighlight,
+    borderWidth: 1,
+    borderColor: line.card,
     paddingVertical: space.s3,
     paddingHorizontal: space.s4,
     marginBottom: space.s2,
   },
   badge: {
-    width: 38,
-    height: 38,
+    width: 40,
+    height: 40,
     borderRadius: radius.sm,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },

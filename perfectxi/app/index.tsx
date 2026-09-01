@@ -1,7 +1,14 @@
 import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import { Screen, Section, Hero, Row, Press } from '../src/ui/components';
+import {
+  Screen,
+  ModeCard,
+  Collapse,
+  Row,
+  Rise,
+  Press,
+} from '../src/ui/components';
 import {
   IconTrophy,
   IconCalendar,
@@ -12,18 +19,22 @@ import {
   IconCpu,
   IconStar,
   IconMedal,
+  IconYou,
 } from '../src/ui/icons';
-import { color, space, radius, gap } from '../src/ui/tokens';
+import { color, space, radius, gradient, shadow, line } from '../src/ui/tokens';
 import { font, text } from '../src/ui/type';
 import { progressStore, dynastyStore } from '../src/save';
 import type { Progress, DynastySummary } from '../src/save';
 
 /**
- * Home is the only hub. Every mode is one tap from here and every mode
- * returns here. There is no tab bar and no drawer: once you are inside a
- * mode you see that mode and nothing else.
+ * Home is the only hub. Every mode is reachable from here and every mode
+ * returns here. No tab bar, no drawer.
  *
- * Copy is taken from the live site rather than written fresh, so the app
+ * Three modes carry the screen: the draft, the World Cup and Dynasty.
+ * Everything else is real and one tap away, but it sits inside a disclosure
+ * so the screen opens short instead of opening as a wall.
+ *
+ * Copy comes from the live site rather than being written fresh, so the app
  * and the website say the same things about the same modes.
  */
 export default function Home() {
@@ -43,143 +54,259 @@ export default function Home() {
 
   return (
     <Screen>
-      <View style={styles.brand}>
-        <View style={styles.brandTop}>
-          <Text style={styles.wordmark}>
-            PERFECT <Text style={styles.wordmarkXI}>XI</Text>
-          </Text>
-          <View style={styles.seasonChip}>
-            <Text style={[text.key, styles.seasonChipText]}>Season 26/27</Text>
+      <Rise delay={0}>
+        <View style={styles.brand}>
+          <View style={styles.brandTop}>
+            <Text style={styles.wordmark}>
+              PERFECT <Text style={styles.wordmarkXI}>XI</Text>
+            </Text>
+            <View style={styles.seasonChip}>
+              <Text style={styles.seasonChipText}>Season 26/27</Text>
+            </View>
           </View>
+          <Text style={styles.tagline}>
+            Unofficial fan draft game · free to play
+          </Text>
         </View>
-        <Text style={styles.tagline}>
-          Unofficial fan draft game · free to play
-        </Text>
-      </View>
+      </Rise>
 
-      <Hero
-        kicker="All-Time Premier League"
-        title="START A DRAFT"
-        subtitle="Spin real club-seasons · build your XI · simulate 38 games"
-        onPress={() => router.push('/draft')}
-      />
+      <Rise delay={1}>
+        <ModeCard
+          tone="accent"
+          big
+          kicker="All-Time Premier League"
+          title="START A DRAFT"
+          subtitle="Spin real club-seasons · build your XI · simulate 38 games"
+          onPress={() => router.push('/draft')}
+        />
+      </Rise>
 
-      <View style={styles.afterHero}>
-        <Row
-          icon={IconTrophy}
+      <Rise delay={2}>
+        <ModeCard
           tone="gold"
+          kicker="Tournament"
           title="World Cup 2026"
           subtitle="Pick a nation or build a World XI · win the cup"
+          icon={IconTrophy}
           onPress={() =>
-            soon('World Cup', 'World Cup 2026', 'Pick one of the qualified nations and draft its real squad, or build a World XI, then play the group stage and the knockouts.')
+            soon(
+              'World Cup',
+              'World Cup 2026',
+              'Pick one of the qualified nations and draft its real squad, or build a World XI, then play the group stage and the knockouts.',
+            )
           }
         />
-      </View>
+      </Rise>
 
-      <Section label="Play today">
-        <Row
-          icon={IconCalendar}
-          tone="blue"
-          tag="Daily"
-          title="Daily Challenge"
-          subtitle="Same spins for everyone · one attempt"
-          onPress={() =>
-            soon('Play today', 'Daily Challenge', 'Everyone in the world gets the same seeded spins once a day, with one attempt and a shareable scorecard showing all 38 results.')
-          }
-        />
-        <Row
-          icon={IconSpark}
-          tone="gold"
-          tag="Event"
-          title="Weekly Event"
-          subtitle="A new twist every week"
-          onPress={() =>
-            soon('Play today', 'Weekly Event', 'A rotating rule twist each week: Nineties Week, Y2K Week, Moneyball, Modern Era and Homegrown.')
-          }
-        />
-        <Row
-          icon={IconSwords}
-          tone="danger"
-          tag="Duel"
-          title="Start a duel"
-          subtitle="Seeded run · share the code"
-          onPress={() =>
-            soon('Play today', 'Start a duel', 'Send a code and your friend drafts from your exact spin sequence, then the game declares a winner.')
-          }
-        />
-        <Row
-          icon={IconKeypad}
-          tone="neutral"
-          tag="Code"
-          title="Enter a code"
-          subtitle="Same spins · beat their points"
-          onPress={() =>
-            soon('Play today', 'Enter a code', 'Take a code from a friend and draft from the same spins, then see who scored more points.')
-          }
-        />
-      </Section>
-
-      <Section label="Your game">
-        <Row
-          icon={IconBank}
-          tone="accent"
-          title={dynasty ? `Dynasty · ${dynasty.club}` : 'Dynasty'}
-          subtitle={dynastyLine(dynasty)}
-          onPress={() =>
-            soon('Your game', 'Dynasty', 'Carry one XI across seasons. Players age, develop, decline and retire, your league finish earns a transfer budget, and a board sets the objectives your job depends on.')
-          }
-        />
-        <Row
-          icon={IconCpu}
-          tone="blue"
-          title="Beat the Machine"
-          subtitle="It re-drafts your exact boards · outscore it"
-          onPress={() =>
-            soon('Your game', 'Beat the Machine', 'Finish a season and the Machine re-drafts your exact boards with best-on-paper picks. Outscore it if you can.')
-          }
-        />
-        <Row
-          icon={IconStar}
+      <Rise delay={3}>
+        <ModeCard
           tone="purple"
-          title={`Progress · Level ${progress.lvl}`}
-          subtitle={progressLine(progress)}
+          kicker="Career"
+          title="Dynasty"
+          subtitle="A career across seasons · ages, transfers, the board"
+          status={dynastyStatus(dynasty)}
+          icon={IconBank}
           onPress={() =>
-            soon('Your game', 'Progress', 'Level, missions, collection and unlocks, all earned from seasons you have actually played.')
+            soon(
+              'Career',
+              'Dynasty',
+              'Carry one XI across seasons. Players age, develop, decline and retire, your league finish earns a transfer budget, and a board sets the objectives your job depends on.',
+            )
           }
         />
-        <Row
-          icon={IconMedal}
-          tone="gold"
-          title="Hall of Fame"
-          subtitle="Your greatest seasons, ranked"
-          onPress={() =>
-            soon('Your game', 'Hall of Fame', 'Your greatest seasons, ranked.')
-          }
-        />
-      </Section>
+      </Rise>
 
-      <Text style={styles.dbLine}>
-        51 clubs · 712 squad-seasons · 1992 to 2026
-      </Text>
+      <Rise delay={4} style={styles.groups}>
+        <Collapse label="Play today" count={4}>
+          <Row
+            icon={IconCalendar}
+            tone="blue"
+            tag="Daily"
+            title="Daily Challenge"
+            subtitle="Same spins for everyone · one attempt"
+            onPress={() =>
+              soon(
+                'Play today',
+                'Daily Challenge',
+                'Everyone in the world gets the same seeded spins once a day, with one attempt and a shareable scorecard showing all 38 results.',
+              )
+            }
+          />
+          <Row
+            icon={IconSpark}
+            tone="gold"
+            tag="Event"
+            title="Weekly Event"
+            subtitle="A new twist every week"
+            onPress={() =>
+              soon(
+                'Play today',
+                'Weekly Event',
+                'A rotating rule twist each week: Nineties Week, Y2K Week, Moneyball, Modern Era and Homegrown.',
+              )
+            }
+          />
+          <Row
+            icon={IconSwords}
+            tone="danger"
+            tag="Duel"
+            title="Start a duel"
+            subtitle="Seeded run · share the code"
+            onPress={() =>
+              soon(
+                'Play today',
+                'Start a duel',
+                'Send a code and your friend drafts from your exact spin sequence, then the game declares a winner.',
+              )
+            }
+          />
+          <Row
+            icon={IconKeypad}
+            tone="neutral"
+            tag="Code"
+            title="Enter a code"
+            subtitle="Same spins · beat their points"
+            onPress={() =>
+              soon(
+                'Play today',
+                'Enter a code',
+                'Take a code from a friend and draft from the same spins, then see who scored more points.',
+              )
+            }
+          />
+        </Collapse>
 
-      <View style={styles.footer}>
-        {FOOTER.map((f) => (
-          <Press
-            key={f.label}
-            onPress={() => soon('Perfect XI', f.label, f.blurb)}
-            feel="select"
-            scaleTo={0.94}
-            style={styles.footerChip}
-          >
-            <Text style={styles.footerText}>{f.label}</Text>
-          </Press>
-        ))}
-      </View>
+        <Collapse label="Your game" count={3}>
+          <Row
+            icon={IconCpu}
+            tone="blue"
+            title="Beat the Machine"
+            subtitle="It re-drafts your exact boards · outscore it"
+            onPress={() =>
+              soon(
+                'Your game',
+                'Beat the Machine',
+                'Finish a season and the Machine re-drafts your exact boards with best-on-paper picks. Outscore it if you can.',
+              )
+            }
+          />
+          <Row
+            icon={IconStar}
+            tone="purple"
+            title={`Progress · Level ${progress.lvl}`}
+            subtitle={`${progress.coins} coins · ${progress.streak}-day streak`}
+            onPress={() =>
+              soon(
+                'Your game',
+                'Progress',
+                'Level, missions, collection and unlocks, all earned from seasons you have actually played.',
+              )
+            }
+          />
+          <Row
+            icon={IconMedal}
+            tone="gold"
+            title="Hall of Fame"
+            subtitle="Your greatest seasons, ranked"
+            onPress={() =>
+              soon('Your game', 'Hall of Fame', 'Your greatest seasons, ranked.')
+            }
+          />
+        </Collapse>
 
-      <Text style={styles.legal}>
-        Perfect XI is an unofficial fan game. Not affiliated with the Premier
-        League, any football club, or any player.
-      </Text>
+        <Collapse label="Records and tools" count={5}>
+          <Row
+            icon={IconTrophy}
+            tone="gold"
+            title="Trophy cabinet"
+            subtitle="Every achievement you have earned"
+            onPress={() =>
+              soon(
+                'Records',
+                'Trophy cabinet',
+                'Every achievement you have earned, across the draft, Dynasty and the World Cup.',
+              )
+            }
+          />
+          <Row
+            icon={IconCalendar}
+            tone="neutral"
+            title="Draft history"
+            subtitle="Every completed run, saved"
+            onPress={() =>
+              soon(
+                'Records',
+                'Draft history',
+                'Draft your first XI and simulate a full 38-game season. Every completed run gets saved here.',
+              )
+            }
+          />
+          <Row
+            icon={IconMedal}
+            tone="accent"
+            title="Best seasons"
+            subtitle="Your campaigns, ranked by points"
+            onPress={() =>
+              soon(
+                'Records',
+                'Best seasons',
+                'Complete a full 38-game season and your best campaigns will be ranked here.',
+              )
+            }
+          />
+          <Row
+            icon={IconSwords}
+            tone="danger"
+            title="Versus"
+            subtitle="Head to head against a friend"
+            onPress={() =>
+              soon(
+                'Records',
+                'Versus',
+                'Draft head to head against a friend from the same spins.',
+              )
+            }
+          />
+          <Row
+            icon={IconYou}
+            tone="blue"
+            title="Player index"
+            subtitle="Search all 3,003 players"
+            onPress={() =>
+              soon(
+                'Records',
+                'Player index',
+                'Search every player in the database and see every club-season they appear in.',
+              )
+            }
+          />
+        </Collapse>
+      </Rise>
+
+      <Rise delay={5}>
+        <Text style={styles.dbLine}>
+          51 clubs · 712 squad-seasons · 1992 to 2026
+        </Text>
+
+        <View style={styles.footer}>
+          {FOOTER.map((f) => (
+            <Press
+              key={f.label}
+              onPress={() => soon('Perfect XI', f.label, f.blurb)}
+              feel="select"
+              scaleTo={0.94}
+              style={styles.footerChip}
+            >
+              <Text style={styles.footerText}>{f.label}</Text>
+            </Press>
+          ))}
+        </View>
+
+        <Text style={styles.legal}>
+          Perfect XI is an unofficial fan game. Not affiliated with the Premier
+          League, any football club, or any player.
+        </Text>
+      </Rise>
     </Screen>
   );
 }
@@ -190,39 +317,29 @@ const FOOTER = [
     blurb:
       'How to play, the match engine, squad chemistry, formations and the ratings database, written from the game’s own numbers.',
   },
-  {
-    label: 'Changelog',
-    blurb: 'What changed in each update.',
-  },
+  { label: 'Changelog', blurb: 'What changed in each update.' },
   {
     label: 'Privacy',
     blurb:
       'Perfect XI needs no account and stores your saves on this device rather than on a server.',
   },
-  {
-    label: 'Contact',
-    blurb: 'Feedback, bug reports, or an argument about a rating.',
-  },
+  { label: 'Contact', blurb: 'Feedback, bug reports, or an argument about a rating.' },
 ];
 
 /**
- * One honest screen for anything not built yet, rather than a dead tap or
- * a badge on the home screen. Each entry carries its own real description
- * from the live site, so the screen says something true about the mode.
+ * One honest screen for anything not built yet, rather than a dead tap or a
+ * badge on the home screen. Each entry carries its own real description from
+ * the live site, so the screen says something true about the mode.
  */
 function soon(overline: string, title: string, blurb: string) {
   router.push({ pathname: '/soon', params: { overline, title, blurb } });
 }
 
-/** No career yet is a real state, so it gets the description, not a blank. */
-function dynastyLine(d: DynastySummary | null): string {
-  if (!d) return 'A career across seasons · ages, transfers, the board';
+/** No career yet is a real state, so the card keeps its description. */
+function dynastyStatus(d: DynastySummary | null): string | null {
+  if (!d) return null;
   if (d.sacked) return 'Sacked · start again';
-  return `Season ${d.season} · £${d.budget}m · ${d.trophies} titles`;
-}
-
-function progressLine(p: Progress): string {
-  return `${p.coins} coins · ${p.streak}-day streak`;
+  return `${d.club} · season ${d.season} · £${d.budget}m · ${d.trophies} titles`;
 }
 
 const styles = StyleSheet.create({
@@ -235,31 +352,40 @@ const styles = StyleSheet.create({
   },
   wordmark: {
     fontFamily: font.displayBlack,
-    fontSize: 26,
-    lineHeight: 29,
-    letterSpacing: 1.2,
+    fontSize: 27,
+    lineHeight: 30,
+    letterSpacing: 1.3,
     color: color.text1,
   },
   wordmarkXI: { color: color.accent },
   seasonChip: {
     paddingHorizontal: space.s3,
-    paddingVertical: space.s1 + 1,
+    paddingVertical: space.s1 + 2,
     borderRadius: radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.border,
-    backgroundColor: color.surface1,
+    backgroundColor: color.accent,
   },
-  seasonChipText: { color: color.text2 },
+  seasonChipText: {
+    fontFamily: font.displayBold,
+    fontSize: 11,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    color: '#06130C',
+  },
   tagline: {
-    ...text.small,
-    marginTop: space.s1,
+    ...text.key,
+    fontSize: 10.5,
+    color: color.text3,
+    marginTop: space.s2,
   },
-  afterHero: { marginTop: space.s3 },
+
+  groups: { marginTop: space.s4 },
+
   dbLine: {
     ...text.key,
+    fontSize: 10.5,
     color: color.text3,
     textAlign: 'center',
-    marginTop: gap.group,
+    marginTop: space.s6,
   },
   footer: {
     flexDirection: 'row',
@@ -270,15 +396,17 @@ const styles = StyleSheet.create({
   },
   footerChip: {
     paddingHorizontal: space.s4,
-    paddingVertical: space.s2,
+    paddingVertical: space.s2 + 1,
     borderRadius: radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.border,
-    backgroundColor: color.surface1,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
+    boxShadow: shadow.card,
   },
   footerText: {
-    fontFamily: font.bodyMed,
-    fontSize: 12,
+    fontFamily: font.bodySemi,
+    fontSize: 12.5,
     color: color.text2,
   },
   legal: {
@@ -287,6 +415,6 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     color: color.text3,
     textAlign: 'center',
-    marginTop: space.s4,
+    marginTop: space.s5,
   },
 });

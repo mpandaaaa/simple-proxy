@@ -73,6 +73,47 @@ export const space = {
 } as const;
 
 /**
+ * Gradients and shadows, transcribed from the web build.
+ *
+ * This is most of what separates the site from a flat mockup of the site.
+ * Every card there is a gradient with a real drop shadow and a green tinted
+ * border; a flat fill with a grey hairline reads as dead by comparison.
+ *
+ * React Native renders both natively here, so these are the CSS values with
+ * the units React Native needs. Always paint a solid backgroundColor behind
+ * a gradient so a card is still a card if the gradient does not draw.
+ */
+export const gradient = {
+  /* the one solid accent block on the home screen */
+  hero: 'linear-gradient(140deg, #22D287 0%, #12A866 58%, #0D8F57 100%)',
+  /* every dark card */
+  card: 'linear-gradient(180deg, #13241C 0%, #0E1A13 100%)',
+  cardLift: 'linear-gradient(180deg, #16281F 0%, #101D15 100%)',
+  gold: 'linear-gradient(140deg, #1E2A1E 0%, #141d15 60%, #10170F 100%)',
+  purple: 'linear-gradient(140deg, #1B1A2B 0%, #14141F 60%, #101017 100%)',
+} as const;
+
+export const shadow = {
+  hero: '0px 12px 30px rgba(0, 0, 0, 0.45)',
+  lift: '0px 8px 22px rgba(0, 0, 0, 0.35)',
+  card: '0px 6px 16px rgba(0, 0, 0, 0.30)',
+} as const;
+
+/**
+ * Card borders are green tinted, not grey. On a near black background a
+ * neutral hairline looks like a seam; a tinted one looks like an edge.
+ */
+export const line = {
+  card: '#243A2C',
+  cardHot: '#2F4C3A',
+  gold: 'rgba(214, 178, 94, 0.40)',
+  purple: 'rgba(185, 140, 242, 0.40)',
+  blue: 'rgba(76, 160, 255, 0.40)',
+  danger: 'rgba(229, 72, 77, 0.40)',
+  accent: 'rgba(31, 197, 126, 0.40)',
+} as const;
+
+/**
  * Semantic gaps, so a screen asks for the meaning rather than the number.
  * Related things sit close; separate groups get real air.
  */

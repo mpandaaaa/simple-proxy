@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { color, radius, space } from '../tokens';
+import { color, radius, space, gradient, shadow, line } from '../tokens';
 import { font, text } from '../type';
 import { Press } from './Press';
 
@@ -66,16 +66,23 @@ const styles = StyleSheet.create({
   },
   chip: {
     paddingHorizontal: space.s4,
-    paddingVertical: space.s2 + 2,
+    paddingVertical: space.s2 + 3,
     borderRadius: radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.border,
-    backgroundColor: color.surface1,
-    minHeight: 38,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
+    boxShadow: shadow.card,
+    minHeight: 40,
     justifyContent: 'center',
   },
   chipOn: {
+    // Overridden with a real gradient rather than cleared. Setting a style
+    // to undefined in a merged array means "do not override", so the dark
+    // card gradient would otherwise stay on top of the accent fill.
     backgroundColor: color.accentWeak,
+    experimental_backgroundImage:
+      'linear-gradient(180deg, rgba(31,197,126,0.26) 0%, rgba(31,197,126,0.10) 100%)',
     borderColor: color.accent,
   },
   chipText: {

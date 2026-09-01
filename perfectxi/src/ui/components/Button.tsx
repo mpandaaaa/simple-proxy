@@ -1,6 +1,6 @@
 import { Pressable, Text, StyleSheet, ViewStyle } from 'react-native';
-import * as Haptics from 'expo-haptics';
-import { color, radius, hit, space } from '../tokens';
+import { haptic } from '../feel';
+import { color, radius, hit, space, gradient, shadow, line } from '../tokens';
 import { text } from '../type';
 
 type Variant = 'primary' | 'secondary' | 'ghost';
@@ -25,18 +25,14 @@ export function Button({
     <Pressable
       accessibilityRole="button"
       onPress={() => {
-        Haptics.impactAsync(
-          variant === 'primary'
-            ? Haptics.ImpactFeedbackStyle.Medium
-            : Haptics.ImpactFeedbackStyle.Light,
-        );
+        haptic(variant === 'primary' ? 'medium' : 'light');
         onPress?.();
       }}
       style={({ pressed }) => [
         styles.base,
         VARIANTS[variant].box,
         variant === 'primary' && styles.primarySize,
-        pressed && { opacity: 0.82, transform: [{ scale: 0.985 }] },
+        pressed && { opacity: 0.9, transform: [{ scale: 0.97 }] },
         style,
       ]}
     >
@@ -49,15 +45,25 @@ export function Button({
 
 const VARIANTS: Record<Variant, { box: ViewStyle; text: { color: string } }> = {
   primary: {
-    box: { backgroundColor: color.accent, borderColor: color.accentHi },
-    text: { color: '#06120C' },
+    box: {
+      backgroundColor: color.accent,
+      experimental_backgroundImage: gradient.hero,
+      borderColor: color.accentHi,
+      boxShadow: shadow.hero,
+    },
+    text: { color: '#06130C' },
   },
   secondary: {
-    box: { backgroundColor: color.surface3, borderColor: color.borderStrong },
+    box: {
+      backgroundColor: '#101A14',
+      experimental_backgroundImage: gradient.cardLift,
+      borderColor: line.cardHot,
+      boxShadow: shadow.card,
+    },
     text: { color: color.text1 },
   },
   ghost: {
-    box: { backgroundColor: 'transparent', borderColor: color.border },
+    box: { backgroundColor: 'transparent', borderColor: line.card },
     text: { color: color.text2 },
   },
 };
@@ -65,11 +71,11 @@ const VARIANTS: Record<Variant, { box: ViewStyle; text: { color: string } }> = {
 const styles = StyleSheet.create({
   base: {
     minHeight: hit.button,
-    borderRadius: radius.sm,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radius.md,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: space.s4,
   },
-  primarySize: { minHeight: hit.primary, borderRadius: radius.md },
+  primarySize: { minHeight: hit.primary, borderRadius: radius.lg },
 });
