@@ -28,6 +28,8 @@ export function Screen({
           paddingHorizontal: space.s4,
         }}
         showsVerticalScrollIndicator={false}
+          bounces={false}
+          overScrollMode="never"
       >
         {children}
       </ScrollView>

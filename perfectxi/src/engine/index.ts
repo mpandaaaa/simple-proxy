@@ -1,4 +1,15 @@
 export { ENGINE_VERSION } from './version';
+export {
+  CLUB_COLOURS,
+  clubColour,
+  clubCode,
+  lastName,
+  initials,
+  tierFor,
+  tierLabel,
+  faceStats,
+} from './clubs';
+export type { CardTier } from './clubs';
 export { mulberry32, systemRng, shuffle } from './rng';
 export type { Rng } from './rng';
 export * from './types';

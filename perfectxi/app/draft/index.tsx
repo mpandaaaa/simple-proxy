@@ -1,10 +1,18 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
-import { ModeScreen, Button, Choice, Toggle, Surface } from '../../src/ui/components';
-import { color, space, radius } from '../../src/ui/tokens';
+import {
+  ModeScreen,
+  Button,
+  OptionGroup,
+  Toggle,
+  Surface,
+  Pitch,
+  Rise,
+} from '../../src/ui/components';
+import { color, space, radius, line } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
-import { FORMATIONS, FORMATION_NAMES, defaultConfig } from '../../src/engine';
+import { FORMATIONS, FORMATION_NAMES, defaultConfig, slotsFor } from '../../src/engine';
 import type { DraftConfig, Difficulty, DraftMode, RatingType } from '../../src/engine';
 import { startRun } from '../../src/game/run';
 
@@ -12,22 +20,25 @@ import { startRun } from '../../src/game/run';
  * Draft setup. Everything that changes the run is decided here and nothing
  * can change once the first board is on the table, which is what makes a
  * run replayable from its seed.
+ *
+ * Every choice shows what it does rather than only what it is called, and
+ * the formation is shown as a shape on a pitch rather than as a number.
  */
 
-const MODES: readonly { value: DraftMode; label: string }[] = [
-  { value: 'squad', label: 'Squad draft' },
-  { value: 'alltime', label: 'All Time XI' },
+const MODES: readonly { value: DraftMode; label: string; desc: string }[] = [
+  { value: 'squad', label: 'Squad draft', desc: 'Any club, any era' },
+  { value: 'alltime', label: 'All Time XI', desc: 'Top 20 clubs, all eras merged' },
 ];
 
-const DIFFS: readonly { value: Difficulty; label: string }[] = [
-  { value: 'easy', label: 'Easy' },
-  { value: 'normal', label: 'Normal' },
-  { value: 'hard', label: 'Hard' },
+const DIFFS: readonly { value: Difficulty; label: string; desc: string }[] = [
+  { value: 'easy', label: 'Easy', desc: '3 rerolls available' },
+  { value: 'normal', label: 'Normal', desc: '1 reroll available' },
+  { value: 'hard', label: 'Hard', desc: 'No rerolls, ratings hidden' },
 ];
 
-const RATINGS: readonly { value: RatingType; label: string }[] = [
-  { value: 'prime', label: 'Prime' },
-  { value: 'season', label: 'That season' },
+const RATINGS: readonly { value: RatingType; label: string; desc: string }[] = [
+  { value: 'prime', label: 'Prime', desc: 'Every player at their career best' },
+  { value: 'season', label: 'That season', desc: 'Rated for the year you found them' },
 ];
 
 /** The 1992 to 2026 span, cut where the eras actually changed. */
@@ -49,110 +60,133 @@ export default function DraftSetup() {
     setConfig((c) => ({ ...c, [key]: value }));
 
   const fm = FORMATIONS[config.formation];
-  const rerolls = config.diff === 'easy' ? 3 : config.diff === 'normal' ? 1 : 0;
+  const empty = useMemo(() => slotsFor(config.formation), [config.formation]);
 
   return (
     <ModeScreen overline="All-Time Premier League" title="Start a draft">
-      <Choice
-        label="Formation"
-        options={FORMATION_NAMES.map((n) => ({ value: n, label: n }))}
-        value={config.formation}
-        onChange={(v) => set('formation', v)}
-        hint={fm?.desc}
-      />
+      <Rise delay={0}>
+        <OptionGroup
+          label="Formation"
+          options={FORMATION_NAMES.map((n) => ({ value: n, label: n }))}
+          value={config.formation}
+          onChange={(v) => set('formation', v)}
+        />
 
-      <Choice
-        label="Mode"
-        options={MODES}
-        value={config.mode}
-        onChange={(v) => set('mode', v)}
-        hint={
-          config.mode === 'alltime'
-            ? 'Pick from one club’s entire history, every season pooled together.'
-            : 'Every spin lands on a real club from a real season.'
-        }
-      />
+        <Text style={[text.small, styles.fmDesc]}>{fm?.desc}</Text>
 
-      {config.mode === 'squad' ? (
-        <Choice
-          label="Era"
-          options={ERAS.map((e) => ({ value: e.value, label: e.label }))}
-          value={era}
-          onChange={(v) => {
-            const found = ERAS.find((e) => e.value === v)!;
-            setEra(v);
-            setConfig((c) => ({ ...c, eraFrom: found.from, eraTo: found.to }));
+        <View style={styles.traits}>
+          <Trait label="Attack" value={fm?.att ?? 1} />
+          <Trait label="Defence" value={fm?.def ?? 1} />
+        </View>
+
+        <View style={styles.preview}>
+          <Pitch squad={empty} formation={config.formation} preview />
+        </View>
+      </Rise>
+
+      <Rise delay={1}>
+        <OptionGroup
+          label="Game mode"
+          options={MODES}
+          value={config.mode}
+          onChange={(v) => set('mode', v)}
+        />
+
+        {config.mode === 'squad' ? (
+          <OptionGroup
+            label="Era"
+            options={ERAS.map((e) => ({ value: e.value, label: e.label }))}
+            value={era}
+            onChange={(v) => {
+              const found = ERAS.find((e) => e.value === v)!;
+              setEra(v);
+              setConfig((c) => ({ ...c, eraFrom: found.from, eraTo: found.to }));
+            }}
+            hint={`Spins land between ${config.eraFrom} and ${config.eraTo}.`}
+          />
+        ) : null}
+
+        <OptionGroup
+          label="Difficulty"
+          tone="gold"
+          options={DIFFS}
+          value={config.diff}
+          onChange={(v) => set('diff', v)}
+        />
+
+        <OptionGroup
+          label="Ratings"
+          options={RATINGS}
+          value={config.rtype}
+          onChange={(v) => set('rtype', v)}
+        />
+
+        <Surface style={styles.blitz}>
+          <Toggle
+            label="Blitz"
+            hint="Only the top three of every board are offered."
+            value={config.blitz}
+            onChange={(v) => set('blitz', v)}
+          />
+        </Surface>
+      </Rise>
+
+      <Rise delay={2}>
+        <Button
+          label="Spin the first board"
+          style={styles.go}
+          onPress={() => {
+            startRun(config);
+            router.push('/draft/board');
           }}
-          hint={`Spins land between ${config.eraFrom} and ${config.eraTo}.`}
         />
-      ) : null}
-
-      <Choice
-        label="Difficulty"
-        options={DIFFS}
-        value={config.diff}
-        onChange={(v) => set('diff', v)}
-        hint={
-          rerolls === 0
-            ? 'No rerolls. Whatever the spin gives you, you take.'
-            : `${rerolls} reroll${rerolls === 1 ? '' : 's'} across the whole draft.`
-        }
-      />
-
-      <Choice
-        label="Ratings"
-        options={RATINGS}
-        value={config.rtype}
-        onChange={(v) => set('rtype', v)}
-        hint={
-          config.rtype === 'prime'
-            ? 'Every player is rated at their career best.'
-            : 'Every player is rated for the season you found them in.'
-        }
-      />
-
-      <Surface style={styles.blitz}>
-        <Toggle
-          label="Blitz"
-          hint="Only the top three of every board are offered."
-          value={config.blitz}
-          onChange={(v) => set('blitz', v)}
-        />
-      </Surface>
-
-      <View style={styles.summary}>
-        <Text style={styles.summaryText}>
-          {config.formation} · {fm ? fm.rows.length : 0} lines ·{' '}
-          {rerolls} reroll{rerolls === 1 ? '' : 's'}
-          {config.blitz ? ' · blitz' : ''}
-        </Text>
-      </View>
-
-      <Button
-        label="Spin the first board"
-        style={styles.go}
-        onPress={() => {
-          startRun(config);
-          router.push('/draft/board');
-        }}
-      />
+      </Rise>
     </ModeScreen>
   );
 }
 
+/**
+ * What a formation actually costs you. The multipliers are real engine
+ * inputs, so this is not decoration: 4-2-4 really does score more and
+ * concede more.
+ */
+function Trait({ label, value }: { label: string; value: number }) {
+  const up = value > 1.02;
+  const down = value < 0.98;
+  const tone = up ? color.accent : down ? color.danger : color.text3;
+  const mark = up ? '▲' : down ? '▼' : '—';
+  return (
+    <View style={[styles.trait, { borderColor: tone + '55' }]}>
+      <Text style={[styles.traitLabel, { color: color.text2 }]}>{label}</Text>
+      <Text style={[styles.traitMark, { color: tone }]}>{mark}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  blitz: { paddingVertical: 0, marginBottom: space.s5 },
-  summary: {
+  fmDesc: { marginTop: -space.s3, marginBottom: space.s3 },
+  traits: { flexDirection: 'row', gap: space.s2, marginBottom: space.s4 },
+  trait: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: space.s3,
-    marginBottom: space.s3,
-    borderRadius: radius.sm,
-    backgroundColor: color.surface1,
+    gap: space.s2,
+    paddingHorizontal: space.s3,
+    paddingVertical: space.s2,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    backgroundColor: 'rgba(255,255,255,0.03)',
   },
-  summaryText: {
+  traitLabel: {
     ...text.key,
-    color: color.text2,
-    fontFamily: font.displaySemi,
+    fontSize: 10.5,
+  },
+  traitMark: { fontFamily: font.displayBold, fontSize: 12 },
+  preview: { marginBottom: space.s5 },
+  blitz: {
+    paddingVertical: 0,
+    marginBottom: space.s5,
+    borderColor: line.card,
+    borderWidth: 1,
   },
   go: { marginBottom: space.s4 },
 });

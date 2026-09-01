@@ -53,6 +53,8 @@ export function ModeScreen({
             paddingBottom: insets.bottom + space.s7,
           }}
           showsVerticalScrollIndicator={false}
+          bounces={false}
+          overScrollMode="never"
         >
           {body}
         </ScrollView>

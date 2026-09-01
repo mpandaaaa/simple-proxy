@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, ScrollView, Animated, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { ModeScreen, Button, Press, Pitch } from '../../src/ui/components';
-import { color, space, radius } from '../../src/ui/tokens';
+import { color, space, radius, gradient, shadow, line } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic, useReduceMotion } from '../../src/ui/feel';
 import { chemBonus, simulateSeason, squadAvg, type Grade } from '../../src/engine';
@@ -283,31 +283,35 @@ function GradeBadge({ grade }: { grade: Grade }) {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   skip: {
-    paddingHorizontal: space.s3,
-    paddingVertical: space.s2,
+    paddingHorizontal: space.s3 + 2,
+    paddingVertical: space.s2 + 1,
     borderRadius: radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.borderStrong,
+    borderWidth: 1,
+    borderColor: line.cardHot,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
   },
   skipText: { ...text.key, color: color.text2 },
   grade: {
-    width: 34,
-    height: 34,
+    width: 38,
+    height: 38,
     borderRadius: radius.sm,
-    borderWidth: 1.5,
+    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  gradeText: { fontFamily: font.displayBlack, fontSize: 18, lineHeight: 21 },
+  gradeText: { fontFamily: font.displayBlack, fontSize: 21, lineHeight: 24 },
 
   bar: {
-    height: 4,
-    borderRadius: 2,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: color.surface2,
+    borderWidth: 1,
+    borderColor: line.card,
     overflow: 'hidden',
   },
   barFill: {
-    height: 4,
+    height: 6,
     backgroundColor: color.accent,
     // scaleX from a zero-width-anchored bar: transform runs on the native
     // thread, animating width would not.
@@ -326,9 +330,13 @@ const styles = StyleSheet.create({
   stat: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: space.s2,
+    paddingVertical: space.s2 + 2,
     borderRadius: radius.sm,
-    backgroundColor: color.surface1,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
+    boxShadow: shadow.card,
   },
   statValue: {
     fontFamily: font.displayBold,
@@ -344,9 +352,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.s3,
-    paddingVertical: space.s2 + 2,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: color.border,
+    paddingVertical: space.s3,
+    paddingHorizontal: space.s3,
+    marginBottom: space.s2,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
+    boxShadow: shadow.card,
   },
   matchNo: {
     ...text.key,
@@ -361,23 +375,27 @@ const styles = StyleSheet.create({
     color: color.text1,
   },
   score: {
-    minWidth: 52,
+    minWidth: 58,
     alignItems: 'center',
-    paddingVertical: 3,
-    borderRadius: radius.xs,
+    paddingVertical: 5,
+    borderRadius: radius.sm,
     borderWidth: 1,
   },
   scoreText: {
-    fontFamily: font.displayBold,
-    fontSize: 15,
+    fontFamily: font.displayBlack,
+    fontSize: 17,
     fontVariant: ['tabular-nums'],
   },
 
   finalPad: { paddingBottom: space.s8 },
   sectionLabel: { marginTop: space.s5, marginBottom: space.s2 },
   table: {
-    borderRadius: radius.sm,
-    backgroundColor: color.surface1,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
+    boxShadow: shadow.card,
     overflow: 'hidden',
   },
   tableRow: {
@@ -422,8 +440,12 @@ const styles = StyleSheet.create({
   tYouText: { color: color.accent },
 
   scorers: {
-    borderRadius: radius.sm,
-    backgroundColor: color.surface1,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
+    boxShadow: shadow.card,
     paddingHorizontal: space.s3,
   },
   scorerRow: {

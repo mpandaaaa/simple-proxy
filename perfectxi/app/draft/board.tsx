@@ -8,8 +8,16 @@ import {
   type ListRenderItemInfo,
 } from 'react-native';
 import { router } from 'expo-router';
-import { ModeScreen, Button, Press, Pitch, surname } from '../../src/ui/components';
-import { color, space, radius, positionColor, gradient, shadow, line } from '../../src/ui/tokens';
+import { ModeScreen, Button, Press, Pitch, PlayerCard } from '../../src/ui/components';
+import {
+  color,
+  space,
+  radius,
+  positionColor,
+  gradient,
+  shadow,
+  line,
+} from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic, useReduceMotion } from '../../src/ui/feel';
 import {
@@ -17,27 +25,26 @@ import {
   POSITION_LABEL,
   canPlay,
   chemBonus,
+  clubCode,
+  clubColour,
+  lastName,
   slotsForPlayer,
   squadAvg,
   squadChem,
   visibleBoard,
   type Pick,
+  type Position,
 } from '../../src/engine';
-import {
-  doSpin,
-  pickPlayer,
-  settleSpin,
-  spendReroll,
-  useRun,
-} from '../../src/game/run';
+import { doSpin, pickPlayer, settleSpin, spendReroll, useRun } from '../../src/game/run';
 
-const ROW_HEIGHT = 62;
+const ROW_HEIGHT = 66;
 
 export default function DraftBoard() {
   const run = useRun();
   const reduceMotion = useReduceMotion();
   const [reel, setReel] = useState<string | null>(null);
   const [chooser, setChooser] = useState<{ player: Pick; slots: number[] } | null>(null);
+  const [reveal, setReveal] = useState<{ player: Pick; pos: Position } | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -46,9 +53,9 @@ export default function DraftBoard() {
     };
   }, []);
 
-  // A run only exists while the draft is in flight. Coming back to this
-  // screen without one means the stack was restored from a cold start, so
-  // send them back rather than drawing a screen with nothing behind it.
+  // A run only exists while the draft is in flight. Coming back here without
+  // one means the stack was restored from a cold start, so go back rather
+  // than draw a screen with nothing behind it.
   useEffect(() => {
     if (!run) router.replace('/draft');
   }, [run]);
@@ -79,6 +86,17 @@ export default function DraftBoard() {
     }, 55);
   }, [reduceMotion]);
 
+  /** Place the player, then give the pick the reveal it has earned. */
+  const sign = useCallback(
+    (player: Pick, slotIndex: number) => {
+      if (!run) return;
+      const pos = run.state.squad[slotIndex].pos;
+      pickPlayer(player, slotIndex);
+      setReveal({ player, pos });
+    },
+    [run],
+  );
+
   const onPick = useCallback(
     (player: Pick) => {
       if (!run) return;
@@ -88,14 +106,13 @@ export default function DraftBoard() {
         return;
       }
       if (slots.length === 1) {
-        haptic('success');
-        pickPlayer(player, slots[0]);
+        sign(player, slots[0]);
         return;
       }
       haptic('light');
       setChooser({ player, slots });
     },
-    [run],
+    [run, sign],
   );
 
   if (!run) return null;
@@ -106,42 +123,61 @@ export default function DraftBoard() {
   const avg = squadAvg(state.squad);
   const shown = board ? visibleBoard(board, state.config.blitz) : [];
   const rerollsLeft = state.rerollsMax - state.rerolls;
+  const hideRatings = state.config.diff === 'hard';
 
   const renderRow = ({ item }: ListRenderItemInfo<Pick>) => {
     const playable = canPlay(state, item);
-    const pos = item.pos[0];
-    const tint = positionColor[pos as keyof typeof positionColor] ?? color.text3;
+    const pos = item.pos[0] as Position;
+    const tint = positionColor[pos] ?? color.text3;
+    const rt = ratingTint(item.rtg);
     return (
       <Press
         onPress={() => onPick(item)}
         feel="none"
-        scaleTo={0.98}
+        scaleTo={0.975}
         disabled={!playable}
         style={[styles.player, !playable && styles.playerOff]}
-        accessibilityLabel={`${item.n}, rated ${item.rtg}, ${POSITION_LABEL[pos as 'GK'] ?? pos}`}
+        accessibilityLabel={`${item.n}, rated ${item.rtg}, ${POSITION_LABEL[pos] ?? pos}`}
       >
-        <View style={[styles.posBadge, { backgroundColor: tint + '28', borderColor: tint + '55' }]}>
+        <View
+          style={[
+            styles.posBadge,
+            { backgroundColor: tint + '24', borderColor: tint + '66' },
+          ]}
+        >
           <Text style={[styles.posText, { color: tint }]}>{pos}</Text>
         </View>
+
         <View style={styles.playerBody}>
           <Text style={styles.playerName} numberOfLines={1}>
             {item.n}
           </Text>
           <Text style={styles.playerMeta} numberOfLines={1}>
-            {item.nat}
-            {item.pos.length > 1 ? ' · ' + item.pos.join('/') : ''}
+            {item.nat} · {item.club} {item.season}
           </Text>
         </View>
-        <Text style={[styles.rating, playable && item.rtg >= 90 && styles.ratingGold]}>
-          {item.rtg}
-        </Text>
+
+        <View
+          style={[
+            styles.ratingBadge,
+            hideRatings
+              ? styles.ratingHidden
+              : { backgroundColor: rt + '1f', borderColor: rt + '77' },
+          ]}
+        >
+          <Text
+            style={[styles.ratingText, { color: hideRatings ? color.text3 : rt }]}
+          >
+            {hideRatings ? '?' : item.rtg}
+          </Text>
+        </View>
       </Press>
     );
   };
 
   return (
     <ModeScreen
-      overline={complete ? 'Draft complete' : `${left} to fill`}
+      overline={complete ? 'Draft complete' : `${left} left to fill`}
       title={`${state.filled} of ${state.total} picked`}
       scroll={false}
       right={
@@ -160,7 +196,7 @@ export default function DraftBoard() {
 
       {complete ? (
         <View style={styles.done}>
-          <Text style={[text.heading, styles.doneTitle]}>Your XI is ready</Text>
+          <Text style={styles.doneTitle}>Your XI is ready</Text>
           <Text style={[text.small, styles.doneMeta]}>
             Average {Math.round(avg)} · chemistry {squadChem(state.squad)}% · worth +
             {chemBonus(state.squad).toFixed(2)}
@@ -173,27 +209,54 @@ export default function DraftBoard() {
         </View>
       ) : board ? (
         <>
-          <View style={styles.boardHead}>
-            <View style={styles.boardWho}>
-              <Text style={styles.boardClub} numberOfLines={1}>
+          <View style={styles.clubCard}>
+            <View
+              style={[
+                styles.disc,
+                {
+                  backgroundColor: clubColour(club),
+                  experimental_backgroundImage: `linear-gradient(145deg, ${clubColour(club)} 0%, rgba(0,0,0,0.55) 100%)`,
+                },
+              ]}
+            >
+              <Text style={styles.discText}>{clubCode(club)}</Text>
+            </View>
+
+            <View style={styles.clubBody}>
+              <Text style={styles.pickLabel}>
+                Pick {state.filled + 1} of {state.total}
+              </Text>
+              <Text style={styles.clubName} numberOfLines={1}>
                 {club}
               </Text>
-              <Text style={styles.boardSeason}>{season}</Text>
+              <Text style={styles.clubSeason}>{season}</Text>
             </View>
+
             {rerollsLeft > 0 ? (
               <Press
                 onPress={() => {
                   if (spendReroll()) haptic('warning');
                 }}
                 feel="none"
-                scaleTo={0.94}
+                scaleTo={0.93}
                 style={styles.reroll}
               >
-                <Text style={styles.rerollText}>
-                  Reroll · {rerollsLeft}
-                </Text>
+                <Text style={styles.rerollText}>Reroll</Text>
+                <View style={styles.dots}>
+                  {Array.from({ length: state.rerollsMax }).map((_, i) => (
+                    <View
+                      key={i}
+                      style={[styles.dot, i >= rerollsLeft && styles.dotUsed]}
+                    />
+                  ))}
+                </View>
               </Press>
             ) : null}
+          </View>
+
+          <View style={styles.listHead}>
+            <Text style={styles.listTitle}>Pick a player</Text>
+            <Text style={styles.listCount}>{shown.length} in squad</Text>
           </View>
 
           <FlatList
@@ -203,6 +266,7 @@ export default function DraftBoard() {
             style={styles.list}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
+            bounces={false}
             initialNumToRender={12}
             windowSize={9}
             removeClippedSubviews
@@ -220,17 +284,17 @@ export default function DraftBoard() {
         </>
       ) : (
         <View style={styles.spinWrap}>
-          <Text style={styles.reelText} numberOfLines={1}>
+          <Text style={styles.reelLabel}>
+            {spinning ? 'Finding a club' : 'Next board'}
+          </Text>
+          <Text style={styles.reelText} numberOfLines={1} adjustsFontSizeToFit>
             {reel ?? (spinning ? '' : 'Spin for a club')}
           </Text>
-          <Button
-            label={spinning ? 'Spinning' : 'Spin'}
-            onPress={onSpin}
-            style={styles.spinBtn}
-          />
+          <Button label="Spin" onPress={onSpin} style={styles.spinBtn} />
         </View>
       )}
 
+      {/* Asked only when a player could fill more than one open slot */}
       <Modal
         visible={!!chooser}
         transparent
@@ -246,8 +310,8 @@ export default function DraftBoard() {
           <View />
         </Press>
         <View style={styles.sheet}>
-          <Text style={[text.heading, styles.sheetTitle]}>
-            Where does {chooser ? surname(chooser.player.n) : ''} play?
+          <Text style={styles.sheetTitle}>
+            Where does {chooser ? lastName(chooser.player.n) : ''} play?
           </Text>
           {chooser?.slots.map((si) => {
             const pos = run.state.squad[si].pos;
@@ -256,14 +320,19 @@ export default function DraftBoard() {
               <Press
                 key={si}
                 onPress={() => {
-                  haptic('success');
-                  pickPlayer(chooser.player, si);
+                  const c = chooser;
                   setChooser(null);
+                  sign(c.player, si);
                 }}
                 feel="none"
-                style={[styles.sheetRow, { borderColor: tint + '55' }]}
+                style={[styles.sheetRow, { borderColor: tint + '66' }]}
               >
-                <View style={[styles.posBadge, { backgroundColor: tint + '28', borderColor: tint + '55' }]}>
+                <View
+                  style={[
+                    styles.posBadge,
+                    { backgroundColor: tint + '24', borderColor: tint + '66' },
+                  ]}
+                >
                   <Text style={[styles.posText, { color: tint }]}>{pos}</Text>
                 </View>
                 <Text style={styles.sheetRowText}>{POSITION_LABEL[pos]}</Text>
@@ -278,17 +347,32 @@ export default function DraftBoard() {
           />
         </View>
       </Modal>
+
+      <PlayerCard
+        player={reveal?.player ?? null}
+        slotPos={reveal?.pos ?? null}
+        onDone={() => setReveal(null)}
+      />
     </ModeScreen>
   );
 }
 
+/** Gold for the ones worth shouting about, green for the rest. */
+function ratingTint(rtg: number): string {
+  if (rtg >= 88) return color.gold;
+  if (rtg >= 78) return color.accent;
+  return color.text2;
+}
+
 const styles = StyleSheet.create({
   avgChip: {
-    minWidth: 40,
+    minWidth: 42,
     paddingHorizontal: space.s2,
     paddingVertical: 3,
     borderRadius: radius.pill,
     backgroundColor: color.accentWeak,
+    borderWidth: 1,
+    borderColor: line.accent,
     alignItems: 'center',
   },
   avgValue: {
@@ -298,7 +382,8 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
 
-  spinWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.s5 },
+  spinWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.s3 },
+  reelLabel: { ...text.key, color: color.text3 },
   reelText: {
     fontFamily: font.displayBlack,
     fontSize: 38,
@@ -308,36 +393,69 @@ const styles = StyleSheet.create({
     minHeight: 42,
     textAlign: 'center',
   },
-  spinBtn: { alignSelf: 'stretch' },
+  spinBtn: { alignSelf: 'stretch', marginTop: space.s4 },
 
-  boardHead: {
+  clubCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     gap: space.s3,
     marginTop: space.s4,
-    marginBottom: space.s2,
-  },
-  boardWho: { flex: 1, minWidth: 0 },
-  boardClub: {
-    fontFamily: font.displayBlack,
-    fontSize: 24,
-    lineHeight: 27,
-    letterSpacing: 0.3,
-    color: color.text1,
-  },
-  boardSeason: { ...text.key, color: color.accent, marginTop: 1 },
-  reroll: {
-    paddingHorizontal: space.s4,
-    paddingVertical: space.s2 + 2,
-    borderRadius: radius.pill,
+    marginBottom: space.s3,
+    padding: space.s3,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: line.cardHot,
+    borderColor: line.card,
     backgroundColor: '#101A14',
     experimental_backgroundImage: gradient.cardLift,
     boxShadow: shadow.card,
   },
-  rerollText: { ...text.key, color: color.text2 },
+  disc: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  discText: {
+    fontFamily: font.displayBold,
+    fontSize: 14,
+    letterSpacing: 0.4,
+    color: '#FFFFFF',
+  },
+  clubBody: { flex: 1, minWidth: 0 },
+  pickLabel: { ...text.key, fontSize: 10, color: color.accent },
+  clubName: {
+    fontFamily: font.displayBlack,
+    fontSize: 23,
+    lineHeight: 26,
+    letterSpacing: 0.3,
+    color: color.text1,
+    marginTop: 1,
+  },
+  clubSeason: { fontFamily: font.bodySemi, fontSize: 12, color: color.text3 },
+  reroll: {
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: space.s3,
+    paddingVertical: space.s2,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: line.gold,
+    backgroundColor: 'rgba(214,178,94,0.10)',
+  },
+  rerollText: { ...text.key, fontSize: 10, color: color.gold },
+  dots: { flexDirection: 'row', gap: 3 },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: color.gold },
+  dotUsed: { backgroundColor: 'rgba(214,178,94,0.25)' },
+
+  listHead: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    marginBottom: space.s2,
+  },
+  listTitle: { ...text.label, color: color.accent, fontSize: 12.5 },
+  listCount: { ...text.key, fontSize: 10.5, color: color.text3 },
 
   list: { flex: 1, marginHorizontal: -space.s1 },
   listContent: { paddingBottom: space.s5 },
@@ -358,21 +476,21 @@ const styles = StyleSheet.create({
     experimental_backgroundImage: gradient.card,
     boxShadow: shadow.card,
   },
-  playerOff: { opacity: 0.34 },
+  playerOff: { opacity: 0.32 },
   posBadge: {
-    width: 34,
+    width: 40,
     height: 34,
     borderRadius: radius.xs,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  posText: { ...text.key, fontSize: 11 },
+  posText: { ...text.key, fontSize: 10.5 },
   playerBody: { flex: 1, minWidth: 0 },
   playerName: {
     fontFamily: font.bodySemi,
-    fontSize: 15,
-    lineHeight: 19,
+    fontSize: 15.5,
+    lineHeight: 20,
     color: color.text1,
   },
   playerMeta: {
@@ -381,18 +499,31 @@ const styles = StyleSheet.create({
     lineHeight: 15,
     color: color.text3,
   },
-  rating: {
-    fontFamily: font.displayBold,
-    fontSize: 22,
-    color: color.text1,
-    fontVariant: ['tabular-nums'],
-    minWidth: 30,
-    textAlign: 'right',
+  ratingBadge: {
+    minWidth: 44,
+    height: 34,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  ratingGold: { color: color.gold },
+  ratingHidden: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderColor: line.card,
+  },
+  ratingText: {
+    fontFamily: font.displayBlack,
+    fontSize: 19,
+    fontVariant: ['tabular-nums'],
+  },
 
   done: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.s2 },
-  doneTitle: { fontSize: 26, lineHeight: 30 },
+  doneTitle: {
+    fontFamily: font.displayBlack,
+    fontSize: 30,
+    lineHeight: 34,
+    color: color.text1,
+  },
   doneMeta: { textAlign: 'center' },
   doneBtn: { alignSelf: 'stretch', marginTop: space.s4 },
 
@@ -416,20 +547,22 @@ const styles = StyleSheet.create({
     paddingBottom: space.s8,
     gap: space.s2,
   },
-  sheetTitle: { marginBottom: space.s2 },
+  sheetTitle: {
+    fontFamily: font.displayBold,
+    fontSize: 21,
+    lineHeight: 24,
+    color: color.text1,
+    marginBottom: space.s2,
+  },
   sheetRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.s3,
     padding: space.s3,
-    borderRadius: radius.sm,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radius.md,
+    borderWidth: 1,
     backgroundColor: color.surface2,
   },
-  sheetRowText: {
-    fontFamily: font.bodySemi,
-    fontSize: 15,
-    color: color.text1,
-  },
+  sheetRowText: { fontFamily: font.bodySemi, fontSize: 15, color: color.text1 },
   sheetCancel: { marginTop: space.s3 },
 });

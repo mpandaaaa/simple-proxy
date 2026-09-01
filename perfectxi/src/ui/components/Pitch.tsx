@@ -1,26 +1,36 @@
 import { View, Text, StyleSheet } from 'react-native';
+import Svg, { Rect, Line, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { color, radius, space, positionColor } from '../tokens';
 import { font, text } from '../type';
-import { FORMATIONS } from '../../engine';
+import { FORMATIONS, lastName } from '../../engine';
 import type { Slot } from '../../engine';
 
+export { lastName as surname } from '../../engine';
+
 /**
- * The XI as a shape rather than as a list.
+ * The XI as a shape on an actual pitch.
  *
- * Drawn back to front the way a formation is written but rendered top to
- * bottom the way a pitch is watched, so the attack is at the top of the
- * screen. Empty slots keep their position colour at low opacity, which is
- * what makes it obvious at a glance which line still needs filling.
+ * The web build draws a real green pitch with markings and colour coded
+ * position tokens, and it is most of why its draft screen looks like a
+ * game. A grid of grey boxes on a black background does not.
+ *
+ * Markings are one SVG behind the tokens: mowing stripes, a halfway line, a
+ * centre circle and both boxes. The tokens are laid out with flexbox on
+ * top, so the shape stays correct at any width without hand placing
+ * anything.
  */
 export function Pitch({
   squad,
   formation,
   highlight,
+  preview,
 }: {
   squad: Slot[];
   formation: string;
   /** slot indexes a player being placed could go into */
   highlight?: number[];
+  /** the smaller, label only version used on the setup screen */
+  preview?: boolean;
 }) {
   const fm = FORMATIONS[formation];
   if (!fm) return null;
@@ -34,107 +44,143 @@ export function Pitch({
   }
 
   return (
-    <View style={styles.pitch}>
-      <View style={styles.halfway} />
-      {rows
-        .slice()
-        .reverse()
-        .map((indexes, r) => (
-          <View key={r} style={styles.row}>
-            {indexes.map((si) => {
-              const slot = squad[si];
-              const on = positionColor[slot.pos];
-              const filled = !!slot.player;
-              const lit = highlight?.includes(si);
-              return (
-                <View
-                  key={si}
-                  style={[
-                    styles.slot,
-                    { borderColor: filled ? on : on + '44' },
-                    filled && { backgroundColor: on + '1f' },
-                    lit && styles.lit,
-                  ]}
-                >
-                  {filled ? (
-                    <>
-                      <Text style={[styles.rating, { color: on }]}>
-                        {slot.player!.rtg}
-                      </Text>
-                      <Text style={styles.name} numberOfLines={1}>
-                        {surname(slot.player!.n)}
-                      </Text>
-                    </>
-                  ) : (
-                    <Text style={[styles.empty, { color: on + 'aa' }]}>
-                      {slot.pos}
-                    </Text>
-                  )}
-                </View>
-              );
-            })}
-          </View>
+    <View style={[styles.pitch, preview && styles.pitchPreview]}>
+      <Svg style={StyleSheet.absoluteFill} viewBox="0 0 100 118" preserveAspectRatio="none">
+        <Defs>
+          <LinearGradient id="turf" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor="#2F7A45" />
+            <Stop offset="1" stopColor="#1B5730" />
+          </LinearGradient>
+        </Defs>
+        <Rect x="0" y="0" width="100" height="118" fill="url(#turf)" />
+
+        {/* mowing stripes, the thing that stops flat green reading as felt */}
+        {[0, 2, 4, 6].map((n) => (
+          <Rect
+            key={n}
+            x="0"
+            y={n * 14.75}
+            width="100"
+            height="14.75"
+            fill="#FFFFFF"
+            opacity={0.035}
+          />
         ))}
+
+        <Rect x="2" y="2" width="96" height="114" stroke="#FFFFFF" strokeOpacity={0.3} strokeWidth={0.7} fill="none" />
+        <Line x1="2" y1="59" x2="98" y2="59" stroke="#FFFFFF" strokeOpacity={0.3} strokeWidth={0.7} />
+        <Circle cx="50" cy="59" r="13" stroke="#FFFFFF" strokeOpacity={0.3} strokeWidth={0.7} fill="none" />
+        <Circle cx="50" cy="59" r="1.1" fill="#FFFFFF" fillOpacity={0.35} />
+        {/* both penalty areas and six yard boxes */}
+        <Rect x="24" y="2" width="52" height="18" stroke="#FFFFFF" strokeOpacity={0.3} strokeWidth={0.7} fill="none" />
+        <Rect x="38" y="2" width="24" height="7" stroke="#FFFFFF" strokeOpacity={0.3} strokeWidth={0.7} fill="none" />
+        <Rect x="24" y="98" width="52" height="18" stroke="#FFFFFF" strokeOpacity={0.3} strokeWidth={0.7} fill="none" />
+        <Rect x="38" y="109" width="24" height="7" stroke="#FFFFFF" strokeOpacity={0.3} strokeWidth={0.7} fill="none" />
+      </Svg>
+
+      <View style={styles.rows}>
+        {rows
+          .slice()
+          .reverse()
+          .map((indexes, r) => (
+            <View key={r} style={styles.row}>
+              {indexes.map((si) => {
+                const slot = squad[si];
+                const tint = positionColor[slot.pos];
+                const filled = !!slot.player;
+                const lit = highlight?.includes(si);
+                return (
+                  <View
+                    key={si}
+                    style={[
+                      styles.token,
+                      preview && styles.tokenPreview,
+                      {
+                        backgroundColor: filled ? shade(tint) : 'rgba(8,20,12,0.42)',
+                        borderColor: tint,
+                        boxShadow: lit
+                          ? `0px 0px 14px ${tint}`
+                          : '0px 3px 8px rgba(0,0,0,0.40)',
+                      },
+                      lit && styles.tokenLit,
+                    ]}
+                  >
+                    {filled ? (
+                      <>
+                        <Text style={[styles.rating, { color: tint }]}>
+                          {slot.player!.rtg}
+                        </Text>
+                        <Text style={styles.name} numberOfLines={1}>
+                          {lastName(slot.player!.n)}
+                        </Text>
+                      </>
+                    ) : (
+                      <Text style={[styles.empty, { color: tint }]}>{slot.pos}</Text>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          ))}
+      </View>
     </View>
   );
 }
 
-/** Enough of a name to recognise a player in a 60 point wide box. */
-export function surname(full: string): string {
-  const parts = full.trim().split(/\s+/);
-  return parts.length > 1 ? parts[parts.length - 1] : full;
+/** A filled token sits on its own position colour, darkened to stay legible. */
+function shade(hex: string): string {
+  return hex + '2E';
 }
 
 const styles = StyleSheet.create({
   pitch: {
-    backgroundColor: color.surface1,
+    aspectRatio: 0.98,
     borderRadius: radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.border,
-    borderTopColor: color.topHighlight,
-    paddingVertical: space.s3,
-    paddingHorizontal: space.s2,
-    gap: space.s2,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: '#1F5A32',
+    boxShadow: '0px 10px 24px rgba(0,0,0,0.45)',
     overflow: 'hidden',
   },
-  halfway: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: '50%',
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: color.border,
+  pitchPreview: { aspectRatio: 1.12 },
+  rows: {
+    flex: 1,
+    justifyContent: 'space-evenly',
+    paddingVertical: space.s3,
+    paddingHorizontal: space.s2,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: space.s2,
   },
-  slot: {
+  token: {
     flex: 1,
-    maxWidth: 74,
-    minHeight: 42,
-    borderRadius: radius.xs,
-    borderWidth: 1,
+    maxWidth: 78,
+    minHeight: 46,
+    borderRadius: radius.sm,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 2,
   },
-  lit: { borderWidth: 2, backgroundColor: color.accentWeak },
+  tokenPreview: { minHeight: 34, maxWidth: 62 },
+  tokenLit: { borderWidth: 2.5 },
   rating: {
-    fontFamily: font.displayBold,
-    fontSize: 16,
-    lineHeight: 18,
+    fontFamily: font.displayBlack,
+    fontSize: 18,
+    lineHeight: 20,
     fontVariant: ['tabular-nums'],
   },
   name: {
-    fontFamily: font.bodyMed,
+    fontFamily: font.bodySemi,
     fontSize: 9.5,
     lineHeight: 12,
-    color: color.text2,
+    color: '#EAF3EC',
   },
   empty: {
     ...text.key,
     fontSize: 11,
+    letterSpacing: 1.1,
   },
 });
