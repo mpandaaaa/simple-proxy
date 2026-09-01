@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,14 @@ import {
   type ListRenderItemInfo,
 } from 'react-native';
 import { router } from 'expo-router';
-import { ModeScreen, Button, Press, Pitch, PlayerCard } from '../../src/ui/components';
+import {
+  ModeScreen,
+  Button,
+  Press,
+  Pitch,
+  PlayerCard,
+  SpinWheel,
+} from '../../src/ui/components';
 import {
   color,
   space,
@@ -21,11 +28,11 @@ import {
 import { font, text } from '../../src/ui/type';
 import { haptic, useReduceMotion } from '../../src/ui/feel';
 import {
-  AT20_CLUBS,
   POSITION_LABEL,
   canPlay,
   chemBonus,
   clubCode,
+  clubSeasons,
   clubColour,
   lastName,
   slotsForPlayer,
@@ -34,6 +41,7 @@ import {
   visibleBoard,
   type Pick,
   type Position,
+  type SpinResult,
 } from '../../src/engine';
 import { doSpin, pickPlayer, settleSpin, spendReroll, useRun } from '../../src/game/run';
 
@@ -42,16 +50,17 @@ const ROW_HEIGHT = 66;
 export default function DraftBoard() {
   const run = useRun();
   const reduceMotion = useReduceMotion();
-  const [reel, setReel] = useState<string | null>(null);
+  const [pending, setPending] = useState<SpinResult | null>(null);
   const [chooser, setChooser] = useState<{ player: Pick; slots: number[] } | null>(null);
   const [reveal, setReveal] = useState<{ player: Pick; pos: Position } | null>(null);
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => {
-    return () => {
-      if (timer.current) clearInterval(timer.current);
-    };
-  }, []);
+  // Scenery for the reel: every club-season in the era being drafted, so the
+  // strips flying past are real sides rather than invented ones.
+  const era = run?.state.config;
+  const pool = useMemo(
+    () => (era ? clubSeasons(era.eraFrom, era.eraTo) : []),
+    [era?.eraFrom, era?.eraTo],
+  );
 
   // A run only exists while the draft is in flight. Coming back here without
   // one means the stack was restored from a cold start, so go back rather
@@ -60,31 +69,21 @@ export default function DraftBoard() {
     if (!run) router.replace('/draft');
   }, [run]);
 
+  // The club is decided before the reel draws a single frame. The spin is
+  // how it is shown, never how it is chosen.
   const onSpin = useCallback(() => {
     const result = doSpin();
     if (!result) return;
     haptic('medium');
+    setPending(result);
+  }, []);
 
-    if (reduceMotion) {
-      settleSpin(result);
-      return;
-    }
-
-    // A short reel of club names. It is only there to make the landing feel
-    // earned; the club was already decided before the first frame.
-    let ticks = 0;
-    timer.current = setInterval(() => {
-      ticks++;
-      setReel(AT20_CLUBS[Math.floor(Math.random() * AT20_CLUBS.length)]);
-      if (ticks >= 11) {
-        if (timer.current) clearInterval(timer.current);
-        timer.current = null;
-        setReel(null);
-        settleSpin(result);
-        haptic('success');
-      }
-    }, 55);
-  }, [reduceMotion]);
+  const onSettled = useCallback(() => {
+    setPending((p) => {
+      if (p) settleSpin(p);
+      return null;
+    });
+  }, []);
 
   /** Place the player, then give the pick the reveal it has earned. */
   const sign = useCallback(
@@ -117,13 +116,16 @@ export default function DraftBoard() {
 
   if (!run) return null;
 
-  const { state, board, club, season, spinning } = run;
+  const { state, board, club, season } = run;
   const left = state.total - state.filled;
   const complete = state.filled === state.total;
   const avg = squadAvg(state.squad);
   const shown = board ? visibleBoard(board, state.config.blitz) : [];
   const rerollsLeft = state.rerollsMax - state.rerolls;
   const hideRatings = state.config.diff === 'hard';
+  const boardAvg = shown.length
+    ? Math.round(shown.reduce((n, p) => n + p.rtg, 0) / shown.length)
+    : 0;
 
   const renderRow = ({ item }: ListRenderItemInfo<Pick>) => {
     const playable = canPlay(state, item);
@@ -192,6 +194,7 @@ export default function DraftBoard() {
         squad={state.squad}
         formation={state.config.formation}
         highlight={chooser?.slots}
+        compact={!complete}
       />
 
       {complete ? (
@@ -229,7 +232,10 @@ export default function DraftBoard() {
               <Text style={styles.clubName} numberOfLines={1}>
                 {club}
               </Text>
-              <Text style={styles.clubSeason}>{season}</Text>
+              <Text style={styles.clubSeason}>
+                {season}
+                {boardAvg ? `  ·  squad average ${boardAvg}` : ''}
+              </Text>
             </View>
 
             {rerollsLeft > 0 ? (
@@ -283,15 +289,25 @@ export default function DraftBoard() {
           />
         </>
       ) : (
-        <View style={styles.spinWrap}>
-          <Text style={styles.reelLabel}>
-            {spinning ? 'Finding a club' : 'Next board'}
-          </Text>
-          <Text style={styles.reelText} numberOfLines={1} adjustsFontSizeToFit>
-            {reel ?? (spinning ? '' : 'Spin for a club')}
-          </Text>
-          <Button label="Spin" onPress={onSpin} style={styles.spinBtn} />
-        </View>
+        <>
+          <View style={styles.stage}>
+            <Text style={styles.stageLabel}>
+              {pending ? 'Finding a club' : `Pick ${state.filled + 1} of ${state.total}`}
+            </Text>
+            <SpinWheel
+              target={
+                pending ? { club: pending.club, season: pending.season } : null
+              }
+              pool={pool}
+              onSettled={onSettled}
+            />
+          </View>
+          <Button
+            label={pending ? 'Spinning' : 'Spin'}
+            onPress={onSpin}
+            style={styles.spinBtn}
+          />
+        </>
       )}
 
       {/* Asked only when a player could fill more than one open slot */}
@@ -382,18 +398,16 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
 
-  spinWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.s3 },
-  reelLabel: { ...text.key, color: color.text3 },
-  reelText: {
-    fontFamily: font.displayBlack,
-    fontSize: 38,
-    lineHeight: 42,
-    letterSpacing: 0.4,
-    color: color.text1,
-    minHeight: 42,
-    textAlign: 'center',
+  // The wheel owns the middle of the screen. The pitch sits above it as a
+  // readout and the action is pinned below, so there is no dead band.
+  stage: {
+    flex: 1,
+    justifyContent: 'center',
+    gap: space.s3,
+    paddingVertical: space.s4,
   },
-  spinBtn: { alignSelf: 'stretch', marginTop: space.s4 },
+  stageLabel: { ...text.key, color: color.text3, textAlign: 'center' },
+  spinBtn: { alignSelf: 'stretch', marginBottom: space.s4 },
 
   clubCard: {
     flexDirection: 'row',

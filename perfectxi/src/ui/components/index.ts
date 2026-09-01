@@ -18,3 +18,4 @@ export { Rise } from './Rise';
 export { OptionGroup } from './OptionGroup';
 export type { GroupOption, OptionTone } from './OptionGroup';
 export { PlayerCard } from './PlayerCard';
+export { SpinWheel, spinFacts } from './SpinWheel';

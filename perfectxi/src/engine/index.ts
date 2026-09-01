@@ -26,6 +26,7 @@ export {
   ALL_KEYS,
   AT20_CLUBS,
   seasonStr,
+  clubSeasons,
   newDraft,
   rerollsFor,
   spin,

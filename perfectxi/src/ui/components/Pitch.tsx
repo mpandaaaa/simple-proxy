@@ -24,6 +24,7 @@ export function Pitch({
   formation,
   highlight,
   preview,
+  compact,
 }: {
   squad: Slot[];
   formation: string;
@@ -31,6 +32,9 @@ export function Pitch({
   highlight?: number[];
   /** the smaller, label only version used on the setup screen */
   preview?: boolean;
+  /** shorter still, for when the pitch is a progress readout beside the
+   *  thing you are actually doing */
+  compact?: boolean;
 }) {
   const fm = FORMATIONS[formation];
   if (!fm) return null;
@@ -44,7 +48,7 @@ export function Pitch({
   }
 
   return (
-    <View style={[styles.pitch, preview && styles.pitchPreview]}>
+    <View style={[styles.pitch, preview && styles.pitchPreview, compact && styles.pitchCompact]}>
       <Svg style={StyleSheet.absoluteFill} viewBox="0 0 100 118" preserveAspectRatio="none">
         <Defs>
           <LinearGradient id="turf" x1="0" y1="0" x2="0" y2="1">
@@ -95,6 +99,7 @@ export function Pitch({
                     style={[
                       styles.token,
                       preview && styles.tokenPreview,
+                      compact && styles.tokenCompact,
                       {
                         backgroundColor: filled ? shade(tint) : 'rgba(8,20,12,0.42)',
                         borderColor: tint,
@@ -143,6 +148,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   pitchPreview: { aspectRatio: 1.12 },
+  pitchCompact: { aspectRatio: 1.5 },
   rows: {
     flex: 1,
     justifyContent: 'space-evenly',
@@ -165,6 +171,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   tokenPreview: { minHeight: 34, maxWidth: 62 },
+  tokenCompact: { minHeight: 36, maxWidth: 66 },
   tokenLit: { borderWidth: 2.5 },
   rating: {
     fontFamily: font.displayBlack,

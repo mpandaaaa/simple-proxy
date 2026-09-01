@@ -28,6 +28,31 @@ export function seasonStr(year: number): string {
   return year + '/' + (year + 1).toString().slice(2);
 }
 
+const seasonListCache = new Map<string, { club: string; season: string }[]>();
+
+/**
+ * Every club-season in an era, as scenery for the spin reel.
+ *
+ * Cached per era: the reel asks for this on every spin and there is no
+ * reason to walk 712 keys each time.
+ */
+export function clubSeasons(from: number, to: number): { club: string; season: string }[] {
+  const key = from + ':' + to;
+  const hit = seasonListCache.get(key);
+  if (hit) return hit;
+
+  const out: { club: string; season: string }[] = [];
+  for (const k of ALL_KEYS) {
+    const bar = k.indexOf('|');
+    const year = Number(k.slice(bar + 1));
+    if (year >= from && year <= to) {
+      out.push({ club: k.slice(0, bar), season: seasonStr(year) });
+    }
+  }
+  seasonListCache.set(key, out);
+  return out;
+}
+
 export type DraftState = {
   config: DraftConfig;
   squad: Slot[];
