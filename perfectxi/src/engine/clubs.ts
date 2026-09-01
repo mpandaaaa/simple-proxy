@@ -95,3 +95,25 @@ export function faceStats(rating: number, isGK: boolean): [string, number][] {
     : [['PAC', cl(rating + 2)], ['SHO', cl(rating - 1)], ['PAS', cl(rating + 1)],
        ['DRI', cl(rating)], ['DEF', cl(rating - 3)], ['PHY', cl(rating + 2)]];
 }
+
+export type Era = {
+  key: 'nineties' | 'y2k' | 'tens' | 'modern';
+  label: string;
+  tint: string;
+};
+
+/**
+ * Which era a club-season belongs to, and the colour that era wears.
+ *
+ * Landing on Blackburn 1994/95 should not look identical to landing on
+ * Man City 2022/23. The era gives the moment a period, which is most of
+ * what makes a spin feel like it went somewhere.
+ */
+export function eraOf(season: string): Era {
+  const year = parseInt(season.slice(0, 4), 10);
+  if (!Number.isFinite(year)) return { key: 'modern', label: 'All eras', tint: '#1FC57E' };
+  if (year <= 1999) return { key: 'nineties', label: 'The nineties', tint: '#E0A868' };
+  if (year <= 2009) return { key: 'y2k', label: 'The 2000s', tint: '#8FB3D9' };
+  if (year <= 2019) return { key: 'tens', label: 'The 2010s', tint: '#B98CF2' };
+  return { key: 'modern', label: 'Modern era', tint: '#1FC57E' };
+}

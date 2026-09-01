@@ -15,6 +15,7 @@ import {
   Pitch,
   PlayerCard,
   SpinWheel,
+  ClubDisc,
 } from '../../src/ui/components';
 import {
   color,
@@ -31,9 +32,8 @@ import {
   POSITION_LABEL,
   canPlay,
   chemBonus,
-  clubCode,
   clubSeasons,
-  clubColour,
+  eraOf,
   lastName,
   slotsForPlayer,
   squadAvg,
@@ -56,10 +56,10 @@ export default function DraftBoard() {
 
   // Scenery for the reel: every club-season in the era being drafted, so the
   // strips flying past are real sides rather than invented ones.
-  const era = run?.state.config;
+  const cfg = run?.state.config;
   const pool = useMemo(
-    () => (era ? clubSeasons(era.eraFrom, era.eraTo) : []),
-    [era?.eraFrom, era?.eraTo],
+    () => (cfg ? clubSeasons(cfg.eraFrom, cfg.eraTo) : []),
+    [cfg?.eraFrom, cfg?.eraTo],
   );
 
   // A run only exists while the draft is in flight. Coming back here without
@@ -126,6 +126,7 @@ export default function DraftBoard() {
   const boardAvg = shown.length
     ? Math.round(shown.reduce((n, p) => n + p.rtg, 0) / shown.length)
     : 0;
+  const era = eraOf(season ?? '');
 
   const renderRow = ({ item }: ListRenderItemInfo<Pick>) => {
     const playable = canPlay(state, item);
@@ -212,24 +213,39 @@ export default function DraftBoard() {
         </View>
       ) : board ? (
         <>
-          <View style={styles.clubCard}>
+          <View
+            style={[
+              styles.clubCard,
+              { borderColor: hexA(era.tint, 0.4) },
+            ]}
+          >
             <View
               style={[
-                styles.disc,
+                styles.clubGlow,
                 {
-                  backgroundColor: clubColour(club),
-                  experimental_backgroundImage: `linear-gradient(145deg, ${clubColour(club)} 0%, rgba(0,0,0,0.55) 100%)`,
+                  experimental_backgroundImage: `linear-gradient(135deg, ${hexA(era.tint, 0.16)} 0%, rgba(0,0,0,0) 62%)`,
                 },
               ]}
-            >
-              <Text style={styles.discText}>{clubCode(club)}</Text>
-            </View>
+              pointerEvents="none"
+            />
+
+            <ClubDisc club={club} size={54} />
 
             <View style={styles.clubBody}>
-              <Text style={styles.pickLabel}>
-                Pick {state.filled + 1} of {state.total}
-              </Text>
-              <Text style={styles.clubName} numberOfLines={1}>
+              <View style={styles.clubTop}>
+                <Text style={[styles.pickLabel, { color: era.tint }]}>
+                  Pick {state.filled + 1} of {state.total}
+                </Text>
+                <View
+                  style={[
+                    styles.eraPill,
+                    { borderColor: hexA(era.tint, 0.45), backgroundColor: hexA(era.tint, 0.12) },
+                  ]}
+                >
+                  <Text style={[styles.eraText, { color: era.tint }]}>{era.label}</Text>
+                </View>
+              </View>
+              <Text style={styles.clubName} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                 {club}
               </Text>
               <Text style={styles.clubSeason}>
@@ -300,6 +316,7 @@ export default function DraftBoard() {
               }
               pool={pool}
               onSettled={onSettled}
+              hint={`${pool.length} club-seasons in the wheel`}
             />
           </View>
           <Button
@@ -373,6 +390,12 @@ export default function DraftBoard() {
   );
 }
 
+/** #RRGGBB plus an alpha, for tints that follow the era colour. */
+function hexA(hex: string, a: number): string {
+  const h = hex.replace('#', '');
+  return `rgba(${parseInt(h.slice(0, 2), 16)},${parseInt(h.slice(2, 4), 16)},${parseInt(h.slice(4, 6), 16)},${a})`;
+}
+
 /** Gold for the ones worth shouting about, green for the rest. */
 function ratingTint(rtg: number): string {
   if (rtg >= 88) return color.gold;
@@ -412,41 +435,47 @@ const styles = StyleSheet.create({
   clubCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: space.s3,
+    gap: space.s4,
     marginTop: space.s4,
     marginBottom: space.s3,
-    padding: space.s3,
-    borderRadius: radius.md,
+    padding: space.s4,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: line.card,
     backgroundColor: '#101A14',
     experimental_backgroundImage: gradient.cardLift,
-    boxShadow: shadow.card,
+    boxShadow: shadow.lift,
+    overflow: 'hidden',
   },
-  disc: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  discText: {
-    fontFamily: font.displayBold,
-    fontSize: 14,
-    letterSpacing: 0.4,
-    color: '#FFFFFF',
-  },
+  clubGlow: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   clubBody: { flex: 1, minWidth: 0 },
-  pickLabel: { ...text.key, fontSize: 10, color: color.accent },
+  clubTop: { flexDirection: 'row', alignItems: 'center', gap: space.s2 },
+  pickLabel: { ...text.key, fontSize: 10 },
+  eraPill: {
+    paddingHorizontal: space.s2,
+    paddingVertical: 1,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+  },
+  eraText: {
+    fontFamily: font.displaySemi,
+    fontSize: 9,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+  },
   clubName: {
     fontFamily: font.displayBlack,
-    fontSize: 23,
-    lineHeight: 26,
+    fontSize: 28,
+    lineHeight: 31,
     letterSpacing: 0.3,
     color: color.text1,
+    marginTop: 2,
+  },
+  clubSeason: {
+    fontFamily: font.bodySemi,
+    fontSize: 12,
+    color: color.text3,
     marginTop: 1,
   },
-  clubSeason: { fontFamily: font.bodySemi, fontSize: 12, color: color.text3 },
   reroll: {
     alignItems: 'center',
     gap: 5,

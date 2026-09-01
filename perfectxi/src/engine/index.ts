@@ -8,8 +8,9 @@ export {
   tierFor,
   tierLabel,
   faceStats,
+  eraOf,
 } from './clubs';
-export type { CardTier } from './clubs';
+export type { CardTier, Era } from './clubs';
 export { mulberry32, systemRng, shuffle } from './rng';
 export type { Rng } from './rng';
 export * from './types';

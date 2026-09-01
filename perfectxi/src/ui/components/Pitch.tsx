@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   pitchPreview: { aspectRatio: 1.12 },
-  pitchCompact: { aspectRatio: 1.5 },
+  pitchCompact: { aspectRatio: 1.72 },
   rows: {
     flex: 1,
     justifyContent: 'space-evenly',
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   tokenPreview: { minHeight: 34, maxWidth: 62 },
-  tokenCompact: { minHeight: 36, maxWidth: 66 },
+  tokenCompact: { minHeight: 32, maxWidth: 64 },
   tokenLit: { borderWidth: 2.5 },
   rating: {
     fontFamily: font.displayBlack,
