@@ -105,6 +105,20 @@ export function tickSchedule(allTime = false): Tick[] {
   return out;
 }
 
+/**
+ * Which card boundaries earn a tick, as a lookup by index.
+ *
+ * The reel fires its haptics off real position rather than a stopwatch, so
+ * what it needs at run time is not *when* a tick happens but *whether*
+ * this boundary is one of the ones the thinning kept. The timing above is
+ * only used to decide that, and to print the schedule.
+ */
+export function tickIndices(allTime = false): boolean[] {
+  const keep = new Array<boolean>(WHEEL.TRAVEL + 1).fill(false);
+  for (const t of tickSchedule(allTime)) keep[t.index] = true;
+  return keep;
+}
+
 /** When the winner reaches the centre line. */
 export function landingAt(allTime = false): number {
   return Math.round(
