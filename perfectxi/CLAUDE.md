@@ -27,6 +27,10 @@ new phase.
 
 ## Hard constraints
 
+- **No social studio.** The web build has a "Make social posts from this XI"
+  feature. It is not coming to the app. Do not build it, do not link to it,
+  do not leave a button for it anywhere.
+
 - **Never use a WebView.** Apple guideline 4.2 rejects repackaged websites.
   Every screen is rebuilt natively. This is not negotiable.
 - **Never change the tuned maths.** The Dixon-Coles constants, the Dynasty

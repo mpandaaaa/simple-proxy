@@ -172,6 +172,27 @@ export function calcOdds(avg: number, chem: number): Odds {
   };
 }
 
+/**
+ * How many of the nineteen clubs your XI is stronger than.
+ *
+ * The projection says where you should finish; this says who you are better
+ * than, which is the same fact told in the way a football fan asks it.
+ */
+export function strongerThan(avg: number, chem: number): number {
+  const str = strFromAvg(avg + chem);
+  return SIM_LEAGUE.filter((t) => t.str < str).length;
+}
+
+/** The headline a projected finish deserves. */
+export function verdictFor(projFinish: number): string {
+  if (projFinish === 1) return 'Title favourites';
+  if (projFinish <= 4) return 'Champions League push';
+  if (projFinish <= 7) return 'European contenders';
+  if (projFinish <= 14) return 'Mid-table';
+  if (projFinish <= 17) return 'A survival fight';
+  return 'Relegation favourites';
+}
+
 export type Outcome = 'win' | 'draw' | 'loss';
 
 export type Scorer = { name: string; min: number };

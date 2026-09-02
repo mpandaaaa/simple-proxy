@@ -38,8 +38,9 @@ export {
   squadAvg,
   squadChem,
   chemBonus,
+  chemistryLinks,
 } from './draft';
-export type { DraftState, SpinResult } from './draft';
+export type { DraftState, SpinResult, ChemLink } from './draft';
 export {
   SIM_LEAGUE,
   strFromAvg,
@@ -48,6 +49,8 @@ export {
   simulateSeason,
   calcOdds,
   ordinal,
+  strongerThan,
+  verdictFor,
 } from './sim';
 export type {
   Odds,

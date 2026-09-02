@@ -16,6 +16,7 @@ import {
   Ticker,
   Rise,
   ClubDisc,
+  Pitch,
 } from '../../src/ui/components';
 import { color, space, radius, line, gradient, positionColor } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
@@ -24,9 +25,13 @@ import { useReduceMotion } from '../../src/ui/feel';
 import {
   calcOdds,
   chemBonus,
+  chemistryLinks,
+  eraOf,
   ordinal,
   squadAvg,
   squadChem,
+  strongerThan,
+  verdictFor,
   type Position,
   type Slot,
 } from '../../src/engine';
@@ -46,18 +51,28 @@ const OUTLOOK = [
   { key: 'rel', label: 'Relegation', tint: color.danger },
 ] as const;
 
+const ERAS = [
+  { key: 'nineties', label: '90s', tint: '#E0A868' },
+  { key: 'y2k', label: '00s', tint: '#8FB3D9' },
+  { key: 'tens', label: '10s', tint: '#B98CF2' },
+  { key: 'modern', label: '20s', tint: '#1FC57E' },
+] as const;
+
 /**
  * The payoff for the draft.
  *
- * Same anatomy as the site: the hero with your overall, the three
- * predictions, the star man, the season outlook, then the XI written out by
- * line. The odds are the site's own curves, tuned against the same strength
- * scale the match engine uses, so the projection and the season it is
- * projecting agree with each other.
+ * The site's anatomy is all here: the overall, the three predictions, the
+ * star man, the season outlook, the XI by line. What it adds is the things
+ * the site had the data for and never said.
  *
- * It is a screen of its own rather than a state of the draft board, which
- * is how the site has it, and it means arriving here is a real transition
- * rather than the pitch quietly turning into something else.
+ * The XI is shown as the shape you actually built, not only as a list. The
+ * overall gets a verdict, so 89 means "title favourites" rather than being
+ * a number you have to interpret. Chemistry is broken into the clubs and
+ * seasons it came from, which turns it from a score you are handed into
+ * something you can draft towards. The eras are counted, because a side
+ * pulled from four decades is a different achievement to one from four
+ * seasons. And the strength is put against the nineteen clubs you will
+ * actually face, which is the way a football fan asks the question.
  */
 export default function SquadComplete() {
   const run = useRun();
@@ -75,12 +90,23 @@ export default function SquadComplete() {
   const odds = calcOdds(avg, bonus);
   const overall = Math.round(avg);
   const hideRatings = config.diff === 'hard';
+  const links = chemistryLinks(squad);
+  const beats = strongerThan(avg, bonus);
 
-  // The best player in the side, and the slot he is standing in.
+  // The best and the worst of it. One is a boast, the other is the thing
+  // you will blame in April.
   let star: Slot | null = null;
+  let weak: Slot | null = null;
   for (const s of squad) {
-    if (s.player && (!star || s.player.rtg > star.player!.rtg)) star = s;
+    if (!s.player) continue;
+    if (!star || s.player.rtg > star.player!.rtg) star = s;
+    if (!weak || s.player.rtg < weak.player!.rtg) weak = s;
   }
+
+  const eras = ERAS.map((e) => ({
+    ...e,
+    n: squad.filter((s) => s.player && eraOf(s.player.season).key === e.key).length,
+  })).filter((e) => e.n > 0);
 
   return (
     <ModeScreen
@@ -93,43 +119,123 @@ export default function SquadComplete() {
       }
     >
       <Rise delay={0}>
-        <Hero overall={overall} chem={chem} bonus={bonus} />
+        <Hero
+          overall={overall}
+          verdict={verdictFor(odds.projFinish)}
+          beats={beats}
+        />
       </Rise>
 
       <Rise delay={1}>
         <View style={styles.chips}>
           <Chip value={ordinal(odds.projFinish)} label="Proj finish" />
-          <Chip value={String(odds.expPts)} label="Exp points" numeric />
+          <Chip value={odds.expPts} label="Exp points" numeric />
           <Chip value={`${odds.winPct}%`} label="Title odds" tint={color.gold} />
         </View>
       </Rise>
 
-      {star?.player ? (
-        <Rise delay={2}>
-          <StarMan slot={star} hideRatings={hideRatings} />
+      {/* The shape you built, not just the names in it. */}
+      <Rise delay={2}>
+        <View style={styles.pitchWrap}>
+          <Pitch squad={squad} formation={config.formation} />
+        </View>
+      </Rise>
+
+      <Rise delay={3}>
+        <View style={styles.pair}>
+          {star?.player ? (
+            <Marker slot={star} kind="star" hideRatings={hideRatings} />
+          ) : null}
+          {weak?.player && weak !== star ? (
+            <Marker slot={weak} kind="weak" hideRatings={hideRatings} />
+          ) : null}
+        </View>
+      </Rise>
+
+      <Rise delay={4}>
+        <Text style={styles.sectionTitle}>Chemistry</Text>
+        <View style={styles.panel}>
+          <View style={styles.chemHead}>
+            <Ticker value={chem} style={styles.chemValue} />
+            <Text style={styles.chemPct}>%</Text>
+            <Text style={styles.chemWorth}>
+              {bonus > 0
+                ? `worth +${bonus.toFixed(2)} to your rating`
+                : 'no shared clubs or seasons'}
+            </Text>
+          </View>
+
+          {links.clubs.length || links.seasons.length ? (
+            <View style={styles.chemLinks}>
+              {links.clubs.slice(0, 3).map((l) => (
+                <View key={`c${l.name}`} style={styles.chemChip}>
+                  <Text style={styles.chemChipN}>{l.count}</Text>
+                  <Text style={styles.chemChipL} numberOfLines={1}>
+                    {l.name}
+                  </Text>
+                </View>
+              ))}
+              {links.seasons.slice(0, 2).map((l) => (
+                <View key={`s${l.name}`} style={[styles.chemChip, styles.chemChipSeason]}>
+                  <Text style={styles.chemChipN}>{l.count}</Text>
+                  <Text style={styles.chemChipL} numberOfLines={1}>
+                    {l.name}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.chemNone}>
+              Eleven strangers. Draft from one club or one season and they will
+              play like they know each other.
+            </Text>
+          )}
+        </View>
+      </Rise>
+
+      {eras.length ? (
+        <Rise delay={5}>
+          <Text style={styles.sectionTitle}>Eras</Text>
+          <View style={styles.panel}>
+            <View style={styles.eraBar}>
+              {eras.map((e) => (
+                <View
+                  key={e.key}
+                  style={[
+                    styles.eraSeg,
+                    { flex: e.n, backgroundColor: e.tint },
+                  ]}
+                />
+              ))}
+            </View>
+            <View style={styles.eraKeys}>
+              {eras.map((e) => (
+                <View key={e.key} style={styles.eraKey}>
+                  <View style={[styles.eraDot, { backgroundColor: e.tint }]} />
+                  <Text style={styles.eraKeyText}>
+                    {e.n} from the {e.label}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
         </Rise>
       ) : null}
 
-      <Rise delay={3}>
+      <Rise delay={6}>
         <Text style={styles.sectionTitle}>Season outlook</Text>
-        <View style={styles.outlook}>
+        <View style={styles.panel}>
           {OUTLOOK.map((o, i) => (
-            <OddsRow
-              key={o.key}
-              label={o.label}
-              pct={odds[o.key]}
-              tint={o.tint}
-              delay={i}
-            />
+            <OddsRow key={o.key} label={o.label} pct={odds[o.key]} tint={o.tint} delay={i} />
           ))}
-          <Text style={styles.outlookNote}>
+          <Text style={styles.note}>
             What an overall of {overall} should produce. Simulate to see if you
             beat it.
           </Text>
         </View>
       </Rise>
 
-      <Rise delay={4}>
+      <Rise delay={7}>
         {LINES.map((ln) => {
           const members = squad.filter((s) => s.player && s.pos === ln.key);
           if (!members.length) return null;
@@ -153,7 +259,7 @@ export default function SquadComplete() {
         })}
       </Rise>
 
-      <Rise delay={5}>
+      <Rise delay={8}>
         <Button
           label="Simulate the season"
           style={styles.cta}
@@ -165,53 +271,46 @@ export default function SquadComplete() {
 }
 
 /**
- * The overall, made the largest thing on the screen.
+ * The overall, made the largest thing on the screen, and told what it means.
  *
- * Everything about the draft resolves to this one number, so it gets the
- * hero face at seventy two points, a gold bloom behind it, and nothing
- * else competing for the middle of the card.
+ * The bloom behind the number is a drawn radial rather than a text shadow.
+ * A shadow at that radius renders as a lit rectangle around the glyphs,
+ * which is what was putting a faint box behind the 89.
  */
 function Hero({
   overall,
-  chem,
-  bonus,
+  verdict,
+  beats,
 }: {
   overall: number;
-  chem: number;
-  bonus: number;
+  verdict: string;
+  beats: number;
 }) {
   const reduce = useReduceMotion();
   const pop = useSharedValue(reduce ? 1 : 0);
 
   useEffect(() => {
     if (reduce) return;
-    pop.value = withDelay(
-      120,
-      withSpring(1, { stiffness: 170, damping: 13, mass: 1 }),
-    );
+    pop.value = withDelay(120, withSpring(1, { stiffness: 170, damping: 13, mass: 1 }));
   }, [pop, reduce]);
 
   const ratingStyle = useAnimatedStyle(() => ({
     opacity: pop.value,
     transform: [{ scale: 0.7 + pop.value * 0.3 }],
   }));
+  const bloomStyle = useAnimatedStyle(() => ({ opacity: pop.value }));
 
   return (
     <View style={styles.hero}>
       <View style={styles.heroOrbs} pointerEvents="none">
         <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
           <Defs>
-            <RadialGradient id="scGold" cx="50%" cy="50%" r="50%">
-              <Stop offset="0" stopColor={color.gold} stopOpacity={0.3} />
-              <Stop offset="1" stopColor={color.gold} stopOpacity={0} />
-            </RadialGradient>
             <RadialGradient id="scGreen" cx="50%" cy="50%" r="50%">
-              <Stop offset="0" stopColor={color.accent} stopOpacity={0.16} />
+              <Stop offset="0" stopColor={color.accent} stopOpacity={0.14} />
               <Stop offset="1" stopColor={color.accent} stopOpacity={0} />
             </RadialGradient>
           </Defs>
-          <Ellipse cx="50" cy="46" rx="46" ry="40" fill="url(#scGold)" />
-          <Ellipse cx="12" cy="94" rx="44" ry="36" fill="url(#scGreen)" />
+          <Ellipse cx="12" cy="96" rx="46" ry="38" fill="url(#scGreen)" />
         </Svg>
       </View>
       <View style={styles.grain} pointerEvents="none">
@@ -223,17 +322,29 @@ function Hero({
         <Text style={styles.heroBadgeText}>Squad assembled</Text>
       </View>
 
-      <Animated.View style={[styles.heroRating, ratingStyle]}>
-        <Ticker value={overall} style={styles.heroValue} duration={900} />
-      </Animated.View>
-      <Text style={styles.heroLabel}>Overall</Text>
-
-      <View style={styles.heroChem}>
-        <Text style={styles.heroChemText}>
-          Chemistry {chem}%
-          {bonus > 0 ? `  ·  worth +${bonus.toFixed(2)} to your rating` : ''}
-        </Text>
+      <View style={styles.heroNumber}>
+        <Animated.View style={[styles.heroBloom, bloomStyle]} pointerEvents="none">
+          <Svg width="100%" height="100%" viewBox="0 0 100 100">
+            <Defs>
+              <RadialGradient id="scGold" cx="50%" cy="50%" r="50%">
+                <Stop offset="0" stopColor={color.gold} stopOpacity={0.42} />
+                <Stop offset="0.55" stopColor={color.gold} stopOpacity={0.1} />
+                <Stop offset="1" stopColor={color.gold} stopOpacity={0} />
+              </RadialGradient>
+            </Defs>
+            <Ellipse cx="50" cy="50" rx="50" ry="50" fill="url(#scGold)" />
+          </Svg>
+        </Animated.View>
+        <Animated.View style={ratingStyle}>
+          <Ticker value={overall} style={styles.heroValue} duration={900} />
+        </Animated.View>
       </View>
+
+      <Text style={styles.heroLabel}>Overall</Text>
+      <Text style={styles.heroVerdict}>{verdict}</Text>
+      <Text style={styles.heroBeats}>
+        Stronger than {beats} of the 19 clubs you will face
+      </Text>
     </View>
   );
 }
@@ -244,7 +355,7 @@ function Chip({
   tint,
   numeric,
 }: {
-  value: string;
+  value: string | number;
   label: string;
   tint?: string;
   numeric?: boolean;
@@ -254,10 +365,7 @@ function Chip({
       {numeric ? (
         <Ticker value={Number(value)} style={[styles.chipValue, tint ? { color: tint } : null]} />
       ) : (
-        <Text
-          style={[styles.chipValue, tint ? { color: tint } : null]}
-          allowFontScaling={false}
-        >
+        <Text style={[styles.chipValue, tint ? { color: tint } : null]} allowFontScaling={false}>
           {value}
         </Text>
       )}
@@ -266,32 +374,39 @@ function Chip({
   );
 }
 
-function StarMan({ slot, hideRatings }: { slot: Slot; hideRatings: boolean }) {
+/** The best player in the side, and the one you will worry about. */
+function Marker({
+  slot,
+  kind,
+  hideRatings,
+}: {
+  slot: Slot;
+  kind: 'star' | 'weak';
+  hideRatings: boolean;
+}) {
   const p = slot.player!;
   const tint = positionColor[slot.pos];
+  const accent = kind === 'star' ? color.gold : color.text3;
   return (
-    <View style={styles.star}>
-      <View
-        style={[styles.starWash, {
-          experimental_backgroundImage: `linear-gradient(120deg, rgba(214,178,94,0.20) 0%, rgba(0,0,0,0) 62%)`,
-        }]}
-        pointerEvents="none"
-      />
-      <ClubDisc club={p.club} size={48} square />
-      <View style={styles.starBody}>
-        <Text style={styles.starLabel}>Star man</Text>
-        <Text style={styles.starName} numberOfLines={1}>
-          {p.n}
-        </Text>
-        <Text style={styles.starSub} numberOfLines={1}>
-          {p.club}  ·  {p.season}
+    <View style={[styles.marker, kind === 'star' && styles.markerStar]}>
+      <View style={styles.markerTop}>
+        <ClubDisc club={p.club} size={34} square />
+        <Text style={[styles.markerLabel, { color: accent }]}>
+          {kind === 'star' ? 'Star man' : 'Weak link'}
         </Text>
       </View>
-      <View style={[styles.starRating, { borderColor: tint + '77', backgroundColor: tint + '1f' }]}>
-        <Text style={[styles.starRatingText, { color: hideRatings ? color.text3 : tint }]}>
-          {hideRatings ? '?' : p.rtg}
-        </Text>
-      </View>
+      <Text style={styles.markerName} numberOfLines={1}>
+        {p.n}
+      </Text>
+      <Text style={styles.markerSub} numberOfLines={1}>
+        {p.club} · {p.season}
+      </Text>
+      <Text
+        style={[styles.markerRating, { color: hideRatings ? color.text3 : tint }]}
+        allowFontScaling={false}
+      >
+        {hideRatings ? '?' : p.rtg}
+      </Text>
     </View>
   );
 }
@@ -320,9 +435,7 @@ function OddsRow({
     );
   }, [pct, fill, delay, reduce]);
 
-  const barStyle = useAnimatedStyle(() => ({
-    transform: [{ scaleX: fill.value }],
-  }));
+  const barStyle = useAnimatedStyle(() => ({ transform: [{ scaleX: fill.value }] }));
 
   return (
     <View style={styles.oddsRow}>
@@ -376,6 +489,14 @@ function PlayerLine({
   );
 }
 
+const PANEL = {
+  borderRadius: radius.lg,
+  borderWidth: 1,
+  borderColor: line.card,
+  backgroundColor: '#101A14',
+  experimental_backgroundImage: gradient.card,
+} as const;
+
 const styles = StyleSheet.create({
   fmPill: {
     paddingHorizontal: space.s3,
@@ -385,16 +506,11 @@ const styles = StyleSheet.create({
     borderColor: line.card,
     backgroundColor: 'rgba(255,255,255,0.04)',
   },
-  fmText: {
-    ...text.key,
-    fontSize: 10.5,
-    color: color.text2,
-    fontVariant: ['tabular-nums'],
-  },
+  fmText: { ...text.key, fontSize: 10.5, color: color.text2, fontVariant: ['tabular-nums'] },
 
   hero: {
     alignItems: 'center',
-    paddingVertical: space.s6,
+    paddingVertical: space.s5,
     paddingHorizontal: space.s5,
     borderRadius: 26,
     borderWidth: 1,
@@ -426,37 +542,40 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(214,178,94,0.14)',
   },
   heroBadgeText: { ...text.key, fontSize: 10, color: color.gold },
-  heroRating: { marginTop: space.s3 },
+
+  heroNumber: { alignItems: 'center', justifyContent: 'center', marginTop: space.s2 },
+  heroBloom: { position: 'absolute', width: 240, height: 240, top: -62 },
   heroValue: {
     fontFamily: font.hero,
     fontSize: 76,
     lineHeight: 99,
     color: color.text1,
     fontVariant: ['tabular-nums'],
-    textShadowColor: 'rgba(214,178,94,0.45)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 24,
   },
-  heroLabel: { ...text.key, fontSize: 10, color: color.text3, marginTop: -space.s2 },
-  heroChem: { marginTop: space.s4 },
-  heroChemText: {
+  heroLabel: { ...text.key, fontSize: 10, color: color.text3, marginTop: -space.s3 },
+  heroVerdict: {
+    fontFamily: font.displayBlack,
+    fontSize: 23,
+    lineHeight: 28,
+    color: color.gold,
+    marginTop: space.s3,
+    textAlign: 'center',
+  },
+  heroBeats: {
     fontFamily: font.bodyMed,
     fontSize: 12.5,
     color: color.text2,
+    marginTop: space.s1,
     textAlign: 'center',
   },
 
   chips: { flexDirection: 'row', gap: space.s3, marginTop: space.s3 },
   chip: {
+    ...PANEL,
     flex: 1,
     alignItems: 'center',
     paddingVertical: space.s3 + 2,
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: line.card,
-    backgroundColor: '#101A14',
-    experimental_backgroundImage: gradient.card,
-    boxShadow: 'inset 0px 1px 0px rgba(255,255,255,0.05)',
   },
   chipValue: {
     fontFamily: font.displayBlack,
@@ -467,44 +586,32 @@ const styles = StyleSheet.create({
   },
   chipLabel: { ...text.key, fontSize: 8.5, color: color.text3, marginTop: 2 },
 
-  star: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.s3,
-    marginTop: space.s3,
-    padding: space.s4,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(214,178,94,0.4)',
-    backgroundColor: '#101A14',
-    experimental_backgroundImage: gradient.cardLift,
-    boxShadow: '0px 10px 24px rgba(0,0,0,0.45)',
-    overflow: 'hidden',
+  pitchWrap: { marginTop: space.s4 },
+
+  pair: { flexDirection: 'row', gap: space.s3, marginTop: space.s4 },
+  marker: {
+    ...PANEL,
+    flex: 1,
+    padding: space.s3 + 2,
+    gap: 2,
   },
-  starWash: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  starBody: { flex: 1, minWidth: 0 },
-  starLabel: { ...text.key, fontSize: 9.5, color: color.gold },
-  starName: {
-    fontFamily: font.displayBlack,
-    fontSize: 22,
-    lineHeight: 27,
+  markerStar: { borderColor: 'rgba(214,178,94,0.4)' },
+  markerTop: { flexDirection: 'row', alignItems: 'center', gap: space.s2 },
+  markerLabel: { ...text.key, fontSize: 9 },
+  markerName: {
+    fontFamily: font.displayBold,
+    fontSize: 17,
+    lineHeight: 21,
     color: color.text1,
-    marginTop: 1,
+    marginTop: space.s2,
   },
-  starSub: { fontFamily: font.body, fontSize: 12, color: color.text3 },
-  starRating: {
-    minWidth: 52,
-    height: 44,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  starRatingText: {
+  markerSub: { fontFamily: font.body, fontSize: 11, color: color.text3 },
+  markerRating: {
     fontFamily: font.displayBlack,
-    fontSize: 24,
-    lineHeight: 29,
+    fontSize: 26,
+    lineHeight: 32,
     fontVariant: ['tabular-nums'],
+    marginTop: space.s1,
   },
 
   sectionTitle: {
@@ -514,22 +621,60 @@ const styles = StyleSheet.create({
     marginTop: space.s6,
     marginBottom: space.s2,
   },
-  outlook: {
-    padding: space.s4,
-    borderRadius: radius.lg,
+  panel: { ...PANEL, padding: space.s4, gap: space.s3 },
+  note: { ...text.small, color: color.text3, marginTop: space.s1 },
+
+  chemHead: { flexDirection: 'row', alignItems: 'baseline', gap: 2 },
+  chemValue: {
+    fontFamily: font.hero,
+    fontSize: 34,
+    lineHeight: 44,
+    color: color.accent,
+    fontVariant: ['tabular-nums'],
+  },
+  chemPct: { fontFamily: font.displayBold, fontSize: 17, lineHeight: 21, color: color.accent },
+  chemWorth: {
+    flex: 1,
+    fontFamily: font.body,
+    fontSize: 12.5,
+    color: color.text3,
+    textAlign: 'right',
+  },
+  chemLinks: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s2 },
+  chemChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: space.s3,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: line.card,
-    backgroundColor: '#101A14',
-    experimental_backgroundImage: gradient.card,
-    gap: space.s3,
+    borderColor: line.accent,
+    backgroundColor: 'rgba(31,197,126,0.12)',
   },
-  oddsRow: { flexDirection: 'row', alignItems: 'center', gap: space.s3 },
-  oddsLabel: {
-    fontFamily: font.bodyMed,
+  chemChipSeason: {
+    borderColor: 'rgba(185,140,242,0.4)',
+    backgroundColor: 'rgba(185,140,242,0.12)',
+  },
+  chemChipN: {
+    fontFamily: font.displayBlack,
     fontSize: 13,
-    color: color.text2,
-    width: 76,
+    lineHeight: 16,
+    color: color.text1,
+    fontVariant: ['tabular-nums'],
   },
+  chemChipL: { fontFamily: font.bodyMed, fontSize: 12, color: color.text2 },
+  chemNone: { ...text.small, color: color.text3 },
+
+  eraBar: { flexDirection: 'row', height: 10, borderRadius: 5, overflow: 'hidden', gap: 2 },
+  eraSeg: { height: 10 },
+  eraKeys: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s3 },
+  eraKey: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  eraDot: { width: 7, height: 7, borderRadius: 4 },
+  eraKeyText: { fontFamily: font.body, fontSize: 12, color: color.text2 },
+
+  oddsRow: { flexDirection: 'row', alignItems: 'center', gap: space.s3 },
+  oddsLabel: { fontFamily: font.bodyMed, fontSize: 13, color: color.text2, width: 76 },
   oddsTrack: {
     flex: 1,
     height: 7,
@@ -552,11 +697,6 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     fontVariant: ['tabular-nums'],
   },
-  outlookNote: {
-    ...text.small,
-    color: color.text3,
-    marginTop: space.s1,
-  },
 
   lineHead: {
     flexDirection: 'row',
@@ -569,6 +709,7 @@ const styles = StyleSheet.create({
   lineTitle: { ...text.label, fontSize: 12, color: color.text2 },
 
   playerRow: {
+    ...PANEL,
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.s3,
@@ -576,11 +717,7 @@ const styles = StyleSheet.create({
     paddingVertical: space.s2 + 2,
     paddingHorizontal: space.s3,
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: line.card,
     borderLeftWidth: 3,
-    backgroundColor: '#101A14',
-    experimental_backgroundImage: gradient.card,
   },
   posChip: {
     width: 42,

@@ -248,6 +248,36 @@ export function squadChem(squad: Slot[]): number {
   return Math.round((total / (3 * pl.length)) * 100);
 }
 
+export type ChemLink = { name: string; count: number };
+
+/**
+ * What the chemistry is actually made of.
+ *
+ * squadChem returns a percentage, which tells you there is chemistry but
+ * not where it came from. This names it: the clubs and the seasons two or
+ * more of your XI share, most shared first. Knowing that three of your side
+ * are Liverpool 2010/11 is what turns chemistry from a number you are given
+ * into something you can draft towards.
+ */
+export function chemistryLinks(squad: Slot[]): {
+  clubs: ChemLink[];
+  seasons: ChemLink[];
+} {
+  const clubs = new Map<string, number>();
+  const seasons = new Map<string, number>();
+  for (const s of squad) {
+    if (!s.player) continue;
+    clubs.set(s.player.club, (clubs.get(s.player.club) ?? 0) + 1);
+    seasons.set(s.player.season, (seasons.get(s.player.season) ?? 0) + 1);
+  }
+  const top = (m: Map<string, number>): ChemLink[] =>
+    [...m.entries()]
+      .filter(([, n]) => n >= 2)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  return { clubs: top(clubs), seasons: top(seasons) };
+}
+
 /** Chemistry is worth at most three rating points on top of the average. */
 export function chemBonus(squad: Slot[]): number {
   return Math.min(3, squadChem(squad) / 33);
