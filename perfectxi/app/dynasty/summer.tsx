@@ -16,7 +16,16 @@ import { font, text } from '../../src/ui/type';
 import { GRAIN_URI } from '../../src/ui/grain';
 import { haptic } from '../../src/ui/feel';
 import { sfx } from '../../src/ui/sound';
-import { processSeasonEnd, type DynastyPlayer, type SummerReport } from '../../src/engine';
+import {
+  asSquad,
+  chemBonus,
+  mulberry32,
+  processSeasonEnd,
+  simulateSeason,
+  starters,
+  type DynastyPlayer,
+  type SummerReport,
+} from '../../src/engine';
 import { getCareer, setCareer } from '../../src/game/career';
 import { clearSeasonResult, takeSeasonResult } from '../../src/game/careerSeason';
 
@@ -41,8 +50,27 @@ export default function Summer() {
     done.current = true;
 
     const career = getCareer();
-    const result = takeSeasonResult();
-    if (!career || !result) {
+    if (!career) {
+      router.replace('/dynasty');
+      return;
+    }
+
+    /* The season is a pure function of the career and the year, so if the
+       handoff is gone, which it is after the app has been closed, it can
+       be played again and comes out identical. Without this a career that
+       was shut down between the last match and the summer could never be
+       advanced. */
+    const result =
+      takeSeasonResult() ??
+      (() => {
+        const xi = starters(career);
+        if (xi.length < 11) return null;
+        const rnd = mulberry32((career.seed ^ Math.imul(career.year, 0x9e3779b1)) >>> 0);
+        const squad = asSquad(xi);
+        return simulateSeason(squad, career.tactic.form, chemBonus(squad), rnd);
+      })();
+
+    if (!result) {
       router.replace('/dynasty');
       return;
     }

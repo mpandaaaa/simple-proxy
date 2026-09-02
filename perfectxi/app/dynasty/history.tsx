@@ -84,8 +84,8 @@ export default function History() {
             <Text style={[styles.th, styles.cRec]}>W-D-L</Text>
             <Text style={[styles.th, styles.cMoney]}>Profit</Text>
           </View>
-          {seasons.map((s) => (
-            <View key={s.s} style={styles.tr}>
+          {seasons.map((s, i) => (
+            <View key={`${s.s}-${i}`} style={styles.tr}>
               <View style={[styles.zone, { backgroundColor: finTint(s.fin) }]} />
               <Text style={[styles.td, styles.cS]} allowFontScaling={false}>
                 {s.s}

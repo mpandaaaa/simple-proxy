@@ -129,23 +129,29 @@ export function processSeasonEnd(
   );
 
   /* 3. the history */
-  next.seasons = [
-    ...d.seasons,
-    {
-      s: d.year,
-      fin: result.position,
-      pts: result.pts,
-      w: result.wins,
-      d: result.draws,
-      l: result.losses,
-      gf: result.gf,
-      ga: result.ga,
-      met,
-      rev: ledger.rev,
-      profit: ledger.profit,
-      ded: ledger.deduction,
-    },
-  ];
+  const row = {
+    s: d.year,
+    fin: result.position,
+    pts: result.pts,
+    w: result.wins,
+    d: result.draws,
+    l: result.losses,
+    gf: result.gf,
+    ga: result.ga,
+    met,
+    rev: ledger.rev,
+    profit: ledger.profit,
+    ded: ledger.deduction,
+  };
+  // The season screen already banked this year the moment the last whistle
+  // went, so that closing the app between the final match and the summer
+  // could not lose a season. This fills that row in rather than writing a
+  // second one for the same year.
+  const already = d.seasons.findIndex((x) => x.s === d.year);
+  next.seasons =
+    already >= 0
+      ? d.seasons.map((x, i) => (i === already ? row : x))
+      : [...d.seasons, row];
   if (result.position === 1) {
     next.titles = d.titles + 1;
     say('Champions', `${d.club} are champions of England on ${result.pts} points.`, 'good');
