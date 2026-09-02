@@ -136,6 +136,14 @@ const DOORS: {
   },
 ];
 
+/** A team sheet reads in four blocks, top to bottom, as it always has. */
+const LINES: { pos: Position; title: string }[] = [
+  { pos: 'GK', title: 'In goal' },
+  { pos: 'DEF', title: 'Defence' },
+  { pos: 'MID', title: 'Midfield' },
+  { pos: 'ATT', title: 'Attack' },
+];
+
 export default function DynastyHub() {
   const career = useCareer();
   const [ending, setEnding] = useState(false);
@@ -520,44 +528,80 @@ export default function DynastyHub() {
             places with, or the arrows again to put him back.
           </Text>
         ) : null}
-        <View style={styles.list}>
-          {career.roster.slice(0, 11).map((p, i) =>
-            p ? (
-              <PlayerRow
-                key={p.n}
-                player={p}
-                slot={career.slots[i]}
-                armed={swapping === i}
-                target={swapping !== null && canTake.has(i)}
-                dim={swapping !== null && swapping !== i && !canTake.has(i)}
-                onSwap={() => {
-                  haptic('light');
-                  setSwapping((cur) => (cur === i ? null : i));
-                }}
-                onPress={() => {
-                  if (swapping !== null) {
-                    if (canTake.has(i)) doSwap(swapping, i);
-                    else if (swapping === i) setSwapping(null);
-                    return;
-                  }
-                  haptic('light');
-                  setOpen({ p, slot: i });
-                }}
-              />
-            ) : (
-              <EmptySlot
-                key={`slot${i}`}
-                pos={career.slots[i]}
-                target={swapping !== null && canTake.has(i)}
-                onPress={
-                  swapping !== null && canTake.has(i)
-                    ? () => doSwap(swapping, i)
-                    : undefined
-                }
-              />
-            ),
-          )}
-        </View>
+        {/* A team sheet reads by line, not as eleven names in a column.
+            The section a player is under is the place he is standing in,
+            so a defender pushed into midfield appears in the midfield. */}
+        {LINES.map((ln) => {
+          const places = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].filter(
+            (i) => (career.slots[i] ?? 'MID') === ln.pos,
+          );
+          if (!places.length) return null;
+          const men = places
+            .map((i) => career.roster[i])
+            .filter((q): q is DynastyPlayer => q !== null);
+          const avg = men.length
+            ? Math.round(men.reduce((a, q) => a + q.rtg, 0) / men.length)
+            : 0;
+          return (
+            <View key={ln.pos} style={styles.lineGroup}>
+              <View style={styles.lineHead}>
+                <View
+                  style={[styles.lineDot, { backgroundColor: positionColor[ln.pos] }]}
+                />
+                <Text style={[styles.lineName, { color: positionColor[ln.pos] }]}>
+                  {ln.title}
+                </Text>
+                <View style={styles.lineRule} />
+                <Text style={styles.lineAvg} allowFontScaling={false}>
+                  {men.length < places.length
+                    ? `${men.length} of ${places.length}`
+                    : avg
+                      ? `rated ${avg}`
+                      : ''}
+                </Text>
+              </View>
+              <View style={styles.list}>
+                {places.map((i) => {
+                  const p = career.roster[i];
+                  return p ? (
+                    <PlayerRow
+                      key={p.n}
+                      player={p}
+                      slot={career.slots[i]}
+                      armed={swapping === i}
+                      target={swapping !== null && canTake.has(i)}
+                      dim={swapping !== null && swapping !== i && !canTake.has(i)}
+                      onSwap={() => {
+                        haptic('light');
+                        setSwapping((cur) => (cur === i ? null : i));
+                      }}
+                      onPress={() => {
+                        if (swapping !== null) {
+                          if (canTake.has(i)) doSwap(swapping, i);
+                          else if (swapping === i) setSwapping(null);
+                          return;
+                        }
+                        haptic('light');
+                        setOpen({ p, slot: i });
+                      }}
+                    />
+                  ) : (
+                    <EmptySlot
+                      key={`slot${i}`}
+                      pos={career.slots[i]}
+                      target={swapping !== null && canTake.has(i)}
+                      onPress={
+                        swapping !== null && canTake.has(i)
+                          ? () => doSwap(swapping, i)
+                          : undefined
+                      }
+                    />
+                  );
+                })}
+              </View>
+            </View>
+          );
+        })}
 
         <Text style={[text.label, styles.sect]}>Substitutes</Text>
         <Text style={styles.subsNote}>
@@ -1117,6 +1161,19 @@ const styles = StyleSheet.create({
     boxShadow:
       'inset 0px 1px 0px rgba(255,255,255,0.06), inset 0px 0px 0px 1px rgba(255,255,255,0.035)',
   },
+  lineGroup: { marginBottom: space.s4 },
+  lineHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s2,
+    marginBottom: space.s2,
+    paddingHorizontal: 2,
+  },
+  lineDot: { width: 7, height: 7, borderRadius: 4 },
+  lineName: { ...text.key, fontSize: 9.5 },
+  lineRule: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.09)' },
+  lineAvg: { ...text.key, fontSize: 8.5, color: color.text3 },
+
   swapHint: {
     ...text.small,
     fontSize: 12,
