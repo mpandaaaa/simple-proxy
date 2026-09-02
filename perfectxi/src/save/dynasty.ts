@@ -48,8 +48,13 @@ function isDynasty(v: unknown): v is Dynasty | null {
     typeof d.club === 'string' &&
     typeof d.year === 'number' &&
     typeof d.formation === 'string' &&
-    Array.isArray(d.squad) &&
-    d.squad.every(isPlayer) &&
+    Array.isArray(d.roster) &&
+    d.roster.every((p) => p === null || isPlayer(p)) &&
+    Array.isArray(d.slots) &&
+    typeof d.mgr === "number" &&
+    typeof d.budget === "number" &&
+    typeof d.objective === "object" &&
+    d.objective !== null &&
     Array.isArray(d.retired) &&
     Array.isArray(d.seasons) &&
     typeof d.titles === 'number'
@@ -58,22 +63,27 @@ function isDynasty(v: unknown): v is Dynasty | null {
 
 export const dynastyStore = defineStore<Dynasty | null>({
   key: 'dynasty',
-  version: 2,
+  version: 3,
   fallback: null,
   validate: isDynasty,
   migrations: {
-    // The old summary describes a career that was never playable. There is
-    // nothing in it to carry forward.
+    // Version 1 held a summary of a career the app could not yet play, and
+    // version 2 an eleven man squad from before the roster was fourteen.
+    // Neither can be turned into the shape that exists now, and inventing
+    // one would be worse than starting again.
     2: () => null,
+    3: () => null,
   },
 });
 
 export function dynastySummary(d: Dynasty | null): DynastySummary | null {
-  if (!d || !d.squad.length) return null;
+  if (!d) return null;
+  const xi = d.roster.slice(0, 11).filter((p): p is NonNullable<typeof p> => p !== null);
+  if (!xi.length) return null;
   return {
     club: d.club,
     season: d.year,
-    rating: Math.round(d.squad.reduce((s, p) => s + p.rtg, 0) / d.squad.length),
+    rating: Math.round(xi.reduce((s, p) => s + p.rtg, 0) / xi.length),
     titles: d.titles,
   };
 }

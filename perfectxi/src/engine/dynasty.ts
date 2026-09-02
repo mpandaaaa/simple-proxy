@@ -315,7 +315,24 @@ export type Dynasty = {
   /** the season number, starting at 1 */
   year: number;
   formation: string;
-  squad: DynastyPlayer[];
+  mode: 'simple' | 'immersive';
+  scenario: string;
+  /**
+   * Fourteen places: the eleven in formation order, then three
+   * substitutes. A place with nobody in it is null rather than missing,
+   * because the shape has to hold its shape.
+   */
+  roster: (DynastyPlayer | null)[];
+  slots: Position[];
+  /** board confidence, 0 to 99. Twenty or under and you are gone. */
+  mgr: number;
+  /** transfer money, in £m */
+  budget: number;
+  /** how much patience the board has, from the scenario */
+  leash: number;
+  objective: { label: string; target: number };
+  capacity: number;
+  rival: string | null;
   /** everyone who has retired out of this career, newest first */
   retired: DynastyPlayer[];
   /** one entry per season played */
@@ -333,22 +350,37 @@ export type Dynasty = {
 };
 
 /** A seed of the career's own, so ageing never disturbs a season's draw. */
-function careerSeed(seed: number, year: number): number {
+export function careerSeed(seed: number, year: number): number {
   let h = (seed ^ Math.imul(year + 1, 0x27d4eb2f)) >>> 0;
   h = Math.imul(h ^ (h >>> 15), 0x2545f491) >>> 0;
   return (h ^ (h >>> 13)) >>> 0;
 }
 
-/** Take a finished XI and make a career out of it. */
-export function startDynasty(squad: Slot[], formation: string, club: string, seed: number): Dynasty {
+/**
+ * Take a finished XI and make a career out of it.
+ *
+ * The "create your own club" route. The three substitute places start
+ * empty, because a drafted eleven is exactly eleven.
+ */
+export function startDynasty(
+  squad: Slot[],
+  formation: string,
+  club: string,
+  seed: number,
+): Dynasty {
   const rnd = mulberry32(careerSeed(seed, 0));
-  const players: DynastyPlayer[] = [];
+  const roster: (DynastyPlayer | null)[] = [];
+  const slots: Position[] = [];
 
   for (const slot of squad) {
-    if (!slot.player) continue;
+    slots.push(slot.pos);
     const p = slot.player;
+    if (!p) {
+      roster.push(null);
+      continue;
+    }
     const age = ageIn(p.n, seasonYear(p.season), slot.pos);
-    players.push(
+    roster.push(
       seedTracks(
         {
           n: p.n,
@@ -368,12 +400,37 @@ export function startDynasty(squad: Slot[], formation: string, club: string, see
     );
   }
 
+  slots.push('DEF', 'MID', 'ATT');
+  roster.push(null, null, null);
+
+  const filled = roster.filter((p): p is DynastyPlayer => p !== null);
+  const avg = filled.length ? filled.reduce((s, p) => s + p.rtg, 0) / filled.length : 0;
+  const target = avg >= 90 ? 1 : avg >= 87 ? 2 : avg >= 84 ? 4 : avg >= 80 ? 7 : avg >= 76 ? 10 : 17;
+
   return {
     seed,
     club,
     year: 1,
     formation,
-    squad: players,
+    mode: 'simple',
+    scenario: 'own',
+    roster,
+    slots,
+    mgr: 55,
+    budget: 60,
+    leash: 1,
+    objective: {
+      label:
+        target <= 1 ? 'Win the Premier League'
+        : target <= 2 ? 'Finish in the top two'
+        : target <= 4 ? 'Champions League, top four'
+        : target <= 7 ? 'European places, top seven'
+        : target <= 10 ? 'Top half finish'
+        : 'Avoid the relegation fight',
+      target,
+    },
+    capacity: 40000,
+    rival: null,
     retired: [],
     seasons: [],
     titles: 0,
@@ -398,14 +455,18 @@ export type AgeingReport = {
  */
 export function advanceSeason(d: Dynasty): { dynasty: Dynasty; report: AgeingReport } {
   const rnd = mulberry32(careerSeed(d.seed, d.year));
-  const before = squadRating(d.squad);
+  const before = squadRating(starters(d));
 
-  const kept: DynastyPlayer[] = [];
+  const kept: (DynastyPlayer | null)[] = [];
   const gone: DynastyPlayer[] = [];
   const improved: DynastyPlayer[] = [];
   const declined: DynastyPlayer[] = [];
 
-  for (const p of d.squad) {
+  for (const p of d.roster) {
+    if (!p) {
+      kept.push(null);
+      continue;
+    }
     const aged = ageOne(p, rnd);
     aged.contract = {
       yrs: Math.max(0, aged.contract.yrs - 1),
@@ -414,6 +475,9 @@ export function advanceSeason(d: Dynasty): { dynasty: Dynasty; report: AgeingRep
 
     if (rnd() < retireOdds(aged)) {
       gone.push({ ...aged, retired: true });
+      // A retirement leaves the place empty rather than shuffling the
+      // shape, so you can see exactly where the hole is.
+      kept.push(null);
       continue;
     }
     kept.push(aged);
@@ -424,21 +488,38 @@ export function advanceSeason(d: Dynasty): { dynasty: Dynasty; report: AgeingRep
   improved.sort((a, b) => b.delta - a.delta);
   declined.sort((a, b) => a.delta - b.delta);
 
+  const next: Dynasty = {
+    ...d,
+    year: d.year + 1,
+    roster: kept,
+    retired: [...gone, ...d.retired],
+  };
+
   return {
-    dynasty: {
-      ...d,
-      year: d.year + 1,
-      squad: kept,
-      retired: [...gone, ...d.retired],
-    },
+    dynasty: next,
     report: {
       improved,
       declined,
       retired: gone,
       before,
-      after: squadRating(kept),
+      after: squadRating(starters(next)),
     },
   };
+}
+
+/** The eleven, which is what the match engine and the strength look at. */
+export function starters(d: Dynasty): DynastyPlayer[] {
+  return d.roster.slice(0, 11).filter((p): p is DynastyPlayer => p !== null);
+}
+
+/** The three on the bench. Depth, not strength. */
+export function bench(d: Dynasty): DynastyPlayer[] {
+  return d.roster.slice(11).filter((p): p is DynastyPlayer => p !== null);
+}
+
+/** Everyone under contract, in roster order. */
+export function everyone(d: Dynasty): DynastyPlayer[] {
+  return d.roster.filter((p): p is DynastyPlayer => p !== null);
 }
 
 export function squadRating(squad: readonly DynastyPlayer[]): number {

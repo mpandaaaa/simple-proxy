@@ -51,7 +51,8 @@
     "wheel": "tsc -p tsconfig.headless.json && node scripts/wheel-ticks.mjs",
     "commentary": "tsc -p tsconfig.headless.json && node scripts/check-commentary.mjs",
     "cups": "tsc -p tsconfig.headless.json && node scripts/check-cups.mjs",
-    "dynasty": "tsc -p tsconfig.headless.json && node scripts/check-dynasty.mjs"
+    "dynasty": "tsc -p tsconfig.headless.json && node scripts/check-dynasty.mjs",
+    "career": "tsc -p tsconfig.headless.json && node scripts/check-career.mjs"
   },
   "private": true
 }

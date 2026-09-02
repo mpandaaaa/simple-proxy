@@ -141,7 +141,7 @@ export default function Home() {
           subtitle="A career across seasons · ages, transfers, the board"
           status={dynastyStatus(dynasty)}
           icon={IconBank}
-          onPress={() => router.push('/dynasty')}
+          onPress={() => router.push(dynasty ? '/dynasty' : '/dynasty/start')}
         />
       </Rise>
 

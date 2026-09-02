@@ -18,8 +18,12 @@ import { haptic } from '../../src/ui/feel';
 import { sfx } from '../../src/ui/sound';
 import {
   advanceSeason,
+  budgetFor,
   asSquad,
+  bench,
   chemBonus,
+  everyone,
+  starters,
   mulberry32,
   ordinal,
   playerValue,
@@ -73,11 +77,32 @@ export default function DynastyHub() {
     // The dynasty's own generator, mixed from the career seed and the
     // year, so a season here never disturbs the ageing draw.
     const rnd = mulberry32((career.seed ^ Math.imul(career.year, 0x9e3779b1)) >>> 0);
-    const squad = asSquad(career.squad);
+    const squad = asSquad(starters(career));
     const result = simulateSeason(squad, career.formation, chemBonus(squad), rnd);
+
+    // The board's verdict. Meeting a title objective is worth more than
+    // meeting a survival one, and missing narrowly costs less than missing
+    // badly. A points deduction, when that lands, will cost ten more.
+    const met = result.position <= career.objective.target;
+    const swing = met
+      ? career.objective.target === 1
+        ? 15
+        : 12
+      : Math.abs(result.position - career.objective.target) <= 3
+        ? -6
+        : -14;
 
     const next: Dynasty = {
       ...career,
+      mgr: Math.max(0, Math.min(99, career.mgr + Math.round(swing * career.leash))),
+      // Only 45% of what you did not spend carries over; the board takes
+      // the rest. The full rule also subtracts PSR headroom, which needs
+      // the accounts, so until finances land this is the generous half of
+      // it and a budget will tighten when they arrive.
+      budget: Math.min(
+        320,
+        Math.round(career.budget * 0.45 + budgetFor(result.position)),
+      ),
       titles: career.titles + (result.position === 1 ? 1 : 0),
       seasons: [
         ...career.seasons,
@@ -121,39 +146,39 @@ export default function DynastyHub() {
           </Text>
           <Text style={styles.emptyTitle}>No career yet</Text>
           <Text style={styles.emptyBody}>
-            A Dynasty starts with an XI you have already drafted and taken
-            through a season. Finish one, and the results screen will offer
-            to carry that eleven forward.
+            Take a real club and the squad it actually has, and manage it
+            season by season. They age. A 22 year old grows into what he
+            could have been, a 31 year old starts losing his legs, and one
+            day your best player tells you he is finished.
           </Text>
           <Text style={styles.emptyBody}>
-            From there they age. A 22 year old grows into what he could
-            have been, a 31 year old starts losing his legs, and one day
-            your best player tells you he is finished.
+            The board set you an objective and judge you on it. Miss it
+            often enough and you are gone.
           </Text>
           <Press
             onPress={() => {
               haptic('medium');
-              router.push('/draft');
+              router.push('/dynasty/start');
             }}
             feel="none"
             style={styles.cta}
             scaleTo={0.98}
           >
-            <Text style={styles.ctaText}>Draft an XI</Text>
+            <Text style={styles.ctaText}>Take a job</Text>
           </Press>
         </View>
       </ModeScreen>
     );
   }
 
-  const rating = squadRating(career.squad);
-  const worth = squadValue(career.squad);
-  const bill = wageBill(career.squad);
+  const xi = starters(career);
+  const subs = bench(career);
+  const all = everyone(career);
+  const rating = squadRating(xi);
+  const worth = squadValue(all);
+  const bill = wageBill(all);
   const last = career.seasons[career.seasons.length - 1];
-  const order: Position[] = ['GK', 'DEF', 'MID', 'ATT'];
-  const squad = [...career.squad].sort(
-    (a, b) => order.indexOf(a.pos) - order.indexOf(b.pos) || b.rtg - a.rtg,
-  );
+  const short = xi.length < 11;
 
   return (
     <>
@@ -185,15 +210,46 @@ export default function DynastyHub() {
           <Text style={styles.heroKey}>Squad rating</Text>
 
           <View style={styles.heroStats}>
+            <HeroStat label="Budget" value={`£${career.budget}m`} tint={color.accent} />
             <HeroStat label="Value" value={`£${worth}m`} />
             <HeroStat label="Wages" value={`£${bill}m`} />
             <HeroStat label="Titles" value={String(career.titles)} tint={color.gold} />
-            <HeroStat
-              label="Squad"
-              value={String(career.squad.length)}
-              tint={career.squad.length < 11 ? color.danger : undefined}
-            />
           </View>
+        </View>
+
+        {/* ---- what the board wants, and what it thinks ---- */}
+        <View style={styles.board}>
+          <Shine radius={radius.lg} group="panel" />
+          <View style={styles.boardHead}>
+            <Text style={styles.boardKey}>The board want</Text>
+            <Text
+              style={[styles.boardMgr, { color: mgrTint(career.mgr) }]}
+              allowFontScaling={false}
+            >
+              {career.mgr}
+            </Text>
+          </View>
+          <Text style={styles.boardObj}>{career.objective.label}</Text>
+          <View style={styles.boardTrack}>
+            <View
+              style={[
+                styles.boardFill,
+                {
+                  width: `${Math.max(2, career.mgr)}%`,
+                  backgroundColor: mgrTint(career.mgr),
+                },
+              ]}
+            />
+            {/* the line you are sacked below */}
+            <View style={styles.boardMark} />
+          </View>
+          <Text style={styles.boardNote}>
+            {career.mgr <= 30
+              ? 'They are close to making a change.'
+              : career.mgr >= 70
+                ? 'They are happy with the direction.'
+                : 'They are watching.'}
+          </Text>
         </View>
 
         {/* ---- last season, and what happens next ---- */}
@@ -217,11 +273,11 @@ export default function DynastyHub() {
           </Rise>
         ) : null}
 
-        {career.squad.length < 11 ? (
+        {short ? (
           <View style={styles.warn}>
             <Text style={styles.warnText}>
-              You are down to {career.squad.length}. A season needs eleven, and
-              signings are not built yet, so this career has run its course.
+              You have {xi.length} of eleven. Signings are not built yet, so
+              until they are this career has run its course.
             </Text>
           </View>
         ) : played ? (
@@ -237,12 +293,32 @@ export default function DynastyHub() {
           </Press>
         )}
 
-        {/* ---- the squad ---- */}
-        <Text style={[text.label, styles.sect]}>The squad</Text>
+        {/* ---- the eleven, in the shape they play in ---- */}
+        <Text style={[text.label, styles.sect]}>
+          The starting eleven {'·'} {career.formation}
+        </Text>
         <View style={styles.list}>
-          {squad.map((p) => (
-            <PlayerRow key={p.n} player={p} />
-          ))}
+          {career.roster.slice(0, 11).map((p, i) =>
+            p ? (
+              <PlayerRow key={p.n} player={p} />
+            ) : (
+              <EmptySlot key={`slot${i}`} pos={career.slots[i]} />
+            ),
+          )}
+        </View>
+
+        <Text style={[text.label, styles.sect]}>Substitutes</Text>
+        <Text style={styles.subsNote}>
+          Depth is insurance. The bench only counts when someone is injured.
+        </Text>
+        <View style={styles.list}>
+          {career.roster.slice(11).map((p, i) =>
+            p ? (
+              <PlayerRow key={p.n} player={p} />
+            ) : (
+              <EmptySlot key={`sub${i}`} pos={career.slots[11 + i]} />
+            ),
+          )}
         </View>
 
         {career.retired.length ? (
@@ -286,6 +362,29 @@ export default function DynastyHub() {
         }}
       />
     </>
+  );
+}
+
+/** Board confidence, coloured by how close you are to the door. */
+function mgrTint(mgr: number): string {
+  if (mgr <= 20) return color.danger;
+  if (mgr <= 40) return color.warning;
+  if (mgr >= 70) return color.accent;
+  return color.text1;
+}
+
+/** A place in the shape with nobody in it. */
+function EmptySlot({ pos }: { pos: Position }) {
+  const tint = positionColor[pos] ?? color.text3;
+  return (
+    <View style={styles.emptySlot}>
+      <View
+        style={[styles.badge, { backgroundColor: tint + '12', borderColor: tint + '3D' }]}
+      >
+        <Text style={[styles.badgeText, { color: tint, opacity: 0.6 }]}>{pos}</Text>
+      </View>
+      <Text style={styles.emptyText}>Nobody in this place</Text>
+    </View>
   );
 }
 
@@ -494,8 +593,66 @@ const styles = StyleSheet.create({
   },
   warnText: { ...text.body, color: color.text2 },
 
+  board: {
+    marginTop: space.s4,
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
+    overflow: 'hidden',
+    gap: space.s2,
+  },
+  boardHead: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+  },
+  boardKey: { ...text.key, fontSize: 9.5, color: color.text3 },
+  boardMgr: {
+    fontFamily: font.displayBlack,
+    fontSize: 22,
+    lineHeight: 27,
+    fontVariant: ['tabular-nums'],
+  },
+  boardObj: {
+    fontFamily: font.displayBold,
+    fontSize: 20,
+    lineHeight: 25,
+    color: color.text1,
+  },
+  boardTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    overflow: 'hidden',
+  },
+  boardFill: { height: 6, borderRadius: 3 },
+  boardMark: {
+    position: 'absolute',
+    left: '20%',
+    top: -2,
+    bottom: -2,
+    width: 1.5,
+    backgroundColor: 'rgba(229,72,77,0.8)',
+  },
+  boardNote: { ...text.small, fontSize: 11.5 },
+
   sect: { marginTop: space.s6, marginBottom: space.s3 },
+  subsNote: { ...text.small, fontSize: 11, marginTop: -space.s2, marginBottom: space.s3 },
   list: { gap: space.s2 },
+  emptySlot: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s3,
+    padding: space.s3,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  emptyText: { ...text.small, fontSize: 12 },
 
   row: {
     flexDirection: 'row',
