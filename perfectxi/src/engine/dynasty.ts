@@ -284,13 +284,19 @@ function contractMul(yrs: number): number {
 /**
  * Transfer value in £m.
  *
- * The sixth power is what makes the top of the market vertical: 70 is
- * worth £24m, 85 is £77m, and a 92 at his peak is about £125m. Do not
- * flatten it. That shape is the whole reason a great player feels
- * unaffordable.
+ * A quadratic on how far above 62 a player is. Sixty two is roughly where
+ * a footballer stops being a transfer asset at all, so the curve starts
+ * from nothing there and steepens: a 70 is £8m, an 85 is £67m, and a 92
+ * attacker at his peak is £124m. Do not flatten it. The gap between very
+ * good and great is the whole reason a great player feels unaffordable.
+ *
+ * The web build carries two versions of this and the later one, a sixth
+ * power, is the one that actually runs there. It agrees at the top and
+ * priced the lower end far too high, valuing a squad player at £22m. This
+ * is the quadratic from the specification, chosen deliberately.
  */
 export function value(rtg: number, age: number, pos: Position, yrs = 3): number {
-  const base = Math.pow(Math.max(0, rtg) / 50, 6) * 2.78;
+  const base = 0.12 * Math.pow(Math.max(0, rtg - 62), 2);
   return Math.max(1, Math.round(base * ageValueMul(age) * contractMul(yrs) * POS_VALUE[pos]));
 }
 

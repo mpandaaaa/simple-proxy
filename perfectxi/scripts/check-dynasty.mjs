@@ -29,14 +29,18 @@ function check(label, got, lo, hi, fmt = (v) => String(v)) {
 
 console.log('\nVALUATION, at peak age with a long contract');
 // The stated anchor, 'a 92 rated 23 year old worth about £125m', is an
-// attacker. The position multiplier is the difference: the same player as
-// a midfielder is £113m and as a keeper £81m.
+// attacker. The position multiplier is the difference.
 check('92 attacker, 23 years old', value(92, 23, 'ATT', 4), 118, 130, (v) => '£' + v + 'm');
 check('92 midfielder, 23 years old', value(92, 23, 'MID', 4), 108, 118, (v) => '£' + v + 'm');
-check('85 midfielder, 23 years old', value(85, 23, 'MID', 4), 66, 74, (v) => '£' + v + 'm');
-check('70 midfielder, 23 years old', value(70, 23, 'MID', 4), 20, 25, (v) => '£' + v + 'm');
+check('85 midfielder, 23 years old', value(85, 23, 'MID', 4), 62, 72, (v) => '£' + v + 'm');
+// The point of the quadratic. A squad player is a squad player, not an
+// eight figure asset, and the sixth power priced this one at £22m.
+check('70 midfielder, 23 years old', value(70, 23, 'MID', 4), 6, 11, (v) => '£' + v + 'm');
+check('65 midfielder, 23 years old', value(65, 23, 'MID', 4), 1, 3, (v) => '£' + v + 'm');
 check('92 midfielder, 33 years old', value(92, 33, 'MID', 4), 22, 28, (v) => '£' + v + 'm');
-check('an attacker costs more than a keeper', value(88, 24, 'ATT', 4) - value(88, 24, 'GK', 4), 28, 36, (v) => '£' + v + 'm');
+check('an attacker costs more than a keeper', value(88, 24, 'ATT', 4) - value(88, 24, 'GK', 4), 26, 36, (v) => '£' + v + 'm');
+// A short contract is a discount, because he can walk.
+check('a year left knocks the price down', value(88, 24, 'MID', 1), 30, 40, (v) => '£' + v + 'm');
 
 console.log('\nWAGES, weekly and in thousands');
 check('65 rated squad player', wage(65, 26), 30, 38, (v) => '£' + v + 'k');
