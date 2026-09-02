@@ -107,6 +107,18 @@ for (const sc of SCENARIOS) {
     if (!LABELS.includes(d.objective.label)) fail(`season ${year}: label "${d.objective.label}"`);
     if (d.objective.target < 1 || d.objective.target > 20) fail(`season ${year}: target ${d.objective.target}`);
     if (d.roster.length !== 14) fail(`season ${year}: roster is ${d.roster.length}`);
+    /* The keeper rule. Nothing in the app may put a goalkeeper outfield or
+       an outfield player in goal, and a hundred seasons of signing and
+       promoting is where that would show up if a path had been missed. */
+    for (let i = 0; i < 11; i++) {
+      const p = d.roster[i];
+      if (!p) continue;
+      const want = d.slots[i];
+      if (!want) continue;
+      if ((p.pos === 'GK') !== (want === 'GK')) {
+        fail(`season ${year}: ${p.n} is a ${p.pos} standing at ${want}`);
+      }
+    }
     if (d.mgr < 0 || d.mgr > 99) fail(`season ${year}: confidence ${d.mgr}`);
     if (d.budget < 0) fail(`season ${year}: budget ${d.budget}`);
     if (!Number.isFinite(r.ledger.profit)) fail(`season ${year}: profit is not a number`);

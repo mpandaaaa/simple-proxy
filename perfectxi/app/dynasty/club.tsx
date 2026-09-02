@@ -8,6 +8,9 @@ import { haptic } from '../../src/ui/feel';
 import { sfx } from '../../src/ui/sound';
 import {
   STADIUM_STEP,
+  RETAIL_COST,
+  FAN_CEIL,
+  merchRevenue,
   clubColour,
   matchdayRevenue,
   stadiumCost,
@@ -62,6 +65,18 @@ export default function Club() {
     sfx('pick');
   }, []);
 
+  const openShop = useCallback(() => {
+    updateCareer((d) => {
+      const cur = d.infra.retail;
+      if (cur >= 5) return d;
+      const cost = RETAIL_COST[cur + 1];
+      if (d.budget < cost) return d;
+      return { ...d, infra: { ...d.infra, retail: cur + 1 }, budget: d.budget - cost };
+    });
+    haptic('success');
+    sfx('pick');
+  }, []);
+
   if (!career) return null;
 
   const pay = stadiumPayback(career);
@@ -107,6 +122,103 @@ export default function Club() {
           charge more and fill it. Building one while you are near the bottom
           takes a very long time to come back.
         </Text>
+      </View>
+
+      {/* ---- the following ---- */}
+      <Text style={[text.label, styles.sect]}>The following</Text>
+      <View style={styles.fans}>
+        <Shine radius={radius.lg} group="panel" />
+        <View style={styles.fansTop}>
+          <View style={styles.fansLeft}>
+            <Text style={styles.fansValue} allowFontScaling={false}>
+              {career.fans.toFixed(1)}m
+            </Text>
+            <Text style={styles.fansKey}>supporters</Text>
+          </View>
+          <View style={styles.fansRight}>
+            <Text style={styles.fansMerch} allowFontScaling={false}>
+              £{merchRevenue(career)}m
+            </Text>
+            <Text style={styles.fansKey}>sold a season</Text>
+          </View>
+        </View>
+        <View style={styles.fansTrack}>
+          <View
+            style={[
+              styles.fansFill,
+              { width: `${Math.max(2, (career.fans / FAN_CEIL) * 100)}%` },
+            ]}
+          />
+        </View>
+        <Text style={styles.fansBody}>
+          People come for winning and for players worth watching, and they
+          leave when there is neither. Everything with a badge on it is sold
+          to them, so the shop below is only worth building once there are
+          enough of them to sell to.
+        </Text>
+      </View>
+
+      {/* ---- the shop ---- */}
+      <View style={styles.shop}>
+        <View style={styles.shopHead}>
+          <Text style={styles.shopTitle}>The club shop</Text>
+          <Text style={styles.shopLevel} allowFontScaling={false}>
+            {career.infra.retail} of 5
+          </Text>
+        </View>
+        <View style={styles.bars}>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <View
+              key={i}
+              style={[
+                styles.bar,
+                {
+                  backgroundColor:
+                    i <= career.infra.retail ? hue.rose : 'rgba(255,255,255,0.09)',
+                },
+              ]}
+            />
+          ))}
+        </View>
+        <Text style={styles.shopEffect}>
+          Every level is worth another 12% of everything sold. At {career.fans.toFixed(1)}m
+          following you that is £{merchRevenue(career)}m a season now
+          {career.infra.retail < 5
+            ? `, and £${Math.round(career.fans * 9 * (1 + (career.infra.retail + 1) * 0.12))}m at the next level`
+            : ''}
+          .
+        </Text>
+        {career.infra.retail < 5 ? (
+          <Press
+            onPress={() => career.budget >= RETAIL_COST[career.infra.retail + 1] && openShop()}
+            feel="none"
+            scaleTo={0.98}
+            style={[
+              styles.facCta,
+              career.budget >= RETAIL_COST[career.infra.retail + 1]
+                ? { borderColor: alpha(hue.rose, 0.45), backgroundColor: alpha(hue.rose, 0.12) }
+                : styles.off,
+            ]}
+          >
+            <Text
+              style={[
+                styles.facCtaText,
+                {
+                  color:
+                    career.budget >= RETAIL_COST[career.infra.retail + 1]
+                      ? hue.rose
+                      : color.text3,
+                },
+              ]}
+            >
+              {career.budget >= RETAIL_COST[career.infra.retail + 1]
+                ? `Build it out for £${RETAIL_COST[career.infra.retail + 1]}m`
+                : `Level ${career.infra.retail + 1} costs £${RETAIL_COST[career.infra.retail + 1]}m`}
+            </Text>
+          </Press>
+        ) : (
+          <Text style={styles.facDone}>There is nothing left to sell them.</Text>
+        )}
       </View>
 
       {/* ---- the facilities ---- */}
@@ -298,6 +410,59 @@ const styles = StyleSheet.create({
   off: { borderColor: line.card, backgroundColor: 'rgba(255,255,255,0.03)' },
 
   sect: { marginTop: space.s6, marginBottom: space.s3 },
+  fans: {
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: alpha(hue.rose, 0.26),
+    backgroundColor: '#190F14',
+    experimental_backgroundImage:
+      'linear-gradient(180deg, #2A1520 0%, #170E13 62%, #0C070A 100%)',
+    overflow: 'hidden',
+    gap: space.s3,
+  },
+  fansTop: { flexDirection: 'row', alignItems: 'flex-end' },
+  fansLeft: { flex: 1 },
+  fansRight: { alignItems: 'flex-end' },
+  fansValue: {
+    fontFamily: font.hero,
+    fontSize: 40,
+    lineHeight: 52,
+    color: hue.rose,
+    fontVariant: ['tabular-nums'],
+  },
+  fansMerch: {
+    fontFamily: font.displayBlack,
+    fontSize: 24,
+    lineHeight: 30,
+    color: color.text1,
+    fontVariant: ['tabular-nums'],
+  },
+  fansKey: { ...text.key, fontSize: 8.5, color: color.text3 },
+  fansTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.09)',
+    overflow: 'hidden',
+  },
+  fansFill: { height: 6, borderRadius: 3, backgroundColor: hue.rose },
+  fansBody: { ...text.small, fontSize: 11.5, lineHeight: 16 },
+
+  shop: {
+    marginTop: space.s4,
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: alpha(hue.rose, 0.22),
+    backgroundColor: '#140E11',
+    experimental_backgroundImage:
+      'linear-gradient(180deg, #221319 0%, #140E11 62%, #0A0709 100%)',
+    gap: space.s2,
+  },
+  shopHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  shopTitle: { fontFamily: font.displayBold, fontSize: 19, lineHeight: 24, color: color.text1 },
+  shopLevel: { ...text.key, fontSize: 9, color: hue.rose },
+  shopEffect: { ...text.small, fontSize: 12, lineHeight: 17 },
   facility: {
     marginBottom: space.s3,
     padding: space.s4,

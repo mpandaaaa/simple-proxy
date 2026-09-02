@@ -136,7 +136,6 @@ export default function Tactics() {
         {(Object.keys(STYLES) as StyleId[]).map((id) => {
           const s = STYLES[id];
           const on = t.style === id;
-          const worth = tacticDeltas({ ...t, style: id }, strength);
           return (
             <Press
               key={id}
@@ -149,22 +148,14 @@ export default function Tactics() {
                 <Text style={[styles.styleTitle, on ? { color: hue.indigo } : null]}>
                   {s.title}
                 </Text>
-                <Text
-                  style={[
-                    styles.styleWorth,
-                    {
-                      color:
-                        worth.att > deltas.att + 0.001
-                          ? color.win
-                          : worth.att < deltas.att - 0.001
-                            ? color.loss
-                            : color.text3,
-                    },
-                  ]}
-                  allowFontScaling={false}
-                >
-                  {on ? 'current' : worth.att > deltas.att ? 'better here' : 'worse here'}
-                </Text>
+                {/* No verdict on the other styles. Which one suits this
+                    squad is the decision, and telling him the answer
+                    before he has made it is not a game. */}
+                {on ? (
+                  <Text style={styles.styleWorth} allowFontScaling={false}>
+                    current
+                  </Text>
+                ) : null}
               </View>
               <Text style={styles.styleDesc}>{s.desc}</Text>
             </Press>
@@ -369,7 +360,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: color.text1,
   },
-  styleWorth: { ...text.key, fontSize: 8 },
+  styleWorth: { ...text.key, fontSize: 8, color: hue.indigo },
   styleDesc: { ...text.small, fontSize: 11.5, lineHeight: 16 },
 
   sliderWrap: { marginBottom: space.s4 },

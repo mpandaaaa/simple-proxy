@@ -27,6 +27,7 @@ import {
   sell,
   squadRating,
   squadValue,
+  slotAccepts,
   starters,
   type Dynasty,
   type DynastyPlayer,
@@ -154,8 +155,15 @@ export default function DynastyHub() {
       const roster = [...d.roster];
       const p = roster[slot];
       if (!p) return d;
-      // Into the first free bench place, or swapped with whoever is there.
-      const target = [11, 12, 13].find((i) => !roster[i]) ?? 11;
+      /* Into the first free bench place, or swapped with whoever is there
+         and can actually stand where this player was. A keeper coming off
+         the bench into centre back is exactly what the rule is for. */
+      const free = [11, 12, 13].find((i) => !roster[i]);
+      const swap = [11, 12, 13].find(
+        (i) => roster[i] && slotAccepts(d, slot, roster[i]!.pos),
+      );
+      const target = free ?? swap;
+      if (target === undefined) return d;
       roster[slot] = roster[target];
       roster[target] = p;
       return { ...d, roster };
@@ -566,7 +574,6 @@ export function PlayerRow({
 }) {
   const tint = positionColor[p.pos];
   const wrong = p.pos !== slot;
-  const life = Math.max(0, Math.min(1, (38 - p.age) / 20));
 
   const status =
     p.daysOut >= 60
@@ -599,18 +606,6 @@ export function PlayerRow({
         >
           {p.age} {'·'} £{playerValue(p)}m {'·'} {status}
         </Text>
-        <View style={styles.lifeTrack}>
-          <View
-            style={[
-              styles.lifeFill,
-              {
-                width: `${Math.max(3, life * 100)}%`,
-                backgroundColor:
-                  life > 0.55 ? color.accent : life > 0.3 ? color.warning : color.danger,
-              },
-            ]}
-          />
-        </View>
       </View>
 
       <View style={styles.rowStats}>
@@ -897,13 +892,6 @@ const styles = StyleSheet.create({
     color: color.text3,
     fontVariant: ['tabular-nums'],
   },
-  lifeTrack: {
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    overflow: 'hidden',
-  },
-  lifeFill: { height: 3, borderRadius: 2 },
   rowStats: { alignItems: 'flex-end', minWidth: 42 },
   rowForm: {
     fontFamily: font.displayBold,

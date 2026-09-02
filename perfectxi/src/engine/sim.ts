@@ -40,6 +40,58 @@ export const SIM_LEAGUE: readonly { name: string; str: number; var: number }[] =
   { name: 'Sunderland', str: 0.28, var: 0.12 },
 ];
 
+/**
+ * Who comes up when the club you manage is one of the nineteen.
+ *
+ * Taking Arsenal in a career and then finding Arsenal in your own league
+ * table, and playing yourself twice, is not a league. The club you manage
+ * is removed and a promoted side takes the place, which is exactly what
+ * happens in a real division.
+ */
+const PROMOTED: readonly { name: string; str: number; var: number }[] = [
+  { name: 'Leicester', str: 0.36, var: 0.11 },
+  { name: 'Southampton', str: 0.32, var: 0.12 },
+  { name: 'Ipswich', str: 0.29, var: 0.12 },
+  { name: 'Burnley', str: 0.31, var: 0.11 },
+  { name: 'Sheffield United', str: 0.3, var: 0.12 },
+  { name: 'Norwich', str: 0.33, var: 0.11 },
+  { name: 'Watford', str: 0.34, var: 0.11 },
+  { name: 'Stoke', str: 0.35, var: 0.11 },
+  { name: 'Middlesbrough', str: 0.33, var: 0.12 },
+  { name: 'Coventry', str: 0.31, var: 0.12 },
+];
+
+/**
+ * The nineteen other clubs, given who you are.
+ *
+ * Nothing changes for the draft, where your XI is nobody's club. In a
+ * career the club you manage comes out and the first promoted side that
+ * is not already here goes in.
+ */
+export function leagueFor(
+  club?: string | null,
+): readonly { name: string; str: number; var: number }[] {
+  if (!club) return SIM_LEAGUE;
+  const i = SIM_LEAGUE.findIndex((t) => t.name === club);
+  if (i < 0) return SIM_LEAGUE;
+  const up = PROMOTED.find(
+    (r) => r.name !== club && !SIM_LEAGUE.some((t) => t.name === r.name),
+  );
+  const rest = SIM_LEAGUE.filter((_, j) => j !== i);
+  return up ? [...rest, up] : rest;
+}
+
+/**
+ * The other nineteen seasons.
+ *
+ * 2.93 goals a game across the 2024/25 Premier League, split between the
+ * two sides, and home teams score about a seventh more than away ones.
+ * The spread is what turns a strength gap into a scoreline gap.
+ */
+const LEAGUE_MEAN = 1.28;
+const LEAGUE_SPREAD = 1.95;
+const HOME_EDGE = 1.14;
+
 /** Squad average rating to a strength on the 0.30 to 0.97 scale. */
 export function strFromAvg(avg: number): number {
   return Math.max(0.3, Math.min(0.97, (avg - 65) / 24));
@@ -253,6 +305,20 @@ const GOAL_WEIGHT: Record<Position, number> = {
   ATT: 0.55,
 };
 
+/**
+ * How likely this player is to be the one who scores.
+ *
+ * The clamp matters. A rating under 60 made the base negative, and a
+ * negative number to a fractional power is NaN in JavaScript, which
+ * poisoned the total, made every comparison in the roulette below false,
+ * and quietly handed the goal to whoever happened to be last in the list.
+ * One promoted academy player in the squad was enough to give him 52 of
+ * the team's 59 goals while a striker finished on none.
+ */
+function scoreWeight(rtg: number, base: number, curve: number): number {
+  return base * Math.max(0.15, Math.pow(Math.max(0, rtg - 60) / 30, curve));
+}
+
 /** Better players score more, but a defender can still nick one. */
 function genScorers(
   numGoals: number,
@@ -262,11 +328,9 @@ function genScorers(
 ): Scorer[] {
   const scorers: Scorer[] = [];
   for (let i = 0; i < numGoals; i++) {
-    const weights = players.map((s) => {
-      const base = GOAL_WEIGHT[s.pos] ?? 0.1;
-      const mult = Math.pow((s.player!.rtg - 60) / 30, 1.5);
-      return base * Math.max(0.15, mult);
-    });
+    const weights = players.map((s) =>
+      scoreWeight(s.player!.rtg, GOAL_WEIGHT[s.pos] ?? 0.1, 1.5),
+    );
     let total = 0;
     for (const w of weights) total += w;
 
@@ -287,10 +351,8 @@ function genScorers(
     if (rnd() < 0.62) {
       const pool = players.filter((x) => x.player!.n !== scorer.n);
       if (pool.length) {
-        const aw = pool.map(
-          (s) =>
-            (GOAL_WEIGHT[s.pos] ?? 0.1) *
-            Math.max(0.15, Math.pow((s.player!.rtg - 60) / 30, 1.3)),
+        const aw = pool.map((s) =>
+          scoreWeight(s.player!.rtg, GOAL_WEIGHT[s.pos] ?? 0.1, 1.3),
         );
         let at = 0;
         for (const w of aw) at += w;
@@ -468,6 +530,8 @@ export function simulateSeason(
   formation: string,
   chemBonus: number,
   rnd: Rng,
+  /** the club you manage, so it is not also one of your opponents */
+  club?: string | null,
 ): SeasonResult {
   const filled = squad.filter((s) => s.player);
   if (filled.length !== squad.length) {
@@ -481,14 +545,16 @@ export function simulateSeason(
   const stats: Record<string, PlayerStat> = {};
   for (const s of filled) stats[s.player!.n] = { g: 0, a: 0, cs: 0 };
 
+  const league = leagueFor(club);
+
   // Home and away against all nineteen, drawn so a club is not played twice
   // in a row: shuffle each half, then alternate them.
   const homeFx = shuffle(
-    SIM_LEAGUE.map((t) => ({ team: t, home: true })),
+    league.map((t) => ({ team: t, home: true })),
     rnd,
   );
   const awayFx = shuffle(
-    SIM_LEAGUE.map((t) => ({ team: t, home: false })),
+    league.map((t) => ({ team: t, home: false })),
     rnd,
   );
   const fixtures: { team: { name: string; str: number; var: number }; home: boolean }[] = [];
@@ -574,7 +640,7 @@ export function simulateSeason(
 
   // The other nineteen play their own season, so the table your XI lands in
   // is a real one rather than a ladder drawn around your points.
-  const others: TableRow[] = SIM_LEAGUE.map((t) => {
+  const others: TableRow[] = league.map((t) => {
     let w = 0;
     let d = 0;
     let l = 0;
@@ -582,11 +648,18 @@ export function simulateSeason(
     let tga = 0;
     const teamStr = Math.max(0.2, Math.min(0.98, t.str + (rnd() - 0.5) * t.var * 1.6));
     for (let g = 0; g < 38; g++) {
-      const oppStr = SIM_LEAGUE[g % SIM_LEAGUE.length].str;
-      const boost = g < 19 ? 0.06 : -0.03;
-      const adj = Math.min(0.98, teamStr + boost);
-      const g1 = poissonR(Math.max(0.08, 0.18 + adj * 3.5 - oppStr * 2.0), rnd);
-      const g2 = poissonR(Math.max(0.08, 0.18 + oppStr * 3.5 - adj * 2.0), rnd);
+      const oppStr = league[g % league.length].str;
+      const home = g < 19;
+      /* The nineteen other seasons, scored the way a league actually
+         scores. The old version was linear in strength, which made the
+         best side score two a game and the worst side eight hundredths of
+         one: a hundred point champion and an eight point bottom club, in a
+         division where the real numbers are 84 and 12. This is
+         multiplicative around the league mean, so a gap in quality is a
+         ratio rather than a subtraction and nobody falls off the end. */
+      const edge = Math.exp(LEAGUE_SPREAD * (teamStr - oppStr));
+      const g1 = poissonR(LEAGUE_MEAN * edge * (home ? HOME_EDGE : 1 / HOME_EDGE), rnd);
+      const g2 = poissonR(LEAGUE_MEAN / edge / (home ? HOME_EDGE : 1 / HOME_EDGE), rnd);
       tgf += g1;
       tga += g2;
       if (g1 > g2) w++;

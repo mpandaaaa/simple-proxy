@@ -416,6 +416,7 @@ export default function DraftBoard() {
           lit tile in its own colour, and the whole thing can be thrown
           back down rather than only tapped away. */}
       <Sheet
+        bare
         visible={!!chooser}
         onClose={() => setChooser(null)}
         onClosed={() => {

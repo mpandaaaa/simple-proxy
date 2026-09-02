@@ -91,7 +91,11 @@ export default function History() {
                 {s.s}
               </Text>
               <View style={styles.cFin}>
-                <Text style={[styles.tdFin, { color: finTint(s.fin) }]} allowFontScaling={false}>
+                <Text
+                  style={[styles.tdFin, { color: finTint(s.fin) }]}
+                  numberOfLines={1}
+                  allowFontScaling={false}
+                >
                   {ordinal(s.fin)}
                 </Text>
                 {s.ded ? (
@@ -104,18 +108,28 @@ export default function History() {
                   <Text style={styles.tdMiss}>missed</Text>
                 )}
               </View>
-              <Text style={[styles.td, styles.cN]} allowFontScaling={false}>
+              <Text
+                style={[styles.td, styles.cN]}
+                numberOfLines={1}
+                allowFontScaling={false}
+              >
                 {s.pts}
               </Text>
-              <Text style={[styles.td, styles.cRec]} allowFontScaling={false}>
+              <Text
+                style={[styles.td, styles.tdTight, styles.cRec]}
+                numberOfLines={1}
+                allowFontScaling={false}
+              >
                 {s.w}-{s.d}-{s.l}
               </Text>
               <Text
                 style={[
                   styles.td,
+                  styles.tdTight,
                   styles.cMoney,
-                  { color: s.profit >= 0 ? color.win : color.loss },
+                  { color: s.profit >= 0 ? hue.emerald : hue.crimson },
                 ]}
+                numberOfLines={1}
                 allowFontScaling={false}
               >
                 {s.profit >= 0 ? '+' : '−'}£{Math.abs(Math.round(s.profit))}m
@@ -291,14 +305,19 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   tdFin: { fontFamily: font.displayBold, fontSize: 15, lineHeight: 19 },
+  tdTight: { fontSize: 11.5, lineHeight: 15 },
   tdDed: { fontFamily: font.body, fontSize: 9.5, lineHeight: 13, color: color.danger },
   tdMet: { fontFamily: font.body, fontSize: 9.5, lineHeight: 13, color: color.accent },
   tdMiss: { fontFamily: font.body, fontSize: 9.5, lineHeight: 13, color: color.text3 },
-  cS: { width: 22 },
-  cFin: { flex: 1, paddingLeft: space.s2 },
-  cN: { width: 34, textAlign: 'right' },
-  cRec: { width: 58, textAlign: 'right' },
-  cMoney: { width: 58, textAlign: 'right' },
+  /* Fixed widths, wide enough for the widest value each column can hold.
+     "13-11-14" is eight characters and the record column used to be sized
+     for six, so it wrapped onto a second line and sat on top of the
+     points beside it. */
+  cS: { width: 20 },
+  cFin: { flex: 1, minWidth: 0, paddingLeft: space.s2, paddingRight: space.s2 },
+  cN: { width: 28, textAlign: 'right' },
+  cRec: { width: 68, textAlign: 'right' },
+  cMoney: { width: 72, textAlign: 'right' },
 
   tabs: { flexDirection: 'row', gap: 5, marginBottom: space.s3 },
   tab: {

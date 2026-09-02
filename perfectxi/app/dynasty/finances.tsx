@@ -7,6 +7,7 @@ import {
   amortTotal,
   clubWageBill,
   matchdayRevenue,
+  merchRevenue,
   revenue,
   staffWages,
   ticketYield,
@@ -43,7 +44,8 @@ export default function Finances() {
   const equal = 96.9;
   const merit = Math.max(2.6, 53.1 - (finish - 1) * 2.66);
   const facility = 9 + Math.max(0, 21 - finish) * 0.8;
-  const commercial = career.titles * 8 + (finish <= 4 ? 85 : finish <= 7 ? 55 : finish <= 12 ? 38 : 28);
+  const commercial = career.titles * 8 + (finish <= 4 ? 30 : finish <= 7 ? 22 : 16);
+  const shop = merchRevenue(career);
   const euro = finish === 1 ? 95 : finish <= 4 ? 70 : finish <= 5 ? 55 : finish <= 7 ? 18 : 0;
   const gate = matchdayRevenue(career);
 
@@ -52,6 +54,7 @@ export default function Finances() {
     { label: 'Merit money', v: merit, tint: hue.emerald },
     { label: 'Facility fees', v: facility, tint: hue.sky },
     { label: 'Commercial', v: commercial, tint: hue.gold },
+    { label: 'The club shop', v: shop, tint: hue.rose },
     { label: 'Europe', v: euro, tint: hue.violet },
     { label: 'The gate', v: gate, tint: hue.rose },
   ].filter((s) => s.v > 0);

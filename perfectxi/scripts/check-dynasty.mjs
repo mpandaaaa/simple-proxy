@@ -44,7 +44,14 @@ check('a year left knocks the price down', value(88, 24, 'MID', 1), 30, 40, (v) 
 
 console.log('\nWAGES, weekly and in thousands');
 check('65 rated squad player', wage(65, 26), 30, 38, (v) => '£' + v + 'k');
-check('90 rated star', wage(90, 27), 225, 252, (v) => '£' + v + 'k');
+/* Widened once, deliberately, in September 2026, when the wage curve got
+   a premium above 88. The old curve topped out near £270k for anybody at
+   all, in a league where Haaland is on £525k a week and Salah on £400k.
+   Everything at 88 and below is untouched: the two checks either side of
+   this one have not moved. */
+check('90 rated star', wage(90, 27), 270, 330, (v) => '£' + v + 'k');
+check('a genuine superstar', wage(94, 28), 380, 560, (v) => '£' + v + 'k');
+check('88 is below the premium', wage(88, 27), 195, 220, (v) => '£' + v + 'k');
 check('a teenager is paid less', wage(80, 20), 40, 60, (v) => '£' + v + 'k');
 
 console.log('\nAGEING, 400 careers per case');

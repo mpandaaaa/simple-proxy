@@ -112,6 +112,8 @@ export type Infra = {
   training: number;
   academy: number;
   capacity: number;
+  /** the club shop and everything behind it, 0 to 5 */
+  retail: number;
 };
 
 export type Ledger = {
@@ -435,9 +437,20 @@ export function playerValue(p: DynastyPlayer): number {
   return value(p.rtg, p.age, p.pos, p.contract.yrs);
 }
 
-/** Weekly wage in thousands. A 65 rated squad player is about £30k, a 90 about £290k. */
+/**
+ * Weekly wage in thousands. A 65 rated squad player is about £30k.
+ *
+ * The curve through the middle of the league was already right: a 78 on
+ * about £100k and an 84 on about £155k is what a Premier League starter
+ * earns. What it could not do was the very top, where the market stops
+ * being a curve. Haaland is on £525k a week, Salah £400k, and the old
+ * formula topped out near £270k for anybody. The premium above 88 is that
+ * cliff, and it touches one or two players in a squad rather than the
+ * wage bill as a whole.
+ */
 export function wage(rtg: number, age: number): number {
   let w = Math.pow(Math.max(40, rtg) / 50, 6) * 7.0;
+  w *= Math.min(1.7, 1 + Math.max(0, rtg - 88) * 0.12);
   if (age < 21) w *= 0.45;
   else if (age < 24) w *= 0.75;
   else if (age > 32) w *= 0.85;
@@ -469,6 +482,15 @@ export type Dynasty = {
   leash: number;
   objective: { label: string; target: number };
   capacity: number;
+  /**
+   * The following, in millions.
+   *
+   * Fans are won by winning and by signing players people want to watch,
+   * and they are what merchandise is sold to. A club that finishes fourth
+   * with a stacked squad is worth more off the pitch than one that
+   * finishes fourth with eleven journeymen.
+   */
+  fans: number;
   rival: string | null;
   tactic: Tactic;
   staff: Staff;
@@ -605,13 +627,14 @@ export function startDynasty(
       target,
     },
     capacity: 40000,
+    fans: 2.9,
     rival: null,
     retired: [],
     seasons: [],
     titles: 0,
     tactic: { ...EMPTY_TACTIC, form: formation },
     staff: { ...EMPTY_STAFF },
-    infra: { stadium: 0, training: 2, academy: 2, capacity: 40000 },
+    infra: { stadium: 0, training: 2, academy: 2, capacity: 40000, retail: 1 },
     youth: [],
     allTime: {},
     records: { bestPts: 0, bestFin: 20, unbeaten: 0 },

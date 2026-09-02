@@ -1,5 +1,7 @@
 import { defineStore } from './storage';
 import { EMPTY_STAFF, EMPTY_TACTIC, type Dynasty, type DynastyPlayer } from '../engine/dynasty';
+import { tidySquad } from '../engine/dynastySquad';
+import { startingFans } from '../engine/dynastyClub';
 
 /**
  * The Dynasty career in progress, or null when there is not one.
@@ -80,10 +82,12 @@ function isDynasty(v: unknown): v is Dynasty | null {
     typeof d.leash === 'number' &&
     obj(d.objective) &&
     typeof d.capacity === 'number' &&
+    typeof d.fans === 'number' &&
     obj(d.tactic) &&
     typeof (d.tactic as Record<string, unknown>).form === 'string' &&
     obj(d.staff) &&
     obj(d.infra) &&
+    typeof (d.infra as Record<string, unknown>).retail === 'number' &&
     Array.isArray(d.youth) &&
     d.youth.every(isPlayer) &&
     Array.isArray(d.retired) &&
@@ -186,10 +190,11 @@ function migrateToFour(v: unknown): Dynasty | null {
         ? (d.objective as Dynasty['objective'])
         : { label: 'Top half finish', target: 10 },
     capacity,
+    fans: typeof d.fans === 'number' ? d.fans : startingFans(capacity),
     rival: typeof d.rival === 'string' ? d.rival : null,
     tactic: { ...EMPTY_TACTIC, form: formation },
     staff: { ...EMPTY_STAFF },
-    infra: { stadium: 0, training: 2, academy: 2, capacity },
+    infra: { stadium: 0, training: 2, academy: 2, capacity, retail: 1 },
     youth: [],
     retired: Array.isArray(d.retired)
       ? d.retired.map(repairPlayer).filter((p): p is DynastyPlayer => p !== null)
@@ -218,7 +223,7 @@ function migrateToFour(v: unknown): Dynasty | null {
 
 export const dynastyStore = defineStore<Dynasty | null>({
   key: 'dynasty',
-  version: 5,
+  version: 7,
   fallback: null,
   validate: isDynasty,
   migrations: {
@@ -231,6 +236,20 @@ export const dynastyStore = defineStore<Dynasty | null>({
     // Five added the looks at the market. A career from before it simply
     // starts the season with all three unused.
     5: (v) => (v ? { ...(v as Dynasty), marketRolls: 0 } : null),
+    // Six is the keeper rule. Careers that already have a goalkeeper at
+    // centre back are tidied up rather than left broken.
+    6: (v) => (v ? tidySquad(v as Dynasty) : null),
+    // Seven is the following and the club shop. A career from before them
+    // starts with the crowd its ground would hold and a shop at level one.
+    7: (v) => {
+      if (!v) return null;
+      const d = v as Dynasty;
+      return {
+        ...d,
+        fans: typeof d.fans === 'number' ? d.fans : startingFans(d.infra.capacity),
+        infra: { ...d.infra, retail: typeof d.infra.retail === 'number' ? d.infra.retail : 1 },
+      };
+    },
   },
 });
 

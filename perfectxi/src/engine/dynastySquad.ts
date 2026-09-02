@@ -3,13 +3,15 @@ import type { Rng } from './rng';
 import type { Position } from './types';
 import {
   ageIn,
+  starters,
   seedTracks,
   value,
   wage,
   type Dynasty,
   type DynastyPlayer,
 } from './dynasty';
-import { injuryMultiplier } from './dynastyClub';
+import { FAN_CEIL, injuryMultiplier } from './dynastyClub';
+import { canFill, slotAccepts } from './dynastyTactics';
 import { primeAge } from './career';
 
 /**
@@ -42,15 +44,27 @@ function rint(a: number, b: number, rnd: Rng): number {
  * squad averages about fifty a season and thigh strains are the commonest
  * single type by a distance.
  */
+/**
+ * What actually happens to footballers, and for how long.
+ *
+ * Measured against the 2024/25 Premier League: 593 time-loss injuries
+ * across the twenty clubs, 21,000 days lost, an average of 36 days each,
+ * and somewhere between four and eleven cruciate ruptures in the whole
+ * division in a season. The old table had a one in fifty cruciate and a
+ * knee that could take four months, which put three players a squad out
+ * for most of a year. Hamstrings are the most common injury in the game
+ * and now the second most common here.
+ */
 const INJURIES: readonly { t: string; min: number; max: number; w: number }[] = [
-  { t: 'Thigh strain', min: 14, max: 35, w: 24 },
-  { t: 'Hamstring', min: 14, max: 42, w: 20 },
-  { t: 'Ankle sprain', min: 10, max: 35, w: 14 },
-  { t: 'Groin', min: 10, max: 30, w: 12 },
-  { t: 'Knee', min: 28, max: 120, w: 10 },
-  { t: 'Calf', min: 10, max: 28, w: 10 },
-  { t: 'Knock', min: 5, max: 12, w: 8 },
-  { t: 'Cruciate ligament', min: 180, max: 270, w: 2 },
+  { t: 'Thigh strain', min: 14, max: 35, w: 22 },
+  { t: 'Hamstring', min: 16, max: 45, w: 20 },
+  { t: 'Ankle sprain', min: 12, max: 38, w: 14 },
+  { t: 'Groin', min: 12, max: 34, w: 12 },
+  { t: 'Calf', min: 12, max: 30, w: 11 },
+  { t: 'Knee', min: 30, max: 110, w: 8 },
+  { t: 'Back', min: 10, max: 30, w: 6 },
+  { t: 'Foot', min: 20, max: 60, w: 6 },
+  { t: 'Cruciate ligament', min: 180, max: 260, w: 1 },
 ];
 
 function rollInjury(rnd: Rng) {
@@ -78,7 +92,11 @@ export function seasonInjuries(
   rnd: Rng,
 ): { count: number; days: number } {
   const ageF = p.age <= 24 ? 0.85 : p.age <= 28 ? 1.0 : p.age <= 31 ? 1.25 : 1.55;
-  let k = 1.9 * ageF * p.prone * congestion * medical;
+  /* 1.05, not 1.9. The Premier League records about 593 time-loss
+     injuries a season across twenty squads, which is a shade over one per
+     player. The old number put nearly two on everybody and left half a
+     first eleven watching. */
+  let k = 1.05 * ageF * p.prone * congestion * medical;
 
   let count = 0;
   let days = 0;
@@ -178,8 +196,14 @@ export function intakeSize(academy: number, rnd: Rng): number {
  * Never the number. The range halves with every look, and an older player
  * is easier to read because there is less of him left to guess at.
  */
-export function scoutRange(p: DynastyPlayer): { low: number; high: number; exact: boolean } {
-  let spread = 22 * Math.pow(0.55, p.scout);
+export function scoutRange(
+  p: DynastyPlayer,
+  chief = 0,
+): { low: number; high: number; exact: boolean } {
+  /* Your own looks halve the doubt. The Chief Scout is worth a fraction of
+     a look on top of every one of them, so a good one is reading players
+     you have not paid to watch yet. */
+  let spread = 22 * Math.pow(0.55, p.scout + Math.max(0, chief) * 0.34);
   if (p.age >= 21) spread *= 0.6;
   if (spread < 2.5) {
     return { low: p.pot, high: p.pot, exact: true };
@@ -272,6 +296,10 @@ const ORDER: Record<Position, number> = { GK: 0, DEF: 1, MID: 2, ATT: 3 };
  * always at least one keeper on the list, because a keeper retiring with
  * nobody to replace him would end a career through no fault of yours.
  */
+/** Over this is a player worth having. Over ELITE_BAR is a player you build around. */
+const STAR_BAR = 78;
+const ELITE_BAR = 85;
+
 export function market(d: Dynasty, rnd: Rng): Listing[] {
   const have = new Set<string>();
   for (const p of d.roster) if (p) have.add(p.n);
@@ -310,12 +338,40 @@ export function market(d: Dynasty, rnd: Rng): Listing[] {
       .sort((a, b) => a.k - b.k)
       .map((x) => x.v);
 
-  const stars = shuffle(all.filter((p) => p.rtg >= 78)).slice(0, 9);
-  const frees = shuffle(all.filter((p) => p.rtg >= 68 && p.rtg <= 76))
-    .slice(0, 3)
+  /* The Chief Scout is the difference between a list and a shortlist.
+     With nobody in the job you get nine names over 78 and take your
+     chances. Elite brings back fourteen, four of them guaranteed to be
+     the genuine article, and a better class of free agent with them.
+
+     The floor never moves. A poor scout still finds somebody, he just
+     does not find the right somebody. */
+  const chief = Math.max(0, Math.min(5, d.staff?.scout ?? 0));
+  const wanted = 9 + chief;
+  const promised = Math.round(chief * 0.8);
+
+  const taken = new Set<string>();
+  const picked: Listing[] = [];
+  const take = (p: Listing) => {
+    if (taken.has(p.n)) return;
+    taken.add(p.n);
+    picked.push(p);
+  };
+  for (const p of shuffle(all.filter((p) => p.rtg >= ELITE_BAR))) {
+    if (picked.length >= promised) break;
+    take(p);
+  }
+  for (const p of shuffle(all.filter((p) => p.rtg >= STAR_BAR))) {
+    if (picked.length >= wanted) break;
+    take(p);
+  }
+
+  const frees = shuffle(
+    all.filter((p) => p.rtg >= 68 && p.rtg <= 76 + chief && !taken.has(p.n)),
+  )
+    .slice(0, chief >= 3 ? 4 : 3)
     .map((p) => ({ ...p, free: true, price: 0 }));
 
-  const list = [...stars, ...frees];
+  const list = [...picked, ...frees];
   if (!list.some((p) => p.pos === 'GK')) {
     const gk = shuffle(all.filter((p) => p.pos === 'GK' && p.rtg >= 72))[0];
     if (gk) list.push(gk);
@@ -342,6 +398,7 @@ export function sign(
   if (slot < 0 || slot >= d.roster.length) return null;
   if (d.roster[slot]) return null;
   if (listing.price > d.budget) return null;
+  if (!slotAccepts(d, slot, listing.pos)) return null;
 
   const yrs = listing.free ? 3 : Math.min(5, listing.age >= 31 ? 2 : listing.age >= 28 ? 3 : 4);
   const p = seedTracks(
@@ -363,7 +420,20 @@ export function sign(
 
   const roster = [...d.roster];
   roster[slot] = p;
-  return { ...d, roster, budget: d.budget - listing.price };
+
+  /* A signing people actually want to watch brings people in on the day
+     it is announced. Only one better than what you already had counts,
+     so filling a hole with a squad player sells no shirts. */
+  const xi = starters(d);
+  const now = xi.length ? xi.reduce((a, q) => a + q.rtg, 0) / xi.length : listing.rtg;
+  const pull = Math.max(0, listing.rtg - now) * 0.014;
+
+  return {
+    ...d,
+    roster,
+    budget: d.budget - listing.price,
+    fans: Math.round(Math.min(FAN_CEIL, d.fans + pull) * 100) / 100,
+  };
 }
 
 /**
@@ -400,6 +470,7 @@ export function promote(d: Dynasty, youthIndex: number, slot: number): Dynasty |
   if (!y) return null;
   if (slot < 0 || slot >= d.roster.length) return null;
   if (d.roster[slot]) return null;
+  if (!slotAccepts(d, slot, y.pos)) return null;
 
   // He keeps his own position. Putting him in a place that does not suit
   // him is allowed and costs him, which is what the fit penalty is for.
@@ -416,6 +487,55 @@ export function promote(d: Dynasty, youthIndex: number, slot: number): Dynasty |
 /** Let one go. Nothing comes back for him: he was never worth anything yet. */
 export function releaseYouth(d: Dynasty, youthIndex: number): Dynasty {
   return { ...d, youth: d.youth.filter((_, i) => i !== youthIndex) };
+}
+
+/**
+ * Put anybody standing in a place he cannot fill somewhere he can.
+ *
+ * Careers saved before the rule existed have keepers at centre back in
+ * them. Rather than leave them there or throw the career away, this
+ * swaps him with somebody who fits, or moves him to the bench, and only
+ * gives up if there is genuinely nowhere for him.
+ */
+export function tidySquad(d: Dynasty): Dynasty {
+  const roster = [...d.roster];
+  const at = (i: number) => d.slots[i] ?? 'MID';
+  let moved = false;
+
+  for (let i = 0; i < Math.min(roster.length, 11); i++) {
+    const p = roster[i];
+    if (!p || canFill(p.pos, at(i))) continue;
+
+    // somebody who fits here, and who this player could replace
+    let done = false;
+    for (let j = 0; j < roster.length; j++) {
+      if (j === i) continue;
+      const q = roster[j];
+      if (!q) continue;
+      if (!canFill(q.pos, at(i))) continue;
+      if (j < 11 && !canFill(p.pos, at(j))) continue;
+      roster[i] = q;
+      roster[j] = p;
+      done = true;
+      break;
+    }
+    if (done) {
+      moved = true;
+      continue;
+    }
+
+    // or an empty place he can stand in
+    for (let j = 0; j < roster.length; j++) {
+      if (roster[j]) continue;
+      if (j < 11 && !canFill(p.pos, at(j))) continue;
+      roster[j] = p;
+      roster[i] = null;
+      moved = true;
+      break;
+    }
+  }
+
+  return moved ? { ...d, roster } : d;
 }
 
 /** Which places in the shape have nobody in them. */

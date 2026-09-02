@@ -50,7 +50,7 @@ export const STAFF: readonly {
   {
     id: 'scout',
     title: 'Chief Scout',
-    desc: 'Narrows the doubt on young players.',
+    desc: 'Brings back more names, and better ones. Reads your own young players quicker.',
     effect: 'scouting',
   },
 ];
@@ -148,14 +148,65 @@ export function amortTotal(d: Dynasty): number {
   );
 }
 
+/* ---------- the following, and what it buys ---------- */
+
+/** What the club shop costs to build out, by level. */
+export const RETAIL_COST = [0, 0, 20, 45, 85, 150];
+
+/** How many people follow a club this size before you have done anything. */
+export function startingFans(capacity: number): number {
+  return Math.round((capacity / 13500) * 10) / 10;
+}
+
+/** Nobody has fewer than this, and nobody in England has more. */
+export const FAN_FLOOR = 0.4;
+export const FAN_CEIL = 12;
+
+/**
+ * What a season does to the following.
+ *
+ * Winning brings people in and losing loses them, but the squad matters
+ * on its own: a team full of players worth watching is followed by people
+ * who never see a match. The two together are what merchandise is sold
+ * to, so the shop is worth building only once there is somebody to sell
+ * to, which is the decision.
+ */
+export function fanChange(finish: number, squadRating: number, titles: number): number {
+  const onThePitch =
+    finish === 1 ? 0.62 : finish <= 4 ? 0.34 : finish <= 7 ? 0.14 : finish <= 14 ? 0.02 : finish <= 17 ? -0.06 : -0.18;
+  const worthWatching = (squadRating - 78) * 0.022;
+  const history = Math.min(0.12, titles * 0.015);
+  return Math.round(Math.max(-0.4, Math.min(0.9, onThePitch + worthWatching + history)) * 100) / 100;
+}
+
+/** The following after a season, kept inside its bounds. */
+export function nextFans(d: Dynasty, finish: number, squadRating: number): number {
+  const moved = d.fans + fanChange(finish, squadRating, d.titles);
+  return Math.round(Math.max(FAN_FLOOR, Math.min(FAN_CEIL, moved)) * 100) / 100;
+}
+
+/** Every level of the shop is worth another twelve percent of everything sold. */
+export function retailMultiplier(d: Dynasty): number {
+  return 1 + (d.infra?.retail ?? 0) * 0.12;
+}
+
+/** Shirts, and everything else with a badge on it, in £m a season. */
+export function merchRevenue(d: Dynasty): number {
+  return Math.round((d.fans ?? 0) * 9 * retailMultiplier(d));
+}
+
 export function revenue(finish: number, d: Dynasty): number {
   const equal = 96.9;
   const merit = Math.max(2.6, 53.1 - (finish - 1) * 2.66);
   const facility = 9 + Math.max(0, 21 - finish) * 0.8;
-  const commercial =
-    d.titles * 8 + (finish <= 4 ? 85 : finish <= 7 ? 55 : finish <= 12 ? 38 : 28);
+  /* Commercial used to be a flat bracket by finish. It is now the base
+     sponsorship plus what the shop actually sells, so a following is
+     worth money rather than being a number on a screen. */
+  const commercial = d.titles * 8 + (finish <= 4 ? 30 : finish <= 7 ? 22 : 16);
   const euro = finish === 1 ? 95 : finish <= 4 ? 70 : finish <= 5 ? 55 : finish <= 7 ? 18 : 0;
-  return Math.round(equal + merit + facility + commercial + euro + matchdayRevenue(d));
+  return Math.round(
+    equal + merit + facility + commercial + euro + merchRevenue(d) + matchdayRevenue(d),
+  );
 }
 
 /**

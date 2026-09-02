@@ -1,12 +1,25 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { ModeScreen, Press, Rise, Shine, PlayerSheet } from '../../src/ui/components';
+import {
+  ModeScreen,
+  Press,
+  Rise,
+  Shine,
+  PlayerSheet,
+  SlotSheet,
+} from '../../src/ui/components';
 import { color, gradient, line, positionColor, radius, space, hue, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic } from '../../src/ui/feel';
 import { sfx } from '../../src/ui/sound';
-import { releaseYouth, scoutRange, type DynastyPlayer } from '../../src/engine';
+import {
+  emptySlots,
+  promote,
+  releaseYouth,
+  scoutRange,
+  type DynastyPlayer,
+} from '../../src/engine';
 import { useCareer, updateCareer } from '../../src/game/career';
 
 /** What one look at a player costs. */
@@ -25,6 +38,12 @@ const SCOUT_FEE = 1;
 export default function Academy() {
   const career = useCareer();
   const [open, setOpen] = useState<number | null>(null);
+  /* Promoting happens here. It used to hand you over to the transfer
+     screen, which threw away the screen you were looking at to do a job
+     this screen already has everything for. */
+  const [promoting, setPromoting] = useState<number | null>(null);
+
+  const holes = useMemo(() => (career ? emptySlots(career) : []), [career]);
 
   const scout = useCallback((index: number) => {
     updateCareer((d) => {
@@ -37,6 +56,14 @@ export default function Academy() {
     });
     haptic('medium');
     sfx('tick');
+  }, []);
+
+  const putIn = useCallback((youthIndex: number, slot: number) => {
+    updateCareer((d) => promote(d, youthIndex, slot) ?? d);
+    haptic('success');
+    sfx('pick');
+    setPromoting(null);
+    setOpen(null);
   }, []);
 
   const release = useCallback((index: number) => {
@@ -78,28 +105,31 @@ export default function Academy() {
             <Rise key={p.n} delay={Math.min(i, 5)}>
               <Prospect
                 player={p}
+                chief={career.staff.scout}
                 onPress={() => {
                   haptic('light');
                   setOpen(i);
                 }}
                 onScout={career.budget >= SCOUT_FEE ? () => scout(i) : undefined}
+                onPromote={
+                  holes.length
+                    ? () => {
+                        haptic('medium');
+                        setPromoting(i);
+                      }
+                    : undefined
+                }
               />
             </Rise>
           ))}
         </View>
 
         {career.youth.length ? (
-          <Press
-            onPress={() => {
-              haptic('medium');
-              router.push('/dynasty/market');
-            }}
-            feel="none"
-            style={styles.cta}
-            scaleTo={0.98}
-          >
-            <Text style={styles.ctaText}>Promote one into the squad</Text>
-          </Press>
+          <Text style={styles.foot}>
+            {holes.length
+              ? `${holes.length} place${holes.length === 1 ? '' : 's'} open in the squad. Promoting one costs nothing.`
+              : 'Every place in the squad is filled. Sell somebody to make room for one of these.'}
+          </Text>
         ) : null}
 
         <View style={{ height: space.s6 }} />
@@ -119,6 +149,24 @@ export default function Academy() {
         }
         scoutCost={SCOUT_FEE}
         onRelease={open !== null ? () => release(open) : undefined}
+        onPromote={
+          open !== null && holes.length
+            ? () => {
+                setPromoting(open);
+                setOpen(null);
+              }
+            : undefined
+        }
+      />
+
+      <SlotSheet
+        open={promoting !== null}
+        title={promoting !== null ? (career.youth[promoting]?.n ?? '') : ''}
+        subtitle="He goes straight into the squad, counts as homegrown and costs nothing."
+        holes={holes}
+        playerPos={promoting !== null ? (career.youth[promoting]?.pos ?? 'MID') : 'MID'}
+        onClose={() => setPromoting(null)}
+        onPick={(slot) => promoting !== null && putIn(promoting, slot)}
       />
     </>
   );
@@ -132,15 +180,19 @@ export default function Academy() {
  */
 function Prospect({
   player: p,
+  chief,
   onPress,
   onScout,
+  onPromote,
 }: {
   player: DynastyPlayer;
+  chief: number;
   onPress: () => void;
   onScout?: () => void;
+  onPromote?: () => void;
 }) {
   const tint = positionColor[p.pos];
-  const range = scoutRange(p);
+  const range = scoutRange(p, chief);
   const low = (Math.max(40, range.low) - 40) / 59;
   const high = (Math.max(40, range.high) - 40) / 59;
   const now = (Math.max(40, p.rtg) - 40) / 59;
@@ -183,11 +235,18 @@ function Prospect({
         </Text>
       </View>
 
-      {onScout && !range.exact ? (
-        <Press onPress={onScout} feel="none" scaleTo={0.98} style={styles.scout}>
-          <Text style={styles.scoutText}>Scout him · £{SCOUT_FEE}m</Text>
-        </Press>
-      ) : null}
+      <View style={styles.acts}>
+        {onScout && !range.exact ? (
+          <Press onPress={onScout} feel="none" scaleTo={0.98} style={styles.scout}>
+            <Text style={styles.scoutText}>Scout him · £{SCOUT_FEE}m</Text>
+          </Press>
+        ) : null}
+        {onPromote ? (
+          <Press onPress={onPromote} feel="medium" scaleTo={0.98} style={styles.promote}>
+            <Text style={styles.promoteText}>Promote him</Text>
+          </Press>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -261,11 +320,10 @@ const styles = StyleSheet.create({
   fogText: { fontFamily: font.body, fontSize: 10.5, lineHeight: 14, color: color.text3 },
 
   scout: {
+    flex: 1,
     minHeight: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.07)',
     backgroundColor: alpha(hue.lime, 0.10),
   },
   scoutText: {
@@ -276,15 +334,29 @@ const styles = StyleSheet.create({
     color: hue.lime,
   },
 
-  cta: {
-    marginTop: space.s5,
-    minHeight: 52,
+  acts: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.07)' },
+  promote: {
+    flex: 1,
+    minHeight: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: alpha(hue.lime, 0.45),
-    backgroundColor: alpha(hue.lime, 0.12),
+    borderLeftWidth: 1,
+    borderLeftColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: alpha(hue.mint, 0.12),
   },
-  ctaText: { ...text.button, fontSize: 15, color: hue.lime },
+  promoteText: {
+    fontFamily: font.displayBold,
+    fontSize: 13,
+    lineHeight: 17,
+    letterSpacing: 0.3,
+    color: hue.mint,
+  },
+  foot: {
+    ...text.small,
+    fontSize: 12,
+    lineHeight: 17,
+    textAlign: 'center',
+    marginTop: space.s5,
+    paddingHorizontal: space.s4,
+  },
 });

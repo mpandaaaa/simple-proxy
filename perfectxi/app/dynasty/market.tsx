@@ -8,6 +8,7 @@ import {
   Shine,
   ClubDisc,
   Sheet,
+  SlotSheet,
   PlayerSheet,
 } from '../../src/ui/components';
 import { color, gradient, line, positionColor, radius, space, hue, alpha } from '../../src/ui/tokens';
@@ -22,6 +23,7 @@ import {
   market,
   mulberry32,
   posFit,
+  canFill,
   playerValue,
   promote,
   revenue,
@@ -257,22 +259,26 @@ export default function Market() {
         <View style={styles.list}>
           {shown.map((l, i) => {
             const affordable = l.price <= career.budget;
-            // What he would actually add, at the best place you have open.
-            const best = holes.length
-              ? holes.reduce(
+            /* What he would actually add, at the best place you have open.
+               Only places he is allowed to fill count: a keeper cannot be
+               offered a spot at centre back to make the number look better. */
+            const legal = holes.filter((h) => h.index >= 11 || canFill(l.pos, h.pos));
+            const best = legal.length
+              ? legal.reduce(
                   (a, b) => (posFit(l.pos, a.pos) >= posFit(l.pos, b.pos) ? a : b),
-                  holes[0],
+                  legal[0],
                 )
               : null;
             const fit = best ? posFit(l.pos, best.pos) : 1;
             const worth = Math.round(l.rtg * fit);
             const swing = worth - rating;
+            const noRoom = holes.length > 0 && legal.length === 0;
 
             return (
               <Rise key={l.n} delay={Math.min(i, 6)}>
                 <Press
                   onPress={() => {
-                    if (!affordable) return;
+                    if (!affordable || noRoom) return;
                     haptic('light');
                     setTarget(l);
                   }}
@@ -280,7 +286,7 @@ export default function Market() {
                   scaleTo={0.99}
                   style={[
                     styles.card,
-                    !affordable ? styles.cardOff : null,
+                    !affordable || noRoom ? styles.cardOff : null,
                     l.free ? { borderColor: line.gold } : null,
                   ]}
                 >
@@ -294,7 +300,13 @@ export default function Market() {
                     <Text style={styles.cardMeta} numberOfLines={1}>
                       {l.age} {'·'} {l.club} {'·'} £{l.wage}k a week
                     </Text>
-                    {best && fit < 1 ? (
+                    {noRoom ? (
+                      <Text style={styles.cardFit} numberOfLines={1}>
+                        {l.pos === 'GK'
+                          ? 'no place in goal open'
+                          : `no place open for a ${l.pos.toLowerCase()}`}
+                      </Text>
+                    ) : best && fit < 1 ? (
                       <Text style={styles.cardFit} numberOfLines={1}>
                         would play at {best.pos.toLowerCase()}, {Math.round((1 - fit) * 100)}% off
                         his best
@@ -318,7 +330,7 @@ export default function Market() {
                     >
                       {l.free ? 'free' : `£${l.price}m`}
                     </Text>
-                    {holes.length ? (
+                    {legal.length ? (
                       <Text
                         style={[
                           styles.cardSwing,
@@ -441,102 +453,6 @@ function Badge({ pos }: { pos: Position }) {
     <View style={[styles.badge, { backgroundColor: tint + '26', borderColor: tint + '66' }]}>
       <Text style={[styles.badgeText, { color: tint }]}>{pos}</Text>
     </View>
-  );
-}
-
-/**
- * Which place he fills.
- *
- * Every empty place listed, with what it would cost him to play there.
- * Out of position is allowed, because sometimes it is the only option, and
- * the price is shown rather than hidden.
- */
-function SlotSheet({
-  open,
-  title,
-  subtitle,
-  holes,
-  playerPos,
-  onClose,
-  onPick,
-}: {
-  open: boolean;
-  title: string;
-  subtitle: string;
-  holes: { index: number; pos: Position }[];
-  playerPos: Position;
-  onClose: () => void;
-  onPick: (slot: number) => void;
-}) {
-  return (
-    <Sheet visible={open} onClose={onClose}>
-      <Text style={styles.sheetTitle}>{title}</Text>
-      <Text style={styles.sheetSub}>{subtitle}</Text>
-
-      {holes.length ? (
-        <>
-          <Text style={styles.sheetKey}>Where does he play?</Text>
-          <View style={styles.slots}>
-            {[...holes]
-              .sort((a, b) => posFit(playerPos, b.pos) - posFit(playerPos, a.pos))
-              .map((h) => {
-                const fit = posFit(playerPos, h.pos);
-                const tint = positionColor[h.pos];
-                return (
-                  <Press
-                    key={h.index}
-                    onPress={() => onPick(h.index)}
-                    feel="medium"
-                    scaleTo={0.98}
-                    style={[
-                      styles.slot,
-                      fit === 1 ? { borderColor: line.accent } : null,
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.badge,
-                        { backgroundColor: tint + '26', borderColor: tint + '66' },
-                      ]}
-                    >
-                      <Text style={[styles.badgeText, { color: tint }]}>{h.pos}</Text>
-                    </View>
-                    <View style={styles.slotBody}>
-                      <Text style={styles.slotWhere}>
-                        {h.index < 11 ? 'In the eleven' : 'On the bench'}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.slotFit,
-                          {
-                            color:
-                              fit === 1
-                                ? color.accent
-                                : fit >= 0.94
-                                  ? color.warning
-                                  : color.danger,
-                          },
-                        ]}
-                      >
-                        {fit === 1
-                          ? 'His own position'
-                          : `${Math.round((1 - fit) * 100)}% off his best`}
-                      </Text>
-                    </View>
-                    <Text style={styles.slotArrow} allowFontScaling={false}>
-                      {'›'}
-                    </Text>
-                  </Press>
-                );
-              })}
-          </View>
-        </>
-      ) : (
-        <Text style={styles.sheetNone}>
-          There is nowhere to put him. Sell somebody first.
-        </Text>
-      )}
-    </Sheet>
   );
 }
 

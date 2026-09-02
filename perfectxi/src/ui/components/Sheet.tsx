@@ -38,10 +38,20 @@ export function Sheet({
   visible,
   onClose,
   onClosed,
+  bare,
   children,
 }: {
   visible: boolean;
   onClose: () => void;
+  /**
+   * Skip the panel and render the children straight onto the dim.
+   *
+   * Only for a caller that draws its own surface, as the draft board does.
+   * Everything else wants the panel, and without it the sheet has no
+   * background at all: the screen behind shows straight through the text,
+   * which looks like the app has glitched rather than opened something.
+   */
+  bare?: boolean;
   /**
    * Fired once the exit has played and the modal is gone.
    *
@@ -152,7 +162,15 @@ export function Sheet({
 
         <GestureDetector gesture={pan}>
           <Animated.View style={[styles.sheet, sheetStyle]} onLayout={onLayout}>
-            {children}
+            {bare ? (
+              children
+            ) : (
+              <View style={styles.panel}>
+                <View style={styles.edge} pointerEvents="none" />
+                <View style={styles.grab} />
+                {children}
+              </View>
+            )}
           </Animated.View>
         </GestureDetector>
       </View>
@@ -172,4 +190,35 @@ const styles = StyleSheet.create({
   },
   dimHit: { flex: 1 },
   sheet: { paddingBottom: space.s2 },
+  panel: {
+    backgroundColor: '#0B120E',
+    experimental_backgroundImage:
+      'linear-gradient(180deg, #16231B 0%, #0B120E 52%, #070B08 100%)',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.10)',
+    boxShadow: '0px -20px 50px rgba(0,0,0,0.6)',
+    paddingHorizontal: space.s5,
+    paddingTop: space.s3,
+    paddingBottom: space.s7,
+    gap: space.s2,
+    overflow: 'hidden',
+  },
+  edge: {
+    position: 'absolute',
+    top: 0,
+    left: '18%',
+    right: '18%',
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+  },
+  grab: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    marginBottom: space.s2,
+  },
 });

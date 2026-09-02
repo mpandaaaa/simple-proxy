@@ -92,7 +92,7 @@ export function tacticDeltas(t: Tactic, strength: number): TacticDeltas {
 }
 
 /** How well a player suits the place he is being asked to fill. */
-export const FIT = { exact: 1.0, near: 0.94, far: 0.82 } as const;
+export const FIT = { exact: 1.0, near: 0.94, far: 0.82, keeper: 0.5 } as const;
 
 const NEAR: Record<Position, Position[]> = {
   GK: [],
@@ -101,8 +101,34 @@ const NEAR: Record<Position, Position[]> = {
   ATT: ['MID'],
 };
 
+/**
+ * Can this player fill this place at all?
+ *
+ * A striker at centre back is a bad decision. A goalkeeper at centre back
+ * is not a decision, it is a bug, and so is an outfield player in goal.
+ * Nothing in the app may offer either, so every place that takes a player
+ * asks this first.
+ */
+export function canFill(playerPos: Position, slotPos: Position): boolean {
+  return (playerPos === 'GK') === (slotPos === 'GK');
+}
+
+/**
+ * The same question for a real place in the squad.
+ *
+ * The three places on the bench take anybody, because a bench with no
+ * room for a reserve keeper is not a bench. The eleven are strict.
+ */
+export function slotAccepts(d: Dynasty, index: number, pos: Position): boolean {
+  if (index >= 11) return true;
+  return canFill(pos, d.slots[index] ?? pos);
+}
+
 export function posFit(playerPos: Position, slotPos: Position): number {
   if (playerPos === slotPos) return FIT.exact;
+  // Nothing should reach this, but an old career saved before the rule
+  // existed still has to load and still has to be honest about the cost.
+  if (!canFill(playerPos, slotPos)) return FIT.keeper;
   return NEAR[slotPos].includes(playerPos) ? FIT.near : FIT.far;
 }
 

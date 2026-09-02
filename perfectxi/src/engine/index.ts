@@ -45,6 +45,7 @@ export {
 export type { DraftState, SpinResult, ChemLink, EraSummary } from './draft';
 export {
   SIM_LEAGUE,
+  leagueFor,
   strFromAvg,
   dcExpected,
   seasonGrade,
@@ -114,7 +115,7 @@ export type { Scenario, ScenarioId, ClubOption, Mode } from './career';
 export { matchRating, expectedRating, perfBeta, development, seasonRatings } from './dynastyRatings';
 export type { MatchContext, Development } from './dynastyRatings';
 export {
-  STYLES, MENTALITIES, FIT, tacticDeltas, posFit, benchCover,
+  STYLES, MENTALITIES, FIT, tacticDeltas, posFit, canFill, slotAccepts, benchCover,
   effectiveRating, misfits, setPieceShare, learnTactic, changeShape,
 } from './dynastyTactics';
 export type { StyleId, TacticDeltas } from './dynastyTactics';
@@ -123,11 +124,13 @@ export {
   injuryMultiplier, trainingMultiplier, SEAT_COST, STADIUM_STEP, ticketYield,
   matchdayRevenue, stadiumCost, stadiumPayback, wageBill as clubWageBill,
   amortTotal, revenue, closeBooks, nextBudget, baseBudget,
+  RETAIL_COST, FAN_FLOOR, FAN_CEIL, startingFans, fanChange, nextFans,
+  retailMultiplier, merchRevenue,
 } from './dynastyClub';
 export type { StaffRole } from './dynastyClub';
 export {
   seasonInjuries, makeYouth, intakeSize, scoutRange, renewalTerms,
-  expiring, autoRenews, market, sign, sell, promote, releaseYouth, emptySlots,
+  expiring, autoRenews, market, sign, sell, promote, releaseYouth, emptySlots, tidySquad,
 } from './dynastySquad';
 export type { Listing, RenewalTerms } from './dynastySquad';
 export { processSeasonEnd } from './dynastySeason';

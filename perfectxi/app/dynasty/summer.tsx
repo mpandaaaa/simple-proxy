@@ -32,6 +32,7 @@ import {
   processSeasonEnd,
   simulateSeason,
   starters,
+  everyone,
   verdict,
   type Dynasty,
   type DynastyPlayer,
@@ -111,6 +112,15 @@ export default function Summer() {
     report: SummerReport;
     result: SeasonResult;
     before: Dynasty;
+    /**
+     * The career after the season was processed.
+     *
+     * Appearances, days out and the average match rating are only written
+     * when the season closes, so reading them off `before` showed last
+     * year's numbers next to this year's goals. A player who had just
+     * signed read as nought appearances and two assists.
+     */
+    after: Dynasty;
   } | null>(null);
 
   useEffect(() => {
@@ -133,7 +143,7 @@ export default function Summer() {
         if (xi.length < 11) return null;
         const rnd = mulberry32((career.seed ^ Math.imul(career.year, 0x9e3779b1)) >>> 0);
         const squad = asSquad(xi);
-        return simulateSeason(squad, career.tactic.form, chemBonus(squad), rnd);
+        return simulateSeason(squad, career.tactic.form, chemBonus(squad), rnd, career.club);
       })();
 
     if (!result) {
@@ -144,7 +154,7 @@ export default function Summer() {
     const out = processSeasonEnd(career, result);
     setCareer(out.dynasty);
     clearSeasonResult();
-    setState({ report: out.report, result, before: career });
+    setState({ report: out.report, result, before: career, after: out.dynasty });
 
     haptic(out.report.sacked ? 'error' : out.report.met ? 'success' : 'warning');
     sfx(
@@ -172,7 +182,7 @@ export default function Summer() {
   }, [state]);
 
   if (!state) return null;
-  const { report, result, before } = state;
+  const { report, result, before, after } = state;
   const fin = finishFor(result);
   const tone = TONE[fin.tone];
   const paper = verdict(result);
@@ -186,6 +196,9 @@ export default function Summer() {
   // The squad that played it, so the review can name them.
   const squad = starters(before);
   const byName = new Map(squad.map((p) => [p.n, p]));
+  /* What each of them actually did this season, which lives on the career
+     as it is after the summer has been processed, not before it. */
+  const played = new Map(everyone(after).map((p) => [p.n, p]));
   const scorers = Object.entries(result.playerStats)
     .map(([n, s]) => ({ n, ...s }))
     .sort((a, b) => b.g - a.g || b.a - a.a);
@@ -376,7 +389,11 @@ export default function Summer() {
             const st = result.playerStats[p.n] ?? { g: 0, a: 0, cs: 0 };
             const keeps = p.pos === 'GK' || p.pos === 'DEF';
             const expected = expectedRating(p.rtg);
-            const rating = p.avgR;
+            // his season, not the one before it
+            const did = played.get(p.n);
+            const rating = did?.avgR ?? null;
+            const apps = did?.apps ?? 0;
+            const out = did?.daysOut ?? 0;
             return (
               <View key={p.n} style={styles.pl}>
                 <View
@@ -397,8 +414,8 @@ export default function Summer() {
                     {p.n}
                   </Text>
                   <Text style={styles.plMeta} numberOfLines={1}>
-                    {p.apps} apps
-                    {p.daysOut >= 30 ? ` · ${p.daysOut} days out` : ''}
+                    {apps} app{apps === 1 ? '' : 's'}
+                    {out >= 30 ? ` · ${out} days out` : ''}
                   </Text>
                 </View>
                 {rating != null ? (

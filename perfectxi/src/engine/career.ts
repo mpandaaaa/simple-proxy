@@ -1,6 +1,7 @@
 import { SQUADS } from '../data/squads';
 import { CAPACITY, DOB, RIVALS } from '../data/dynasty';
 import { FORMATIONS } from './formations';
+import { startingFans } from './dynastyClub';
 import { mulberry32 } from './rng';
 import type { Position } from './types';
 import {
@@ -302,10 +303,17 @@ export function startCareer(args: {
     leash: sc.leash,
     objective: { label: objectiveLabel(target), target },
     capacity: CAPACITY[club] ?? 28000,
+    fans: startingFans(CAPACITY[club] ?? 28000),
     rival: RIVALS[club] ?? null,
     tactic: { ...EMPTY_TACTIC, form: formation },
     staff: { ...EMPTY_STAFF },
-    infra: { stadium: 0, training: 2, academy: 2, capacity: CAPACITY[club] ?? 28000 },
+    infra: {
+      stadium: 0,
+      training: 2,
+      academy: 2,
+      capacity: CAPACITY[club] ?? 28000,
+      retail: 1,
+    },
     youth: [],
     allTime: {},
     records: { bestPts: 0, bestFin: 20, unbeaten: 0 },

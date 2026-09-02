@@ -5,6 +5,7 @@ import {
   careerSeed,
   everyone,
   retireOdds,
+  squadRating,
   starters,
   wage,
   type Dynasty,
@@ -18,6 +19,7 @@ import {
   devMultiplier,
   injuryMultiplier,
   nextBudget,
+  nextFans,
   revenue,
   trainingMultiplier,
   wageBill,
@@ -64,6 +66,9 @@ export type SummerReport = {
   before: number;
   after: number;
   budget: number;
+  /** the following before the season, and how far it moved */
+  fansBefore: number;
+  fansSwing: number;
   news: InboxItem[];
 };
 
@@ -162,8 +167,10 @@ export function processSeasonEnd(
     unbeaten: d.records.unbeaten + (result.losses === 0 ? 1 : 0),
   };
 
-  /* 4. the budget */
+  /* 4. the budget, and who is now following the club */
   next.budget = nextBudget(d, result.position, ledger);
+  const fansBefore = d.fans;
+  next.fans = nextFans(d, result.position, squadRating(starters(d)));
 
   /* 5. match ratings, which development is about to read */
   const stats: Record<string, { g: number; a: number }> = {};
@@ -372,6 +379,8 @@ export function processSeasonEnd(
       before,
       after: avg,
       budget: next.budget,
+      fansBefore,
+      fansSwing: Math.round((next.fans - fansBefore) * 100) / 100,
       news,
     },
   };

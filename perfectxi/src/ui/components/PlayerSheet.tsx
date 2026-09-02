@@ -32,6 +32,7 @@ export function PlayerSheet({
   youth,
   onScout,
   onRelease,
+  onPromote,
   scoutCost,
 }: {
   player: DynastyPlayer | null;
@@ -43,6 +44,7 @@ export function PlayerSheet({
   youth?: boolean;
   onScout?: () => void;
   onRelease?: () => void;
+  onPromote?: () => void;
   scoutCost?: number;
 }) {
   const [tab, setTab] = useState<'now' | 'career'>('now');
@@ -263,6 +265,19 @@ export function PlayerSheet({
             <Text style={[styles.actionText, { color: color.danger }]}>
               Sell for £{worth}m
             </Text>
+          </Press>
+        ) : null}
+        {onPromote ? (
+          <Press
+            onPress={() => {
+              haptic('medium');
+              onPromote();
+            }}
+            feel="none"
+            style={styles.action}
+            scaleTo={0.98}
+          >
+            <Text style={styles.actionText}>Promote him into the squad</Text>
           </Press>
         ) : null}
         {onRelease ? (
