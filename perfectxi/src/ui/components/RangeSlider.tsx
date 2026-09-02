@@ -7,10 +7,9 @@ import Animated, {
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
-  withTiming,
 } from 'react-native-reanimated';
 import { color, radius, line } from '../tokens';
-import { haptic, useReduceMotion } from '../feel';
+import { haptic } from '../feel';
 
 const THUMB = 26;
 const TRACK = 6;
@@ -41,7 +40,6 @@ export function RangeSlider({
   /** fired when either end lands on a new step */
   onChange: (from: number, to: number) => void;
 }) {
-  const reduce = useReduceMotion();
   const [width, setWidth] = useState(0);
 
   const span = Math.max(1, max - min);
@@ -88,24 +86,53 @@ export function RangeSlider({
     },
   );
 
-  const panLo = Gesture.Pan()
-    .onBegin(() => {
+  /** which thumb the current drag owns: 0 undecided, 1 low, 2 high */
+  const active = useSharedValue(0);
+
+  /**
+   * One gesture for both thumbs.
+   *
+   * A gesture per thumb looks obvious and breaks the moment they meet: the
+   * two views sit on top of each other, the last one rendered swallows the
+   * touch, and if that one is already against its end the slider goes dead.
+   * Which is exactly what happened with both ends on 2026/27.
+   *
+   * So the track owns the gesture and picks the thumb. Nearest to the touch
+   * normally; when they are on the same year there is no nearest, so it
+   * waits for the first movement and gives it to whichever one can go that
+   * way.
+   *
+   * activeOffsetX keeps the page scrolling: the slider only takes over once
+   * the finger has committed to sideways.
+   */
+  const pan = Gesture.Pan()
+    .activeOffsetX([-6, 6])
+    .failOffsetY([-12, 12])
+    .onBegin((e) => {
       'worklet';
       startLo.value = lo.value;
-    })
-    .onUpdate((e) => {
-      'worklet';
-      lo.value = Math.min(hi.value, Math.max(0, startLo.value + e.translationX));
-    });
-
-  const panHi = Gesture.Pan()
-    .onBegin(() => {
-      'worklet';
       startHi.value = hi.value;
+      const x = e.x - THUMB / 2;
+      const dl = Math.abs(x - lo.value);
+      const dh = Math.abs(x - hi.value);
+      active.value = Math.abs(dl - dh) < 2 ? 0 : dl < dh ? 1 : 2;
     })
     .onUpdate((e) => {
       'worklet';
-      hi.value = Math.max(lo.value, Math.min(usable, startHi.value + e.translationX));
+      if (active.value === 0) {
+        if (e.translationX < -2) active.value = 1;
+        else if (e.translationX > 2) active.value = 2;
+        else return;
+      }
+      if (active.value === 1) {
+        lo.value = Math.min(hi.value, Math.max(0, startLo.value + e.translationX));
+      } else {
+        hi.value = Math.max(lo.value, Math.min(usable, startHi.value + e.translationX));
+      }
+    })
+    .onFinalize(() => {
+      'worklet';
+      active.value = 0;
     });
 
   // Snapped positions, so a thumb rests on its year rather than between two.
@@ -124,22 +151,19 @@ export function RangeSlider({
   }));
 
   return (
-    <View style={styles.wrap} onLayout={onLayout}>
-      <View style={styles.track} />
-      <Animated.View style={[styles.range, rangeStyle]} />
+    <GestureDetector gesture={pan}>
+      <View style={styles.wrap} onLayout={onLayout}>
+        <View style={styles.track} />
+        <Animated.View style={[styles.range, rangeStyle]} />
 
-      <GestureDetector gesture={panLo}>
-        <Animated.View style={[styles.thumbHit, loStyle]}>
+        <Animated.View style={[styles.thumbHit, loStyle]} pointerEvents="none">
           <View style={styles.thumb} />
         </Animated.View>
-      </GestureDetector>
-
-      <GestureDetector gesture={panHi}>
-        <Animated.View style={[styles.thumbHit, hiStyle]}>
+        <Animated.View style={[styles.thumbHit, hiStyle]} pointerEvents="none">
           <View style={styles.thumb} />
         </Animated.View>
-      </GestureDetector>
-    </View>
+      </View>
+    </GestureDetector>
   );
 }
 
