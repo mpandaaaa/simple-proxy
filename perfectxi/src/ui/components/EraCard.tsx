@@ -1,29 +1,49 @@
-import { useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 import Animated, {
   Easing,
+  Extrapolation,
+  interpolate,
+  runOnJS,
+  useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
+  withSequence,
   withSpring,
   withTiming,
+  type SharedValue,
 } from 'react-native-reanimated';
 import { color, radius, space, line, gradient } from '../tokens';
 import { font, text } from '../type';
-import { useReduceMotion } from '../feel';
+import { haptic, useReduceMotion } from '../feel';
 import { clubColour, eraOf } from '../../engine';
+import {
+  WHEEL,
+  arrivalVelocity,
+  buildReel,
+  offsetFor,
+  stepCount,
+  stepDelays,
+  type ReelItem,
+} from '../../game/wheel';
 import { ClubDisc } from './ClubDisc';
 
 /**
- * The card the reel lands into.
+ * The era card, which on this game is also the spinner.
  *
- * This is what the web build actually shows: a pick counter, the club, the
- * season, and how strong that squad is. Same anatomy, with the club's own
- * colour washing the panel and the strength bar filling while the number
- * counts up.
+ * The site has no separate reel. Pressing Start Spinning reveals this card
+ * and swaps the club name inside it thirteen times on a three phase
+ * schedule. That is the whole spin, and it is what this reproduces: same
+ * card, same place on the page, same step count, same timing.
  *
- * Its height never changes. An empty state that is shorter than a full one
- * makes the whole page jump every time the reel lands, so the empty state
- * is a skeleton of exactly the right size rather than a gap.
+ * The one thing the web could not do is make it move. Instead of the text
+ * being replaced, the club row physically travels through the card, and
+ * arrives still carrying the speed of its last step so the settle spring
+ * takes that velocity, carries it past the winner and brings it back. The
+ * overshoot is the reel's own momentum rather than a chosen distance.
+ *
+ * The card's height never changes, so nothing on the page moves under your
+ * thumb when it lands.
  */
 export function EraCard({
   pick,
@@ -31,34 +51,126 @@ export function EraCard({
   club,
   season,
   strength,
-  cycling,
+  target,
+  pool,
+  allTime,
+  onSettled,
 }: {
   pick: number;
   total: number;
-  /** null while the reel is still running */
+  /** the landed club, once the run has a board */
   club: string | null;
   season: string | null;
-  /** the squad's average rating, or 0 while spinning */
+  /** the squad's average rating, or 0 before it has landed */
   strength: number;
-  /** the club currently under the pointer, while the reel runs */
-  cycling?: string | null;
+  /** set this to a club-season and the card spins to it */
+  target: ReelItem | null;
+  pool: readonly ReelItem[];
+  allTime?: boolean;
+  onSettled: () => void;
 }) {
   const reduce = useReduceMotion();
+
+  const y = useSharedValue(offsetFor(0));
+  /** 1 at full pace, 0 once still: drives the smear and the dimming */
+  const speed = useSharedValue(0);
   const fill = useSharedValue(0);
   const rise = useSharedValue(0);
+  const glow = useSharedValue(0);
 
-  const live = !!club;
+  const detent = useSharedValue(0);
+  const ticking = useSharedValue(false);
+
+  const [strip, setStrip] = useState<ReelItem[]>([]);
+  const [spinning, setSpinning] = useState(false);
+
+  const live = !!club && !spinning;
   const tint = live ? clubColour(club) : color.accent;
-  const era = season ? eraOf(season) : null;
+  const era = live && season ? eraOf(season) : null;
   // Ratings live between about 60 and 97, so that is what the bar spans.
   const fraction = strength ? Math.max(0.05, Math.min(1, (strength - 58) / 38)) : 0;
 
+  /** A club clicking past. The site fires a 6ms buzz; selection is Apple's. */
+  const tick = useCallback(() => haptic('select'), []);
+
+  const settle = useCallback(() => {
+    haptic('heavy'); // the site's 40ms landing buzz
+    setSpinning(false);
+    glow.value = withSequence(
+      withTiming(1, { duration: 140, easing: Easing.out(Easing.quad) }),
+      withTiming(0, { duration: 460, easing: Easing.out(Easing.quad) }),
+    );
+    onSettled();
+  }, [glow, onSettled]);
+
+  // Ticks come from real position, so they slow because the reel slows.
+  useAnimatedReaction(
+    () => y.value,
+    (cur) => {
+      'worklet';
+      if (!ticking.value) return;
+      const progress = -cur / WHEEL.ROW - WHEEL.PAD;
+      const d = Math.floor(progress + 0.0001);
+      if (d <= detent.value) return;
+      detent.value = d;
+      if (d >= 1) runOnJS(tick)();
+    },
+  );
+
   useEffect(() => {
-    if (!live) {
-      fill.value = 0;
-      rise.value = 0;
+    if (!target || !pool.length) return;
+
+    const delays = stepDelays(allTime);
+    const last = stepCount(allTime);
+
+    setStrip(buildReel(target, pool, allTime));
+    setSpinning(true);
+    y.value = offsetFor(0);
+    detent.value = 0;
+    fill.value = 0;
+    rise.value = 0;
+
+    if (reduce) {
+      y.value = offsetFor(last);
+      speed.value = 0;
+      haptic('heavy');
+      setSpinning(false);
+      onSettled();
       return;
     }
+
+    ticking.value = true;
+
+    // One timed step per club, on the site's own three phase schedule,
+    // then the settle spring carrying the reel's arrival speed.
+    const steps = delays.map((ms, i) =>
+      withTiming(offsetFor(i + 1), { duration: ms, easing: Easing.linear }),
+    );
+
+    y.value = withSequence(
+      ...steps,
+      withSpring(
+        offsetFor(last),
+        { ...WHEEL.SETTLE, velocity: arrivalVelocity(allTime) },
+        (finished) => {
+          'worklet';
+          ticking.value = false;
+          if (finished) runOnJS(settle)();
+        },
+      ),
+    );
+
+    const runMs = delays.reduce((n, ms) => n + ms, 0);
+    speed.value = withSequence(
+      withTiming(1, { duration: 0 }),
+      withTiming(0, { duration: runMs, easing: Easing.linear }),
+    );
+    // A new target is a new spin. Nothing else may restart one in flight.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target]);
+
+  useEffect(() => {
+    if (!live) return;
     fill.value = withTiming(fraction, {
       duration: reduce ? 0 : 600,
       easing: Easing.out(Easing.cubic),
@@ -66,13 +178,15 @@ export function EraCard({
     rise.value = withSpring(1, { stiffness: 210, damping: 15, mass: 1 });
   }, [live, fraction, fill, rise, reduce]);
 
+  const stripStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: y.value }],
+  }));
+  const barStyle = useAnimatedStyle(() => ({ transform: [{ scaleX: fill.value }] }));
   const bodyStyle = useAnimatedStyle(() => ({
     opacity: rise.value,
-    transform: [{ translateY: (1 - rise.value) * 8 }],
+    transform: [{ translateY: (1 - rise.value) * 6 }],
   }));
-  const barStyle = useAnimatedStyle(() => ({
-    transform: [{ scaleX: fill.value }],
-  }));
+  const glowStyle = useAnimatedStyle(() => ({ opacity: glow.value }));
 
   return (
     <View style={[styles.card, live && { borderColor: hexA(tint, 0.5) }]}>
@@ -88,9 +202,21 @@ export function EraCard({
         />
       ) : null}
 
+      {/* the card lighting up as the reel locks home */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.wash,
+          glowStyle,
+          {
+            experimental_backgroundImage: `linear-gradient(130deg, ${hexA(tint, 0.34)} 0%, rgba(0,0,0,0) 70%)`,
+          },
+        ]}
+      />
+
       <View style={styles.head}>
         <View style={styles.pickWrap}>
-          <View style={[styles.dot, { backgroundColor: live ? tint : color.accent }]} />
+          <View style={[styles.dot, { backgroundColor: tint }]} />
           <Text style={styles.pickText}>
             Pick {pick} of {total}
           </Text>
@@ -98,57 +224,53 @@ export function EraCard({
         <Text style={styles.yourSquad}>Your squad</Text>
       </View>
 
-      <View style={styles.body}>
-        {live ? (
-          <Animated.View style={bodyStyle}>
-            <ClubDisc club={club} size={54} square />
+      {/* One row tall, and the reel runs through it. */}
+      <View style={styles.window}>
+        {spinning ? (
+          <Animated.View style={[styles.strip, stripStyle]}>
+            {strip.map((item, i) => (
+              <ReelRow key={i} item={item} index={i} y={y} speed={speed} />
+            ))}
           </Animated.View>
-        ) : cycling ? (
-          <ClubDisc club={cycling} size={54} square />
         ) : (
-          <View style={styles.discSkeleton} />
-        )}
-
-        <View style={styles.names}>
-          {live ? (
-            <Animated.View style={bodyStyle}>
-              <Text
-                style={styles.club}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.6}
-                allowFontScaling={false}
-              >
-                {club}
-              </Text>
-              <Text style={styles.season}>
-                {season}
-                {era ? `  ·  ${era.label}` : ''}
-              </Text>
-            </Animated.View>
-          ) : cycling ? (
-            // The site swaps the club name here as it spins. Same idea, but
-            // the name comes from the card actually under the pointer.
-            <>
-              <Text style={[styles.club, styles.clubSpinning]} numberOfLines={1}>
-                {cycling}
-              </Text>
-              <Text style={styles.season}>. . .</Text>
-            </>
-          ) : (
-            <>
-              <View style={[styles.skeleton, styles.skeletonTitle]} />
-              <View style={[styles.skeleton, styles.skeletonSub]} />
-            </>
-          )}
-        </View>
-
-        {live ? (
-          <Animated.View style={[styles.strengthWrap, bodyStyle]}>
-            <CountUp to={strength} />
-            <Text style={styles.strengthLabel}>Squad</Text>
+          <Animated.View style={[styles.row, live ? bodyStyle : undefined]}>
+            {live ? (
+              <ClubDisc club={club} size={54} square />
+            ) : (
+              <View style={styles.discSkeleton} />
+            )}
+            <View style={styles.names}>
+              {live ? (
+                <>
+                  <Text
+                    style={styles.club}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.6}
+                    allowFontScaling={false}
+                  >
+                    {club}
+                  </Text>
+                  <Text style={styles.season}>
+                    {season}
+                    {era ? `  ·  ${era.label}` : ''}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <View style={[styles.skeleton, styles.skeletonTitle]} />
+                  <View style={[styles.skeleton, styles.skeletonSub]} />
+                </>
+              )}
+            </View>
+            {live ? (
+              <View style={styles.strengthWrap}>
+                <CountUp to={strength} />
+                <Text style={styles.strengthLabel}>Squad</Text>
+              </View>
+            ) : null}
           </Animated.View>
-        ) : null}
+        )}
       </View>
 
       <View style={styles.track}>
@@ -168,11 +290,53 @@ export function EraCard({
 }
 
 /**
- * A number that arrives rather than appears.
- *
- * Driven from JavaScript because there is no way to animate the glyphs in
- * a Text node from the native side. It runs for half a second, once per
- * spin, while nothing else is moving, and stops the moment it unmounts.
+ * One club on the reel. Its appearance is a worklet reading the shared
+ * scroll value, so it never re-renders while the card is spinning.
+ */
+const ReelRow = memo(function ReelRow({
+  item,
+  index,
+  y,
+  speed,
+}: {
+  item: ReelItem;
+  index: number;
+  y: SharedValue<number>;
+  speed: SharedValue<number>;
+}) {
+  const style = useAnimatedStyle(() => {
+    // where this row sits relative to the window, in rows
+    const d = (index * WHEEL.ROW + y.value) / WHEEL.ROW;
+    const ad = Math.abs(d);
+    const c = Extrapolation.CLAMP;
+    const smear = interpolate(speed.value, [0, 1], [1, 1.35]);
+
+    return {
+      opacity: interpolate(ad, [0, 0.5, 1], [1, 0.45, 0.1], c),
+      transform: [
+        { perspective: 620 },
+        { rotateX: `${interpolate(d, [-1, 0, 1], [26, 0, -26], c)}deg` },
+        { scaleY: interpolate(ad, [0, 1], [1, 0.86], c) * smear },
+      ],
+    };
+  });
+
+  return (
+    <Animated.View style={[styles.row, style]}>
+      <ClubDisc club={item.club} size={54} square />
+      <View style={styles.names}>
+        <Text style={[styles.club, styles.clubSpinning]} numberOfLines={1}>
+          {item.club}
+        </Text>
+        <Text style={styles.season}>{item.season}</Text>
+      </View>
+    </Animated.View>
+  );
+});
+
+/**
+ * A number that arrives rather than appears. Driven from JavaScript
+ * because glyphs in a Text node cannot be animated from the native side.
  */
 function CountUp({ to }: { to: number }) {
   const reduce = useReduceMotion();
@@ -185,9 +349,8 @@ function CountUp({ to }: { to: number }) {
       return;
     }
     const start = Date.now();
-    const DUR = 560;
     const step = () => {
-      const p = Math.min(1, (Date.now() - start) / DUR);
+      const p = Math.min(1, (Date.now() - start) / 560);
       setN(Math.round(to * (1 - Math.pow(1 - p, 3))));
       if (p < 1) frame.current = requestAnimationFrame(step);
     };
@@ -235,9 +398,18 @@ const styles = StyleSheet.create({
   },
   yourSquad: { ...text.key, fontSize: 10, color: color.text3 },
 
-  // Fixed height so the landing never resizes the page under your thumb.
-  body: { flexDirection: 'row', alignItems: 'center', gap: space.s4, height: 56 },
-  names: { flex: 1, minWidth: 0, gap: 6 },
+  // Exactly one row tall, so the reel shows one club at a time and the
+  // card never changes height.
+  window: { height: WHEEL.ROW, overflow: 'hidden' },
+  strip: {},
+  row: {
+    height: WHEEL.ROW,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s4,
+  },
+
+  names: { flex: 1, minWidth: 0 },
   club: {
     fontFamily: font.displayBlack,
     fontSize: 31,
@@ -245,13 +417,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
     color: color.text1,
   },
+  clubSpinning: { color: color.text2 },
   season: {
     fontFamily: font.bodyMed,
     fontSize: 12.5,
-    color: color.text2,
+    color: color.text3,
     marginTop: 1,
   },
-  clubSpinning: { color: color.text2 },
 
   discSkeleton: {
     width: 54,
@@ -263,7 +435,7 @@ const styles = StyleSheet.create({
   },
   skeleton: { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 5 },
   skeletonTitle: { height: 24, width: '62%' },
-  skeletonSub: { height: 11, width: '38%' },
+  skeletonSub: { height: 11, width: '38%', marginTop: 6 },
 
   strengthWrap: { alignItems: 'flex-end' },
   strengthValue: {

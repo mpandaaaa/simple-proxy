@@ -17,11 +17,12 @@
  */
 
 export const WHEEL = {
-  /** one card plus its gap, in points; the reel travels in these units */
-  CARD: 124,
-  /** the card itself, the rest of CARD being the gap */
-  CARD_W: 112,
-  CARD_H: 132,
+  /**
+   * The height of one club row inside the era card. The spin happens in
+   * the card itself, exactly as it does on the site, so this is the unit
+   * the reel travels in.
+   */
+  ROW: 56,
 
   /** cards drawn behind the start, so the window is never empty on the left */
   PAD: 3,
@@ -66,7 +67,7 @@ export function stepCount(allTime = false): number {
 
 /** Where the strip sits, in points, for a given detent. */
 export function offsetFor(detent: number): number {
-  return -(WHEEL.PAD + detent) * WHEEL.CARD;
+  return -(WHEEL.PAD + detent) * WHEEL.ROW;
 }
 
 /**
@@ -76,7 +77,7 @@ export function offsetFor(detent: number): number {
  */
 export function arrivalVelocity(allTime = false): number {
   const delays = stepDelays(allTime);
-  return -(WHEEL.CARD / delays[delays.length - 1]) * 1000;
+  return -(WHEEL.ROW / delays[delays.length - 1]) * 1000;
 }
 
 export type Tick = { at: number; detent: number; strong: boolean };
@@ -110,7 +111,7 @@ export function spinDuration(allTime = false): number {
 
 /** Peak speed, during the 65ms phase, in points per second. */
 export function peakVelocity(): number {
-  return (WHEEL.CARD / WHEEL.STEP_BASE) * 1000;
+  return (WHEEL.ROW / WHEEL.STEP_BASE) * 1000;
 }
 
 export type ReelItem = { club: string; season: string };

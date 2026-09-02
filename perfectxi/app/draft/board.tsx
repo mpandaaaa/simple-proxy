@@ -8,7 +8,6 @@ import {
   Press,
   Pitch,
   PlayerCard,
-  SpinReel,
   EraCard,
   OverallStrip,
 } from '../../src/ui/components';
@@ -44,8 +43,6 @@ export default function DraftBoard() {
   const [pending, setPending] = useState<SpinResult | null>(null);
   const [chooser, setChooser] = useState<{ player: Pick; slots: number[] } | null>(null);
   const [reveal, setReveal] = useState<{ player: Pick; pos: Position } | null>(null);
-  /** the club under the pointer while the reel runs, for the era card */
-  const [cycling, setCycling] = useState<string | null>(null);
 
   // Scenery for the reel: every club-season in the era being drafted, so
   // the cards flying past are real sides rather than invented ones.
@@ -64,7 +61,6 @@ export default function DraftBoard() {
   const onSpin = useCallback(() => {
     const result = doSpin();
     if (!result) return;
-    setCycling(null);
     setPending(result);
   }, []);
 
@@ -85,7 +81,6 @@ export default function DraftBoard() {
   }, [run, pending, reveal, onSpin]);
 
   const onSettled = useCallback(() => {
-    setCycling(null);
     setPending((p) => {
       if (p) settleSpin(p);
       return null;
@@ -182,59 +177,60 @@ export default function DraftBoard() {
         />
       </View>
 
-      {!board ? (
+      {/* Hidden until the first spin, exactly as the site hides it. */}
+      {board || pending ? (
         <View style={styles.block}>
-          <SpinReel
+          <EraCard
+            pick={Math.min(state.filled + 1, state.total)}
+            total={state.total}
+            club={board ? club : null}
+            season={board ? season : null}
+            strength={boardAvg}
             target={pending ? { club: pending.club, season: pending.season } : null}
             pool={pool}
             allTime={state.config.mode === 'alltime'}
-            onDetent={(item) => setCycling(item.club)}
             onSettled={onSettled}
           />
         </View>
       ) : null}
 
-      <View style={styles.block}>
-        <EraCard
-          pick={Math.min(state.filled + 1, state.total)}
-          total={state.total}
-          club={board ? club : null}
-          season={board ? season : null}
-          strength={boardAvg}
-          cycling={cycling}
+      {state.rerollsMax > 0 ? (
+        <View style={styles.rerollRow}>
+          <Press
+            onPress={() => {
+              if (spendReroll()) haptic('warning');
+            }}
+            feel="none"
+            scaleTo={0.94}
+            disabled={rerollsLeft === 0 || !board}
+            style={[
+              styles.rerollBtn,
+              (rerollsLeft === 0 || !board) && styles.rerollSpent,
+            ]}
+          >
+            <Text style={styles.rerollText}>Reroll</Text>
+          </Press>
+          <View style={styles.dots}>
+            {Array.from({ length: state.rerollsMax }).map((_, i) => (
+              <View key={i} style={[styles.dot, i < state.rerolls && styles.dotUsed]} />
+            ))}
+          </View>
+          <Text style={styles.rerollsLeft}>
+            {rerollsLeft} reroll{rerollsLeft === 1 ? '' : 's'} left
+          </Text>
+        </View>
+      ) : null}
+
+      {!board ? (
+        <Button
+          label={pending ? 'Spinning' : 'Start spinning'}
+          onPress={onSpin}
+          style={styles.spinBtn}
         />
-      </View>
+      ) : null}
 
       {board ? (
         <>
-          <View style={styles.rerollRow}>
-            {state.rerollsMax > 0 ? (
-              <>
-                <Press
-                  onPress={() => {
-                    if (spendReroll()) haptic('warning');
-                  }}
-                  feel="none"
-                  scaleTo={0.94}
-                  disabled={rerollsLeft === 0}
-                  style={[styles.rerollBtn, rerollsLeft === 0 && styles.rerollSpent]}
-                >
-                  <Text style={styles.rerollText}>Reroll</Text>
-                </Press>
-                <View style={styles.dots}>
-                  {Array.from({ length: state.rerollsMax }).map((_, i) => (
-                    <View
-                      key={i}
-                      style={[styles.dot, i < state.rerolls && styles.dotUsed]}
-                    />
-                  ))}
-                </View>
-                <Text style={styles.rerollsLeft}>
-                  {rerollsLeft} reroll{rerollsLeft === 1 ? '' : 's'} left
-                </Text>
-              </>
-            ) : null}
-          </View>
 
           {need.length ? (
             <View style={styles.needRow}>
@@ -263,13 +259,7 @@ export default function DraftBoard() {
             <Text style={styles.listCount}>{shown.length} in squad</Text>
           </View>
         </>
-      ) : (
-        <Button
-          label={pending ? 'Spinning' : 'Spin'}
-          onPress={onSpin}
-          style={styles.spinBtn}
-        />
-      )}
+      ) : null}
     </View>
   );
 
