@@ -33,3 +33,5 @@ export { Trophy } from './Trophy';
 export { SeasonCurve } from './SeasonCurve';
 export { CupCard } from './CupCard';
 export { ShareCard, CARD_W, CARD_H } from './ShareCard';
+export { AchievementToast } from './AchievementToast';
+export { AchievementPanel } from './AchievementPanel';

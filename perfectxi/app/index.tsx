@@ -8,6 +8,7 @@ import {
   Row,
   Rise,
   Press,
+  AchievementPanel,
 } from '../src/ui/components';
 import {
   IconTrophy,
@@ -30,7 +31,7 @@ import {
   careerStore,
   ranked,
 } from '../src/save';
-import { ACHIEVEMENTS } from '../src/game/achievements';
+import { ACHIEVEMENTS, type Career } from '../src/game/achievements';
 import type { Progress, DynastySummary } from '../src/save';
 
 /**
@@ -72,6 +73,7 @@ export default function Home() {
     dynastyStore.read(),
   );
   const [record, setRecord] = useState(() => readRecord());
+  const [career, setCareer] = useState<Career>(() => careerStore.read());
 
   // Saves change while you are inside a mode, so the status lines are read
   // again every time Home comes back to the front rather than once on mount.
@@ -80,6 +82,7 @@ export default function Home() {
       setProgress(progressStore.read());
       setDynasty(dynastyStore.read());
       setRecord(readRecord());
+      setCareer(careerStore.read());
     }, []),
   );
 
@@ -145,6 +148,12 @@ export default function Home() {
             )
           }
         />
+      </Rise>
+
+      <Rise delay={4}>
+        <View style={styles.achievements}>
+          <AchievementPanel career={career} />
+        </View>
       </Rise>
 
       <Rise delay={4} style={styles.groups}>
@@ -401,6 +410,7 @@ const styles = StyleSheet.create({
     marginTop: space.s2,
   },
 
+  achievements: { marginTop: space.s4 },
   groups: { marginTop: space.s4 },
 
   dbLine: {

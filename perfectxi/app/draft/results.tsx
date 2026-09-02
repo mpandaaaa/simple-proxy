@@ -61,6 +61,7 @@ import {
   type SeasonRecord,
 } from '../../src/save';
 import { achievementFor, earn, foldSeason } from '../../src/game/achievements';
+import { pushUnlocks } from '../../src/game/unlocks';
 
 /**
  * The season review.
@@ -178,6 +179,9 @@ export default function Results() {
     });
     careerStore.write({ ...after, earned: [...after.earned, ...fresh] });
     setUnlocked(fresh);
+    // Shown as a banner over the page as well as listed on it, so the
+    // first one is impossible to miss and the rest are still recorded.
+    pushUnlocks(fresh);
 
     const scorers = Object.entries(r.playerStats)
       .map(([name, st]) => ({ name, goals: st.g }))

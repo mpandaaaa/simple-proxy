@@ -17,6 +17,7 @@ import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
 import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
 import { Anton_400Regular } from '@expo-google-fonts/anton/400Regular';
 import { color } from '../src/ui/tokens';
+import { AchievementToast } from '../src/ui/components';
 import { useReduceMotion } from '../src/ui/feel';
 
 SplashScreen.preventAutoHideAsync();
@@ -69,6 +70,8 @@ export default function RootLayout() {
             fullScreenGestureEnabled: true,
           }}
         />
+        {/* above every screen, so an achievement finds you wherever you are */}
+        <AchievementToast />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

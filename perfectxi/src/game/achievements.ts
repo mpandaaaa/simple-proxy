@@ -273,3 +273,62 @@ export function earn(args: {
 
   return out;
 }
+
+export type Target = {
+  achievement: Achievement;
+  /** where you are, and what you need, when the condition is countable */
+  have: number;
+  need: number;
+};
+
+/**
+ * What you are closest to earning.
+ *
+ * Only the countable ones can honestly show progress: seasons played,
+ * titles, total wins, unbeaten campaigns, cups. The rest are one shot
+ * conditions, and a bar that reads "0 of 1" until the moment it reads
+ * "1 of 1" tells you nothing you did not already know.
+ *
+ * Sorted by how close you are, so the front of the list is the thing worth
+ * playing another season for.
+ */
+export function nextUp(career: Career, limit = 3): Target[] {
+  const has = new Set(career.earned);
+  const countable: { key: string; have: number; need: number }[] = [
+    { key: 'runs5', have: career.seasons, need: 5 },
+    { key: 'runs10', have: career.seasons, need: 10 },
+    { key: 'runs25', have: career.seasons, need: 25 },
+    { key: 'runs50', have: career.seasons, need: 50 },
+    { key: 'titles3', have: career.titles, need: 3 },
+    { key: 'titles5', have: career.titles, need: 5 },
+    { key: 'titles10', have: career.titles, need: 10 },
+    { key: 'wins100', have: career.wins, need: 100 },
+    { key: 'unbeaten3', have: career.unbeaten, need: 3 },
+    { key: 'formationHunter', have: career.titleFormations.length, need: 4 },
+    { key: 'firstTitle', have: career.titles, need: 1 },
+    { key: 'nationalCup', have: career.nationalCups, need: 1 },
+    { key: 'continentalCup', have: career.continentalCups, need: 1 },
+    { key: 'cupDouble', have: career.doubles, need: 1 },
+    { key: 'treble', have: career.trebles, need: 1 },
+  ];
+
+  return countable
+    .filter((c) => !has.has(c.key))
+    .map((c) => {
+      const achievement = achievementFor(c.key);
+      return achievement ? { achievement, have: Math.min(c.have, c.need), need: c.need } : null;
+    })
+    .filter((t): t is Target => t !== null)
+    .sort((a, b) => b.have / b.need - a.have / a.need || a.need - b.need)
+    .slice(0, limit);
+}
+
+/** The most recently earned, newest first. */
+export function recent(career: Career, limit = 4): Achievement[] {
+  const out: Achievement[] = [];
+  for (let i = career.earned.length - 1; i >= 0 && out.length < limit; i--) {
+    const a = achievementFor(career.earned[i]);
+    if (a) out.push(a);
+  }
+  return out;
+}
