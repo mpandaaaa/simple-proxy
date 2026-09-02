@@ -12,7 +12,7 @@ import {
   Ticker,
   PlayerSheet,
 } from '../../src/ui/components';
-import { color, gradient, line, positionColor, radius, space } from '../../src/ui/tokens';
+import { color, gradient, line, positionColor, radius, space, hue, alpha, type Hue } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { GRAIN_URI } from '../../src/ui/grain';
 import { haptic } from '../../src/ui/feel';
@@ -56,22 +56,38 @@ type Href =
   | '/dynasty/finances'
   | '/dynasty/history';
 
-const TILES: {
+/**
+ * Every door, always.
+ *
+ * Simple and Immersive change how much you touch inside a screen, never
+ * whether the screen is there at all. Hiding the staff and the stadium
+ * behind a mode chosen on the first screen of a career meant half the
+ * mode was invisible and looked missing.
+ */
+const DOORS: {
   href: Href;
   mark: string;
   title: string;
+  tint: Hue;
   note: (d: Dynasty) => string;
-  immersive?: boolean;
 }[] = [
-  { href: '/dynasty/market', mark: '🔁', title: 'Transfers', note: (d) => `£${d.budget}m to spend` },
+  {
+    href: '/dynasty/market',
+    mark: '🔁',
+    title: 'Transfers',
+    tint: 'sky',
+    note: (d) => `£${d.budget}m to spend`,
+  },
   {
     href: '/dynasty/tactics',
+    tint: 'indigo',
     mark: '🧭',
     title: 'Tactics',
     note: (d) => `${d.tactic.form} · ${d.tactic.style === 'direct' ? 'counter' : d.tactic.style}`,
   },
   {
     href: '/dynasty/squad',
+    tint: 'violet',
     mark: '📋',
     title: 'Contracts',
     note: (d) => {
@@ -81,34 +97,36 @@ const TILES: {
   },
   {
     href: '/dynasty/academy',
+    tint: 'lime',
     mark: '🌱',
     title: 'Academy',
     note: (d) => `${d.youth.length} coming through`,
   },
   {
     href: '/dynasty/staff',
+    tint: 'mint',
     mark: '👔',
     title: 'Staff',
     note: (d) =>
       `${d.staff.coach + d.staff.medical + d.staff.youth + d.staff.setpiece + d.staff.scout} of 25 stars`,
-    immersive: true,
   },
   {
     href: '/dynasty/club',
+    tint: 'amber',
     mark: '🏟',
     title: 'The club',
     note: (d) => `${d.infra.capacity.toLocaleString('en-GB')} seats`,
-    immersive: true,
   },
   {
     href: '/dynasty/finances',
+    tint: 'gold',
     mark: '💷',
     title: 'Finances',
     note: (d) => (d.ledger ? `£${d.ledger.profit}m last year` : 'no accounts yet'),
-    immersive: true,
   },
   {
     href: '/dynasty/history',
+    tint: 'rose',
     mark: '📖',
     title: 'History',
     note: (d) => `${d.seasons.length} season${d.seasons.length === 1 ? '' : 's'}`,
@@ -182,8 +200,7 @@ export default function DynastyHub() {
   const last = career.seasons[career.seasons.length - 1];
   const short = xi.length < 11;
   const outOfPosition = misfits(career);
-  const immersive = career.mode === 'immersive';
-  const tiles = TILES.filter((t) => immersive || !t.immersive);
+  const tiles = DOORS;
 
   return (
     <>
@@ -350,14 +367,33 @@ export default function DynastyHub() {
                 router.push(t.href);
               }}
               feel="none"
-              style={styles.tile}
+              style={[
+                styles.tile,
+                {
+                  borderColor: alpha(hue[t.tint], 0.28),
+                  experimental_backgroundImage: `linear-gradient(180deg, ${alpha(
+                    hue[t.tint],
+                    0.16,
+                  )} 0%, rgba(10,15,12,0) 78%)`,
+                },
+              ]}
               scaleTo={0.97}
             >
-              <Text style={styles.tileMark} allowFontScaling={false}>
-                {t.mark}
-              </Text>
+              <View
+                style={[
+                  styles.tileDisc,
+                  {
+                    borderColor: alpha(hue[t.tint], 0.36),
+                    backgroundColor: alpha(hue[t.tint], 0.14),
+                  },
+                ]}
+              >
+                <Text style={styles.tileMark} allowFontScaling={false}>
+                  {t.mark}
+                </Text>
+              </View>
               <Text style={styles.tileTitle}>{t.title}</Text>
-              <Text style={styles.tileNote} numberOfLines={1}>
+              <Text style={[styles.tileNote, { color: alpha(hue[t.tint], 0.85) }]} numberOfLines={1}>
                 {t.note(career)}
               </Text>
             </Press>
@@ -781,7 +817,7 @@ const styles = StyleSheet.create({
   tile: {
     width: '31.5%',
     flexGrow: 1,
-    minHeight: 86,
+    minHeight: 104,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: space.s2,
@@ -794,7 +830,16 @@ const styles = StyleSheet.create({
       'inset 0px 1px 0px rgba(255,255,255,0.06), inset 0px 0px 0px 1px rgba(255,255,255,0.035)',
     gap: 2,
   },
-  tileMark: { fontSize: 19, lineHeight: 24 },
+  tileDisc: {
+    width: 34,
+    height: 34,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 3,
+  },
+  tileMark: { fontSize: 17, lineHeight: 22 },
   tileTitle: { fontFamily: font.displayBold, fontSize: 14, lineHeight: 18, color: color.text1 },
   tileNote: { fontFamily: font.body, fontSize: 9.5, lineHeight: 13, color: color.text3 },
 

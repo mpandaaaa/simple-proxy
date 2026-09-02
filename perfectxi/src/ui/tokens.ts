@@ -144,3 +144,105 @@ export const motion = {
   d4: 300,
   d5: 400,
 } as const;
+
+/**
+ * Colour, beyond the green.
+ *
+ * Emerald is the app's identity, not its whole palette. A screen where
+ * every card, every border and every button is the same green reads as
+ * one flat surface, and nothing on it can be more important than anything
+ * else. So anything that carries its own meaning carries its own hue: the
+ * market is blue money, the academy is young growth, the board is gold,
+ * trouble is red, and a match wears the colour of the club you are facing.
+ *
+ * `wear` takes any hex, a club's colour included, and gives back the five
+ * values a card needs. One call instead of five hand mixed rgba strings,
+ * which is what stops the palette drifting screen by screen.
+ */
+export const hue = {
+  emerald: '#1FC57E',
+  mint: '#2FD4B6',
+  sky: '#4CA0FF',
+  indigo: '#7C86FF',
+  violet: '#B98CF2',
+  rose: '#F06A9A',
+  crimson: '#E5484D',
+  amber: '#F5A524',
+  gold: '#D6B25E',
+  lime: '#A6D74F',
+} as const;
+
+export type Hue = keyof typeof hue;
+
+function rgbOf(hex: string): [number, number, number] {
+  const h = hex.replace('#', '');
+  return [
+    parseInt(h.slice(0, 2), 16),
+    parseInt(h.slice(2, 4), 16),
+    parseInt(h.slice(4, 6), 16),
+  ];
+}
+
+/** A hex plus an alpha, as the rgba string React Native wants. */
+export function alpha(hex: string, a: number): string {
+  const [r, g, b] = rgbOf(hex);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+/**
+ * Black or white, whichever can actually be read on this colour.
+ * Club colours run from near black navy to bright yellow, so a pill that
+ * always used one or the other would be unreadable half the time.
+ */
+export function readable(hex: string): string {
+  const [r, g, b] = rgbOf(hex);
+  const l = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return l > 0.58 ? '#0A0F0C' : '#FFFFFF';
+}
+
+/** Everything a tinted card needs, mixed from one colour. */
+export function wear(base: string) {
+  const [r, g, b] = rgbOf(base);
+  // the card body: the hue at a few percent over the dark ground, top lit
+  const top = `rgba(${Math.round(r * 0.34)},${Math.round(g * 0.34)},${Math.round(b * 0.34)},1)`;
+  return {
+    key: base,
+    line: alpha(base, 0.42),
+    lineSoft: alpha(base, 0.24),
+    wash: alpha(base, 0.13),
+    glow: `0px 0px 20px ${alpha(base, 0.20)}`,
+    grad: `linear-gradient(160deg, ${top} 0%, #0D1712 68%, #080D0A 100%)`,
+    on: readable(base),
+  };
+}
+
+/**
+ * A club colour bright enough to carry a button.
+ *
+ * Real kit colours run from bright yellow to a navy that is almost the
+ * background. Left alone, half of them make an unreadable button, so
+ * anything too dark is lifted until it can hold text and anything too
+ * pale is pulled back.
+ */
+export function vivid(hex: string): string {
+  let [r, g, b] = rgbOf(hex);
+  let l = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  let guard = 0;
+  while (l < 0.34 && guard++ < 12) {
+    r += (255 - r) * 0.16;
+    g += (255 - g) * 0.16;
+    b += (255 - b) * 0.16;
+    l = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  }
+  const h = (c: number) =>
+    Math.max(0, Math.min(255, Math.round(c))).toString(16).padStart(2, '0');
+  return `#${h(r)}${h(g)}${h(b)}`;
+}
+
+/** The same colour, darker, for the bottom of a gradient. */
+export function deepen(hex: string, amount = 0.32): string {
+  const [r, g, b] = rgbOf(hex);
+  const h = (c: number) =>
+    Math.max(0, Math.min(255, Math.round(c * (1 - amount)))).toString(16).padStart(2, '0');
+  return `#${h(r)}${h(g)}${h(b)}`;
+}

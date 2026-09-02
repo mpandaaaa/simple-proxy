@@ -490,6 +490,14 @@ export type Dynasty = {
   saleProfit: number;
   /** points deducted this season, if the books did not add up */
   psrHit: number;
+  /**
+   * How many times the market has been looked at again this season.
+   *
+   * Three, then it is the list you have until the summer. Without a limit
+   * the market is not a market, it is a slot machine you pull until the
+   * right player appears.
+   */
+  marketRolls: number;
   ledger: Ledger | null;
   /** who left, and how, this summer */
   expired: string[];
@@ -611,6 +619,7 @@ export function startDynasty(
     psr: [],
     saleProfit: 0,
     psrHit: 0,
+    marketRolls: 0,
     ledger: null,
     expired: [],
     renewed: [],

@@ -2,12 +2,13 @@ import { useCallback } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { ModeScreen, Press, Shine, ClubDisc } from '../../src/ui/components';
-import { color, gradient, line, radius, space } from '../../src/ui/tokens';
+import { color, gradient, line, radius, space, hue, alpha, wear, vivid } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic } from '../../src/ui/feel';
 import { sfx } from '../../src/ui/sound';
 import {
   STADIUM_STEP,
+  clubColour,
   matchdayRevenue,
   stadiumCost,
   stadiumPayback,
@@ -65,14 +66,16 @@ export default function Club() {
 
   const pay = stadiumPayback(career);
   const canBuild = career.budget >= pay.cost;
+  // The ground is painted in the club's own colours, not the app's.
+  const kit = wear(clubColour(career.club));
 
   return (
     <ModeScreen overline={career.club} title="The club" onBack={() => router.back()}>
       {/* ---- the ground ---- */}
-      <View style={styles.ground}>
+      <View style={[styles.ground, { borderColor: kit.lineSoft, experimental_backgroundImage: kit.grad }]}>
         <Shine radius={radius.xl} group="feature" bevel={false} clip={false} />
         <ClubDisc club={career.club} size={48} />
-        <Text style={styles.capacity} allowFontScaling={false}>
+        <Text style={[styles.capacity, { color: vivid(kit.key) }]} allowFontScaling={false}>
           {career.infra.capacity.toLocaleString('en-GB')}
         </Text>
         <Text style={styles.capKey}>seats</Text>
@@ -109,6 +112,7 @@ export default function Club() {
       {/* ---- the facilities ---- */}
       <Text style={[text.label, styles.sect]}>Facilities</Text>
       <Facility
+        tint={hue.mint}
         title="Training ground"
         level={career.infra.training}
         effect={`Players develop ${Math.round((trainingMultiplier(career) - 1) * 100)}% faster than average`}
@@ -122,6 +126,7 @@ export default function Club() {
         onPress={() => improve('training')}
       />
       <Facility
+        tint={hue.lime}
         title="Academy"
         level={career.infra.academy}
         effect={`${career.infra.academy >= 4 ? 'Four or five' : career.infra.academy >= 3 ? 'Three or four' : 'Two or three'} come through each summer, and better ones`}
@@ -158,6 +163,7 @@ function Facility({
   next,
   cost,
   budget,
+  tint,
   onPress,
 }: {
   title: string;
@@ -166,15 +172,27 @@ function Facility({
   next: string | null;
   cost: number;
   budget: number;
+  tint: string;
   onPress: () => void;
 }) {
   const can = next !== null && budget >= cost;
   return (
-    <View style={styles.facility}>
+    <View
+      style={[
+        styles.facility,
+        {
+          borderColor: alpha(tint, 0.26),
+          experimental_backgroundImage: `linear-gradient(180deg, ${alpha(
+            tint,
+            0.13,
+          )} 0%, rgba(10,15,12,0) 76%)`,
+        },
+      ]}
+    >
       <Shine radius={radius.lg} group="card" bevel={false} clip={false} />
       <View style={styles.facHead}>
         <Text style={styles.facTitle}>{title}</Text>
-        <Text style={styles.facLevel} allowFontScaling={false}>
+        <Text style={[styles.facLevel, { color: tint }]} allowFontScaling={false}>
           {level} of 5
         </Text>
       </View>
@@ -184,7 +202,7 @@ function Facility({
             key={i}
             style={[
               styles.bar,
-              { backgroundColor: i <= level ? color.accent : 'rgba(255,255,255,0.09)' },
+              { backgroundColor: i <= level ? tint : 'rgba(255,255,255,0.09)' },
             ]}
           />
         ))}
@@ -195,9 +213,14 @@ function Facility({
           onPress={() => can && onPress()}
           feel="none"
           scaleTo={0.98}
-          style={[styles.facCta, !can ? styles.off : null]}
+          style={[
+            styles.facCta,
+            can
+              ? { borderColor: alpha(tint, 0.45), backgroundColor: alpha(tint, 0.12) }
+              : styles.off,
+          ]}
         >
-          <Text style={[styles.facCtaText, !can ? { color: color.text3 } : null]}>
+          <Text style={[styles.facCtaText, { color: can ? tint : color.text3 }]}>
             {can ? `Build for £${cost}m` : next}
           </Text>
         </Press>
@@ -246,12 +269,13 @@ const styles = StyleSheet.create({
     padding: space.s4,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: line.card,
-    backgroundColor: '#101A14',
-    experimental_backgroundImage: gradient.card,
+    borderColor: alpha(hue.amber, 0.26),
+    backgroundColor: '#15120A',
+    experimental_backgroundImage:
+      'linear-gradient(180deg, #231C0C 0%, #14120A 62%, #0B0A07 100%)',
     gap: space.s2,
   },
-  buildKey: { ...text.key, fontSize: 9.5, color: color.text3 },
+  buildKey: { ...text.key, fontSize: 9.5, color: hue.amber },
   buildBody: { ...text.small, fontSize: 12.5, lineHeight: 18 },
   buildCta: {
     marginTop: space.s2,
@@ -260,15 +284,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: line.accent,
-    backgroundColor: 'rgba(31,197,126,0.10)',
+    borderColor: alpha(hue.amber, 0.45),
+    backgroundColor: alpha(hue.amber, 0.12),
   },
   buildCtaText: {
     fontFamily: font.displayBold,
     fontSize: 15,
     lineHeight: 19,
     letterSpacing: 0.3,
-    color: color.accent,
+    color: hue.amber,
   },
   buildNote: { ...text.small, fontSize: 11, lineHeight: 15, color: color.text3 },
   off: { borderColor: line.card, backgroundColor: 'rgba(255,255,255,0.03)' },

@@ -313,6 +313,7 @@ export function startCareer(args: {
     psr: [],
     saleProfit: 0,
     psrHit: 0,
+    marketRolls: 0,
     ledger: null,
     expired: [],
     renewed: [],

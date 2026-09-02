@@ -95,6 +95,7 @@ function isDynasty(v: unknown): v is Dynasty | null {
     Array.isArray(d.psr) &&
     typeof d.saleProfit === 'number' &&
     typeof d.psrHit === 'number' &&
+    typeof d.marketRolls === 'number' &&
     Array.isArray(d.expired) &&
     Array.isArray(d.renewed) &&
     Array.isArray(d.sold) &&
@@ -205,6 +206,7 @@ function migrateToFour(v: unknown): Dynasty | null {
     psr: [],
     saleProfit: 0,
     psrHit: 0,
+    marketRolls: 0,
     ledger: null,
     expired: [],
     renewed: [],
@@ -216,7 +218,7 @@ function migrateToFour(v: unknown): Dynasty | null {
 
 export const dynastyStore = defineStore<Dynasty | null>({
   key: 'dynasty',
-  version: 4,
+  version: 5,
   fallback: null,
   validate: isDynasty,
   migrations: {
@@ -226,6 +228,9 @@ export const dynastyStore = defineStore<Dynasty | null>({
     2: () => null,
     3: () => null,
     4: migrateToFour,
+    // Five added the looks at the market. A career from before it simply
+    // starts the season with all three unused.
+    5: (v) => (v ? { ...(v as Dynasty), marketRolls: 0 } : null),
   },
 });
 

@@ -7,12 +7,34 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { router, Stack } from 'expo-router';
-import { ModeScreen, Press, Shine, ClubDisc, Ticker } from '../../src/ui/components';
-import { color, gradient, line, radius, space } from '../../src/ui/tokens';
+import {
+  ModeScreen,
+  Press,
+  Rise,
+  Shine,
+  ClubDisc,
+  Ticker,
+  MatchLive,
+} from '../../src/ui/components';
+import {
+  color,
+  gradient,
+  line,
+  radius,
+  space,
+  hue,
+  wear,
+  alpha,
+  vivid,
+  deepen,
+  readable,
+} from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic, useReduceMotion } from '../../src/ui/feel';
 import { sfx } from '../../src/ui/sound';
 import {
+  SIM_LEAGUE,
+  clubColour,
   asSquad,
   chemBonus,
   livePosition,
@@ -26,25 +48,38 @@ import {
 import { useCareer, updateCareer } from '../../src/game/career';
 import { setSeasonResult } from '../../src/game/careerSeason';
 
-/** A normal week. */
-const TICK = 300;
-/** A derby, or anything in the last five, gets held on. */
-const BIG = 900;
+/** How fast auto sim runs through the fixtures it is not showing you. */
+const AUTO_MS = 520;
+
+const OUTCOME = {
+  win: { tint: color.win, letter: 'W', label: 'Win' },
+  draw: { tint: color.draw, letter: 'D', label: 'Draw' },
+  loss: { tint: color.loss, letter: 'L', label: 'Loss' },
+} as const;
+
+const STRENGTH: Record<string, number> = {};
+for (const t of SIM_LEAGUE) STRENGTH[t.name] = t.str;
 
 /**
- * A Dynasty season, played out.
+ * A Dynasty season, played one match at a time.
  *
- * The result is decided the moment this screen opens. Revealing it a week
- * at a time is theatre, but it is the theatre the season is for: you watch
- * the table move, and the app slows down for the games that matter, which
- * are the derby and anything in the run in.
+ * The same shape as the draft's season, because it is the same thing: a
+ * fixture list you come back to and a match you choose to watch. What is
+ * different is that these are your players, so the run in matters and the
+ * derby is marked.
+ *
+ * The whole season is decided the moment this screen opens. What you are
+ * choosing is how much of it you want to see.
  */
 export default function DynastySeason() {
   const career = useCareer();
   const reduce = useReduceMotion();
-  const [shown, setShown] = useState(0);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [played, setPlayed] = useState(0);
+  const [watching, setWatching] = useState<{ index: number; live: boolean } | null>(null);
+  const [auto, setAuto] = useState(false);
+  const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progress = useSharedValue(0);
+  const banked = useRef(false);
 
   const result: SeasonResult | null = useMemo(() => {
     if (!career) return null;
@@ -53,158 +88,286 @@ export default function DynastySeason() {
     const rnd = mulberry32((career.seed ^ Math.imul(career.year, 0x9e3779b1)) >>> 0);
     const squad = asSquad(xi);
     return simulateSeason(squad, career.tactic.form, chemBonus(squad), rnd);
-  }, [career]);
+  }, [career?.seed, career?.year]);
 
   const total = result ? result.matches.length : 38;
-  const done = result !== null && shown >= total;
-
-  const isBig = useCallback(
-    (m: MatchResult, i: number) =>
-      (career?.rival != null && m.opp === career.rival) || i >= total - 5,
-    [career, total],
-  );
+  const done = result !== null && played >= total;
 
   useEffect(() => {
     if (!career) router.replace('/dynasty');
   }, [career]);
 
-  useEffect(() => {
-    if (!result || reduce) {
-      if (result && reduce) setShown(total);
-      return;
+  const standing = useMemo(() => {
+    const seen = result ? result.matches.slice(0, played) : [];
+    let w = 0;
+    let d = 0;
+    let l = 0;
+    let gf = 0;
+    let ga = 0;
+    for (const m of seen) {
+      gf += m.gf;
+      ga += m.ga;
+      if (m.oc === 'win') w++;
+      else if (m.oc === 'draw') d++;
+      else l++;
     }
-    if (shown >= total) return;
-    const m = result.matches[shown];
-    timer.current = setTimeout(
-      () => {
-        haptic(m.oc === 'win' ? 'light' : m.oc === 'loss' ? 'warning' : 'select');
-        if (isBig(m, shown)) sfx(m.oc === 'win' ? 'goal' : m.oc === 'loss' ? 'against' : 'tick');
-        setShown((n) => n + 1);
-      },
-      shown > 0 && isBig(result.matches[shown - 1], shown - 1) ? BIG : TICK,
-    );
-    return () => {
-      if (timer.current) clearTimeout(timer.current);
+    const pts = w * 3 + d;
+    return {
+      w,
+      d,
+      l,
+      gf,
+      ga,
+      pts,
+      form: seen.slice(-6),
+      pos: result ? livePosition(pts, played, result.table) : 20,
     };
-  }, [result, shown, total, reduce, isBig]);
+  }, [result, played]);
 
   useEffect(() => {
-    progress.value = withTiming(total ? shown / total : 0, {
-      duration: reduce ? 0 : 240,
-      easing: Easing.out(Easing.quad),
+    progress.value = withTiming(total ? played / total : 0, {
+      duration: reduce ? 0 : 280,
+      easing: Easing.out(Easing.cubic),
     });
-  }, [shown, total, progress, reduce]);
+  }, [played, total, progress, reduce]);
+
+  const stopAuto = useCallback(() => {
+    setAuto(false);
+    if (autoTimer.current) {
+      clearTimeout(autoTimer.current);
+      autoTimer.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!auto || !result || done) return;
+    autoTimer.current = setTimeout(() => {
+      const m = result.matches[played];
+      haptic(m.oc === 'win' ? 'light' : m.oc === 'loss' ? 'warning' : 'select');
+      setPlayed((n) => n + 1);
+    }, AUTO_MS);
+    return () => {
+      if (autoTimer.current) clearTimeout(autoTimer.current);
+    };
+  }, [auto, result, played, done]);
 
   // Banked the moment the last whistle goes, so leaving cannot lose it.
-  const banked = useRef(false);
   useEffect(() => {
-    if (!done || !result || banked.current) return;
+    if (!done || !result || banked.current || watching) return;
     banked.current = true;
+    stopAuto();
     haptic(result.position === 1 ? 'success' : 'medium');
     sfx(result.position === 1 ? 'trophy' : result.position <= 4 ? 'win' : 'ft');
     setSeasonResult(result);
     updateCareer((d) => ({
       ...d,
-      seasons: [
-        ...d.seasons,
-        {
-          s: d.year,
-          fin: result.position,
-          pts: result.pts,
-          w: result.wins,
-          d: result.draws,
-          l: result.losses,
-          gf: result.gf,
-          ga: result.ga,
-          met: result.position <= d.objective.target,
-          rev: 0,
-          profit: 0,
-          ded: 0,
-        },
-      ],
+      seasons: d.seasons.some((s) => s.s === d.year)
+        ? d.seasons
+        : [
+            ...d.seasons,
+            {
+              s: d.year,
+              fin: result.position,
+              pts: result.pts,
+              w: result.wins,
+              d: result.draws,
+              l: result.losses,
+              gf: result.gf,
+              ga: result.ga,
+              met: result.position <= d.objective.target,
+              rev: 0,
+              profit: 0,
+              ded: 0,
+            },
+          ],
     }));
-  }, [done, result]);
+  }, [done, result, watching, stopAuto]);
+
+  const playNext = useCallback(() => {
+    if (!result || done) return;
+    stopAuto();
+    setWatching({ index: played, live: true });
+  }, [result, done, played, stopAuto]);
+
+  const closeMatch = useCallback(() => {
+    const live = watching?.live;
+    setWatching(null);
+    if (live) setPlayed((n) => n + 1);
+  }, [watching]);
 
   const barStyle = useAnimatedStyle(() => ({ transform: [{ scaleX: progress.value }] }));
 
   if (!career || !result) return null;
-
-  const seen = result.matches.slice(0, shown);
-  let w = 0;
-  let d = 0;
-  let l = 0;
-  let gf = 0;
-  let ga = 0;
-  for (const m of seen) {
-    gf += m.gf;
-    ga += m.ga;
-    if (m.oc === 'win') w++;
-    else if (m.oc === 'draw') d++;
-    else l++;
-  }
-  const pts = w * 3 + d;
-  const pos = livePosition(pts, shown, result.table);
-  const met = pos <= career.objective.target;
+  const next: MatchResult | null = done ? null : result.matches[played];
+  const met = standing.pos <= career.objective.target;
+  const z = zone(played ? standing.pos : 20);
+  const skin = wear(z.tint);
+  const oppSkin = next ? wear(clubColour(next.opp)) : null;
 
   return (
     <>
       <Stack.Screen options={{ gestureEnabled: false }} />
       <ModeScreen
-        overline={done ? 'Full time' : `Matchday ${Math.min(shown + 1, total)} of ${total}`}
+        overline={done ? 'Full time' : `Matchday ${played + 1} of ${total}`}
         title={career.club}
         onBack={() => router.replace('/dynasty')}
-        right={
-          done ? undefined : (
-            <Press
-              onPress={() => {
-                if (timer.current) clearTimeout(timer.current);
-                haptic('medium');
-                setShown(total);
-              }}
-              feel="none"
-              scaleTo={0.94}
-              style={styles.skip}
-            >
-              <Text style={styles.skipText}>Skip</Text>
-            </Press>
-          )
-        }
       >
         {/* ---- where you are ---- */}
-        <View style={styles.standing}>
+        <View
+          style={[
+            styles.standing,
+            {
+              borderColor: skin.lineSoft,
+              experimental_backgroundImage: skin.grad,
+            },
+          ]}
+        >
           <Shine radius={radius.xl} group="feature" bevel={false} clip={false} />
-          <Text style={styles.standKey}>Position</Text>
+          <View style={[styles.zoneChip, { borderColor: skin.line, backgroundColor: skin.wash }]}>
+            <Text style={[styles.zoneText, { color: skin.key }]}>{z.name}</Text>
+          </View>
           <View style={styles.standRow}>
             <Ticker
-              value={shown ? pos : 20}
+              value={played ? standing.pos : 20}
               from={20}
               duration={420}
-              style={[styles.standPos, { color: posTint(pos) }]}
+              style={[styles.standPos, { color: skin.key }]}
             />
-            <Text style={[styles.standOrd, { color: posTint(pos) }]} allowFontScaling={false}>
-              {shown ? ordinal(pos).replace(String(pos), '') : ''}
+            <Text style={[styles.standOrd, { color: skin.key }]} allowFontScaling={false}>
+              {played ? ordinal(standing.pos).replace(String(standing.pos), '') : ''}
             </Text>
           </View>
-          <Text style={[styles.standObj, met ? { color: color.accent } : null]}>
+          <Text
+            style={[
+              styles.standObj,
+              played ? { color: met ? hue.emerald : hue.amber } : null,
+            ]}
+          >
             {career.objective.label}
-            {shown ? (met ? ' · on course' : ' · not yet') : ''}
+            {played ? (met ? ' · on course' : ' · not yet') : ''}
           </Text>
 
           <View style={styles.bar}>
-            <Animated.View style={[styles.barFill, barStyle]} />
+            <Animated.View
+              style={[
+                styles.barFill,
+                barStyle,
+                {
+                  backgroundColor: skin.key,
+                  experimental_backgroundImage: `linear-gradient(90deg, ${alpha(skin.key, 0.55)} 0%, ${skin.key} 100%)`,
+                },
+              ]}
+            />
           </View>
 
           <View style={styles.stats}>
-            <Stat label="W" value={w} tint={color.win} />
-            <Stat label="D" value={d} tint={color.draw} />
-            <Stat label="L" value={l} tint={color.loss} />
-            <Stat label="GF" value={gf} />
-            <Stat label="GA" value={ga} />
-            <Stat label="Pts" value={pts} big />
+            <Stat label="W" value={standing.w} tint={hue.emerald} />
+            <Stat label="D" value={standing.d} tint={hue.amber} />
+            <Stat label="L" value={standing.l} tint={hue.crimson} />
+            <Stat label="GF" value={standing.gf} tint={hue.rose} />
+            <Stat label="GA" value={standing.ga} tint={hue.sky} />
+            <Stat label="Pts" value={standing.pts} tint={hue.gold} big />
           </View>
         </View>
 
-        {done ? (
+        {standing.form.length ? (
+          <View style={styles.form}>
+            <Text style={styles.formKey}>Form</Text>
+            <View style={styles.formRow}>
+              {standing.form.map((m) => (
+                <View
+                  key={m.n}
+                  style={[
+                    styles.formPip,
+                    {
+                      borderColor: OUTCOME[m.oc].tint + '66',
+                      backgroundColor: OUTCOME[m.oc].tint + '1F',
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[styles.formLetter, { color: OUTCOME[m.oc].tint }]}
+                    allowFontScaling={false}
+                  >
+                    {OUTCOME[m.oc].letter}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : null}
+
+        {/* ---- the next match ---- */}
+        {next ? (
+          <Rise delay={0}>
+            <View
+              style={[
+                styles.nextCard,
+                oppSkin
+                  ? {
+                      borderColor: oppSkin.line,
+                      experimental_backgroundImage: oppSkin.grad,
+                      boxShadow: oppSkin.glow,
+                    }
+                  : null,
+              ]}
+            >
+              <Shine radius={radius.lg} group="feature" bevel={false} clip={false} />
+              <Text style={[styles.nextKey, oppSkin ? { color: vivid(oppSkin.key) } : null]}>
+                Next {'·'} Matchday {next.n} {'·'} {next.home ? 'Home' : 'Away'}
+                {career.rival === next.opp ? ' · the derby' : ''}
+              </Text>
+              <View style={styles.nextRow}>
+                <ClubDisc club={next.opp} size={44} />
+                <View style={styles.nextInfo}>
+                  <Text style={styles.nextName} numberOfLines={1}>
+                    {next.opp}
+                  </Text>
+                  <Strength value={STRENGTH[next.opp] ?? 0.5} />
+                </View>
+              </View>
+
+              <Press
+                onPress={playNext}
+                feel="medium"
+                style={[styles.play, kitButton(next.opp)]}
+                scaleTo={0.98}
+              >
+                <Text style={[styles.playText, { color: readable(vivid(clubColour(next.opp))) }]}>
+                  Watch the match
+                </Text>
+              </Press>
+
+              <View style={styles.subRow}>
+                <Press
+                  onPress={() => {
+                    haptic('light');
+                    setAuto((a) => !a);
+                  }}
+                  feel="none"
+                  style={[styles.sub, styles.subSky, auto ? styles.subOn : null]}
+                  scaleTo={0.97}
+                >
+                  <Text style={[styles.subText, { color: auto ? hue.emerald : hue.sky }]}>
+                    {auto ? 'Stop auto sim' : 'Auto sim'}
+                  </Text>
+                </Press>
+                <Press
+                  onPress={() => {
+                    stopAuto();
+                    haptic('medium');
+                    setPlayed(total);
+                  }}
+                  feel="none"
+                  style={[styles.sub, styles.subAmber]}
+                  scaleTo={0.97}
+                >
+                  <Text style={[styles.subText, { color: hue.amber }]}>Sim to end</Text>
+                </Press>
+              </View>
+            </View>
+          </Rise>
+        ) : (
           <Press
             onPress={() => {
               haptic('medium');
@@ -214,63 +377,73 @@ export default function DynastySeason() {
             style={styles.cta}
             scaleTo={0.98}
           >
-            <Text style={styles.ctaText}>The summer</Text>
+            <Text style={styles.ctaText}>The season review</Text>
           </Press>
-        ) : null}
+        )}
 
-        {/* ---- the season, newest first ---- */}
-        <Text style={[text.label, styles.sect]}>Results</Text>
-        <View style={styles.feed}>
-          {[...seen].reverse().map((m) => {
-            const big = career.rival != null && m.opp === career.rival;
-            return (
-              <View
-                key={m.n}
-                style={[
-                  styles.match,
-                  big ? { borderColor: color.gold + '59' } : null,
-                ]}
-              >
-                <Text style={styles.matchNo} allowFontScaling={false}>
-                  {m.n}
-                </Text>
-                <ClubDisc club={m.opp} size={26} />
-                <View style={styles.matchBody}>
-                  <Text style={styles.matchOpp} numberOfLines={1}>
-                    {m.opp}
-                  </Text>
-                  <Text style={styles.matchWhere}>
-                    {m.home ? 'Home' : 'Away'}
-                    {big ? ' · the derby' : ''}
-                  </Text>
-                </View>
-                <Text
-                  style={[styles.matchScore, { color: ocTint(m.oc) }]}
-                  allowFontScaling={false}
-                >
-                  {m.gf}
-                  {'–'}
-                  {m.ga}
-                </Text>
-              </View>
-            );
-          })}
+        {/* ---- all thirty eight ---- */}
+        <Text style={[text.label, styles.sect]}>Fixtures</Text>
+        {played ? (
+          <Text style={styles.sectNote}>Tap a played match to watch it back.</Text>
+        ) : null}
+        <View style={styles.fixtures}>
+          {result.matches.map((m, i) => (
+            <Fixture
+              key={m.n}
+              match={m}
+              derby={career.rival === m.opp}
+              state={i < played ? 'played' : i === played ? 'next' : 'later'}
+              onPress={
+                i < played
+                  ? () => {
+                      haptic('light');
+                      stopAuto();
+                      setWatching({ index: i, live: false });
+                    }
+                  : i === played
+                    ? playNext
+                    : undefined
+              }
+            />
+          ))}
         </View>
       </ModeScreen>
+
+      <MatchLive
+        match={watching ? result.matches[watching.index] : null}
+        seed={career.seed ^ career.year}
+        live={watching?.live ?? false}
+        visible={watching !== null}
+        onDone={closeMatch}
+      />
     </>
   );
 }
 
-function posTint(pos: number): string {
-  if (pos === 1) return color.gold;
-  if (pos <= 4) return color.blue;
-  if (pos <= 7) return color.accent;
-  if (pos >= 18) return color.danger;
-  return color.text1;
+/**
+ * The league in four colours.
+ *
+ * The top card wears where you are, so the screen itself changes colour
+ * across a season: gold champions, blue Europe, green the pack, red the
+ * drop. It tells you the table before you have read a number.
+ */
+function zone(pos: number): { tint: string; name: string } {
+  if (pos === 1) return { tint: hue.gold, name: 'Champions' };
+  if (pos <= 4) return { tint: hue.sky, name: 'Champions League' };
+  if (pos <= 7) return { tint: hue.emerald, name: 'Europe' };
+  if (pos >= 18) return { tint: hue.crimson, name: 'Relegation' };
+  if (pos >= 15) return { tint: hue.amber, name: 'Near the drop' };
+  return { tint: hue.indigo, name: 'Mid table' };
 }
 
-function ocTint(oc: string): string {
-  return oc === 'win' ? color.win : oc === 'draw' ? color.draw : color.loss;
+/** The primary action, painted in the colours of whoever you are facing. */
+function kitButton(opp: string) {
+  const base = vivid(clubColour(opp));
+  return {
+    backgroundColor: base,
+    experimental_backgroundImage: `linear-gradient(140deg, ${base} 0%, ${deepen(base, 0.28)} 100%)`,
+    boxShadow: `0px 8px 22px ${alpha(base, 0.30)}, inset 0px 1px 0px rgba(255,255,255,0.22)`,
+  } as const;
 }
 
 function Stat({
@@ -298,18 +471,103 @@ function Stat({
   );
 }
 
-const styles = StyleSheet.create({
-  skip: {
-    paddingHorizontal: space.s3,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: line.card,
-  },
-  skipText: { ...text.key, fontSize: 10, color: color.text2 },
+function Strength({ value }: { value: number }) {
+  const lit = Math.max(1, Math.min(5, Math.round(((value - 0.25) / 0.68) * 5)));
+  const tint =
+    lit >= 5 ? color.danger : lit >= 4 ? color.warning : lit >= 3 ? color.gold : color.text3;
+  return (
+    <View style={styles.strength}>
+      {[0, 1, 2, 3, 4].map((i) => (
+        <View
+          key={i}
+          style={[
+            styles.strengthBar,
+            { height: 5 + i * 2, backgroundColor: i < lit ? tint : 'rgba(255,255,255,0.10)' },
+          ]}
+        />
+      ))}
+    </View>
+  );
+}
 
+function Fixture({
+  match,
+  state,
+  derby,
+  onPress,
+}: {
+  match: MatchResult;
+  state: 'played' | 'next' | 'later';
+  derby: boolean;
+  onPress?: () => void;
+}) {
+  const oc = OUTCOME[match.oc];
+  const body = (
+    <>
+      <ClubDisc club={match.opp} size={34} />
+      <View style={styles.fxInfo}>
+        <Text style={styles.fxKey}>
+          Matchday {match.n} {'·'} {match.home ? 'Home' : 'Away'}
+          {derby ? ' · derby' : ''}
+        </Text>
+        <Text style={styles.fxName} numberOfLines={1}>
+          {match.opp}
+        </Text>
+        {state === 'played' ? (
+          <Text style={styles.fxHint}>Watch it back</Text>
+        ) : (
+          <Strength value={STRENGTH[match.opp] ?? 0.5} />
+        )}
+      </View>
+
+      {state === 'played' ? (
+        <View style={styles.fxRes}>
+          <Text style={[styles.fxScore, { color: oc.tint }]} allowFontScaling={false}>
+            {match.gf}
+            {'–'}
+            {match.ga}
+          </Text>
+          <Text style={[styles.fxOc, { color: oc.tint }]}>{oc.label}</Text>
+        </View>
+      ) : state === 'next' ? (
+        <View style={[styles.fxPlay, { backgroundColor: vivid(clubColour(match.opp)) }]}>
+          <Text
+            style={[styles.fxPlayText, { color: readable(vivid(clubColour(match.opp))) }]}
+          >
+            Play
+          </Text>
+        </View>
+      ) : (
+        <Text style={styles.fxDash} allowFontScaling={false}>
+          {'–'}
+        </Text>
+      )}
+    </>
+  );
+
+  const kit = clubColour(match.opp);
+  const style = [
+    styles.fx,
+    state === 'next'
+      ? [
+          styles.fxNext,
+          { borderColor: alpha(kit, 0.5), boxShadow: `0px 0px 18px ${alpha(kit, 0.18)}` },
+        ]
+      : null,
+    state === 'later' ? styles.fxLater : null,
+    derby && state !== 'later' ? { borderColor: color.gold + '59' } : null,
+    state === 'played' ? { borderColor: oc.tint + '3D' } : null,
+  ];
+
+  if (!onPress) return <View style={style}>{body}</View>;
+  return (
+    <Press onPress={onPress} feel="light" style={style} scaleTo={0.985}>
+      {body}
+    </Press>
+  );
+}
+
+const styles = StyleSheet.create({
   standing: {
     alignItems: 'center',
     paddingVertical: space.s5,
@@ -322,7 +580,14 @@ const styles = StyleSheet.create({
       'linear-gradient(180deg, #16281F 0%, #0D1712 62%, #080D0A 100%)',
     overflow: 'hidden',
   },
-  standKey: { ...text.key, fontSize: 9, color: color.text3 },
+  zoneChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    marginBottom: 2,
+  },
+  zoneText: { ...text.key, fontSize: 9 },
   standRow: { flexDirection: 'row', alignItems: 'flex-start' },
   standPos: {
     fontFamily: font.hero,
@@ -330,12 +595,7 @@ const styles = StyleSheet.create({
     lineHeight: 84,
     fontVariant: ['tabular-nums'],
   },
-  standOrd: {
-    fontFamily: font.displayBlack,
-    fontSize: 20,
-    lineHeight: 34,
-    marginLeft: 2,
-  },
+  standOrd: { fontFamily: font.displayBlack, fontSize: 20, lineHeight: 34, marginLeft: 2 },
   standObj: { ...text.key, fontSize: 9.5, color: color.text3, marginTop: -space.s2 },
   bar: {
     alignSelf: 'stretch',
@@ -365,9 +625,80 @@ const styles = StyleSheet.create({
   statBig: { fontSize: 22, lineHeight: 27 },
   statLabel: { ...text.key, fontSize: 8, color: color.text3 },
 
-  cta: {
-    marginTop: space.s4,
+  form: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s3,
+    marginTop: space.s3,
+    paddingHorizontal: space.s1,
+  },
+  formKey: { ...text.key, fontSize: 9, color: color.text3 },
+  formRow: { flexDirection: 'row', gap: 6 },
+  formPip: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  formLetter: { fontFamily: font.displayBold, fontSize: 13, lineHeight: 16 },
+
+  nextCard: {
+    marginTop: space.s5,
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: line.accent,
+    backgroundColor: '#0C1510',
+    experimental_backgroundImage: 'linear-gradient(180deg, #17291F 0%, #0C1611 100%)',
+    overflow: 'hidden',
+    gap: space.s3,
+  },
+  nextKey: { ...text.key, fontSize: 9.5, color: color.accent },
+  nextRow: { flexDirection: 'row', alignItems: 'center', gap: space.s3 },
+  nextInfo: { flex: 1, gap: 5 },
+  nextName: {
+    fontFamily: font.displayBold,
+    fontSize: 22,
+    lineHeight: 27,
+    color: color.text1,
+  },
+  play: {
     minHeight: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    backgroundColor: color.accent,
+    experimental_backgroundImage: 'linear-gradient(140deg, #22D287 0%, #12A866 100%)',
+    boxShadow: '0px 8px 22px rgba(31,197,126,0.3), inset 0px 1px 0px rgba(255,255,255,0.22)',
+  },
+  playText: { ...text.button, color: '#05170E' },
+  subRow: { flexDirection: 'row', gap: space.s3 },
+  sub: {
+    flex: 1,
+    minHeight: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  subSky: { borderColor: alpha(hue.sky, 0.34), backgroundColor: alpha(hue.sky, 0.10) },
+  subAmber: { borderColor: alpha(hue.amber, 0.34), backgroundColor: alpha(hue.amber, 0.10) },
+  subOn: { borderColor: line.accent, backgroundColor: 'rgba(31,197,126,0.12)' },
+  subText: {
+    fontFamily: font.displayBold,
+    fontSize: 15,
+    lineHeight: 19,
+    letterSpacing: 0.4,
+    color: color.text2,
+  },
+
+  cta: {
+    marginTop: space.s5,
+    minHeight: 58,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.md,
@@ -377,9 +708,10 @@ const styles = StyleSheet.create({
   },
   ctaText: { ...text.button, color: color.gold },
 
-  sect: { marginTop: space.s6, marginBottom: space.s3 },
-  feed: { gap: space.s2, paddingBottom: space.s6 },
-  match: {
+  sect: { marginTop: space.s6, marginBottom: space.s2 },
+  sectNote: { ...text.small, fontSize: 11.5, marginBottom: space.s3 },
+  fixtures: { gap: space.s2, paddingBottom: space.s6 },
+  fx: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.s3,
@@ -389,24 +721,51 @@ const styles = StyleSheet.create({
     borderColor: line.card,
     backgroundColor: '#101A14',
     experimental_backgroundImage: gradient.card,
+    boxShadow:
+      'inset 0px 1px 0px rgba(255,255,255,0.06), inset 0px 0px 0px 1px rgba(255,255,255,0.035)',
   },
-  matchNo: {
-    width: 20,
-    textAlign: 'right',
+  fxNext: {
+    borderColor: line.accent,
+    backgroundColor: '#0E1B14',
+    boxShadow: '0px 0px 18px rgba(31,197,126,0.18)',
+  },
+  fxLater: { opacity: 0.52 },
+  fxInfo: { flex: 1, gap: 2 },
+  fxKey: { ...text.key, fontSize: 8.5, color: color.text3 },
+  fxName: { fontFamily: font.displayBold, fontSize: 17, lineHeight: 21, color: color.text1 },
+  fxHint: { ...text.small, fontSize: 11, color: color.text3 },
+  fxRes: { alignItems: 'flex-end' },
+  fxScore: {
+    fontFamily: font.displayBlack,
+    fontSize: 20,
+    lineHeight: 25,
+    letterSpacing: 0.4,
+    fontVariant: ['tabular-nums'],
+  },
+  fxOc: { ...text.key, fontSize: 8.5 },
+  fxPlay: {
+    paddingHorizontal: space.s4,
+    paddingVertical: 9,
+    borderRadius: radius.pill,
+    backgroundColor: color.accent,
+    boxShadow: 'inset 0px 1px 0px rgba(255,255,255,0.24)',
+  },
+  fxPlayText: {
     fontFamily: font.displayBold,
-    fontSize: 12,
+    fontSize: 13,
     lineHeight: 16,
-    color: color.text3,
-    fontVariant: ['tabular-nums'],
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    color: '#05170E',
   },
-  matchBody: { flex: 1, minWidth: 0 },
-  matchOpp: { fontFamily: font.bodySemi, fontSize: 14, lineHeight: 19, color: color.text1 },
-  matchWhere: { fontFamily: font.body, fontSize: 10.5, lineHeight: 14, color: color.text3 },
-  matchScore: {
+  fxDash: {
     fontFamily: font.displayBold,
-    fontSize: 17,
-    lineHeight: 21,
-    letterSpacing: 0.3,
-    fontVariant: ['tabular-nums'],
+    fontSize: 18,
+    lineHeight: 22,
+    color: color.text3,
+    paddingRight: space.s2,
   },
+
+  strength: { flexDirection: 'row', alignItems: 'flex-end', gap: 2.5, height: 13 },
+  strengthBar: { width: 4, borderRadius: 1.5 },
 });

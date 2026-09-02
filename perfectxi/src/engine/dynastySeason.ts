@@ -338,7 +338,10 @@ export function processSeasonEnd(
     );
   }
 
-  /* 11. the tactic is a season better understood */
+  /* 11. a new market, and the looks at it come back */
+  next.marketRolls = 0;
+
+  /* the tactic is a season better understood */
   next.tactic = learnTactic(next.tactic);
 
   /* 12. next season */

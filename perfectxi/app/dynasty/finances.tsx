@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { ModeScreen, Shine } from '../../src/ui/components';
-import { color, gradient, line, radius, space } from '../../src/ui/tokens';
+import { color, gradient, line, radius, space, hue, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import {
   amortTotal,
@@ -48,12 +48,12 @@ export default function Finances() {
   const gate = matchdayRevenue(career);
 
   const sources = [
-    { label: 'Equal share', v: equal, tint: color.text2 },
-    { label: 'Merit money', v: merit, tint: color.accent },
-    { label: 'Facility fees', v: facility, tint: color.blue },
-    { label: 'Commercial', v: commercial, tint: color.gold },
-    { label: 'Europe', v: euro, tint: color.purple },
-    { label: 'The gate', v: gate, tint: color.accentHi },
+    { label: 'Equal share', v: equal, tint: hue.mint },
+    { label: 'Merit money', v: merit, tint: hue.emerald },
+    { label: 'Facility fees', v: facility, tint: hue.sky },
+    { label: 'Commercial', v: commercial, tint: hue.gold },
+    { label: 'Europe', v: euro, tint: hue.violet },
+    { label: 'The gate', v: gate, tint: hue.rose },
   ].filter((s) => s.v > 0);
 
   const costs = [
@@ -74,7 +74,7 @@ export default function Finances() {
             styles.psrValue,
             {
               color:
-                headroom <= 0 ? color.danger : headroom < 45 ? color.warning : color.accent,
+                headroom <= 0 ? hue.crimson : headroom < 45 ? hue.amber : hue.gold,
             },
           ]}
           allowFontScaling={false}
@@ -89,7 +89,7 @@ export default function Finances() {
               {
                 width: `${Math.max(2, breachAt)}%`,
                 backgroundColor:
-                  headroom <= 0 ? color.danger : headroom < 45 ? color.warning : color.accent,
+                  headroom <= 0 ? hue.crimson : headroom < 45 ? hue.amber : hue.gold,
               },
             ]}
           />

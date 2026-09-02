@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { ModeScreen, Press, Shine } from '../../src/ui/components';
-import { color, gradient, line, radius, space } from '../../src/ui/tokens';
+import { color, gradient, line, radius, space, hue, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic } from '../../src/ui/feel';
 import { sfx } from '../../src/ui/sound';
@@ -29,6 +29,15 @@ import { useCareer, updateCareer } from '../../src/game/career';
  * "improves development" means nothing and "your players improve 25%
  * faster" means something.
  */
+/** One colour each, so five cards are not five copies of the same card. */
+const ROLE_HUE: Record<StaffRole, string> = {
+  coach: hue.mint,
+  medical: hue.rose,
+  youth: hue.lime,
+  setpiece: hue.indigo,
+  scout: hue.sky,
+};
+
 export default function Staff() {
   const career = useCareer();
 
@@ -66,12 +75,12 @@ export default function Staff() {
           <Effect
             label="Development"
             value={`${Math.round((devMultiplier(career) - 1) * 100) >= 0 ? '+' : ''}${Math.round((devMultiplier(career) - 1) * 100)}%`}
-            tint={devMultiplier(career) >= 1 ? color.accent : color.danger}
+            tint={devMultiplier(career) >= 1 ? hue.mint : hue.crimson}
           />
           <Effect
             label="Injuries"
             value={`${Math.round((injuryMultiplier(career) - 1) * 100)}%`}
-            tint={injuryMultiplier(career) <= 1 ? color.accent : color.danger}
+            tint={injuryMultiplier(career) <= 1 ? hue.mint : hue.crimson}
           />
         </View>
       </View>
@@ -81,12 +90,25 @@ export default function Staff() {
           const stars = career.staff[s.id];
           const cost = stars >= 5 ? 0 : staffUpgradeCost(stars);
           const can = stars < 5 && career.budget >= cost;
+          const tint = ROLE_HUE[s.id];
           return (
-            <View key={s.id} style={styles.card}>
+            <View
+              key={s.id}
+              style={[
+                styles.card,
+                {
+                  borderColor: alpha(tint, 0.26),
+                  experimental_backgroundImage: `linear-gradient(180deg, ${alpha(
+                    tint,
+                    0.13,
+                  )} 0%, rgba(10,15,12,0) 76%)`,
+                },
+              ]}
+            >
               <Shine radius={radius.lg} group="card" bevel={false} clip={false} />
               <View style={styles.cardHead}>
                 <Text style={styles.cardTitle}>{s.title}</Text>
-                <Text style={styles.cardTier}>{STAR_NAMES[stars]}</Text>
+                <Text style={[styles.cardTier, { color: tint }]}>{STAR_NAMES[stars]}</Text>
               </View>
               <Text style={styles.cardDesc}>{s.desc}</Text>
 
@@ -97,8 +119,7 @@ export default function Staff() {
                     style={[
                       styles.star,
                       {
-                        backgroundColor:
-                          i <= stars ? color.gold : 'rgba(255,255,255,0.09)',
+                        backgroundColor: i <= stars ? tint : 'rgba(255,255,255,0.09)',
                       },
                     ]}
                   />
@@ -117,12 +138,17 @@ export default function Staff() {
                   onPress={() => can && upgrade(s.id)}
                   feel="none"
                   scaleTo={0.98}
-                  style={[styles.upgrade, !can ? styles.upgradeOff : null]}
+                  style={[
+                    styles.upgrade,
+                    can
+                      ? { borderColor: alpha(tint, 0.45), backgroundColor: alpha(tint, 0.12) }
+                      : styles.upgradeOff,
+                  ]}
                 >
                   <Text
                     style={[
                       styles.upgradeText,
-                      !can ? { color: color.text3 } : null,
+                      { color: can ? tint : color.text3 },
                     ]}
                   >
                     {can

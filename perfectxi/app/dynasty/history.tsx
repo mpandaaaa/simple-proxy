@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { ModeScreen, Press, Shine, Trophy } from '../../src/ui/components';
-import { color, gradient, line, positionColor, radius, space } from '../../src/ui/tokens';
+import { color, gradient, line, positionColor, radius, space, hue, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic } from '../../src/ui/feel';
 import { ordinal, type AllTime, type Position } from '../../src/engine';
@@ -148,7 +148,7 @@ export default function History() {
             scaleTo={0.96}
             style={[styles.tab, board === id ? styles.tabOn : null]}
           >
-            <Text style={[styles.tabText, board === id ? { color: color.accent } : null]}>
+            <Text style={[styles.tabText, board === id ? { color: hue.rose } : null]}>
               {label}
             </Text>
           </Press>
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: line.card,
   },
-  tabOn: { borderColor: line.accent, backgroundColor: 'rgba(31,197,126,0.1)' },
+  tabOn: { borderColor: alpha(hue.rose, 0.45), backgroundColor: alpha(hue.rose, 0.12) },
   tabText: {
     fontFamily: font.displaySemi,
     fontSize: 11,

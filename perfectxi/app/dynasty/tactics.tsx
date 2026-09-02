@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { ModeScreen, Press, Shine, OptionGroup } from '../../src/ui/components';
-import { color, gradient, line, radius, space } from '../../src/ui/tokens';
+import { color, gradient, line, radius, space, hue, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic } from '../../src/ui/feel';
 import {
@@ -75,7 +75,7 @@ export default function Tactics() {
               styles.famFill,
               {
                 width: `${Math.max(2, (t.fam - 0.8) * 500)}%`,
-                backgroundColor: t.fam >= 0.99 ? color.accent : color.warning,
+                backgroundColor: t.fam >= 0.99 ? hue.mint : hue.amber,
               },
             ]}
           />
@@ -124,7 +124,7 @@ export default function Tactics() {
               style={[styles.seg, on ? styles.segOn : null]}
               scaleTo={0.96}
             >
-              <Text style={[styles.segText, on ? { color: color.accent } : null]}>{m}</Text>
+              <Text style={[styles.segText, on ? { color: hue.indigo } : null]}>{m}</Text>
             </Press>
           );
         })}
@@ -146,7 +146,7 @@ export default function Tactics() {
               scaleTo={0.985}
             >
               <View style={styles.styleHead}>
-                <Text style={[styles.styleTitle, on ? { color: color.accent } : null]}>
+                <Text style={[styles.styleTitle, on ? { color: hue.indigo } : null]}>
                   {s.title}
                 </Text>
                 <Text
@@ -260,7 +260,7 @@ function Slider({
             style={[styles.seg, value === v ? styles.segOn : null]}
             scaleTo={0.96}
           >
-            <Text style={[styles.segText, value === v ? { color: color.accent } : null]}>
+            <Text style={[styles.segText, value === v ? { color: hue.indigo } : null]}>
               {v === -2 ? 'Low' : v === -1 ? '' : v === 0 ? 'Normal' : v === 1 ? '' : 'High'}
               {v === -1 || v === 1 ? (v > 0 ? '+' : '−') : ''}
             </Text>
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
     borderColor: line.card,
     backgroundColor: '#101A14',
   },
-  segOn: { borderColor: line.accent, backgroundColor: 'rgba(31,197,126,0.12)' },
+  segOn: { borderColor: alpha(hue.indigo, 0.45), backgroundColor: alpha(hue.indigo, 0.14) },
   segText: {
     fontFamily: font.displaySemi,
     fontSize: 11,
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
     experimental_backgroundImage: gradient.card,
     gap: 3,
   },
-  styleOn: { borderColor: line.accent, backgroundColor: 'rgba(31,197,126,0.09)' },
+  styleOn: { borderColor: alpha(hue.indigo, 0.45), backgroundColor: alpha(hue.indigo, 0.11) },
   styleHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   styleTitle: {
     fontFamily: font.displayBold,

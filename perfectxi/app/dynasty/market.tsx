@@ -1,60 +1,96 @@
 import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { ModeScreen, Press, Rise, Shine, ClubDisc, Confirm } from '../../src/ui/components';
-import { color, gradient, line, positionColor, radius, space } from '../../src/ui/tokens';
+import {
+  ModeScreen,
+  Press,
+  Rise,
+  Shine,
+  ClubDisc,
+  Sheet,
+  PlayerSheet,
+} from '../../src/ui/components';
+import { color, gradient, line, positionColor, radius, space, hue, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic } from '../../src/ui/feel';
 import { sfx } from '../../src/ui/sound';
 import {
+  clubWageBill,
+  effectiveRating,
   emptySlots,
+  everyone,
   market,
   mulberry32,
-  promote,
-  sign,
   posFit,
+  playerValue,
+  promote,
+  revenue,
+  scoutRange,
+  sell,
+  sign,
+  squadRating,
+  starters,
+  wage,
+  type DynastyPlayer,
   type Listing,
   type Position,
 } from '../../src/engine';
 import { useCareer, updateCareer } from '../../src/game/career';
 
+/** Three looks at the market a season, then it is the list you have. */
+const MAX_ROLLS = 3;
+
+type Filter = 'all' | Position;
+
 /**
  * The transfer market.
  *
- * Nine players worth signing and three free agents, redrawn each season
- * and fixed for it, so you cannot reroll the list until something good
- * turns up. There is always a keeper on it.
+ * Two questions a manager actually asks: can I afford him, and does he
+ * make the team better. Every listing answers both before you tap it, and
+ * the difference he would make to the eleven is worked out through the
+ * same position fit the match engine uses, so a striker filling in at the
+ * back reads as what it is.
  *
- * The academy sits on the same screen, because promoting a seventeen year
- * old and paying £80m for a twenty seven year old are the same decision
- * made two different ways, and putting them on separate screens hides
- * that.
+ * The list is fixed for the season and you get three fresh looks at it.
+ * Without a limit a market is not a market, it is a slot machine you pull
+ * until the right player appears.
  */
 export default function Market() {
   const career = useCareer();
-  const [target, setTarget] = useState<{ listing: Listing } | null>(null);
+  const [filter, setFilter] = useState<Filter>('all');
+  const [target, setTarget] = useState<Listing | null>(null);
   const [youthTarget, setYouthTarget] = useState<number | null>(null);
+  const [selling, setSelling] = useState<{ p: DynastyPlayer; slot: number } | null>(null);
 
-  // Drawn once per season and held, so the list cannot be rerolled.
+  // Drawn from the career seed, the year and how many looks have been used,
+  // so the same list comes back until you spend a look on a new one.
   const listings = useMemo(() => {
     if (!career) return [];
-    return market(career, mulberry32((career.seed ^ Math.imul(career.year, 0x85ebca6b)) >>> 0));
-  }, [career?.seed, career?.year, career?.roster]);
+    const seed =
+      (career.seed ^ Math.imul(career.year * 41 + career.marketRolls, 0x85ebca6b)) >>> 0;
+    return market(career, mulberry32(seed));
+  }, [career?.seed, career?.year, career?.marketRolls, career?.roster]);
 
   const holes = career ? emptySlots(career) : [];
+  const rollsLeft = career ? MAX_ROLLS - career.marketRolls : 0;
 
-  const doSign = useCallback(
-    (listing: Listing, slot: number) => {
-      updateCareer((d) => {
-        const rnd = mulberry32((d.seed ^ Math.imul(d.year * 31 + slot, 0xc2b2ae35)) >>> 0);
-        return sign(d, listing, slot, rnd) ?? d;
-      });
-      haptic('success');
-      sfx('pick');
-      setTarget(null);
-    },
-    [],
-  );
+  const reroll = useCallback(() => {
+    updateCareer((d) =>
+      d.marketRolls >= MAX_ROLLS ? d : { ...d, marketRolls: d.marketRolls + 1 },
+    );
+    haptic('medium');
+    sfx('tick');
+  }, []);
+
+  const doSign = useCallback((listing: Listing, slot: number) => {
+    updateCareer((d) => {
+      const rnd = mulberry32((d.seed ^ Math.imul(d.year * 31 + slot, 0xc2b2ae35)) >>> 0);
+      return sign(d, listing, slot, rnd) ?? d;
+    });
+    haptic('success');
+    sfx('pick');
+    setTarget(null);
+  }, []);
 
   const doPromote = useCallback((youthIndex: number, slot: number) => {
     updateCareer((d) => promote(d, youthIndex, slot) ?? d);
@@ -63,7 +99,21 @@ export default function Market() {
     setYouthTarget(null);
   }, []);
 
+  const doSell = useCallback((slot: number) => {
+    updateCareer((d) => sell(d, slot) ?? d);
+    haptic('warning');
+    setSelling(null);
+  }, []);
+
   if (!career) return null;
+
+  const rating = squadRating(starters(career));
+  const bill = clubWageBill(career);
+  const last = career.seasons[career.seasons.length - 1];
+  const rev = revenue(last ? last.fin : career.objective.target, career);
+  const wageRoom = Math.round(rev * 0.75) - bill;
+
+  const shown = listings.filter((l) => filter === 'all' || l.pos === filter);
 
   return (
     <>
@@ -72,85 +122,165 @@ export default function Market() {
         title="Transfers"
         onBack={() => router.back()}
       >
+        {/* ---- what you have, and what it costs ---- */}
+        <View style={styles.money}>
+          <Shine radius={radius.lg} group="panel" />
+          <View style={styles.moneyRow}>
+            <Fig label="Budget" value={`£${career.budget}m`} tint={hue.sky} />
+            <Fig
+              label="Wage room"
+              value={`£${Math.max(0, wageRoom)}m`}
+              tint={wageRoom < 20 ? hue.crimson : hue.violet}
+            />
+            <Fig label="Squad" value={String(rating)} tint={hue.emerald} />
+          </View>
+          <Text style={styles.moneyNote}>
+            Selling adds to the budget. Wage room is what is left before the
+            bill reaches three quarters of what the club earns, which is
+            where players stop signing new deals.
+          </Text>
+        </View>
+
         {holes.length ? (
           <View style={styles.holes}>
             <Text style={styles.holesKey}>
               {holes.length} place{holes.length === 1 ? '' : 's'} to fill
             </Text>
             <Text style={styles.holesBody}>
-              {holes.map((h) => h.pos).join(', ')}. Sign someone or bring a
-              youngster through. A place left empty is a player short on the
-              day.
+              {holes.map((h) => h.pos).join(', ')}. A place left empty is a
+              player short on the day.
             </Text>
           </View>
         ) : (
           <Text style={styles.lead}>
-            Your fourteen are all filled. Sell someone first if you want to
-            sign, or take a look at what is out there anyway.
+            All fourteen filled. Sell someone to make room, or sign anyway and
+            the new man takes an empty bench place.
           </Text>
         )}
 
+        {/* ---- the academy ---- */}
         {career.youth.length ? (
           <>
             <Text style={[text.label, styles.sect]}>From your own academy</Text>
             <Text style={styles.sectNote}>Free, and they count as homegrown.</Text>
             <View style={styles.list}>
-              {career.youth.map((p, i) => (
-                <Rise key={p.n} delay={Math.min(i, 4)}>
-                  <Press
-                    onPress={() => {
-                      if (!holes.length) return;
-                      haptic('light');
-                      setYouthTarget(i);
-                    }}
-                    feel="none"
-                    scaleTo={0.99}
-                    style={[styles.card, !holes.length ? styles.cardOff : null]}
-                  >
-                    <Shine radius={radius.md} group="card" rating={p.rtg} bevel={false} clip={false} />
-                    <Badge pos={p.pos} />
-                    <View style={styles.cardBody}>
-                      <Text style={styles.cardName} numberOfLines={1}>
-                        {p.n}
-                      </Text>
-                      <Text style={styles.cardMeta} numberOfLines={1}>
-                        {p.age} {'·'} academy {'·'} £{p.contract.wage}k a week
-                      </Text>
-                    </View>
-                    <View style={styles.cardRight}>
-                      <Text style={styles.cardRtg} allowFontScaling={false}>
-                        {p.rtg}
-                      </Text>
-                      <Text style={styles.cardPrice}>free</Text>
-                    </View>
-                  </Press>
-                </Rise>
-              ))}
+              {career.youth.map((p, i) => {
+                const range = scoutRange(p);
+                return (
+                  <Rise key={p.n} delay={Math.min(i, 4)}>
+                    <Press
+                      onPress={() => {
+                        if (!holes.length) return;
+                        haptic('light');
+                        setYouthTarget(i);
+                      }}
+                      feel="none"
+                      scaleTo={0.99}
+                      style={[styles.card, !holes.length ? styles.cardOff : null]}
+                    >
+                      <Shine radius={radius.md} group="card" rating={p.rtg} bevel={false} clip={false} />
+                      <Badge pos={p.pos} />
+                      <View style={styles.cardBody}>
+                        <Text style={styles.cardName} numberOfLines={1}>
+                          {p.n}
+                        </Text>
+                        <Text style={styles.cardMeta} numberOfLines={1}>
+                          {p.age} {'·'} could reach{' '}
+                          {range.exact ? range.high : `${range.low} to ${range.high}`}
+                        </Text>
+                      </View>
+                      <View style={styles.cardRight}>
+                        <Text style={styles.cardRtg} allowFontScaling={false}>
+                          {p.rtg}
+                        </Text>
+                        <Text style={[styles.cardPrice, { color: color.gold }]}>free</Text>
+                      </View>
+                    </Press>
+                  </Rise>
+                );
+              })}
             </View>
           </>
         ) : null}
 
-        <Text style={[text.label, styles.sect]}>On the market</Text>
+        {/* ---- the market ---- */}
+        <View style={styles.marketHead}>
+          <Text style={[text.label, styles.sectTight]}>On the market</Text>
+          <Press
+            onPress={() => rollsLeft > 0 && reroll()}
+            feel="none"
+            scaleTo={0.96}
+            style={[styles.reroll, rollsLeft === 0 ? styles.rerollOff : null]}
+          >
+            <Text
+              style={[styles.rerollText, rollsLeft === 0 ? { color: color.text3 } : null]}
+            >
+              {rollsLeft > 0 ? `New list · ${rollsLeft} left` : 'No looks left'}
+            </Text>
+          </Press>
+        </View>
         <Text style={styles.sectNote}>
-          This list is set for the season. It changes in the summer, not when
-          you look again.
+          {rollsLeft > 0
+            ? `The list is fixed until you spend a look. You get ${MAX_ROLLS} a season.`
+            : 'This is the list until the summer.'}
         </Text>
+
+        <View style={styles.filters}>
+          {(['all', 'GK', 'DEF', 'MID', 'ATT'] as Filter[]).map((f) => (
+            <Press
+              key={f}
+              onPress={() => {
+                haptic('select');
+                setFilter(f);
+              }}
+              feel="none"
+              scaleTo={0.95}
+              style={[
+                styles.filter,
+                filter === f
+                  ? {
+                      borderColor: alpha(filterHue(f), 0.45),
+                      backgroundColor: alpha(filterHue(f), 0.13),
+                    }
+                  : null,
+              ]}
+            >
+              <Text
+                style={[styles.filterText, filter === f ? { color: filterHue(f) } : null]}
+              >
+                {f === 'all' ? 'All' : f}
+              </Text>
+            </Press>
+          ))}
+        </View>
+
         <View style={styles.list}>
-          {listings.map((l, i) => {
+          {shown.map((l, i) => {
             const affordable = l.price <= career.budget;
+            // What he would actually add, at the best place you have open.
+            const best = holes.length
+              ? holes.reduce(
+                  (a, b) => (posFit(l.pos, a.pos) >= posFit(l.pos, b.pos) ? a : b),
+                  holes[0],
+                )
+              : null;
+            const fit = best ? posFit(l.pos, best.pos) : 1;
+            const worth = Math.round(l.rtg * fit);
+            const swing = worth - rating;
+
             return (
               <Rise key={l.n} delay={Math.min(i, 6)}>
                 <Press
                   onPress={() => {
-                    if (!holes.length || !affordable) return;
+                    if (!affordable) return;
                     haptic('light');
-                    setTarget({ listing: l });
+                    setTarget(l);
                   }}
                   feel="none"
                   scaleTo={0.99}
                   style={[
                     styles.card,
-                    !holes.length || !affordable ? styles.cardOff : null,
+                    !affordable ? styles.cardOff : null,
                     l.free ? { borderColor: line.gold } : null,
                   ]}
                 >
@@ -164,6 +294,12 @@ export default function Market() {
                     <Text style={styles.cardMeta} numberOfLines={1}>
                       {l.age} {'·'} {l.club} {'·'} £{l.wage}k a week
                     </Text>
+                    {best && fit < 1 ? (
+                      <Text style={styles.cardFit} numberOfLines={1}>
+                        would play at {best.pos.toLowerCase()}, {Math.round((1 - fit) * 100)}% off
+                        his best
+                      </Text>
+                    ) : null}
                   </View>
                   <View style={styles.cardRight}>
                     <Text style={styles.cardRtg} allowFontScaling={false}>
@@ -182,36 +318,120 @@ export default function Market() {
                     >
                       {l.free ? 'free' : `£${l.price}m`}
                     </Text>
+                    {holes.length ? (
+                      <Text
+                        style={[
+                          styles.cardSwing,
+                          { color: swing > 0 ? color.win : swing < 0 ? color.loss : color.text3 },
+                        ]}
+                        allowFontScaling={false}
+                      >
+                        {swing > 0 ? '+' : ''}
+                        {swing} to the XI
+                      </Text>
+                    ) : null}
                   </View>
                 </Press>
               </Rise>
             );
           })}
+          {shown.length === 0 ? (
+            <Text style={styles.none}>Nobody in that position on this list.</Text>
+          ) : null}
+        </View>
+
+        {/* ---- raising money ---- */}
+        <Text style={[text.label, styles.sect]}>Raise money</Text>
+        <Text style={styles.sectNote}>
+          Selling frees the wage and adds the fee to your budget. An academy
+          player is almost pure profit, because he never cost anything.
+        </Text>
+        <View style={styles.list}>
+          {career.roster.map((p, slot) =>
+            p ? (
+              <Press
+                key={p.n}
+                onPress={() => {
+                  haptic('light');
+                  setSelling({ p, slot });
+                }}
+                feel="none"
+                scaleTo={0.99}
+                style={styles.card}
+              >
+                <Badge pos={p.pos} />
+                <View style={styles.cardBody}>
+                  <Text style={styles.cardName} numberOfLines={1}>
+                    {p.n}
+                  </Text>
+                  <Text style={styles.cardMeta} numberOfLines={1}>
+                    {p.age} {'·'} £{p.contract.wage}k a week {'·'}{' '}
+                    {slot < 11 ? 'starting' : 'bench'}
+                    {p.youth ? ' · academy' : ''}
+                  </Text>
+                </View>
+                <View style={styles.cardRight}>
+                  <Text style={styles.cardRtg} allowFontScaling={false}>
+                    {p.rtg}
+                  </Text>
+                  <Text style={[styles.cardPrice, { color: color.accent }]}>
+                    £{playerValue(p)}m
+                  </Text>
+                </View>
+              </Press>
+            ) : null,
+          )}
         </View>
 
         <View style={{ height: space.s6 }} />
       </ModeScreen>
 
-      {/* Which place he goes into, with what it costs him spelled out. */}
-      <SlotPicker
+      {/* Which place he fills, with what it costs him spelled out. */}
+      <SlotSheet
         open={target !== null}
-        title={target ? `Where does ${target.listing.n} play?` : ''}
+        title={target ? `Sign ${target.n}` : ''}
+        subtitle={
+          target
+            ? `${target.rtg} rated, ${target.age}, ${target.free ? 'free' : `£${target.price}m`}, £${target.wage}k a week`
+            : ''
+        }
         holes={holes}
-        playerPos={target?.listing.pos ?? 'MID'}
-        onCancel={() => setTarget(null)}
-        onPick={(slot) => target && doSign(target.listing, slot)}
+        playerPos={target?.pos ?? 'MID'}
+        onClose={() => setTarget(null)}
+        onPick={(slot) => target && doSign(target, slot)}
       />
-      <SlotPicker
+      <SlotSheet
         open={youthTarget !== null}
-        title={
-          youthTarget !== null ? `Where does ${career.youth[youthTarget]?.n} play?` : ''
+        title={youthTarget !== null ? `Promote ${career.youth[youthTarget]?.n}` : ''}
+        subtitle={
+          youthTarget !== null
+            ? `${career.youth[youthTarget]?.rtg} rated, ${career.youth[youthTarget]?.age}, free`
+            : ''
         }
         holes={holes}
         playerPos={youthTarget !== null ? (career.youth[youthTarget]?.pos ?? 'MID') : 'MID'}
-        onCancel={() => setYouthTarget(null)}
+        onClose={() => setYouthTarget(null)}
         onPick={(slot) => youthTarget !== null && doPromote(youthTarget, slot)}
       />
+
+      <PlayerSheet
+        player={selling?.p ?? null}
+        open={selling !== null}
+        onClose={() => setSelling(null)}
+        onSell={selling ? () => doSell(selling.slot) : undefined}
+      />
     </>
+  );
+}
+
+function Fig({ label, value, tint }: { label: string; value: string; tint?: string }) {
+  return (
+    <View style={styles.fig}>
+      <Text style={[styles.figValue, tint ? { color: tint } : null]} allowFontScaling={false}>
+        {value}
+      </Text>
+      <Text style={styles.figLabel}>{label}</Text>
+    </View>
   );
 }
 
@@ -227,69 +447,131 @@ function Badge({ pos }: { pos: Position }) {
 /**
  * Which place he fills.
  *
- * Every empty place is offered, with what it would cost him to play there.
+ * Every empty place listed, with what it would cost him to play there.
  * Out of position is allowed, because sometimes it is the only option, and
  * the price is shown rather than hidden.
  */
-function SlotPicker({
+function SlotSheet({
   open,
   title,
+  subtitle,
   holes,
   playerPos,
-  onCancel,
+  onClose,
   onPick,
 }: {
   open: boolean;
   title: string;
+  subtitle: string;
   holes: { index: number; pos: Position }[];
   playerPos: Position;
-  onCancel: () => void;
+  onClose: () => void;
   onPick: (slot: number) => void;
 }) {
-  const [chosen, setChosen] = useState<number | null>(null);
-
-  if (!open) return null;
   return (
-    <Confirm
-      visible={open}
-      title={title}
-      body={holes
-        .map((h) => {
-          const fit = posFit(playerPos, h.pos);
-          const where = h.index < 11 ? h.pos : `${h.pos} on the bench`;
-          return fit === 1
-            ? `${where}: his own position`
-            : `${where}: ${Math.round((1 - fit) * 100)}% off his best`;
-        })
-        .join('\n')}
-      confirmLabel={
-        holes.length === 1
-          ? `Put him at ${holes[0].pos.toLowerCase()}`
-          : `Best fit: ${bestHole(holes, playerPos).pos.toLowerCase()}`
-      }
-      cancelLabel="Not now"
-      onCancel={() => {
-        setChosen(null);
-        onCancel();
-      }}
-      onConfirm={() => {
-        const pick = holes.length === 1 ? holes[0] : bestHole(holes, playerPos);
-        setChosen(null);
-        onPick(pick.index);
-      }}
-    />
+    <Sheet visible={open} onClose={onClose}>
+      <Text style={styles.sheetTitle}>{title}</Text>
+      <Text style={styles.sheetSub}>{subtitle}</Text>
+
+      {holes.length ? (
+        <>
+          <Text style={styles.sheetKey}>Where does he play?</Text>
+          <View style={styles.slots}>
+            {[...holes]
+              .sort((a, b) => posFit(playerPos, b.pos) - posFit(playerPos, a.pos))
+              .map((h) => {
+                const fit = posFit(playerPos, h.pos);
+                const tint = positionColor[h.pos];
+                return (
+                  <Press
+                    key={h.index}
+                    onPress={() => onPick(h.index)}
+                    feel="medium"
+                    scaleTo={0.98}
+                    style={[
+                      styles.slot,
+                      fit === 1 ? { borderColor: line.accent } : null,
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.badge,
+                        { backgroundColor: tint + '26', borderColor: tint + '66' },
+                      ]}
+                    >
+                      <Text style={[styles.badgeText, { color: tint }]}>{h.pos}</Text>
+                    </View>
+                    <View style={styles.slotBody}>
+                      <Text style={styles.slotWhere}>
+                        {h.index < 11 ? 'In the eleven' : 'On the bench'}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.slotFit,
+                          {
+                            color:
+                              fit === 1
+                                ? color.accent
+                                : fit >= 0.94
+                                  ? color.warning
+                                  : color.danger,
+                          },
+                        ]}
+                      >
+                        {fit === 1
+                          ? 'His own position'
+                          : `${Math.round((1 - fit) * 100)}% off his best`}
+                      </Text>
+                    </View>
+                    <Text style={styles.slotArrow} allowFontScaling={false}>
+                      {'›'}
+                    </Text>
+                  </Press>
+                );
+              })}
+          </View>
+        </>
+      ) : (
+        <Text style={styles.sheetNone}>
+          There is nowhere to put him. Sell somebody first.
+        </Text>
+      )}
+    </Sheet>
   );
 }
 
-function bestHole(holes: { index: number; pos: Position }[], playerPos: Position) {
-  return [...holes].sort(
-    (a, b) => posFit(playerPos, b.pos) - posFit(playerPos, a.pos) || a.index - b.index,
-  )[0];
+/** A filter wears the colour its position already has everywhere else. */
+function filterHue(f: Filter): string {
+  return f === 'all' ? hue.emerald : positionColor[f];
 }
 
 const styles = StyleSheet.create({
-  lead: { ...text.body, color: color.text2 },
+  money: {
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: alpha(hue.sky, 0.26),
+    backgroundColor: '#0C1219',
+    experimental_backgroundImage:
+      'linear-gradient(180deg, #14212F 0%, #0D1319 62%, #080B0E 100%)',
+    overflow: 'hidden',
+    gap: space.s3,
+  },
+  moneyRow: { flexDirection: 'row' },
+  fig: { flex: 1, alignItems: 'center', gap: 1 },
+  figValue: {
+    fontFamily: font.displayBlack,
+    fontSize: 22,
+    lineHeight: 27,
+    color: color.text1,
+    fontVariant: ['tabular-nums'],
+  },
+  figLabel: { ...text.key, fontSize: 8, color: color.text3 },
+  moneyNote: { ...text.small, fontSize: 11, lineHeight: 15 },
+
+  lead: { ...text.body, color: color.text2, marginTop: space.s4 },
   holes: {
+    marginTop: space.s4,
     padding: space.s4,
     borderRadius: radius.lg,
     borderWidth: 1,
@@ -301,9 +583,50 @@ const styles = StyleSheet.create({
   holesBody: { ...text.small, lineHeight: 18 },
 
   sect: { marginTop: space.s6, marginBottom: space.s2 },
+  sectTight: { marginBottom: 0 },
   sectNote: { ...text.small, fontSize: 11.5, marginBottom: space.s3 },
-  list: { gap: space.s2 },
+  none: { ...text.small, fontSize: 12.5, textAlign: 'center', paddingVertical: space.s4 },
 
+  marketHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: space.s6,
+    marginBottom: space.s2,
+  },
+  reroll: {
+    paddingHorizontal: space.s3,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: line.accent,
+    backgroundColor: 'rgba(31,197,126,0.10)',
+  },
+  rerollOff: { borderColor: line.card, backgroundColor: 'rgba(255,255,255,0.03)' },
+  rerollText: { ...text.key, fontSize: 9, color: color.accent },
+
+  filters: { flexDirection: 'row', gap: 5, marginBottom: space.s3 },
+  filter: {
+    flex: 1,
+    minHeight: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: line.card,
+  },
+  filterOn: { borderColor: line.accent, backgroundColor: 'rgba(31,197,126,0.1)' },
+  filterText: {
+    fontFamily: font.displaySemi,
+    fontSize: 11,
+    lineHeight: 14,
+    letterSpacing: 0.6,
+    color: color.text3,
+  },
+
+  list: { gap: space.s2 },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -326,7 +649,8 @@ const styles = StyleSheet.create({
     color: color.text3,
     fontVariant: ['tabular-nums'],
   },
-  cardRight: { alignItems: 'flex-end', minWidth: 52 },
+  cardFit: { fontFamily: font.body, fontSize: 10, lineHeight: 14, color: color.warning },
+  cardRight: { alignItems: 'flex-end', minWidth: 62 },
   cardRtg: {
     fontFamily: font.displayBlack,
     fontSize: 20,
@@ -341,6 +665,7 @@ const styles = StyleSheet.create({
     color: color.text3,
     fontVariant: ['tabular-nums'],
   },
+  cardSwing: { fontFamily: font.body, fontSize: 9, lineHeight: 12 },
 
   badge: {
     width: 36,
@@ -351,4 +676,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   badgeText: { ...text.key, fontSize: 8.5 },
+
+  sheetTitle: {
+    fontFamily: font.displayBlack,
+    fontSize: 24,
+    lineHeight: 30,
+    color: color.text1,
+  },
+  sheetSub: { ...text.small, fontSize: 12.5, marginTop: 2 },
+  sheetKey: { ...text.key, fontSize: 9, color: color.text3, marginTop: space.s4, marginBottom: space.s2 },
+  sheetNone: { ...text.body, color: color.text2, marginTop: space.s4 },
+  slots: { gap: space.s2, marginBottom: space.s3 },
+  slot: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s3,
+    padding: space.s3,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
+  slotBody: { flex: 1, minWidth: 0 },
+  slotWhere: { fontFamily: font.bodySemi, fontSize: 14, lineHeight: 19, color: color.text1 },
+  slotFit: { fontFamily: font.body, fontSize: 11, lineHeight: 15 },
+  slotArrow: { fontSize: 18, color: color.text3 },
 });

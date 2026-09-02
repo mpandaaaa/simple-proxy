@@ -10,40 +10,108 @@ import {
   Ticker,
   Confetti,
   Trophy,
+  SeasonCurve,
+  ClubDisc,
 } from '../../src/ui/components';
-import { color, gradient, line, positionColor, radius, space } from '../../src/ui/tokens';
+import { color, gradient, line, positionColor, radius, space, hue, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { GRAIN_URI } from '../../src/ui/grain';
 import { haptic } from '../../src/ui/feel';
 import { sfx } from '../../src/ui/sound';
 import {
   asSquad,
+  awards,
   chemBonus,
+  expectedRating,
+  finishFor,
+  highlights,
+  lastName,
+  livePosition,
   mulberry32,
+  ordinal,
   processSeasonEnd,
   simulateSeason,
   starters,
+  verdict,
+  type Dynasty,
   type DynastyPlayer,
+  type FinishTone,
+  type Outcome,
+  type SeasonResult,
   type SummerReport,
+  type TableRow,
 } from '../../src/engine';
 import { getCareer, setCareer } from '../../src/game/career';
 import { clearSeasonResult, takeSeasonResult } from '../../src/game/careerSeason';
 
+/** Eight highlights, eight colours, so the grid is not one green block. */
+const HL_HUES = [
+  hue.emerald,
+  hue.sky,
+  hue.gold,
+  hue.rose,
+  hue.violet,
+  hue.amber,
+  hue.mint,
+  hue.indigo,
+];
+
+const TONE: Record<FinishTone, { tint: string; edge: string; wash: string }> = {
+  gold: {
+    tint: color.gold,
+    edge: 'rgba(214,178,94,0.45)',
+    wash: 'radial-gradient(135% 105% at 50% 0%, rgba(214,178,94,0.30) 0%, rgba(58,44,12,0.55) 44%, #0C0F0A 86%)',
+  },
+  silver: {
+    tint: '#C9D6CE',
+    edge: 'rgba(201,214,206,0.36)',
+    wash: 'radial-gradient(135% 105% at 50% 0%, rgba(201,214,206,0.22) 0%, rgba(40,50,46,0.5) 44%, #0A0F0C 86%)',
+  },
+  ucl: {
+    tint: color.accent,
+    edge: 'rgba(31,197,126,0.42)',
+    wash: 'radial-gradient(135% 105% at 50% 0%, rgba(31,197,126,0.26) 0%, rgba(10,60,38,0.5) 44%, #08110D 86%)',
+  },
+  europa: {
+    tint: color.blue,
+    edge: 'rgba(76,160,255,0.40)',
+    wash: 'radial-gradient(135% 105% at 50% 0%, rgba(76,160,255,0.24) 0%, rgba(12,38,68,0.5) 44%, #080D14 86%)',
+  },
+  mid: {
+    tint: color.text2,
+    edge: 'rgba(255,255,255,0.16)',
+    wash: 'radial-gradient(135% 105% at 50% 0%, rgba(255,255,255,0.12) 0%, rgba(24,32,28,0.6) 44%, #0A0F0C 86%)',
+  },
+  low: {
+    tint: color.warning,
+    edge: 'rgba(245,165,36,0.36)',
+    wash: 'radial-gradient(135% 105% at 50% 0%, rgba(245,165,36,0.22) 0%, rgba(58,40,10,0.5) 44%, #0C0D08 86%)',
+  },
+  rel: {
+    tint: color.danger,
+    edge: 'rgba(229,72,77,0.42)',
+    wash: 'radial-gradient(135% 105% at 50% 0%, rgba(229,72,77,0.26) 0%, rgba(62,14,16,0.5) 44%, #100809 86%)',
+  },
+};
+
 /**
- * The summer.
+ * The season review, and the summer that follows it.
  *
- * A year happens to the whole club at once and this is the only place you
- * see it. The books close, the board decides what it thinks of you, the
- * squad ages, contracts run out and an intake comes through.
+ * One long page, in the order a season actually resolves. Where you
+ * finished and what the papers made of it. The awards. What the squad did,
+ * player by player. The table you finished in. Then the board's verdict,
+ * the books, and everything the year did to the eleven.
  *
- * Ordered by what you cannot undo. The board first, because it can end the
- * career. Then the money, then the players.
+ * The draft's review sets the standard for the top half of this and there
+ * is no reason a career should get less.
  */
 export default function Summer() {
   const done = useRef(false);
-  const [state, setState] = useState<{ report: SummerReport; year: number; club: string } | null>(
-    null,
-  );
+  const [state, setState] = useState<{
+    report: SummerReport;
+    result: SeasonResult;
+    before: Dynasty;
+  } | null>(null);
 
   useEffect(() => {
     if (done.current) return;
@@ -57,9 +125,7 @@ export default function Summer() {
 
     /* The season is a pure function of the career and the year, so if the
        handoff is gone, which it is after the app has been closed, it can
-       be played again and comes out identical. Without this a career that
-       was shut down between the last match and the summer could never be
-       advanced. */
+       be played again and comes out identical. */
     const result =
       takeSeasonResult() ??
       (() => {
@@ -78,33 +144,316 @@ export default function Summer() {
     const out = processSeasonEnd(career, result);
     setCareer(out.dynasty);
     clearSeasonResult();
-    setState({ report: out.report, year: career.year, club: career.club });
+    setState({ report: out.report, result, before: career });
 
     haptic(out.report.sacked ? 'error' : out.report.met ? 'success' : 'warning');
-    sfx(out.report.sacked ? 'lose' : out.report.met ? 'win' : 'ft');
+    sfx(
+      out.report.sacked
+        ? 'lose'
+        : result.position === 1
+          ? 'trophy'
+          : out.report.met
+            ? 'win'
+            : 'ft',
+    );
   }, []);
 
-  const report = state?.report ?? null;
-  const swing = useMemo(
-    () => (report ? report.after - report.before : 0),
-    [report],
-  );
+  const curve = useMemo(() => {
+    if (!state) return { positions: [] as number[], outcomes: [] as Outcome[] };
+    const positions: number[] = [];
+    const outcomes: Outcome[] = [];
+    let pts = 0;
+    state.result.matches.forEach((m, i) => {
+      pts += m.oc === 'win' ? 3 : m.oc === 'draw' ? 1 : 0;
+      positions.push(livePosition(pts, i + 1, state.result.table));
+      outcomes.push(m.oc);
+    });
+    return { positions, outcomes };
+  }, [state]);
 
-  if (!report || !state) return null;
-  const champion = report.met && report.ledger.deduction === 0 && swing >= 0;
+  if (!state) return null;
+  const { report, result, before } = state;
+  const fin = finishFor(result);
+  const tone = TONE[fin.tone];
+  const paper = verdict(result);
+  const stats = highlights(result);
+  const trophies = awards(
+    result.playerStats,
+    starters(before).map((p) => ({ pos: p.pos, player: null })),
+  );
+  const swing = report.after - report.before;
+
+  // The squad that played it, so the review can name them.
+  const squad = starters(before);
+  const byName = new Map(squad.map((p) => [p.n, p]));
+  const scorers = Object.entries(result.playerStats)
+    .map(([n, s]) => ({ n, ...s }))
+    .sort((a, b) => b.g - a.g || b.a - a.a);
 
   return (
     <>
       <Stack.Screen options={{ gestureEnabled: false }} />
       <ModeScreen
-        overline={`After season ${state.year}`}
-        title="The summer"
+        overline={`${before.club} · season ${before.year}`}
+        title="Season review"
         onBack={() => router.replace('/dynasty')}
       >
-        {/* ---- the board ---- */}
+        {/* ================= where you finished ================= */}
         <View
           style={[
-            styles.verdict,
+            styles.finish,
+            { borderColor: tone.edge, experimental_backgroundImage: tone.wash },
+          ]}
+        >
+          <Shine radius={radius.xl} group="feature" bevel={false} clip={false} />
+          <View style={styles.bloom} pointerEvents="none">
+            <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <Defs>
+                <RadialGradient id="revBloom" cx="50%" cy="50%" r="50%">
+                  <Stop offset="0" stopColor={tone.tint} stopOpacity={0.34} />
+                  <Stop offset="1" stopColor={tone.tint} stopOpacity={0} />
+                </RadialGradient>
+              </Defs>
+              <Ellipse cx="50" cy="6" rx="66" ry="50" fill="url(#revBloom)" />
+            </Svg>
+          </View>
+          <View style={styles.grain} pointerEvents="none">
+            <Image source={{ uri: GRAIN_URI }} resizeMode="repeat" style={styles.fill} />
+          </View>
+
+          {result.position === 1 ? (
+            <Trophy size={92} tint={color.gold} />
+          ) : (
+            <Text style={styles.mark} allowFontScaling={false}>
+              {fin.mark}
+            </Text>
+          )}
+
+          <View style={styles.posRow}>
+            <Ticker
+              value={result.position}
+              from={20}
+              duration={1000}
+              style={[styles.posNum, { color: tone.tint }]}
+            />
+            <Text style={[styles.posOrd, { color: tone.tint }]} allowFontScaling={false}>
+              {ordinal(result.position).replace(String(result.position), '')}
+            </Text>
+          </View>
+          <Text style={styles.finTitle}>{fin.title}</Text>
+          <Text style={styles.finSub}>{fin.sub}</Text>
+
+          <View
+            style={[
+              styles.pv,
+              {
+                borderColor: (report.met ? color.accent : color.danger) + '66',
+                backgroundColor: (report.met ? color.accent : color.danger) + '1A',
+              },
+            ]}
+          >
+            <Text
+              style={[styles.pvText, { color: report.met ? color.accent : color.danger }]}
+            >
+              {report.met ? '▲ Objective met' : '▼ Objective missed'}
+            </Text>
+          </View>
+          <Text style={styles.pvSub}>
+            They wanted {before.objective.label.toLowerCase()}
+          </Text>
+        </View>
+
+        {/* ================= the six numbers ================= */}
+        <View style={styles.tiles}>
+          <Tile value={result.wins} label="Won" tint={hue.emerald} />
+          <Tile value={result.draws} label="Drawn" tint={hue.amber} />
+          <Tile value={result.losses} label="Lost" tint={hue.crimson} />
+          <Tile value={result.gf} label="Goals for" tint={hue.rose} />
+          <Tile value={result.ga} label="Goals against" tint={hue.sky} />
+          <Tile value={result.pts} label="Points" tint={tone.tint} />
+        </View>
+
+        {/* ================= the papers ================= */}
+        <Rise delay={0}>
+          <View style={[styles.paper, { borderColor: tone.edge }]}>
+            <View style={styles.grain} pointerEvents="none">
+              <Image source={{ uri: GRAIN_URI }} resizeMode="repeat" style={styles.fill} />
+            </View>
+            <Text style={[styles.paperKey, { color: tone.tint }]}>The morning papers</Text>
+            <View style={[styles.rule, { backgroundColor: tone.edge }]} />
+            <Text style={styles.paperHead}>{paper.headline}</Text>
+            <Text style={styles.paperQuote}>{paper.quote}</Text>
+            <Text style={styles.paperSource}>{paper.source}</Text>
+          </View>
+        </Rise>
+
+        {/* ================= the season as a shape ================= */}
+        <Text style={[text.label, styles.sect]}>The season</Text>
+        <SeasonCurve
+          positions={curve.positions}
+          outcomes={curve.outcomes}
+          tint={tone.tint}
+        />
+
+        {/* ================= highlights ================= */}
+        <Text style={[text.label, styles.sect]}>Season highlights</Text>
+        <View style={styles.hlGrid}>
+          {stats.map((h, i) => (
+            <View
+              key={h.label}
+              style={[
+                styles.hl,
+                {
+                  borderColor: alpha(HL_HUES[i % HL_HUES.length], 0.24),
+                  backgroundColor: alpha(HL_HUES[i % HL_HUES.length], 0.07),
+                },
+              ]}
+            >
+              <Text
+                style={[styles.hlValue, { color: HL_HUES[i % HL_HUES.length] }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                allowFontScaling={false}
+              >
+                {h.value}
+              </Text>
+              <Text style={styles.hlLabel}>{h.label}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* ================= awards ================= */}
+        <Rise delay={0}>
+          <View style={styles.awards}>
+            <View style={styles.grain} pointerEvents="none">
+              <Image source={{ uri: GRAIN_URI }} resizeMode="repeat" style={styles.fill} />
+            </View>
+            <Text style={styles.awardsKey}>Season awards</Text>
+            <Award
+              tint={hue.gold}
+              mark="🏆"
+              label="Player of the season"
+              name={trophies.pots?.name}
+              stat={
+                trophies.pots
+                  ? `${trophies.pots.value} goals, ${trophies.pots.extra ?? 0} assists`
+                  : undefined
+              }
+              squad={byName}
+              top
+            />
+            <Award
+              tint={hue.rose}
+              mark="⚽"
+              label="Golden Boot"
+              name={trophies.boot?.name}
+              stat={trophies.boot ? `${trophies.boot.value} goals` : undefined}
+              squad={byName}
+            />
+            <Award
+              tint={hue.sky}
+              mark="🎯"
+              label="Playmaker"
+              name={trophies.playmaker?.name}
+              stat={trophies.playmaker ? `${trophies.playmaker.value} assists` : undefined}
+              squad={byName}
+            />
+            <Award
+              tint={hue.violet}
+              mark="🧤"
+              label="Golden Glove"
+              name={trophies.glove?.name}
+              stat={trophies.glove ? `${trophies.glove.value} clean sheets` : undefined}
+              squad={byName}
+            />
+          </View>
+        </Rise>
+
+        {/* ================= what every player did ================= */}
+        <Text style={[text.label, styles.sect]}>Player statistics</Text>
+        <View style={styles.players}>
+          {squad.map((p) => {
+            const st = result.playerStats[p.n] ?? { g: 0, a: 0, cs: 0 };
+            const keeps = p.pos === 'GK' || p.pos === 'DEF';
+            const expected = expectedRating(p.rtg);
+            const rating = p.avgR;
+            return (
+              <View key={p.n} style={styles.pl}>
+                <View
+                  style={[
+                    styles.plPos,
+                    {
+                      backgroundColor: positionColor[p.pos] + '26',
+                      borderColor: positionColor[p.pos] + '66',
+                    },
+                  ]}
+                >
+                  <Text style={[styles.plPosText, { color: positionColor[p.pos] }]}>
+                    {p.pos}
+                  </Text>
+                </View>
+                <View style={styles.plName}>
+                  <Text style={styles.plNameText} numberOfLines={1}>
+                    {p.n}
+                  </Text>
+                  <Text style={styles.plMeta} numberOfLines={1}>
+                    {p.apps} apps
+                    {p.daysOut >= 30 ? ` · ${p.daysOut} days out` : ''}
+                  </Text>
+                </View>
+                {rating != null ? (
+                  <View style={styles.plRating}>
+                    <Text
+                      style={[
+                        styles.plRatingValue,
+                        {
+                          color:
+                            rating >= expected + 0.3
+                              ? color.win
+                              : rating <= expected - 0.3
+                                ? color.loss
+                                : color.text1,
+                        },
+                      ]}
+                      allowFontScaling={false}
+                    >
+                      {rating.toFixed(2)}
+                    </Text>
+                    <Text style={styles.plRatingLabel}>form</Text>
+                  </View>
+                ) : null}
+                <PlStat value={st.g} label="G" />
+                <PlStat value={st.a} label="A" />
+                {keeps ? <PlStat value={st.cs} label="CS" /> : null}
+              </View>
+            );
+          })}
+        </View>
+
+        {/* ================= the table ================= */}
+        <Text style={[text.label, styles.sect]}>Final standings</Text>
+        <View style={styles.table}>
+          <View style={styles.thead}>
+            <Text style={[styles.th, styles.colPos]}>#</Text>
+            <Text style={[styles.th, styles.colClub]}>Club</Text>
+            <Text style={[styles.th, styles.colNum]}>W</Text>
+            <Text style={[styles.th, styles.colNum]}>D</Text>
+            <Text style={[styles.th, styles.colNum]}>L</Text>
+            <Text style={[styles.th, styles.colGd]}>GD</Text>
+            <Text style={[styles.th, styles.colPts]}>Pts</Text>
+          </View>
+          {result.table.map((r, i) => (
+            <Row key={r.name} row={r} pos={i + 1} tint={tone.tint} club={before.club} />
+          ))}
+        </View>
+
+        {/* ================= now the summer ================= */}
+        <View style={styles.divider} />
+        <Text style={[text.label, styles.sect]}>The summer</Text>
+
+        <View
+          style={[
+            styles.verdictCard,
             {
               borderColor: report.sacked
                 ? line.danger
@@ -114,31 +463,7 @@ export default function Summer() {
             },
           ]}
         >
-          <Shine radius={radius.xl} group="feature" bevel={false} clip={false} />
-          <View style={styles.bloom} pointerEvents="none">
-            <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-              <Defs>
-                <RadialGradient id="sumBloom" cx="50%" cy="50%" r="50%">
-                  <Stop
-                    offset="0"
-                    stopColor={report.sacked ? color.danger : report.met ? color.accent : color.warning}
-                    stopOpacity={0.28}
-                  />
-                  <Stop
-                    offset="1"
-                    stopColor={report.sacked ? color.danger : report.met ? color.accent : color.warning}
-                    stopOpacity={0}
-                  />
-                </RadialGradient>
-              </Defs>
-              <Ellipse cx="50" cy="4" rx="66" ry="44" fill="url(#sumBloom)" />
-            </Svg>
-          </View>
-          <View style={styles.grain} pointerEvents="none">
-            <Image source={{ uri: GRAIN_URI }} resizeMode="repeat" style={styles.fill} />
-          </View>
-
-          {report.met && !report.sacked ? <Trophy size={64} tint={color.accent} /> : null}
+          <Shine radius={radius.lg} group="panel" />
           <Text style={styles.verdictKey}>The board</Text>
           <Text
             style={[
@@ -152,23 +477,18 @@ export default function Summer() {
               },
             ]}
           >
-            {report.sacked
-              ? 'You are sacked'
-              : report.met
-                ? 'Objective met'
-                : 'Objective missed'}
+            {report.sacked ? 'You are sacked' : report.met ? 'They are pleased' : 'Not good enough'}
           </Text>
           <Text style={styles.verdictSwing}>
             Confidence {report.mgrSwing >= 0 ? 'up' : 'down'} {Math.abs(report.mgrSwing)}
-            {report.deduction ? `, and ${report.deduction} points come off` : ''}
+            {report.deduction ? `, and ${report.deduction} points come off next season` : ''}
           </Text>
         </View>
 
         {report.sacked ? (
           <View style={styles.sacked}>
             <Text style={styles.sackedText}>
-              The board have run out of patience. The career is over, and the
-              save goes with it.
+              The board have run out of patience. The career ends here.
             </Text>
             <Press
               onPress={() => {
@@ -186,7 +506,7 @@ export default function Summer() {
           </View>
         ) : null}
 
-        {/* ---- the money ---- */}
+        {/* the books */}
         <View style={styles.books}>
           <Shine radius={radius.lg} group="panel" />
           <Text style={styles.booksKey}>The books</Text>
@@ -205,7 +525,7 @@ export default function Summer() {
               ]}
               allowFontScaling={false}
             >
-              {report.ledger.profit >= 0 ? '+' : ''}£{report.ledger.profit}m
+              {report.ledger.profit >= 0 ? '+' : '−'}£{Math.abs(report.ledger.profit)}m
             </Text>
           </View>
           <View style={styles.psrTrack}>
@@ -224,15 +544,13 @@ export default function Summer() {
             />
           </View>
           <Text style={styles.psrNote}>
-            Three year rolling {report.ledger.rolling >= 0 ? '+' : ''}£
-            {Math.round(report.ledger.rolling)}m. The league allows losses to £105m.
+            Three year rolling {report.ledger.rolling >= 0 ? '+' : '−'}£
+            {Math.abs(Math.round(report.ledger.rolling))}m. The league allows losses to £105m.
           </Text>
-          <Text style={styles.budgetNote}>
-            You have £{report.budget}m for the summer.
-          </Text>
+          <Text style={styles.budgetNote}>£{report.budget}m to spend this summer.</Text>
         </View>
 
-        {/* ---- the squad ---- */}
+        {/* the squad, a year older */}
         <View style={styles.swing}>
           <Text style={styles.swingKey}>Squad rating</Text>
           <View style={styles.swingRow}>
@@ -255,18 +573,11 @@ export default function Summer() {
         </View>
 
         {report.retired.length ? (
-          <Rise delay={0}>
-            <Group title={`${report.retired.length} retired`} tone={color.danger}>
-              {report.retired.map((p) => (
-                <Line
-                  key={p.n}
-                  name={p.n}
-                  note={`${p.pos} · ${p.age} · rated ${p.rtg}`}
-                  pos={p.pos}
-                />
-              ))}
-            </Group>
-          </Rise>
+          <Group title={`${report.retired.length} retired`} tone={color.danger}>
+            {report.retired.map((p) => (
+              <Line key={p.n} name={p.n} note={`${p.age} years old, rated ${p.rtg}`} pos={p.pos} />
+            ))}
+          </Group>
         ) : null}
 
         {report.lost.length ? (
@@ -310,9 +621,9 @@ export default function Summer() {
         ) : null}
 
         {report.injured.length ? (
-          <Group title="Time on the treatment table" tone={color.warning}>
+          <Group title="On the treatment table" tone={color.warning}>
             {report.injured.map((i) => (
-              <Line key={i.name} name={i.name} note={`${i.days} days · ${i.injury}`} />
+              <Line key={i.name} name={i.name} note={`${i.days} days, ${i.injury.toLowerCase()}`} />
             ))}
           </Group>
         ) : null}
@@ -320,12 +631,7 @@ export default function Summer() {
         {report.intake.length ? (
           <Group title={`${report.intake.length} through the academy`} tone={color.accent}>
             {report.intake.map((p) => (
-              <Line
-                key={p.n}
-                name={p.n}
-                note={`${p.pos} · ${p.age} · rated ${p.rtg}`}
-                pos={p.pos}
-              />
+              <Line key={p.n} name={p.n} note={`${p.age} years old, rated ${p.rtg}`} pos={p.pos} />
             ))}
           </Group>
         ) : null}
@@ -340,13 +646,170 @@ export default function Summer() {
             style={styles.cta}
             scaleTo={0.98}
           >
-            <Text style={styles.ctaText}>Back to the club</Text>
+            <Text style={styles.ctaText}>Continue to season {before.year + 1}</Text>
           </Press>
         ) : null}
       </ModeScreen>
 
-      <Confetti fire={champion && report.met && state.year > 0 && report.ledger.profit >= 0} />
+      <Confetti fire={result.position === 1 && !report.sacked} />
     </>
+  );
+}
+
+function Tile({ value, label, tint }: { value: number; label: string; tint?: string }) {
+  return (
+    <View
+      style={[
+        styles.tile,
+        tint
+          ? {
+              borderColor: alpha(tint, 0.26),
+              experimental_backgroundImage: `linear-gradient(180deg, ${alpha(
+                tint,
+                0.15,
+              )} 0%, rgba(10,15,12,0) 80%)`,
+            }
+          : null,
+      ]}
+    >
+      <Ticker
+        value={value}
+        from={0}
+        blank="0"
+        duration={780}
+        style={[styles.tileValue, tint ? { color: tint } : null]}
+      />
+      <Text style={styles.tileLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function Award({
+  mark,
+  label,
+  name,
+  stat,
+  squad,
+  tint,
+  top,
+}: {
+  mark: string;
+  label: string;
+  name?: string;
+  stat?: string;
+  squad: Map<string, DynastyPlayer>;
+  tint: string;
+  top?: boolean;
+}) {
+  const p = name ? squad.get(name) : undefined;
+  return (
+    <View
+      style={[
+        styles.aw,
+        top ? styles.awTop : null,
+        {
+          borderColor: alpha(tint, top ? 0.5 : 0.26),
+          backgroundColor: alpha(tint, top ? 0.12 : 0.06),
+        },
+      ]}
+    >
+      <Text style={styles.awMark} allowFontScaling={false}>
+        {mark}
+      </Text>
+      <View style={styles.awBody}>
+        <Text style={[styles.awLabel, { color: tint }]}>{label}</Text>
+        <Text style={styles.awName} numberOfLines={1}>
+          {name ?? 'Not awarded'}
+        </Text>
+        {stat ? <Text style={styles.awStat}>{stat}</Text> : null}
+      </View>
+      {p ? (
+        <Text style={styles.awRtg} allowFontScaling={false}>
+          {p.rtg}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+function PlStat({ value, label }: { value: number; label: string }) {
+  return (
+    <View style={styles.plStat}>
+      <Text style={styles.plStatValue} allowFontScaling={false}>
+        {value}
+      </Text>
+      <Text style={styles.plStatLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function Row({
+  row,
+  pos,
+  tint,
+  club,
+}: {
+  row: TableRow;
+  pos: number;
+  tint: string;
+  club: string;
+}) {
+  const zone =
+    pos === 1
+      ? color.gold
+      : pos <= 4
+        ? color.blue
+        : pos <= 7
+          ? color.accent
+          : pos >= 18
+            ? color.danger
+            : 'transparent';
+  return (
+    <View style={[styles.tr, row.isYou ? { backgroundColor: tint + '14' } : null]}>
+      <View style={[styles.zone, { backgroundColor: zone }]} />
+      <Text
+        style={[styles.td, styles.colPos, { color: zone === 'transparent' ? color.text3 : zone }]}
+        allowFontScaling={false}
+      >
+        {pos}
+      </Text>
+      <Text
+        style={[
+          styles.td,
+          styles.colClub,
+          row.isYou ? { color: tint, fontFamily: font.bodyBold } : null,
+        ]}
+        numberOfLines={1}
+      >
+        {row.isYou ? `★ ${club}` : row.name}
+      </Text>
+      <Text style={[styles.td, styles.colNum]} allowFontScaling={false}>
+        {row.w}
+      </Text>
+      <Text style={[styles.td, styles.colNum]} allowFontScaling={false}>
+        {row.d}
+      </Text>
+      <Text style={[styles.td, styles.colNum]} allowFontScaling={false}>
+        {row.l}
+      </Text>
+      <Text
+        style={[
+          styles.td,
+          styles.colGd,
+          { color: row.gf - row.ga >= 0 ? color.win : color.loss },
+        ]}
+        allowFontScaling={false}
+      >
+        {row.gf - row.ga >= 0 ? '+' : ''}
+        {row.gf - row.ga}
+      </Text>
+      <Text
+        style={[styles.tdPts, styles.colPts, row.isYou ? { color: tint } : null]}
+        allowFontScaling={false}
+      >
+        {row.pts}
+      </Text>
+    </View>
   );
 }
 
@@ -460,24 +923,280 @@ function Money({ label, value }: { label: string; value: number }) {
 const styles = StyleSheet.create({
   fill: { width: '100%', height: '100%' },
   grain: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.05 },
-  bloom: { position: 'absolute', top: -30, left: -30, right: -30, height: 180 },
+  bloom: { position: 'absolute', top: -40, left: -40, right: -40, height: 220 },
 
-  verdict: {
+  finish: {
     alignItems: 'center',
-    paddingVertical: space.s5,
+    paddingTop: space.s5,
     paddingHorizontal: space.s4,
+    paddingBottom: space.s5,
     borderRadius: radius.xl,
     borderWidth: 1,
-    backgroundColor: '#0C1510',
-    experimental_backgroundImage:
-      'linear-gradient(180deg, #16281F 0%, #0D1712 62%, #080D0A 100%)',
+    backgroundColor: '#0A0F0C',
+    boxShadow: '0px 16px 38px rgba(0,0,0,0.55)',
     overflow: 'hidden',
   },
-  verdictKey: { ...text.key, fontSize: 9, color: color.text3, marginTop: space.s2 },
+  mark: { fontSize: 40, lineHeight: 50 },
+  posRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: space.s2 },
+  posNum: {
+    fontFamily: font.hero,
+    fontSize: 78,
+    lineHeight: 102,
+    fontVariant: ['tabular-nums'],
+  },
+  posOrd: { fontFamily: font.displayBlack, fontSize: 24, lineHeight: 42, marginLeft: 3 },
+  finTitle: {
+    fontFamily: font.displayBlack,
+    fontSize: 27,
+    lineHeight: 33,
+    letterSpacing: 0.3,
+    color: color.text1,
+    textAlign: 'center',
+    marginTop: -space.s2,
+  },
+  finSub: { ...text.body, color: color.text2, textAlign: 'center', marginTop: 4 },
+  pv: {
+    marginTop: space.s4,
+    paddingHorizontal: space.s4,
+    paddingVertical: 8,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+  },
+  pvText: { ...text.key, fontSize: 11 },
+  pvSub: { ...text.small, fontSize: 12, marginTop: space.s2, textAlign: 'center' },
+
+  tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s2, marginTop: space.s4 },
+  tile: {
+    width: '31.7%',
+    flexGrow: 1,
+    alignItems: 'center',
+    paddingVertical: space.s3,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
+    boxShadow:
+      'inset 0px 1px 0px rgba(255,255,255,0.06), inset 0px 0px 0px 1px rgba(255,255,255,0.035)',
+  },
+  tileValue: {
+    fontFamily: font.hero,
+    fontSize: 32,
+    lineHeight: 42,
+    color: color.text1,
+    fontVariant: ['tabular-nums'],
+  },
+  tileLabel: { ...text.key, fontSize: 8.5, color: color.text3, marginTop: 2 },
+
+  paper: {
+    marginTop: space.s6,
+    padding: space.s5,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    backgroundColor: '#0E1712',
+    experimental_backgroundImage: 'linear-gradient(180deg, #16211B 0%, #0C120E 100%)',
+    overflow: 'hidden',
+  },
+  paperKey: { ...text.key, fontSize: 10 },
+  rule: { height: 1, marginTop: space.s3, marginBottom: space.s3 },
+  paperHead: {
+    fontFamily: font.displayBlack,
+    fontSize: 27,
+    lineHeight: 33,
+    letterSpacing: 0.2,
+    color: color.text1,
+  },
+  paperQuote: {
+    fontFamily: font.body,
+    fontStyle: 'italic',
+    fontSize: 15,
+    lineHeight: 24,
+    color: color.text2,
+    marginTop: space.s3,
+  },
+  paperSource: {
+    ...text.key,
+    fontSize: 9.5,
+    color: color.text3,
+    marginTop: space.s3,
+    textAlign: 'right',
+  },
+
+  sect: { marginTop: space.s6, marginBottom: space.s3 },
+
+  hlGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s2 },
+  hl: {
+    width: '48.6%',
+    flexGrow: 1,
+    paddingVertical: space.s3,
+    paddingHorizontal: space.s4,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
+  },
+  hlValue: {
+    fontFamily: font.displayBlack,
+    fontSize: 26,
+    lineHeight: 32,
+    letterSpacing: 0.2,
+    color: color.text1,
+    fontVariant: ['tabular-nums'],
+  },
+  hlLabel: { ...text.key, fontSize: 8.5, color: color.text3, marginTop: 3 },
+
+  awards: {
+    marginTop: space.s6,
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: line.gold,
+    backgroundColor: '#141207',
+    experimental_backgroundImage:
+      'linear-gradient(180deg, #221D0D 0%, #14120A 60%, #0D0C07 100%)',
+    overflow: 'hidden',
+    gap: space.s2,
+  },
+  awardsKey: { ...text.key, fontSize: 10, color: color.gold, marginBottom: space.s1 },
+  aw: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s3,
+    padding: space.s3,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(214,178,94,0.20)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
+  awTop: { borderColor: 'rgba(214,178,94,0.48)', backgroundColor: 'rgba(214,178,94,0.09)' },
+  awMark: { fontSize: 22, lineHeight: 28, width: 28, textAlign: 'center' },
+  awBody: { flex: 1, minWidth: 0 },
+  awLabel: { ...text.key, fontSize: 8.5, color: color.text3 },
+  awName: {
+    fontFamily: font.displayBold,
+    fontSize: 19,
+    lineHeight: 24,
+    color: color.text1,
+    marginTop: 1,
+  },
+  awStat: { ...text.small, fontSize: 12, color: color.gold },
+  awRtg: {
+    fontFamily: font.displayBlack,
+    fontSize: 20,
+    lineHeight: 25,
+    color: color.gold,
+    fontVariant: ['tabular-nums'],
+  },
+
+  players: { gap: space.s2 },
+  pl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s2,
+    paddingVertical: space.s2,
+    paddingHorizontal: space.s3,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
+  },
+  plPos: {
+    width: 38,
+    height: 26,
+    borderRadius: 7,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  plPosText: { ...text.key, fontSize: 9 },
+  plName: { flex: 1, minWidth: 0 },
+  plNameText: { fontFamily: font.bodySemi, fontSize: 14, lineHeight: 19, color: color.text1 },
+  plMeta: { fontFamily: font.body, fontSize: 10, lineHeight: 14, color: color.text3 },
+  plRating: { alignItems: 'center', minWidth: 40 },
+  plRatingValue: {
+    fontFamily: font.displayBold,
+    fontSize: 15,
+    lineHeight: 19,
+    fontVariant: ['tabular-nums'],
+  },
+  plRatingLabel: { ...text.key, fontSize: 7, color: color.text3 },
+  plStat: { alignItems: 'center', minWidth: 26 },
+  plStatValue: {
+    fontFamily: font.displayBold,
+    fontSize: 16,
+    lineHeight: 20,
+    color: color.text1,
+    fontVariant: ['tabular-nums'],
+  },
+  plStatLabel: { ...text.key, fontSize: 7, color: color.text3 },
+
+  table: {
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#0D1610',
+    overflow: 'hidden',
+  },
+  thead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: space.s2,
+    paddingRight: space.s3,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+  },
+  th: { ...text.key, fontSize: 8.5, color: color.text3 },
+  tr: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 9,
+    paddingRight: space.s3,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.05)',
+  },
+  zone: { width: 3, alignSelf: 'stretch', marginRight: space.s2 },
+  td: {
+    fontFamily: font.body,
+    fontSize: 12.5,
+    lineHeight: 17,
+    color: color.text2,
+    fontVariant: ['tabular-nums'],
+  },
+  tdPts: {
+    fontFamily: font.displayBold,
+    fontSize: 15,
+    lineHeight: 19,
+    color: color.text1,
+    fontVariant: ['tabular-nums'],
+  },
+  colPos: { width: 22, textAlign: 'center' },
+  colClub: { flex: 1, paddingLeft: space.s2 },
+  colNum: { width: 24, textAlign: 'center' },
+  colGd: { width: 38, textAlign: 'right' },
+  colPts: { width: 34, textAlign: 'right' },
+
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    marginTop: space.s7,
+  },
+
+  verdictCard: {
+    alignItems: 'center',
+    paddingVertical: space.s4,
+    paddingHorizontal: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    backgroundColor: '#0C1510',
+    experimental_backgroundImage: gradient.card,
+    overflow: 'hidden',
+  },
+  verdictKey: { ...text.key, fontSize: 9, color: color.text3 },
   verdictTitle: {
     fontFamily: font.displayBlack,
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: 25,
+    lineHeight: 31,
     letterSpacing: 0.3,
   },
   verdictSwing: { ...text.small, fontSize: 12, marginTop: 2, textAlign: 'center' },
@@ -610,15 +1329,15 @@ const styles = StyleSheet.create({
   },
 
   cta: {
-    marginTop: space.s6,
+    marginTop: space.s7,
     marginBottom: space.s6,
-    minHeight: 56,
+    minHeight: 58,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: line.accent,
-    backgroundColor: 'rgba(31,197,126,0.12)',
+    backgroundColor: color.accent,
+    experimental_backgroundImage: 'linear-gradient(140deg, #22D287 0%, #12A866 100%)',
+    boxShadow: '0px 8px 22px rgba(31,197,126,0.3), inset 0px 1px 0px rgba(255,255,255,0.22)',
   },
-  ctaText: { ...text.button, color: color.accent },
+  ctaText: { ...text.button, color: '#05170E' },
 });

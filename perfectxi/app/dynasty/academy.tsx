@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { ModeScreen, Press, Rise, Shine, PlayerSheet } from '../../src/ui/components';
-import { color, gradient, line, positionColor, radius, space } from '../../src/ui/tokens';
+import { color, gradient, line, positionColor, radius, space, hue, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic } from '../../src/ui/feel';
 import { sfx } from '../../src/ui/sound';
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     bottom: 0,
-    backgroundColor: 'rgba(31,197,126,0.28)',
+    backgroundColor: alpha(hue.lime, 0.30),
     borderRadius: 4,
   },
   fogNow: {
@@ -266,14 +266,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.07)',
-    backgroundColor: 'rgba(31,197,126,0.08)',
+    backgroundColor: alpha(hue.lime, 0.10),
   },
   scoutText: {
     fontFamily: font.displayBold,
     fontSize: 13,
     lineHeight: 17,
     letterSpacing: 0.3,
-    color: color.accent,
+    color: hue.lime,
   },
 
   cta: {
@@ -283,8 +283,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: line.accent,
-    backgroundColor: 'rgba(31,197,126,0.10)',
+    borderColor: alpha(hue.lime, 0.45),
+    backgroundColor: alpha(hue.lime, 0.12),
   },
-  ctaText: { ...text.button, fontSize: 15, color: color.accent },
+  ctaText: { ...text.button, fontSize: 15, color: hue.lime },
 });
