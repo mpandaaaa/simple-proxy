@@ -96,7 +96,7 @@ export function ModeCard({
       ]}
       accessibilityLabel={`${title}. ${status ?? subtitle}`}
     >
-      <Shine radius={radius.lg} group="panel" bevel={false} />
+      <Shine radius={radius.lg} group="panel" bevel={false} clip={false} />
 
       <View
         pointerEvents="none"

@@ -251,7 +251,7 @@ export function PlayerCard({
             },
           ]}
         >
-          <Shine radius={22} group="card" rating={card.rtg} reveal bevel={false} />
+          <Shine radius={22} group="card" rating={card.rtg} reveal bevel={false} clip={false} />
 
           <View style={[styles.topEdge, { backgroundColor: tier.edge }]} />
 

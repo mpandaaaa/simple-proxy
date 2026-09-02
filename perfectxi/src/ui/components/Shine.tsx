@@ -112,6 +112,7 @@ export function Shine({
   reveal,
   bevel = true,
   phase = 0,
+  clip = true,
 }: {
   /** the card's own corner radius, so the sweep is clipped to its shape */
   radius?: number;
@@ -124,6 +125,12 @@ export function Shine({
   bevel?: boolean;
   /** extra offset within the group, 0 to 1, for staggering a list */
   phase?: number;
+  /**
+   * Clip the sweep to the card. Turn it off when the card already clips
+   * its own children: a rounded clip forces an offscreen pass and there is
+   * no reason to pay for two of them.
+   */
+  clip?: boolean;
 }) {
   const reduce = useReduceMotion();
   const width = useSharedValue(0);
@@ -186,7 +193,7 @@ export function Shine({
       onLayout={onLayout}
       style={[
         styles.root,
-        { borderRadius: radius },
+        { borderRadius: radius, overflow: clip ? 'hidden' : 'visible' },
         bevel ? styles.bevel : null,
       ]}
     >
@@ -217,7 +224,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    overflow: 'hidden',
   },
   /* a lit top edge, and the faintest possible outline around the whole card */
   bevel: {

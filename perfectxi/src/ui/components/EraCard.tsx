@@ -192,7 +192,7 @@ export function EraCard({
 
   return (
     <View style={[styles.card, live && { borderColor: hexA(tint, 0.5) }]}>
-      <Shine radius={radius.lg} group="card" bevel={false} />
+      <Shine radius={radius.lg} group="card" bevel={false} clip={false} />
       {live ? (
         <View
           style={[

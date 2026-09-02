@@ -580,7 +580,6 @@ function PlayerRow({
       accessibilityLabel={`${player.n}, rated ${player.rtg}, ${POSITION_LABEL[pos] ?? pos}`}
     >
       <View ref={box} style={styles.rowMeasure} pointerEvents="none" />
-      <Shine radius={radius.md} group="card" rating={player.rtg} bevel={false} />
       <View style={[styles.posBadge, { backgroundColor: tint + '20', borderColor: tint + '77' }]}>
         <Text style={[styles.posText, { color: tint }]}>{pos}</Text>
       </View>

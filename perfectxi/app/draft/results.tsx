@@ -123,6 +123,19 @@ function suffix(n: number): string {
   return ordinal(n).replace(String(n), '');
 }
 
+/**
+ * Chop a list into rows of a fixed size.
+ *
+ * Thirty eight does not divide by four, and a wrapping flex row handles
+ * that by stretching the last two tiles across the width, which is what
+ * made the grid look broken. Real rows with real columns do not.
+ */
+function rows<T>(items: readonly T[], per: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += per) out.push(items.slice(i, i + per));
+  return out;
+}
+
 export default function Results() {
   const run = useRun();
   const banked = useRef(false);
@@ -237,7 +250,7 @@ export default function Results() {
             <View style={styles.grain} pointerEvents="none">
               <Image source={{ uri: GRAIN_URI }} resizeMode="repeat" style={styles.fill} />
             </View>
-            <Shine radius={radius.lg} group="panel" bevel={false} />
+            <Shine radius={radius.lg} group="panel" bevel={false} clip={false} />
             <Text style={[styles.paperKey, { color: tone.tint }]}>The morning papers</Text>
             <View style={[styles.rule, { backgroundColor: tone.edge }]} />
             <Text style={styles.paperHead}>{paper.headline}</Text>
@@ -280,7 +293,6 @@ export default function Results() {
         <View style={styles.hlGrid}>
           {stats.map((h) => (
             <View key={h.label} style={styles.hl}>
-              <Shine radius={radius.md} group="panel" />
               <Text
                 style={styles.hlValue}
                 numberOfLines={1}
@@ -301,7 +313,7 @@ export default function Results() {
               <View style={styles.grain} pointerEvents="none">
                 <Image source={{ uri: GRAIN_URI }} resizeMode="repeat" style={styles.fill} />
               </View>
-              <Shine radius={radius.lg} group="feature" bevel={false} />
+              <Shine radius={radius.lg} group="feature" bevel={false} clip={false} />
               <Text style={styles.awardsKey}>Season awards</Text>
 
               <Award
@@ -351,7 +363,6 @@ export default function Results() {
             const keeps = s.pos === 'GK' || s.pos === 'DEF';
             return (
               <View key={s.player.n} style={styles.pl}>
-                <Shine radius={radius.md} group="card" rating={s.player.rtg} />
                 <View
                   style={[styles.plPos, { backgroundColor: positionColor[s.pos] + '26', borderColor: positionColor[s.pos] + '66' }]}
                 >
@@ -384,15 +395,26 @@ export default function Results() {
         <Text style={[text.label, styles.sect]}>Every result</Text>
         <Text style={styles.sectHint}>Tap any one of them to watch it back.</Text>
         <View style={styles.results}>
-          {result.matches.map((m, i) => (
-            <ResultTile key={m.n} match={m} onPress={() => rewatch(i)} />
+          {rows(result.matches, 4).map((line, r) => (
+            <View key={r} style={styles.rtRow}>
+              {line.map((m) => (
+                <ResultTile
+                  key={m.n}
+                  match={m}
+                  onPress={() => rewatch(m.n - 1)}
+                />
+              ))}
+              {/* a short last row keeps its columns rather than stretching */}
+              {Array.from({ length: 4 - line.length }, (_, k) => (
+                <View key={`gap${k}`} style={styles.rtGap} />
+              ))}
+            </View>
           ))}
         </View>
 
         {/* ================= the table ================= */}
         <Text style={[text.label, styles.sect]}>Final standings</Text>
         <View style={styles.table}>
-          <Shine radius={radius.md} group="panel" />
           <View style={styles.thead}>
             <Text style={[styles.th, styles.colPos]}>#</Text>
             <Text style={[styles.th, styles.colClub]}>Club</Text>
@@ -539,7 +561,7 @@ function Finish({
       <View style={styles.grain} pointerEvents="none">
         <Image source={{ uri: GRAIN_URI }} resizeMode="repeat" style={styles.fill} />
       </View>
-      <Shine radius={radius.xl} group="feature" bevel={false} />
+      <Shine radius={radius.xl} group="feature" bevel={false} clip={false} />
       <View style={styles.finishEdge} pointerEvents="none" />
 
       <Text style={styles.finishMark} allowFontScaling={false}>
@@ -582,7 +604,6 @@ function Finish({
 function Tile({ value, label, tint }: { value: number; label: string; tint?: string }) {
   return (
     <View style={styles.tile}>
-      <Shine radius={radius.md} group="panel" />
       <Ticker
         value={value}
         from={0}
@@ -690,10 +711,11 @@ function ResultTile({ match, onPress }: { match: MatchResult; onPress: () => voi
       onPress={onPress}
       feel="none"
       scaleTo={0.94}
-      style={[styles.rt, { borderColor: tint + '4D' }]}
+      style={[
+        styles.rt,
+        { borderColor: tint + '26', backgroundColor: tint + '12' },
+      ]}
     >
-      <Shine radius={radius.sm} group="card" phase={(match.n % 6) / 6} />
-      <View style={[styles.rtBar, { backgroundColor: tint }]} />
       <Text style={styles.rtKey} allowFontScaling={false}>
         {match.n} {match.home ? 'H' : 'A'}
       </Text>
@@ -870,6 +892,8 @@ const styles = StyleSheet.create({
     marginTop: space.s4,
   },
   tile: {
+    boxShadow:
+      'inset 0px 1px 0px rgba(255,255,255,0.06), inset 0px 0px 0px 1px rgba(255,255,255,0.035)',
     width: '31.7%',
     flexGrow: 1,
     alignItems: 'center',
@@ -962,6 +986,8 @@ const styles = StyleSheet.create({
   /* ---- highlights ---- */
   hlGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s2 },
   hl: {
+    boxShadow:
+      'inset 0px 1px 0px rgba(255,255,255,0.06), inset 0px 0px 0px 1px rgba(255,255,255,0.035)',
     width: '48.6%',
     flexGrow: 1,
     paddingVertical: space.s3,
@@ -1026,6 +1052,8 @@ const styles = StyleSheet.create({
   /* ---- player statistics ---- */
   players: { gap: space.s2 },
   pl: {
+    boxShadow:
+      'inset 0px 1px 0px rgba(255,255,255,0.06), inset 0px 0px 0px 1px rgba(255,255,255,0.035)',
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.s2,
@@ -1082,20 +1110,17 @@ const styles = StyleSheet.create({
   plStatLabel: { ...text.key, fontSize: 7.5, color: color.text3 },
 
   /* ---- every result ---- */
-  results: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s2 },
+  results: { gap: space.s2 },
+  rtRow: { flexDirection: 'row', gap: space.s2 },
+  rtGap: { flex: 1 },
   rt: {
-    width: '22.7%',
-    flexGrow: 1,
+    flex: 1,
     alignItems: 'center',
-    paddingTop: space.s2,
+    paddingTop: 7,
     paddingBottom: 7,
     borderRadius: radius.sm,
     borderWidth: 1,
-    backgroundColor: '#101A14',
-    experimental_backgroundImage: gradient.card,
-    overflow: 'hidden',
   },
-  rtBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 2 },
   rtKey: {
     ...text.key,
     fontSize: 7.5,
@@ -1119,6 +1144,8 @@ const styles = StyleSheet.create({
 
   /* ---- the table ---- */
   table: {
+    boxShadow:
+      'inset 0px 1px 0px rgba(255,255,255,0.06), inset 0px 0px 0px 1px rgba(255,255,255,0.035)',
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: line.card,

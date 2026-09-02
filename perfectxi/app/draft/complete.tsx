@@ -356,7 +356,7 @@ function Hero({
       <View style={styles.grain} pointerEvents="none">
         <Image source={{ uri: GRAIN_URI }} resizeMode="repeat" style={styles.grainImage} />
       </View>
-      <Shine radius={26} group="feature" bevel={false} />
+      <Shine radius={26} group="feature" bevel={false} clip={false} />
       <View style={styles.heroEdge} pointerEvents="none" />
 
       <View style={styles.heroBadge}>
@@ -403,7 +403,6 @@ function Chip({
 }) {
   return (
     <View style={styles.chip}>
-      <Shine radius={radius.md} group="panel" />
       {numeric ? (
         <Ticker value={Number(value)} style={[styles.chipValue, tint ? { color: tint } : null]} />
       ) : (

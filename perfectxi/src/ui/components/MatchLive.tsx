@@ -305,7 +305,7 @@ export function MatchLive({
               style={[styles.flash, flashStyle]}
               pointerEvents="none"
             />
-            <Shine radius={0} group="feature" bevel={false} />
+            <Shine radius={0} group="feature" bevel={false} clip={false} />
             <View style={styles.topEdge} pointerEvents="none" />
 
             <Text style={styles.comp}>

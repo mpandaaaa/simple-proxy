@@ -247,7 +247,6 @@ function Trait({
 
   return (
     <View style={styles.trait}>
-      <Shine radius={radius.md} group="panel" />
       <View style={styles.traitHead}>
         <Text style={styles.traitLabel}>{label}</Text>
         <Text style={[styles.traitValue, { color: tint }]} allowFontScaling={false}>
@@ -288,6 +287,8 @@ const styles = StyleSheet.create({
 
   traits: { flexDirection: 'row', gap: space.s3, marginBottom: space.s4 },
   trait: {
+    boxShadow:
+      'inset 0px 1px 0px rgba(255,255,255,0.06), inset 0px 0px 0px 1px rgba(255,255,255,0.035)',
     flex: 1,
     padding: space.s3,
     borderRadius: radius.md,

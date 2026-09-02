@@ -234,7 +234,7 @@ export default function Season() {
           <View style={styles.grain} pointerEvents="none">
             <Image source={{ uri: GRAIN_URI }} resizeMode="repeat" style={styles.fill} />
           </View>
-          <Shine radius={radius.lg} group="card" bevel={false} />
+          <Shine radius={radius.lg} group="card" bevel={false} clip={false} />
           <View style={styles.heroEdge} pointerEvents="none" />
 
           <ClubDisc club={null} code="XI" size={54} />
@@ -254,7 +254,6 @@ export default function Season() {
 
         {/* ---- the season so far ---- */}
         <View style={styles.statRow}>
-          <Shine radius={radius.md} group="card" />
           <Stat label="W" value={standing.w} tint={color.win} />
           <Stat label="D" value={standing.d} tint={color.draw} />
           <Stat label="L" value={standing.l} tint={color.loss} />
@@ -439,12 +438,6 @@ function Fixture({
   const oc = OUTCOME[match.oc];
   const body = (
     <>
-      <Shine
-        radius={radius.md}
-        group="card"
-        bevel={state !== "later"}
-        phase={(match.n % 6) / 6}
-      />
       <ClubDisc club={match.opp} size={34} />
       <View style={styles.fxInfo}>
         <Text style={styles.fxKey}>
@@ -562,6 +555,8 @@ const styles = StyleSheet.create({
 
   /* the season so far */
   statRow: {
+    boxShadow:
+      'inset 0px 1px 0px rgba(255,255,255,0.06), inset 0px 0px 0px 1px rgba(255,255,255,0.035)',
     flexDirection: 'row',
     paddingVertical: space.s3,
     paddingHorizontal: space.s2,
@@ -657,6 +652,8 @@ const styles = StyleSheet.create({
   sect: { marginTop: space.s6, marginBottom: space.s3 },
   fixtures: { gap: space.s2, paddingBottom: space.s5 },
   fx: {
+    boxShadow:
+      'inset 0px 1px 0px rgba(255,255,255,0.06), inset 0px 0px 0px 1px rgba(255,255,255,0.035)',
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.s3,

@@ -49,8 +49,6 @@ export function Row({
       style={styles.row}
       accessibilityLabel={`${title}. ${subtitle}`}
     >
-      <Shine radius={radius.md} group="panel" />
-
       <View style={[styles.badge, { backgroundColor: t.bg, borderColor: t.edge }]}>
         {icon({ color: t.fg, size: 20 })}
       </View>
@@ -86,7 +84,9 @@ const styles = StyleSheet.create({
     // row is still a row.
     backgroundColor: '#101A14',
     experimental_backgroundImage: gradient.card,
-    boxShadow: shadow.card,
+    boxShadow:
+      shadow.card +
+      ', inset 0px 1px 0px rgba(255,255,255,0.06), inset 0px 0px 0px 1px rgba(255,255,255,0.035)',
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: line.card,
