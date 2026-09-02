@@ -75,7 +75,9 @@
     "dynasty": "tsc -p tsconfig.headless.json && node scripts/check-dynasty.mjs",
     "career": "tsc -p tsconfig.headless.json && node scripts/check-career.mjs",
     "career-run": "tsc -p tsconfig.headless.json && node scripts/check-career-run.mjs",
-    "save": "tsc -p tsconfig.headless.json && node scripts/check-save.mjs"
+    "save": "tsc -p tsconfig.headless.json && node scripts/check-save.mjs",
+    "source": "node scripts/check-source.mjs",
+    "verify": "npm run typecheck && npm run source && npm run golden && npm run dynasty && npm run career && npm run save"
   },
   "private": true
 }

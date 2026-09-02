@@ -31,7 +31,7 @@ import {
   squadAvg,
   type MatchResult,
 } from '../../src/engine';
-import { clearRun, runRng, setResult, useRun } from '../../src/game/run';
+import { clearRun, runRng, setResult, useRequireRun } from '../../src/game/run';
 
 /** How fast auto sim runs through the fixtures it is not showing you. */
 const AUTO_MS = 560;
@@ -69,7 +69,7 @@ for (const t of SIM_LEAGUE) STRENGTH[t.name] = t.str;
  * want to see: every minute of every game, a score at a time, or none of it.
  */
 export default function Season() {
-  const run = useRun();
+  const run = useRequireRun();
   const reduce = useReduceMotion();
   const [played, setPlayed] = useState(0);
   const [watching, setWatching] = useState<{ index: number; live: boolean } | null>(null);
@@ -93,22 +93,6 @@ export default function Season() {
     );
   }, [run]);
 
-  /**
-   * Only when there was never a run to begin with.
-   *
-   * This redirect is for arriving here with nothing, which is a reload or
-   * a link, not for the run ending. Finishing a run clears it, and this
-   * screen is still sitting under the results while that happens. Watching
-   * for focus was not enough: a stack pops through its screens, so this
-   * one becomes the top for a frame on the way out and was sending
-   * everybody to the draft setup as it went. Once a run has existed here,
-   * losing it means the flow is finishing rather than broken.
-   */
-  const everHadRun = useRef(false);
-  if (run) everHadRun.current = true;
-  useEffect(() => {
-    if (!run && !everHadRun.current) router.replace('/draft');
-  }, [run]);
 
   const result = run?.result ?? null;
   const total = result ? result.matches.length : 38;

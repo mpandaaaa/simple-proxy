@@ -61,7 +61,7 @@ export default function History() {
           <Hon label="Seasons" value={String(career.seasons.length)} />
           <Hon
             label="Best finish"
-            value={career.records.bestFin <= 20 ? ordinal(career.records.bestFin) : '—'}
+            value={career.records.bestFin <= 20 ? ordinal(career.records.bestFin) : '–'}
             tint={career.records.bestFin === 1 ? color.gold : undefined}
           />
           <Hon label="Best points" value={String(career.records.bestPts || 0)} />

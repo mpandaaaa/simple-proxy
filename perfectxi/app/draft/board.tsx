@@ -41,7 +41,7 @@ import {
   pickPlayer,
   settleSpin,
   spendReroll,
-  useRun,
+  useRequireRun,
 } from '../../src/game/run';
 
 /** A player, or the rule that separates the ones you can use from the rest. */
@@ -52,7 +52,7 @@ type Row =
 const ORDER: Position[] = ['GK', 'DEF', 'MID', 'ATT'];
 
 export default function DraftBoard() {
-  const run = useRun();
+  const run = useRequireRun();
   const reduceMotion = useReduceMotion();
   const [pending, setPending] = useState<SpinResult | null>(null);
   const [chooser, setChooser] = useState<{ player: Pick; slots: number[] } | null>(null);
@@ -99,9 +99,6 @@ export default function DraftBoard() {
     [cfg?.eraFrom, cfg?.eraTo],
   );
 
-  useEffect(() => {
-    if (!run) router.replace('/draft');
-  }, [run]);
 
   /**
    * The eleventh signing ends the draft.

@@ -169,7 +169,12 @@ npm run cups                           # the cup win rates
 npm run dynasty                        # the ageing, valuation and wage numbers
 npm run career                         # every club can field an XI
 npm run career-run                     # a hundred seasons of Dynasty, end to end
+npm run save                           # old careers still load
+npm run source                         # the mistakes that reached a phone once
+npm run verify                         # all of the above
 ```
 
-Verify with typecheck, expo-doctor and golden before committing. Port 8081 is
+Run `npm run verify` before committing. It covers typecheck, the source
+rules, the golden numbers, the Dynasty numbers, the club check and the
+save migrations. Then expo-doctor, which must stay at 21/21. Port 8081 is
 taken by another project on Mo's machine, so the dev server runs on 8082.

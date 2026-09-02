@@ -1,4 +1,5 @@
-import { useSyncExternalStore } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
+import { router } from 'expo-router';
 import {
   ENGINE_VERSION,
   canPlay,
@@ -180,4 +181,32 @@ export function runRng() {
 export function clearRun(): void {
   run = null;
   emit();
+}
+
+/**
+ * The run, with a redirect for arriving at a draft screen without one.
+ *
+ * Three screens needed this and each had its own copy, which is how the
+ * same bug shipped twice. The subtlety is the guard: the redirect is for
+ * opening a screen with nothing loaded, not for the run ending.
+ *
+ * A finished run is cleared while every screen of the draft is still
+ * mounted underneath the results page, and a stack unmounts them over
+ * several frames rather than at once. An unguarded screen sees the empty
+ * run in that window and replaces whatever route is on top, which is how
+ * taking an XI into a Dynasty landed on the draft setup instead.
+ *
+ * Once a run has existed on a screen, losing it means the flow is
+ * finishing and that screen should say nothing.
+ */
+export function useRequireRun(): Run | null {
+  const run = useRun();
+  const everHadRun = useRef(false);
+  if (run) everHadRun.current = true;
+
+  useEffect(() => {
+    if (!run && !everHadRun.current) router.replace('/draft');
+  }, [run]);
+
+  return run;
 }

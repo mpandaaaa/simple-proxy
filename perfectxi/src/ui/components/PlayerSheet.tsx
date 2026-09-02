@@ -112,7 +112,7 @@ export function PlayerSheet({
             <Tile label="Goals" value={String(p.goals)} />
             <Tile
               label="Rating"
-              value={p.avgR == null ? '—' : p.avgR.toFixed(2)}
+              value={p.avgR == null ? '–' : p.avgR.toFixed(2)}
               tint={
                 p.avgR == null
                   ? undefined
@@ -210,7 +210,7 @@ export function PlayerSheet({
                     {h.a}
                   </Text>
                   <Text style={[styles.crVal, styles.crR]} allowFontScaling={false}>
-                    {h.r == null ? '—' : h.r.toFixed(2)}
+                    {h.r == null ? '–' : h.r.toFixed(2)}
                   </Text>
                 </View>
               ))}

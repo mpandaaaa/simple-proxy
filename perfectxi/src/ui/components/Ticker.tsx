@@ -21,7 +21,7 @@ export function Ticker({
   value,
   style,
   duration = 620,
-  blank = '—',
+  blank = '–',
   from: start,
 }: {
   value: number;

@@ -38,7 +38,7 @@ import {
   type Position,
   type Slot,
 } from '../../src/engine';
-import { clearRun, useRun } from '../../src/game/run';
+import { clearRun, useRequireRun } from '../../src/game/run';
 
 const LINES: { key: Position; title: string }[] = [
   { key: 'GK', title: 'Goalkeeper' },
@@ -78,12 +78,9 @@ const ERAS = [
  * actually face, which is the way a football fan asks the question.
  */
 export default function SquadComplete() {
-  const run = useRun();
+  const run = useRequireRun();
   const [leaving, setLeaving] = useState(false);
 
-  useEffect(() => {
-    if (!run) router.replace('/draft');
-  }, [run]);
 
   if (!run) return null;
 
