@@ -21,6 +21,7 @@ import { sfx } from '../../src/ui/sound';
 import {
   asSquad,
   awards,
+  COMPS,
   chemBonus,
   expectedRating,
   finishFor,
@@ -285,6 +286,54 @@ export default function Summer() {
           <Tile value={result.ga} label="Goals against" tint={hue.sky} />
           <Tile value={result.pts} label="Points" tint={tone.tint} />
         </View>
+
+        {/* ================= the cups ================= */}
+        {report.cups.runs.some((r) => r.entered) ? (
+          <>
+            <Text style={[text.label, styles.sect]}>The cups</Text>
+            <Text style={styles.sectNote}>
+              £{Math.round(report.cups.money)}m of prize money.
+              {report.cups.europeNext
+                ? ` ${COMPS[report.cups.europeNext].name} next season.`
+                : ' No European football next season.'}
+            </Text>
+            <View style={styles.cups}>
+              {report.cups.runs
+                .filter((r) => r.entered)
+                .map((r) => (
+                  <View
+                    key={r.id}
+                    style={[
+                      styles.cup,
+                      r.won
+                        ? { borderColor: alpha(hue.gold, 0.5), backgroundColor: alpha(hue.gold, 0.12) }
+                        : null,
+                    ]}
+                  >
+                    <Text style={styles.cupMark} allowFontScaling={false}>
+                      {COMPS[r.id].mark}
+                    </Text>
+                    <View style={styles.cupBody}>
+                      <Text style={styles.cupName} numberOfLines={1}>
+                        {r.name}
+                      </Text>
+                      <Text
+                        style={[styles.cupFate, r.won ? { color: hue.gold } : null]}
+                        numberOfLines={1}
+                      >
+                        {r.won ? 'Winners' : `Out in the ${r.elim}`}
+                      </Text>
+                    </View>
+                    {r.money > 0 ? (
+                      <Text style={styles.cupMoney} allowFontScaling={false}>
+                        £{Math.round(r.money)}m
+                      </Text>
+                    ) : null}
+                  </View>
+                ))}
+            </View>
+          </>
+        ) : null}
 
         {/* ================= who is following now ================= */}
         <View style={styles.fans}>
@@ -1013,6 +1062,30 @@ const styles = StyleSheet.create({
   },
   pvText: { ...text.key, fontSize: 11 },
   pvSub: { ...text.small, fontSize: 12, marginTop: space.s2, textAlign: 'center' },
+
+  sectNote: { ...text.small, fontSize: 11.5, marginBottom: space.s3, marginTop: -space.s2 },
+  cups: { gap: space.s2, marginBottom: space.s2 },
+  cup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s3,
+    padding: space.s3,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#101A14',
+  },
+  cupMark: { fontSize: 20, lineHeight: 26, width: 26, textAlign: 'center' },
+  cupBody: { flex: 1, minWidth: 0 },
+  cupName: { fontFamily: font.bodySemi, fontSize: 14.5, lineHeight: 19, color: color.text1 },
+  cupFate: { ...text.key, fontSize: 8, color: color.text3 },
+  cupMoney: {
+    fontFamily: font.displayBold,
+    fontSize: 15,
+    lineHeight: 19,
+    color: hue.emerald,
+    fontVariant: ['tabular-nums'],
+  },
 
   fans: {
     marginTop: space.s4,

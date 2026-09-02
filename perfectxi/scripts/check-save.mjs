@@ -30,7 +30,7 @@ function fail(msg) {
 const ADDED_LATER = [
   'tactic', 'staff', 'infra', 'youth', 'allTime', 'records', 'inbox',
   'psr', 'saleProfit', 'psrHit', 'ledger', 'expired', 'renewed', 'sold',
-  'injuries', 'sacked', 'marketRolls', 'fans',
+  'injuries', 'sacked', 'marketRolls', 'fans', 'europe', 'honours', 'lastCups',
 ];
 
 const PLAYER_ADDED_LATER = [

@@ -221,8 +221,12 @@ export function revenue(finish: number, d: Dynasty): number {
  * This mutates the roster's amortisation, because a year of a transfer fee
  * being written off is a year gone whatever else happens.
  */
-export function closeBooks(d: Dynasty, finish: number): Ledger {
-  const rev = revenue(finish, d);
+export function closeBooks(d: Dynasty, finish: number, cupMoney = 0): Ledger {
+  /* Prize money is real income and a Champions League run is the biggest
+     single line a club has: Arsenal banked £96.85m for reaching one
+     semi-final. It goes through the books like everything else, which is
+     why qualifying matters more than the trophy. */
+  const rev = revenue(finish, d) + Math.round(cupMoney);
   const wages = wageBill(d) + staffWages(d);
   const amort = amortTotal(d);
   const running = Math.round(rev * 0.18);

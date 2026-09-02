@@ -79,8 +79,26 @@ export type {
   Highlight,
 } from './sim';
 
-export { simulateCups, NATIONAL_CLUBS, CONTINENTAL_CLUBS } from './cups';
-export type { Cups, CupRun, CupTie, CupClub } from './cups';
+export {
+  simulateCups,
+  simulateSeasonCups,
+  qualifyFor,
+  COMPS,
+  NATIONAL_CLUBS,
+  CONTINENTAL_CLUBS,
+  EUROPA_CLUBS,
+  CONFERENCE_CLUBS,
+} from './cups';
+export type {
+  Cups,
+  CupRun,
+  CupTie,
+  CupClub,
+  CupLeg,
+  CupSeason,
+  CompId,
+  Europe,
+} from './cups';
 export {
   overall,
   ageIn,

@@ -75,7 +75,7 @@ for (const f of files) {
 
 /* ---- 4. a save whose shape is read but never checked ---- */
 const store = readFileSync(join('src', 'save', 'dynasty.ts'), 'utf8');
-if (!store.includes('version: 7')) {
+if (!store.includes('version: 8')) {
   fail('src/save/dynasty.ts changed version. Every bump needs a migration, and check-save has to know about it.');
 }
 

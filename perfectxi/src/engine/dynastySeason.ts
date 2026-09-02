@@ -25,6 +25,7 @@ import {
   wageBill,
 } from './dynastyClub';
 import { learnTactic } from './dynastyTactics';
+import { COMPS, simulateSeasonCups, type CupSeason } from './cups';
 import {
   autoRenews,
   intakeSize,
@@ -69,6 +70,8 @@ export type SummerReport = {
   /** the following before the season, and how far it moved */
   fansBefore: number;
   fansSwing: number;
+  /** every cup the club played, with its money and its trophies */
+  cups: CupSeason;
   news: InboxItem[];
 };
 
@@ -100,8 +103,38 @@ export function processSeasonEnd(
     news.push({ t, b, k, s: d.year });
   };
 
+  /* 0. the cups, which are decided by the same squad and the same seed
+     and whose prize money the books are about to count. */
+  const cups = simulateSeasonCups({
+    myAvg: squadRating(starters(d)),
+    leaguePosition: result.position,
+    europe: d.europe,
+    shield: d.seasons.length > 0 && (d.seasons[d.seasons.length - 1].fin === 1 || (d.honours.fa ?? 0) > 0),
+    runSeed: (d.seed ^ Math.imul(d.year, 0x2545f491)) >>> 0,
+  });
+  next.europe = cups.europeNext;
+  next.lastCups = cups;
+  next.honours = { ...d.honours };
+  for (const t of cups.trophies) {
+    next.honours[t] = (next.honours[t] ?? 0) + 1;
+    say(
+      `${COMPS[t].name} winners`,
+      `${d.club} lifted the ${COMPS[t].name}.`,
+      'good',
+    );
+  }
+  if (cups.europeNext !== d.europe) {
+    say(
+      cups.europeNext ? `Into the ${COMPS[cups.europeNext].name}` : 'Out of Europe',
+      cups.europeNext
+        ? `${ordinalOf(result.position)} and the cups put you in the ${COMPS[cups.europeNext].name} next season.`
+        : `${ordinalOf(result.position)} was not enough for Europe. There is no European football at the club next season.`,
+      cups.europeNext ? 'good' : 'bad',
+    );
+  }
+
   /* 1. the books */
-  const ledger = closeBooks(next, result.position);
+  const ledger = closeBooks(next, result.position, cups.money);
   next.ledger = ledger;
   next.psrHit = ledger.deduction;
   if (ledger.deduction) {
@@ -381,9 +414,16 @@ export function processSeasonEnd(
       budget: next.budget,
       fansBefore,
       fansSwing: Math.round((next.fans - fansBefore) * 100) / 100,
+      cups,
       news,
     },
   };
+}
+
+function ordinalOf(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
 }
 
 function squadAverage(squad: readonly DynastyPlayer[]): number {

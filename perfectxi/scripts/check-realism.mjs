@@ -86,8 +86,10 @@ band('bottom club points', round(bottom / TABLES), 11, 28, '12 is the worst sinc
 band('goals per game, whole league', round(goals / TABLES), 2.6, 3.2, '2.93 in 2024/25');
 
 /* ---------- money ---------- */
-band('a 92 rated 23 year old, £m', value(92, 23, 'ATT', 4), 100, 160, 'about £125m');
+band('a 92 rated 23 year old, £m', value(92, 23, 'ATT', 4), 130, 185, 'Bellingham and Haaland, €180m');
 band('a 78 rated 29 year old, £m', value(78, 29, 'MID', 2), 8, 40, 'a squad player, £10m to £35m');
+band('an 89 defender at 24, £m', value(89, 24, 'DEF', 4), 70, 100, 'Saliba, €100m');
+band('an 83 defender at 24, £m', value(83, 24, 'DEF', 4), 32, 56, 'Timber €50m, Calafiori €55m');
 /* A young star is not paid what a proven one is. Saka was on £195k at
    23, Foden £225k, while Haaland is on £525k and Salah £400k. */
 band('a 92 rated 23 year old, £k a week', wage(92, 23), 150, 320, 'Saka £195k, Foden £225k');

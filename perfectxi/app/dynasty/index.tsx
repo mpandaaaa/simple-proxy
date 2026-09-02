@@ -57,6 +57,7 @@ type Href =
   | '/dynasty/staff'
   | '/dynasty/club'
   | '/dynasty/finances'
+  | '/dynasty/cups'
   | '/dynasty/history';
 
 /**
@@ -126,6 +127,17 @@ const DOORS: {
     mark: '💷',
     title: 'Finances',
     note: (d) => (d.ledger ? `£${d.ledger.profit}m last year` : 'no accounts yet'),
+  },
+  {
+    href: '/dynasty/cups',
+    tint: 'gold',
+    mark: '🏆',
+    title: 'The cups',
+    note: (d) => {
+      const n =
+        d.titles + Object.values(d.honours ?? {}).reduce((a, b) => a + (b as number), 0);
+      return n ? `${n} won` : d.europe ? 'in Europe' : 'nothing yet';
+    },
   },
   {
     href: '/dynasty/history',

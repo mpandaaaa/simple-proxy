@@ -27,20 +27,38 @@ function check(label, got, lo, hi, fmt = (v) => String(v)) {
   );
 }
 
-console.log('\nVALUATION, at peak age with a long contract');
-// The stated anchor, 'a 92 rated 23 year old worth about £125m', is an
-// attacker. The position multiplier is the difference.
-check('92 attacker, 23 years old', value(92, 23, 'ATT', 4), 118, 130, (v) => '£' + v + 'm');
-check('92 midfielder, 23 years old', value(92, 23, 'MID', 4), 108, 118, (v) => '£' + v + 'm');
-check('85 midfielder, 23 years old', value(85, 23, 'MID', 4), 62, 72, (v) => '£' + v + 'm');
-// The point of the quadratic. A squad player is a squad player, not an
-// eight figure asset, and the sixth power priced this one at £22m.
-check('70 midfielder, 23 years old', value(70, 23, 'MID', 4), 6, 11, (v) => '£' + v + 'm');
-check('65 midfielder, 23 years old', value(65, 23, 'MID', 4), 1, 3, (v) => '£' + v + 'm');
-check('92 midfielder, 33 years old', value(92, 33, 'MID', 4), 22, 28, (v) => '£' + v + 'm');
-check('an attacker costs more than a keeper', value(88, 24, 'ATT', 4) - value(88, 24, 'GK', 4), 26, 36, (v) => '£' + v + 'm');
-// A short contract is a discount, because he can walk.
-check('a year left knocks the price down', value(88, 24, 'MID', 1), 30, 40, (v) => '£' + v + 'm');
+console.log('\nVALUATION, against Transfermarkt');
+/* Every band here is a real player, checked against Transfermarkt in
+   September 2026 and converted at 0.85.
+
+   These moved once, deliberately. The old anchor of GBP125m for a 92
+   rated 23 year old was carried over from the web build rather than
+   taken from the market, and the market says a footballer of that
+   description costs more: Bellingham EUR180m, Haaland EUR180m, Yamal
+   over EUR200m. The curve was also too flat at both ends, which is what
+   made a 92 and an 84 in the same squad nine million apart. */
+check('92 attacker at 23', value(92, 23, 'ATT', 4), 135, 180, (v) => 'GBP' + v + 'm');
+check('89 defender at 24, Saliba EUR100m', value(89, 24, 'DEF', 4), 72, 100, (v) => 'GBP' + v + 'm');
+check('89 defender at 27, Gabriel EUR75m', value(89, 27, 'DEF', 3), 55, 80, (v) => 'GBP' + v + 'm');
+check('83 defender at 24, Timber EUR50m', value(83, 24, 'DEF', 4), 34, 55, (v) => 'GBP' + v + 'm');
+check('93 attacker at 25, Haaland EUR180m', value(93, 25, 'ATT', 4), 135, 185, (v) => 'GBP' + v + 'm');
+check('89 keeper at 29, Raya EUR34m', value(89, 29, 'GK', 3), 24, 45, (v) => 'GBP' + v + 'm');
+check('82 defender at 34, Trippier EUR6m', value(82, 34, 'DEF', 1), 2, 9, (v) => 'GBP' + v + 'm');
+check('70 midfielder at 23', value(70, 23, 'MID', 4), 3, 9, (v) => 'GBP' + v + 'm');
+check('65 midfielder at 23', value(65, 23, 'MID', 4), 1, 3, (v) => 'GBP' + v + 'm');
+check('92 midfielder at 33', value(92, 33, 'MID', 4), 22, 40, (v) => 'GBP' + v + 'm');
+check('an attacker costs more than a keeper', value(88, 24, 'ATT', 4) - value(88, 24, 'GK', 4), 26, 60, (v) => 'GBP' + v + 'm');
+check('a year left knocks the price down', value(88, 24, 'MID', 1), 40, 65, (v) => 'GBP' + v + 'm');
+/* The complaint that started this: a 92 and an 84 in the same defence,
+   both 31, came out nine million apart. Real football is more than
+   double. */
+check(
+  'a 92 is worth more than twice an 84',
+  value(92, 31, 'DEF', 2) / value(84, 31, 'DEF', 3),
+  1.9,
+  3.2,
+  (v) => v.toFixed(2) + ' times',
+);
 
 console.log('\nWAGES, weekly and in thousands');
 check('65 rated squad player', wage(65, 26), 30, 38, (v) => '£' + v + 'k');

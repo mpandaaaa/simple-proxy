@@ -304,6 +304,12 @@ export function startCareer(args: {
     objective: { label: objectiveLabel(target), target },
     capacity: CAPACITY[club] ?? 28000,
     fans: startingFans(CAPACITY[club] ?? 28000),
+    /* Where the club was last season, before you took it. A giant is in
+       the Champions League on the day you walk in; a minnow is in
+       nothing. */
+    europe: target <= 4 ? 'ucl' : target <= 6 ? 'uel' : target <= 8 ? 'uecl' : null,
+    honours: {},
+    lastCups: null,
     rival: RIVALS[club] ?? null,
     tactic: { ...EMPTY_TACTIC, form: formation },
     staff: { ...EMPTY_STAFF },

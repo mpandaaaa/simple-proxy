@@ -24,7 +24,10 @@ import { AGE_CURVES, DOB } from '../data/dynasty';
  */
 
 /** How much a position is worth in the transfer market. */
-const POS_VALUE: Record<Position, number> = { ATT: 1.15, MID: 1.05, DEF: 0.9, GK: 0.75 };
+/* Keepers are the cheapest position in football. Raya went for €34m,
+   Alisson and Ederson for about €25m each, and the world record for one
+   is still under €80m. */
+const POS_VALUE: Record<Position, number> = { ATT: 1.15, MID: 1.05, DEF: 0.9, GK: 0.68 };
 
 export type Contract = { yrs: number; wage: number };
 
@@ -410,8 +413,17 @@ function ageValueMul(age: number): number {
   return 0.03;
 }
 
+/**
+ * What is left on the deal.
+ *
+ * A short contract is a discount because he can walk, but it used to be a
+ * bigger one than the player himself: a 92 on two years and an 84 on
+ * three came out nine million apart, when the real gap between those two
+ * footballers is more than double. A year off a deal is worth about a
+ * tenth of a player, not a third of him.
+ */
 function contractMul(yrs: number): number {
-  return yrs >= 4 ? 1.0 : yrs === 3 ? 0.87 : yrs === 2 ? 0.7 : yrs === 1 ? 0.45 : 0.05;
+  return yrs >= 4 ? 1.0 : yrs === 3 ? 0.92 : yrs === 2 ? 0.82 : yrs === 1 ? 0.6 : 0.1;
 }
 
 /**
@@ -429,7 +441,22 @@ function contractMul(yrs: number): number {
  * is the quadratic from the specification, chosen deliberately.
  */
 export function value(rtg: number, age: number, pos: Position, yrs = 3): number {
-  const base = 0.12 * Math.pow(Math.max(0, rtg - 62), 2);
+  /* The quadratic through the middle was right and is untouched. What it
+     could not do was either end.
+
+     At the top, the market stops being a curve. Checked against
+     Transfermarkt: Haaland €180m, Bellingham €180m, Saliba €100m,
+     Gabriel €75m, Timber €50m, Calafiori €55m. An 89 rated defender is
+     worth well over twice an 83, and the plain quadratic made it a third
+     more. The premium above 86 is that gap.
+
+     At the bottom, a 70 rated squad player is a £4m footballer, not an
+     £8m one, so anything under 76 is discounted toward what a reserve
+     actually fetches. */
+  const quality =
+    Math.min(1.55, 1 + Math.max(0, rtg - 86) * 0.045) *
+    Math.max(0.45, 1 - Math.max(0, 76 - rtg) * 0.045);
+  const base = 0.12 * Math.pow(Math.max(0, rtg - 62), 2) * quality;
   return Math.max(1, Math.round(base * ageValueMul(age) * contractMul(yrs) * POS_VALUE[pos]));
 }
 
@@ -482,6 +509,15 @@ export type Dynasty = {
   leash: number;
   objective: { label: string; target: number };
   capacity: number;
+  /**
+   * Which European competition the club is in this season, earned by last
+   * season's finish and last season's cups.
+   */
+  europe: 'ucl' | 'uel' | 'uecl' | null;
+  /** every trophy the club has won under you, by competition */
+  honours: Record<string, number>;
+  /** last season's cup runs, kept so the cabinet can show them */
+  lastCups: unknown | null;
   /**
    * The following, in millions.
    *
@@ -627,6 +663,9 @@ export function startDynasty(
       target,
     },
     capacity: 40000,
+    europe: null,
+    honours: {},
+    lastCups: null,
     fans: 2.9,
     rival: null,
     retired: [],

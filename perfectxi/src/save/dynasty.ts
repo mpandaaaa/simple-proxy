@@ -83,6 +83,7 @@ function isDynasty(v: unknown): v is Dynasty | null {
     obj(d.objective) &&
     typeof d.capacity === 'number' &&
     typeof d.fans === 'number' &&
+    obj(d.honours) &&
     obj(d.tactic) &&
     typeof (d.tactic as Record<string, unknown>).form === 'string' &&
     obj(d.staff) &&
@@ -191,6 +192,13 @@ function migrateToFour(v: unknown): Dynasty | null {
         : { label: 'Top half finish', target: 10 },
     capacity,
     fans: typeof d.fans === 'number' ? d.fans : startingFans(capacity),
+    europe:
+      d.europe === 'ucl' || d.europe === 'uel' || d.europe === 'uecl' ? d.europe : null,
+    honours:
+      typeof d.honours === 'object' && d.honours !== null
+        ? (d.honours as Record<string, number>)
+        : {},
+    lastCups: d.lastCups ?? null,
     rival: typeof d.rival === 'string' ? d.rival : null,
     tactic: { ...EMPTY_TACTIC, form: formation },
     staff: { ...EMPTY_STAFF },
@@ -223,7 +231,7 @@ function migrateToFour(v: unknown): Dynasty | null {
 
 export const dynastyStore = defineStore<Dynasty | null>({
   key: 'dynasty',
-  version: 7,
+  version: 8,
   fallback: null,
   validate: isDynasty,
   migrations: {
@@ -241,6 +249,16 @@ export const dynastyStore = defineStore<Dynasty | null>({
     6: (v) => (v ? tidySquad(v as Dynasty) : null),
     // Seven is the following and the club shop. A career from before them
     // starts with the crowd its ground would hold and a shop at level one.
+    // Eight is the cups: which competition in Europe, and what has been won.
+    8: (v) =>
+      v
+        ? {
+            ...(v as Dynasty),
+            europe: (v as Dynasty).europe ?? null,
+            honours: (v as Dynasty).honours ?? {},
+            lastCups: (v as Dynasty).lastCups ?? null,
+          }
+        : null,
     7: (v) => {
       if (!v) return null;
       const d = v as Dynasty;
