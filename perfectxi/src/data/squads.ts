@@ -1,9 +1,9 @@
 /**
  * GENERATED FILE. Do not edit by hand.
  *
- * Written by scripts/extract-db.mjs from the web build in vendor/. The
- * three data layers and the correction pass have already been applied, so
- * this is the finished database exactly as the game should see it.
+ * Written by scripts/import-db.mjs from data/perfectxi-database.json,
+ * which is the finished database: the corrections are already applied and
+ * this is exactly what the game should see.
  *
  * 712 club-seasons, 51 clubs, 35 seasons, 11077 player rows, 3003 distinct players.
  */

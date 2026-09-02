@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, {
   Easing,
@@ -33,7 +33,18 @@ const COLOURS = [
 ];
 
 const COUNT = 64;
+/** how long one piece takes to cross the screen */
 const FALL_MS = 3200;
+/** the latest a piece can be released */
+const MAX_DELAY = 900;
+/**
+ * The clock has to outlast the last piece.
+ *
+ * Running it only for FALL_MS left every delayed piece stranded partway
+ * down the screen at full opacity when the clock stopped, which is exactly
+ * what froze at the bottom.
+ */
+const TOTAL_MS = FALL_MS + MAX_DELAY;
 
 type Piece = {
   x: number;
@@ -59,7 +70,7 @@ export function Confetti({ fire }: { fire: boolean }) {
       const r = (n: number) => ((Math.sin(i * 12.9898 + n * 78.233) * 43758.5453) % 1 + 1) % 1;
       out.push({
         x: r(1) * width,
-        delay: r(2) * 900,
+        delay: r(2) * MAX_DELAY,
         size: 5 + r(3) * 6,
         tall: r(4) > 0.45,
         spin: 2 + r(5) * 5,
@@ -71,16 +82,23 @@ export function Confetti({ fire }: { fire: boolean }) {
     return out;
   }, [width]);
 
+  const [gone, setGone] = useState(false);
+
   useEffect(() => {
     if (!fire || reduce) return;
+    setGone(false);
     p.value = 0;
     p.value = withDelay(
       260,
-      withTiming(1, { duration: FALL_MS, easing: Easing.linear }),
+      withTiming(1, { duration: TOTAL_MS, easing: Easing.linear }),
     );
+    // Torn down once it has landed, so nothing is left animating behind a
+    // page the player is still reading.
+    const t = setTimeout(() => setGone(true), TOTAL_MS + 700);
+    return () => clearTimeout(t);
   }, [fire, reduce, p]);
 
-  if (!fire || reduce) return null;
+  if (!fire || reduce || gone) return null;
 
   return (
     <View style={styles.root} pointerEvents="none">
@@ -103,7 +121,7 @@ function Flake({
   const style = useAnimatedStyle(() => {
     // Each piece runs its own window inside the one clock, so they do not
     // all leave the top of the screen together.
-    const t = Math.max(0, Math.min(1, (clock.value * FALL_MS - piece.delay) / FALL_MS));
+    const t = Math.max(0, Math.min(1, (clock.value * TOTAL_MS - piece.delay) / FALL_MS));
     if (t <= 0) return { opacity: 0 };
     const y = -30 + t * (height + 120);
     const x = piece.x + Math.sin(t * Math.PI * 2 * piece.freq) * piece.drift;

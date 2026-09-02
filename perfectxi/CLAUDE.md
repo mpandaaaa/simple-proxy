@@ -75,6 +75,8 @@ app/draft/           setup, board, season
 app/soon.tsx         holding screen for a mode not built yet
 src/engine/          the game, free of React. sim, draft, formations, rng
 src/data/squads.ts   GENERATED. 712 club-seasons, do not hand edit
+src/data/dynasty.ts  GENERATED. birth years, ageing curves, capacities
+data/perfectxi-database.json  the source of truth, committed
 src/game/run.ts      the run in progress, held outside React
 src/ui/tokens.ts     pine emerald palette, spacing, radii, tap targets
 src/ui/type.ts       Anton, Barlow Condensed, Inter across three roles
@@ -83,7 +85,7 @@ src/ui/components/   Screen ModeScreen Surface Pill NumberSlot Button
                      Toggle Press Row Hero Choice Pitch
 src/save/            versioned storage, migration chain, settings slice
 scripts/             extract-db, sim-season, golden
-vendor/index.html    the web build, not committed. Needed to rebuild the data
+vendor/index.html    the web build, not committed. Reference only now
 ```
 
 `Press` is the press state used by anything bigger than a button: a spring
@@ -101,11 +103,16 @@ Phase 1 (shell, tokens, fonts, haptics, save layer) and Phase 2 (engine and
 database) are done, and the four tab bar has been replaced by the stack
 described above.
 
-The database is extracted from `vendor/index.html` by `scripts/extract-db.mjs`,
-which runs the web build's own three data layers and correction pass in Node
-and writes `src/data/squads.ts`. The phone never runs the correction pass.
-Verified output: 712 club-seasons, 51 clubs, 35 seasons, 11,077 rows, 3,003
-distinct players.
+The database is `data/perfectxi-database.json`, committed, and
+`scripts/import-db.mjs` turns it into `src/data/squads.ts` and
+`src/data/dynasty.ts`. It validates every row, refuses to write if a
+formation multiplier disagrees with the engine, and sorts the club-seasons
+so a seed always lands in the same place. Verified output: 712 club-seasons,
+51 clubs, 35 seasons, 11,077 rows, 3,003 distinct players, plus 3,062 dated
+players, 25 stadium capacities and 21 derbies for Dynasty.
+
+`scripts/extract-db.mjs` mined the same data out of `vendor/index.html` and
+is kept only as a record of where it came from.
 
 The draft is wired end to end: setup, spin, board, pick, 38 game season,
 final table and grade, with progress banked to the save layer.
@@ -130,7 +137,7 @@ npm run typecheck                      # tsc --noEmit
 npx expo-doctor                        # must stay at 21/21
 npm run sim                            # draft an XI and play a season, headless
 npm run golden                         # the numbers that say the maths is intact
-npm run extract-db                     # rebuild src/data from vendor/index.html
+npm run import-db                      # rebuild src/data from data/perfectxi-database.json
 ```
 
 Verify with typecheck, expo-doctor and golden before committing. Port 8081 is
