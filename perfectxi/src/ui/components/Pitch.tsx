@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
   rating: {
     fontFamily: font.hero,
     fontSize: 21,
-    lineHeight: 25,
+    lineHeight: 28,
     fontVariant: ['tabular-nums'],
   },
   name: {

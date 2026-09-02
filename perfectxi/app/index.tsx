@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   wordmark: {
     fontFamily: font.displayBlack,
     fontSize: 27,
-    lineHeight: 30,
+    lineHeight: 34,
     letterSpacing: 1.3,
     color: color.text1,
   },

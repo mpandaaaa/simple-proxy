@@ -22,17 +22,20 @@ export function Ticker({
   style,
   duration = 620,
   blank = '—',
+  from: start,
 }: {
   value: number;
   style?: StyleProp<TextStyle>;
   duration?: number;
   /** what to show when the value is zero */
   blank?: string;
+  /** where the count starts on mount, so a number can arrive by running */
+  from?: number;
 }) {
   const reduce = useReduceMotion();
-  const [shown, setShown] = useState(value);
+  const [shown, setShown] = useState(start ?? value);
   const frame = useRef<number | null>(null);
-  const from = useRef(value);
+  const from = useRef(start ?? value);
 
   useEffect(() => {
     const start = from.current;

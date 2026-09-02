@@ -383,6 +383,7 @@ function Stat({
     <View style={styles.stat}>
       <Ticker
         value={value}
+        from={0}
         blank="0"
         duration={340}
         style={[styles.statValue, big ? styles.statValueBig : null, tint ? { color: tint } : null]}
@@ -516,7 +517,7 @@ const styles = StyleSheet.create({
   heroName: {
     fontFamily: font.displayBlack,
     fontSize: 34,
-    lineHeight: 40,
+    lineHeight: 43,
     letterSpacing: 0.4,
     color: '#FFFFFF',
     marginTop: space.s2,
@@ -670,7 +671,7 @@ const styles = StyleSheet.create({
   fxScore: {
     fontFamily: font.displayBlack,
     fontSize: 20,
-    lineHeight: 23,
+    lineHeight: 25,
     letterSpacing: 0.4,
     fontVariant: ['tabular-nums'],
   },

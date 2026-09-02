@@ -2,6 +2,7 @@ import type { Slot, Position } from './types';
 import type { Rng } from './rng';
 import { shuffle } from './rng';
 import { FORMATIONS, type Formation } from './formations';
+import { lastName } from './clubs';
 
 /* ===== DIXON-COLES MATCH ENGINE (Dixon & Coles 1997, JRSS-C 46:265-280) =====
    lambda = exp(c + att_home + def_away + gamma)   gamma = 0.27 (home adv)
@@ -391,7 +392,7 @@ export function verdict(r: {
   };
 }
 
-export type Award = { name: string; value: number } | null;
+export type Award = { name: string; value: number; extra?: number } | null;
 
 /**
  * The three end of season awards, as the web build works them out.
@@ -402,11 +403,16 @@ export type Award = { name: string; value: number } | null;
 export function awards(
   stats: Record<string, PlayerStat>,
   squad: Slot[],
-): { boot: Award; playmaker: Award; glove: Award } {
+): { pots: Award; boot: Award; playmaker: Award; glove: Award } {
   const rows = Object.entries(stats).map(([name, s]) => ({ name, ...s }));
-  if (!rows.length) return { boot: null, playmaker: null, glove: null };
+  if (!rows.length) return { pots: null, boot: null, playmaker: null, glove: null };
 
   const boot = [...rows].sort((a, b) => b.g - a.g || b.a - a.a)[0];
+  // Goals count for most, assists next, a clean sheet for something. The
+  // web build weights it exactly this way, so the same XI wins it in both.
+  const pots = [...rows].sort(
+    (a, b) => b.g * 3 + b.a * 2 + b.cs - (a.g * 3 + a.a * 2 + a.cs),
+  )[0];
   const playmaker = [...rows].sort((a, b) => b.a - a.a || b.g - a.g)[0];
 
   const keepers = new Set(
@@ -416,6 +422,7 @@ export function awards(
   const glove = [...(gkRows.length ? gkRows : rows)].sort((a, b) => b.cs - a.cs)[0];
 
   return {
+    pots: pots ? { name: pots.name, value: pots.g, extra: pots.a } : null,
     boot: boot.g > 0 ? { name: boot.name, value: boot.g } : null,
     playmaker: playmaker.a > 0 ? { name: playmaker.name, value: playmaker.a } : null,
     glove: glove && glove.cs > 0 ? { name: glove.name, value: glove.cs } : null,
@@ -616,4 +623,178 @@ export function simulateSeason(
     biggestWin,
     playerStats: stats,
   };
+}
+
+/**
+ * What a squad of this quality is supposed to finish.
+ *
+ * The web build's curve, carried over unchanged. It is deliberately coarser
+ * than the odds card: the odds say where the maths puts you, this says what
+ * would count as a good season, and the gap between the two is the whole
+ * point of the results screen.
+ */
+export function expectedFinish(avg: number): number {
+  if (avg >= 90) return 1;
+  if (avg >= 87) return 2;
+  if (avg >= 84) return 4;
+  if (avg >= 81) return 7;
+  if (avg >= 77) return 11;
+  if (avg >= 73) return 15;
+  return 18;
+}
+
+export type Expectation = {
+  expected: number;
+  /** how the expectation reads in words: "the title", "top 4", "mid-table" */
+  label: string;
+  verdict: 'over' | 'met' | 'under';
+  /** places better than expected, negative for worse */
+  diff: number;
+};
+
+export function expectation(avg: number, pos: number): Expectation {
+  const expected = expectedFinish(avg);
+  const diff = expected - pos;
+  const label =
+    expected === 1
+      ? 'the title'
+      : expected <= 4
+        ? `top ${expected}`
+        : expected <= 8
+          ? 'top 8'
+          : expected <= 14
+            ? 'mid-table'
+            : 'a relegation battle';
+  return {
+    expected,
+    label,
+    diff,
+    verdict: diff >= 1 ? 'over' : diff <= -1 ? 'under' : 'met',
+  };
+}
+
+export type FinishTone = 'gold' | 'silver' | 'ucl' | 'europa' | 'mid' | 'low' | 'rel';
+
+export type Finish = {
+  title: string;
+  sub: string;
+  mark: string;
+  tone: FinishTone;
+};
+
+/**
+ * The headline the season earned, in the site's own words.
+ *
+ * A perfect season and a nineteenth place finish are not the same event and
+ * must not arrive on the same card in the same colour.
+ */
+export function finishFor(r: {
+  position: number;
+  pts: number;
+  draws: number;
+  losses: number;
+}): Finish {
+  const { position: pos, pts, draws, losses } = r;
+  const ord = ordinal(pos);
+  if (!losses && !draws)
+    return {
+      title: 'Perfect Season',
+      sub: `${pts} pts. Unbeaten, undefeated, flawless.`,
+      mark: '🏆',
+      tone: 'gold',
+    };
+  if (pos === 1 && !losses)
+    return {
+      title: 'Invincible Champions',
+      sub: `Champions, unbeaten, ${pts} pts. Immortal.`,
+      mark: '🏆',
+      tone: 'gold',
+    };
+  if (pos === 1)
+    return {
+      title: 'Champions',
+      sub: `${pts} pts. Premier League champions.`,
+      mark: '🏆',
+      tone: 'gold',
+    };
+  if (pos === 2)
+    return {
+      title: 'Runners Up',
+      sub: `Second on ${pts} pts. So close.`,
+      mark: '🥈',
+      tone: 'silver',
+    };
+  if (pos <= 4)
+    return {
+      title: `Champions League, ${ord}`,
+      sub: `${pts} pts. Top four secured.`,
+      mark: '🏅',
+      tone: 'ucl',
+    };
+  if (pos <= 6)
+    return {
+      title: `Europa League, ${ord}`,
+      sub: `${pts} pts. European football secured.`,
+      mark: '⭐',
+      tone: 'europa',
+    };
+  if (pos === 7)
+    return {
+      title: 'Conference League, 7th',
+      sub: `${pts} pts. European nights, just about.`,
+      mark: '⭐',
+      tone: 'europa',
+    };
+  if (pos <= 10)
+    return {
+      title: `${ord} Place`,
+      sub: `${pts} pts. A solid mid-table finish.`,
+      mark: '📊',
+      tone: 'mid',
+    };
+  if (pos <= 14)
+    return {
+      title: `Mid-table, ${ord}`,
+      sub: `${pts} pts. An unremarkable campaign.`,
+      mark: '📊',
+      tone: 'mid',
+    };
+  if (pos <= 17)
+    return {
+      title: `Lower Mid-table, ${ord}`,
+      sub: `${pts} pts. Survival, and little else.`,
+      mark: '😅',
+      tone: 'low',
+    };
+  return {
+    title: `Relegated, ${ord}`,
+    sub: `${pts} pts. Down to the Championship.`,
+    mark: '😔',
+    tone: 'rel',
+  };
+}
+
+export type Highlight = { value: string; label: string };
+
+/** The eight numbers the site puts under Season Highlights. */
+export function highlights(r: SeasonResult): Highlight[] {
+  const games = r.matches.length || 38;
+  const gd = r.gf - r.ga;
+  const rows = Object.entries(r.playerStats).map(([n, s]) => ({ n, g: s.g }));
+  rows.sort((a, b) => b.g - a.g);
+  const top = rows[0];
+
+  return [
+    { value: (r.pts / games).toFixed(2), label: 'Points per game' },
+    { value: `${Math.round((r.wins / games) * 100)}%`, label: 'Win rate' },
+    { value: `${gd >= 0 ? '+' : ''}${gd}`, label: 'Goal difference' },
+    { value: (r.gf / games).toFixed(1), label: 'Goals per game' },
+    { value: String(r.cleanSheets), label: 'Clean sheets' },
+    { value: String(r.longestStreak), label: 'Longest win streak' },
+    { value: r.biggestWin ?? '0-0', label: 'Biggest win' },
+    {
+      value: top ? `${lastName(top.n)} (${top.g})` : '0',
+      label: 'Top scorer',
+    },
+  ];
 }

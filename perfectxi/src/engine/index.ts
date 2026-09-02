@@ -56,6 +56,10 @@ export {
   verdict,
   awards,
   livePosition,
+  expectedFinish,
+  expectation,
+  finishFor,
+  highlights,
 } from './sim';
 export type {
   Odds,
@@ -68,4 +72,8 @@ export type {
   PlayerStat,
   Grade,
   SeasonResult,
+  Expectation,
+  Finish,
+  FinishTone,
+  Highlight,
 } from './sim';

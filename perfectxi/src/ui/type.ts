@@ -104,7 +104,7 @@ export const text = {
   button: {
     fontFamily: font.displayBold,
     fontSize: 17,
-    lineHeight: 20,
+    lineHeight: 22,
     letterSpacing: 0.6,
     textTransform: 'uppercase',
   } as TextStyle,

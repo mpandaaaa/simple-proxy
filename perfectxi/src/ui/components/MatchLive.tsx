@@ -251,7 +251,7 @@ export function MatchLive({
     ],
   }));
   const barStyle = useAnimatedStyle(() => ({ transform: [{ scaleX: clockBar.value }] }));
-  const flashStyle = useAnimatedStyle(() => ({ opacity: flash.value * 0.55 }));
+  const flashStyle = useAnimatedStyle(() => ({ opacity: flash.value * 0.20 }));
   const scoreStyle = useAnimatedStyle(() => ({
     transform: [{ scale: 1 + bump.value * 0.14 }],
   }));
@@ -615,14 +615,14 @@ const styles = StyleSheet.create({
   score: {
     fontFamily: font.hero,
     fontSize: 46,
-    lineHeight: 50,
+    lineHeight: 60,
     color: '#FFFFFF',
     fontVariant: ['tabular-nums'],
   },
   colon: {
     fontFamily: font.hero,
     fontSize: 26,
-    lineHeight: 50,
+    lineHeight: 60,
     color: 'rgba(255,255,255,0.42)',
   },
   clock: {

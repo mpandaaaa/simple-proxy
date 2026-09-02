@@ -1,26 +1,24 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Text, View, StyleSheet } from 'react-native';
 import Animated, {
-  Easing,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
   withSpring,
-  withTiming,
 } from 'react-native-reanimated';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
 import { router, Stack } from 'expo-router';
 import {
   ModeScreen,
-  Button,
   Press,
   Ticker,
   Rise,
   Pitch,
-  Sheet,
+  ClubDisc,
+  MatchLive,
   Confirm,
 } from '../../src/ui/components';
-import { color, space, radius, line, gradient } from '../../src/ui/tokens';
+import { color, space, radius, line, gradient, positionColor } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { GRAIN_URI } from '../../src/ui/grain';
 import { haptic, useReduceMotion } from '../../src/ui/feel';
@@ -28,35 +26,78 @@ import {
   awards,
   calcOdds,
   chemBonus,
-  lastName,
+  expectation,
+  finishFor,
+  highlights,
   ordinal,
   squadAvg,
   verdict,
+  type FinishTone,
   type Grade,
   type MatchResult,
-  type SeasonResult,
+  type Position,
+  type Slot,
+  type TableRow,
 } from '../../src/engine';
 import { clearRun, useRun } from '../../src/game/run';
 import { progressStore } from '../../src/save';
 
 /**
- * What finishing there actually means, and what colour it is.
+ * The season review.
  *
- * A results screen that treats first and seventeenth the same is a
- * scoreboard. This is the moment the whole run resolves into, so where you
- * came dresses the entire top of the page.
+ * The site puts eight sections on this page and every one of them earns its
+ * place: where you came and what it means, the papers, the numbers, the
+ * awards, what every player did, all thirty eight results, and the table
+ * you finished in. A results screen that shows a score and a table is a
+ * receipt.
+ *
+ * Two things here the site does not have. Every result can be tapped and
+ * watched back in full, because the match engine is the same one that
+ * played it. And the season is set against what the odds card promised you
+ * on Squad Complete, in places and in points, which is the only way to know
+ * whether the XI you drafted was any good or merely lucky.
  */
-function finishTone(pos: number) {
-  if (pos === 1)
-    return { tint: color.gold, badge: 'Champions', mark: '🏆' };
-  if (pos <= 4)
-    return { tint: color.accent, badge: 'Champions League', mark: '★' };
-  if (pos <= 7)
-    return { tint: color.blue, badge: 'Europe', mark: '✦' };
-  if (pos <= 17)
-    return { tint: color.text2, badge: 'Survived', mark: '—' };
-  return { tint: color.danger, badge: 'Relegated', mark: '▼' };
-}
+
+const TONE: Record<
+  FinishTone,
+  { tint: string; edge: string; wash: string }
+> = {
+  gold: {
+    tint: color.gold,
+    edge: 'rgba(214,178,94,0.45)',
+    wash: 'radial-gradient(135% 105% at 50% 0%, rgba(214,178,94,0.30) 0%, rgba(58,44,12,0.55) 44%, #0C0F0A 86%)',
+  },
+  silver: {
+    tint: '#C9D6CE',
+    edge: 'rgba(201,214,206,0.36)',
+    wash: 'radial-gradient(135% 105% at 50% 0%, rgba(201,214,206,0.22) 0%, rgba(40,50,46,0.5) 44%, #0A0F0C 86%)',
+  },
+  ucl: {
+    tint: color.accent,
+    edge: 'rgba(31,197,126,0.42)',
+    wash: 'radial-gradient(135% 105% at 50% 0%, rgba(31,197,126,0.26) 0%, rgba(10,60,38,0.5) 44%, #08110D 86%)',
+  },
+  europa: {
+    tint: color.blue,
+    edge: 'rgba(76,160,255,0.40)',
+    wash: 'radial-gradient(135% 105% at 50% 0%, rgba(76,160,255,0.24) 0%, rgba(12,38,68,0.5) 44%, #080D14 86%)',
+  },
+  mid: {
+    tint: color.text2,
+    edge: 'rgba(255,255,255,0.16)',
+    wash: 'radial-gradient(135% 105% at 50% 0%, rgba(255,255,255,0.12) 0%, rgba(24,32,28,0.6) 44%, #0A0F0C 86%)',
+  },
+  low: {
+    tint: color.warning,
+    edge: 'rgba(245,165,36,0.36)',
+    wash: 'radial-gradient(135% 105% at 50% 0%, rgba(245,165,36,0.22) 0%, rgba(58,40,10,0.5) 44%, #0C0D08 86%)',
+  },
+  rel: {
+    tint: color.danger,
+    edge: 'rgba(229,72,77,0.42)',
+    wash: 'radial-gradient(135% 105% at 50% 0%, rgba(229,72,77,0.26) 0%, rgba(62,14,16,0.5) 44%, #100809 86%)',
+  },
+};
 
 const GRADE_TINT: Record<Grade, string> = {
   S: color.gold,
@@ -69,32 +110,26 @@ const GRADE_TINT: Record<Grade, string> = {
 };
 
 const OUTCOME = {
-  win: { tint: color.win, letter: 'W' },
-  draw: { tint: color.draw, letter: 'D' },
-  loss: { tint: color.loss, letter: 'L' },
+  win: color.win,
+  draw: color.draw,
+  loss: color.loss,
 } as const;
 
-/**
- * The season, finished.
- *
- * The site shows a table, some highlights and a verdict. This keeps all of
- * that and adds the thing the site had the numbers for and never said: you
- * were told before kick off exactly where an XI this good should finish, so
- * the first thing this screen does is tell you whether you beat it.
- */
+const POS_ORDER: Position[] = ['GK', 'DEF', 'MID', 'ATT'];
+
+/** Just the suffix, so the number itself can count up on its own. */
+function suffix(n: number): string {
+  return ordinal(n).replace(String(n), '');
+}
+
 export default function Results() {
   const run = useRun();
-  const [tapped, setTapped] = useState<MatchResult | null>(null);
-  const [leaving, setLeaving] = useState(false);
-  /** banked once, on arrival, however many times this screen re-renders */
   const banked = useRef(false);
+  const [leaving, setLeaving] = useState(false);
+  const [watching, setWatching] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (!run || !run.result) router.replace('/draft');
-  }, [run]);
-
-  // The season goes on the record here rather than while it was playing,
-  // so a season abandoned halfway never counts.
+  // The season goes on the record here rather than while it was playing, so
+  // a season abandoned halfway never counts.
   useEffect(() => {
     const r = run?.result;
     if (!r || banked.current) return;
@@ -104,8 +139,16 @@ export default function Results() {
       seasons: p.seasons + 1,
       titles: p.titles + (r.position === 1 ? 1 : 0),
       best: Math.max(p.best, r.pts),
-      coins: p.coins + 30 + Math.round(r.pts / 2) + (r.position === 1 ? 120 : r.position <= 4 ? 45 : 0),
-      xp: p.xp + 140 + r.pts * 3 + (r.position === 1 ? 400 : r.position <= 4 ? 180 : r.position <= 10 ? 60 : 0),
+      coins:
+        p.coins +
+        30 +
+        Math.round(r.pts / 2) +
+        (r.position === 1 ? 120 : r.position <= 4 ? 45 : 0),
+      xp:
+        p.xp +
+        140 +
+        r.pts * 3 +
+        (r.position === 1 ? 400 : r.position <= 4 ? 180 : r.position <= 10 ? 60 : 0),
     }));
   }, [run]);
 
@@ -116,30 +159,46 @@ export default function Results() {
     [run, result],
   );
 
+  const rewatch = useCallback((index: number) => {
+    haptic('light');
+    setWatching(index);
+  }, []);
+
   if (!run || !result) return null;
 
   const { squad, config } = run.state;
   const avg = squadAvg(squad);
   const odds = calcOdds(avg, chemBonus(squad));
-  const tone = finishTone(result.position);
+  const fin = finishFor(result);
+  const tone = TONE[fin.tone];
+  const exp = expectation(avg, result.position);
   const paper = verdict(result);
+  const stats = highlights(result);
 
-  // What you were promised, against what you did.
   const placesBetter = odds.projFinish - result.position;
   const pointsBetter = result.pts - odds.expPts;
+
+  const ordered = squad
+    .filter((s): s is Slot & { player: NonNullable<Slot['player']> } => !!s.player)
+    .slice()
+    .sort((a, b) => POS_ORDER.indexOf(a.pos) - POS_ORDER.indexOf(b.pos));
 
   return (
     <>
       <Stack.Screen options={{ gestureEnabled: false }} />
+
       <ModeScreen
         overline="Season complete"
-        title={paper.headline}
+        title={config.formation}
         onBack={() => setLeaving(true)}
         right={
           <View
             style={[
               styles.grade,
-              { borderColor: GRADE_TINT[result.grade], backgroundColor: GRADE_TINT[result.grade] + '1f' },
+              {
+                borderColor: GRADE_TINT[result.grade],
+                backgroundColor: GRADE_TINT[result.grade] + '1F',
+              },
             ]}
           >
             <Text style={[styles.gradeText, { color: GRADE_TINT[result.grade] }]}>
@@ -148,655 +207,988 @@ export default function Results() {
           </View>
         }
       >
-        <Rise delay={0}>
-          <Finish result={result} tone={tone} />
-        </Rise>
+        {/* ================= where you finished ================= */}
+        <Finish
+          position={result.position}
+          title={fin.title}
+          sub={fin.sub}
+          mark={fin.mark}
+          tone={tone}
+          expVerdict={exp.verdict}
+          expLine={`Avg ${Math.round(avg)} · Expected ${exp.label} · Finished ${ordinal(
+            result.position,
+          )}`}
+        />
 
-        <Rise delay={1}>
-          <View style={[styles.paper, { borderLeftColor: tone.tint }]}>
+        {/* ================= the six numbers ================= */}
+        <View style={styles.tiles}>
+          <Tile value={result.wins} label="Won" tint={color.win} />
+          <Tile value={result.draws} label="Drawn" tint={color.draw} />
+          <Tile value={result.losses} label="Lost" tint={color.loss} />
+          <Tile value={result.gf} label="Goals for" />
+          <Tile value={result.ga} label="Goals against" />
+          <Tile value={result.pts} label="Points" tint={tone.tint} />
+        </View>
+
+        {/* ================= the morning papers ================= */}
+        <Rise delay={0}>
+          <View style={[styles.paper, { borderColor: tone.edge }]}>
+            <View style={styles.grain} pointerEvents="none">
+              <Image source={{ uri: GRAIN_URI }} resizeMode="repeat" style={styles.fill} />
+            </View>
+            <Text style={[styles.paperKey, { color: tone.tint }]}>The morning papers</Text>
+            <View style={[styles.rule, { backgroundColor: tone.edge }]} />
+            <Text style={styles.paperHead}>{paper.headline}</Text>
             <Text style={styles.paperQuote}>{paper.quote}</Text>
             <Text style={styles.paperSource}>{paper.source}</Text>
           </View>
         </Rise>
 
-        {/* The loop back to what squad complete promised. */}
-        <Rise delay={2}>
-          <Text style={styles.sectionTitle}>Against the odds</Text>
-          <View style={styles.panel}>
-            <Expectation
-              label="Finish"
-              expected={ordinal(odds.projFinish)}
-              actual={ordinal(result.position)}
-              delta={placesBetter}
-              unit={Math.abs(placesBetter) === 1 ? 'place' : 'places'}
-            />
-            <Expectation
-              label="Points"
-              expected={String(odds.expPts)}
-              actual={String(result.pts)}
-              delta={pointsBetter}
-              unit={Math.abs(pointsBetter) === 1 ? 'point' : 'points'}
-            />
+        {/* ================= against the odds ================= */}
+        <Rise delay={1}>
+          <View style={styles.odds}>
+            <Text style={styles.sectKey}>Against the odds</Text>
+            <Text style={styles.oddsLead}>
+              What an {Math.round(avg)} rated XI was promised, against what it did.
+            </Text>
+
+            <View style={styles.oddsGrid}>
+              <OddsCol
+                label="Finish"
+                promised={ordinal(odds.projFinish)}
+                actual={ordinal(result.position)}
+                delta={placesBetter}
+                unit={Math.abs(placesBetter) === 1 ? 'place' : 'places'}
+              />
+              <View style={styles.oddsDivide} />
+              <OddsCol
+                label="Points"
+                promised={String(odds.expPts)}
+                actual={String(result.pts)}
+                delta={pointsBetter}
+                unit={Math.abs(pointsBetter) === 1 ? 'point' : 'points'}
+              />
+            </View>
           </View>
         </Rise>
 
-        <Rise delay={3}>
-          <Text style={styles.sectionTitle}>Season highlights</Text>
-          <View style={styles.grid}>
-            <Cell v={(result.pts / 38).toFixed(2)} l="Points per game" />
-            <Cell v={`${Math.round((result.wins / 38) * 100)}%`} l="Win rate" />
-            <Cell
-              v={`${result.gf - result.ga >= 0 ? '+' : ''}${result.gf - result.ga}`}
-              l="Goal difference"
-            />
-            <Cell v={(result.gf / 38).toFixed(1)} l="Goals per game" />
-            <Cell v={String(result.cleanSheets)} l="Clean sheets" />
-            <Cell v={String(result.longestStreak)} l="Longest win run" />
-            <Cell v={result.biggestWin ?? 'None'} l="Biggest win" />
-            <Cell v={`${result.xgF}`} l="Expected goals" />
-          </View>
-        </Rise>
+        {/* ================= season highlights ================= */}
+        <Text style={[text.label, styles.sect]}>Season highlights</Text>
+        <View style={styles.hlGrid}>
+          {stats.map((h) => (
+            <View key={h.label} style={styles.hl}>
+              <Text
+                style={styles.hlValue}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                allowFontScaling={false}
+              >
+                {h.value}
+              </Text>
+              <Text style={styles.hlLabel}>{h.label}</Text>
+            </View>
+          ))}
+        </View>
 
-        {trophies && (trophies.boot || trophies.playmaker || trophies.glove) ? (
-          <Rise delay={4}>
-            <Text style={styles.sectionTitle}>Awards</Text>
+        {/* ================= season awards ================= */}
+        {trophies ? (
+          <Rise delay={0}>
             <View style={styles.awards}>
-              {trophies.boot ? (
-                <AwardRow
-                  label="Golden Boot"
-                  name={trophies.boot.name}
-                  value={`${trophies.boot.value} goals`}
-                  tint={color.gold}
-                />
-              ) : null}
-              {trophies.playmaker ? (
-                <AwardRow
-                  label="Playmaker"
-                  name={trophies.playmaker.name}
-                  value={`${trophies.playmaker.value} assists`}
-                  tint={color.accent}
-                />
-              ) : null}
-              {trophies.glove ? (
-                <AwardRow
-                  label="Golden Glove"
-                  name={trophies.glove.name}
-                  value={`${trophies.glove.value} clean sheets`}
-                  tint={color.gk}
-                />
-              ) : null}
+              <View style={styles.grain} pointerEvents="none">
+                <Image source={{ uri: GRAIN_URI }} resizeMode="repeat" style={styles.fill} />
+              </View>
+              <Text style={styles.awardsKey}>Season awards</Text>
+
+              <Award
+                mark="🏆"
+                label="Player of the season"
+                name={trophies.pots?.name}
+                stat={
+                  trophies.pots
+                    ? `${trophies.pots.value} goals, ${trophies.pots.extra ?? 0} assists`
+                    : undefined
+                }
+                squad={ordered}
+                top
+              />
+              <Award
+                mark="⚽"
+                label="Golden Boot"
+                name={trophies.boot?.name}
+                stat={trophies.boot ? `${trophies.boot.value} goals` : undefined}
+                squad={ordered}
+              />
+              <Award
+                mark="🎯"
+                label="Playmaker"
+                name={trophies.playmaker?.name}
+                stat={
+                  trophies.playmaker ? `${trophies.playmaker.value} assists` : undefined
+                }
+                squad={ordered}
+              />
+              <Award
+                mark="🧤"
+                label="Golden Glove"
+                name={trophies.glove?.name}
+                stat={trophies.glove ? `${trophies.glove.value} clean sheets` : undefined}
+                squad={ordered}
+              />
             </View>
           </Rise>
         ) : null}
 
-        {/* The whole season at a glance, and any of it one tap away. */}
-        <Rise delay={5}>
-          <Text style={styles.sectionTitle}>All 38 results</Text>
-          <View style={styles.panel}>
-            <View style={styles.matchGrid}>
-              {result.matches.map((m) => (
-                <Press
-                  key={m.n}
-                  onPress={() => {
-                    haptic('select');
-                    setTapped(m);
-                  }}
-                  feel="none"
-                  scaleTo={0.88}
-                  style={[
-                    styles.pip,
-                    {
-                      borderColor: OUTCOME[m.oc].tint,
-                      backgroundColor: OUTCOME[m.oc].tint + '22',
-                    },
-                  ]}
-                >
-                  <Text style={[styles.pipText, { color: OUTCOME[m.oc].tint }]}>
-                    {OUTCOME[m.oc].letter}
-                  </Text>
-                </Press>
-              ))}
-            </View>
-            <Text style={styles.note}>Tap any result for the score.</Text>
-          </View>
-        </Rise>
-
-        <Rise delay={6}>
-          <Text style={styles.sectionTitle}>Final table</Text>
-          <View style={styles.table}>
-            <View style={styles.tableHead}>
-              <Text style={[styles.tPos, styles.tHeadText]}>#</Text>
-              <Text style={[styles.tName, styles.tHeadText]}>Club</Text>
-              <Text style={[styles.tNum, styles.tHeadText]}>W</Text>
-              <Text style={[styles.tNum, styles.tHeadText]}>D</Text>
-              <Text style={[styles.tNum, styles.tHeadText]}>L</Text>
-              <Text style={[styles.tNum, styles.tGd, styles.tHeadText]}>GD</Text>
-              <Text style={[styles.tPts, styles.tHeadText]}>Pts</Text>
-            </View>
-            {result.table.map((r, i) => {
-              const zone =
-                i === 0
-                  ? color.gold
-                  : i < 4
-                    ? color.accent
-                    : i < 7
-                      ? color.blue
-                      : i >= 17
-                        ? color.danger
-                        : 'transparent';
-              return (
+        {/* ================= what every player did ================= */}
+        <Text style={[text.label, styles.sect]}>Player statistics</Text>
+        <View style={styles.players}>
+          {ordered.map((s) => {
+            const st = result.playerStats[s.player.n] ?? { g: 0, a: 0, cs: 0 };
+            const keeps = s.pos === 'GK' || s.pos === 'DEF';
+            return (
+              <View key={s.player.n} style={styles.pl}>
                 <View
-                  key={r.name}
-                  style={[
-                    styles.tableRow,
-                    r.isYou && { backgroundColor: tone.tint + '1f' },
-                  ]}
+                  style={[styles.plPos, { backgroundColor: positionColor[s.pos] + '26', borderColor: positionColor[s.pos] + '66' }]}
                 >
-                  <View style={[styles.zone, { backgroundColor: zone }]} />
-                  <Text style={[styles.tPos, r.isYou && styles.tYou]}>{i + 1}</Text>
-                  <Text style={[styles.tName, r.isYou && styles.tYou]} numberOfLines={1}>
-                    {r.name}
+                  <Text style={[styles.plPosText, { color: positionColor[s.pos] }]}>
+                    {s.pos}
                   </Text>
-                  <Text style={[styles.tNum, r.isYou && styles.tYou]}>{r.w}</Text>
-                  <Text style={[styles.tNum, r.isYou && styles.tYou]}>{r.d}</Text>
-                  <Text style={[styles.tNum, r.isYou && styles.tYou]}>{r.l}</Text>
-                  <Text style={[styles.tNum, styles.tGd, r.isYou && styles.tYou]}>
-                    {r.gf - r.ga > 0 ? '+' : ''}
-                    {r.gf - r.ga}
-                  </Text>
-                  <Text style={[styles.tPts, r.isYou && styles.tYou]}>{r.pts}</Text>
                 </View>
-              );
-            })}
+                <View style={styles.plRtg}>
+                  <Text style={styles.plRtgText} allowFontScaling={false}>
+                    {s.player.rtg}
+                  </Text>
+                </View>
+                <View style={styles.plName}>
+                  <Text style={styles.plNameText} numberOfLines={1}>
+                    {s.player.n}
+                  </Text>
+                  <Text style={styles.plClub} numberOfLines={1}>
+                    {s.player.club} {'·'} {s.player.season}
+                  </Text>
+                </View>
+                <PlStat value={st.g} label="Goals" />
+                <PlStat value={st.a} label="Assists" />
+                {keeps ? <PlStat value={st.cs} label="CS" /> : null}
+              </View>
+            );
+          })}
+        </View>
+
+        {/* ================= all thirty eight ================= */}
+        <Text style={[text.label, styles.sect]}>Every result</Text>
+        <Text style={styles.sectHint}>Tap any one of them to watch it back.</Text>
+        <View style={styles.results}>
+          {result.matches.map((m, i) => (
+            <ResultTile key={m.n} match={m} onPress={() => rewatch(i)} />
+          ))}
+        </View>
+
+        {/* ================= the table ================= */}
+        <Text style={[text.label, styles.sect]}>Final standings</Text>
+        <View style={styles.table}>
+          <View style={styles.thead}>
+            <Text style={[styles.th, styles.colPos]}>#</Text>
+            <Text style={[styles.th, styles.colClub]}>Club</Text>
+            <Text style={[styles.th, styles.colNum]}>W</Text>
+            <Text style={[styles.th, styles.colNum]}>D</Text>
+            <Text style={[styles.th, styles.colNum]}>L</Text>
+            <Text style={[styles.th, styles.colGd]}>GD</Text>
+            <Text style={[styles.th, styles.colPts]}>Pts</Text>
           </View>
-        </Rise>
+          {result.table.map((r, i) => (
+            <Row key={r.name} row={r} pos={i + 1} tint={tone.tint} />
+          ))}
+          <View style={styles.legend}>
+            <Key tint={color.gold} label="Champions" />
+            <Key tint={color.blue} label="Champions League" />
+            <Key tint={color.accent} label="Europe" />
+            <Key tint={color.danger} label="Relegation" />
+          </View>
+        </View>
 
-        <Rise delay={7}>
-          <Text style={styles.sectionTitle}>The XI that did it</Text>
-          <Pitch squad={squad} formation={config.formation} />
-        </Rise>
+        {/* ================= the XI that did it ================= */}
+        <Text style={[text.label, styles.sect]}>The XI</Text>
+        <Pitch squad={squad} formation={config.formation} />
 
-        <Rise delay={8}>
-          <Button
-            label="Draft another XI"
-            style={styles.cta}
+        <View style={styles.cta}>
+          <Press
             onPress={() => {
+              haptic('medium');
               clearRun();
               router.dismissAll();
               router.push('/draft');
             }}
-          />
-        </Rise>
-
-        <Sheet visible={!!tapped} onClose={() => setTapped(null)}>
-          <View style={styles.sheet}>
-            <View style={styles.sheetGrab} />
-            {tapped ? <MatchDetail match={tapped} tone={tone.tint} /> : null}
-          </View>
-        </Sheet>
-
-        <Confirm
-          visible={leaving}
-          title="Leave this season?"
-          body="The result will not be kept. This cannot be undone."
-          confirmLabel="Leave"
-          cancelLabel="Stay"
-          onCancel={() => setLeaving(false)}
-          onConfirm={() => {
-            setLeaving(false);
-            clearRun();
-            router.dismissAll();
-          }}
-        />
+            feel="none"
+            style={[styles.again, { borderColor: tone.edge }]}
+            scaleTo={0.98}
+          >
+            <Text style={[styles.againText, { color: tone.tint }]}>Draft another XI</Text>
+          </Press>
+          <Press
+            onPress={() => {
+              haptic('light');
+              clearRun();
+              router.dismissAll();
+            }}
+            feel="none"
+            style={styles.home}
+            scaleTo={0.98}
+          >
+            <Text style={styles.homeText}>Back to home</Text>
+          </Press>
+        </View>
       </ModeScreen>
+
+      <MatchLive
+        match={watching !== null ? result.matches[watching] : null}
+        seed={run.seed}
+        live={false}
+        visible={watching !== null}
+        onDone={() => setWatching(null)}
+      />
+
+      <Confirm
+        visible={leaving}
+        title="Leave the season?"
+        body="The season is already on your record. Leaving just closes it."
+        confirmLabel="Leave"
+        onCancel={() => setLeaving(false)}
+        onConfirm={() => {
+          setLeaving(false);
+          clearRun();
+          router.dismissAll();
+        }}
+      />
     </>
   );
 }
 
-/** Where you finished, dressed as what it means. */
+/**
+ * The moment the run resolves into.
+ *
+ * The position counts up under a bloom in the colour of what it means, so
+ * third and thirteenth do not arrive on the same card looking the same.
+ */
 function Finish({
-  result,
+  position,
+  title,
+  sub,
+  mark,
   tone,
+  expVerdict,
+  expLine,
 }: {
-  result: SeasonResult;
-  tone: ReturnType<typeof finishTone>;
+  position: number;
+  title: string;
+  sub: string;
+  mark: string;
+  tone: { tint: string; edge: string; wash: string };
+  expVerdict: 'over' | 'met' | 'under';
+  expLine: string;
 }) {
   const reduce = useReduceMotion();
-  const pop = useSharedValue(reduce ? 1 : 0);
+  const inn = useSharedValue(reduce ? 1 : 0);
 
   useEffect(() => {
     if (reduce) return;
-    pop.value = withDelay(140, withSpring(1, { stiffness: 160, damping: 12, mass: 1 }));
-  }, [pop, reduce]);
+    inn.value = withDelay(90, withSpring(1, { stiffness: 170, damping: 20, mass: 1 }));
+    haptic('success');
+  }, [inn, reduce]);
 
-  const markStyle = useAnimatedStyle(() => ({
-    opacity: pop.value,
-    transform: [{ scale: 0.6 + pop.value * 0.4 }],
+  const numStyle = useAnimatedStyle(() => ({
+    opacity: inn.value,
+    transform: [{ scale: 0.78 + inn.value * 0.22 }],
   }));
-  const bloomStyle = useAnimatedStyle(() => ({ opacity: pop.value }));
+  const restStyle = useAnimatedStyle(() => ({
+    opacity: inn.value,
+    transform: [{ translateY: (1 - inn.value) * 12 }],
+  }));
+
+  const pill =
+    expVerdict === 'over'
+      ? { tint: color.accent, text: 'Overperformed', mark: '▲' }
+      : expVerdict === 'under'
+        ? { tint: color.danger, text: 'Underperformed', mark: '▼' }
+        : { tint: color.text2, text: 'As expected', mark: '=' };
 
   return (
-    <View style={[styles.finish, { borderColor: tone.tint + '55' }]}>
-      <Animated.View style={[styles.finishBloom, bloomStyle]} pointerEvents="none">
+    <View
+      style={[
+        styles.finish,
+        { borderColor: tone.edge, experimental_backgroundImage: tone.wash },
+      ]}
+    >
+      <View style={styles.finishBloom} pointerEvents="none">
         <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
           <Defs>
-            <RadialGradient id="finishGlow" cx="50%" cy="50%" r="50%">
-              <Stop offset="0" stopColor={tone.tint} stopOpacity={0.32} />
+            <RadialGradient id="finishBloom" cx="50%" cy="50%" r="50%">
+              <Stop offset="0" stopColor={tone.tint} stopOpacity={0.34} />
               <Stop offset="1" stopColor={tone.tint} stopOpacity={0} />
             </RadialGradient>
           </Defs>
-          <Ellipse cx="50" cy="34" rx="52" ry="44" fill="url(#finishGlow)" />
+          <Ellipse cx="50" cy="6" rx="66" ry="50" fill="url(#finishBloom)" />
         </Svg>
-      </Animated.View>
+      </View>
       <View style={styles.grain} pointerEvents="none">
-        <Image source={{ uri: GRAIN_URI }} resizeMode="repeat" style={styles.grainImage} />
+        <Image source={{ uri: GRAIN_URI }} resizeMode="repeat" style={styles.fill} />
       </View>
       <View style={styles.finishEdge} pointerEvents="none" />
 
-      <Animated.Text style={[styles.finishMark, markStyle]}>{tone.mark}</Animated.Text>
-
-      <View style={[styles.finishBadge, { borderColor: tone.tint + '77', backgroundColor: tone.tint + '1f' }]}>
-        <Text style={[styles.finishBadgeText, { color: tone.tint }]}>{tone.badge}</Text>
-      </View>
-
-      <View style={styles.finishPos}>
-        <Ticker value={result.position} style={styles.finishNum} duration={800} />
-        <Text style={[styles.finishOrd, { color: tone.tint }]}>
-          {ordinal(result.position).replace(String(result.position), '')}
-        </Text>
-      </View>
-
-      <Text style={styles.finishRecord}>
-        {result.wins}W · {result.draws}D · {result.losses}L    {result.gf} scored ·{' '}
-        {result.ga} conceded
+      <Text style={styles.finishMark} allowFontScaling={false}>
+        {mark}
       </Text>
+
+      <Animated.View style={[styles.finishNum, numStyle]}>
+        <Ticker
+          value={position}
+          from={20}
+          duration={1000}
+          blank="0"
+          style={[styles.finishPos, { color: tone.tint }]}
+        />
+        <Text style={[styles.finishOrd, { color: tone.tint }]} allowFontScaling={false}>
+          {suffix(position)}
+        </Text>
+      </Animated.View>
+
+      <Animated.View style={[styles.finishRest, restStyle]}>
+        <Text style={styles.finishTitle}>{title}</Text>
+        <Text style={styles.finishSub}>{sub}</Text>
+
+        <View
+          style={[
+            styles.pv,
+            { borderColor: pill.tint + '66', backgroundColor: pill.tint + '1A' },
+          ]}
+        >
+          <Text style={[styles.pvText, { color: pill.tint }]}>
+            {pill.mark} {pill.text}
+          </Text>
+        </View>
+        <Text style={styles.pvSub}>{expLine}</Text>
+      </Animated.View>
     </View>
   );
 }
 
-/** Expected against actual, with the gap named. */
-function Expectation({
+function Tile({ value, label, tint }: { value: number; label: string; tint?: string }) {
+  return (
+    <View style={styles.tile}>
+      <Ticker
+        value={value}
+        from={0}
+        blank="0"
+        duration={780}
+        style={[styles.tileValue, tint ? { color: tint } : null]}
+      />
+      <Text style={styles.tileLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function OddsCol({
   label,
-  expected,
+  promised,
   actual,
   delta,
   unit,
 }: {
   label: string;
-  expected: string;
+  promised: string;
   actual: string;
   delta: number;
   unit: string;
 }) {
-  const good = delta > 0;
-  const tint = delta === 0 ? color.text2 : good ? color.accent : color.danger;
+  const tint = delta > 0 ? color.accent : delta < 0 ? color.danger : color.text2;
   return (
-    <View style={styles.expect}>
-      <Text style={styles.expectLabel}>{label}</Text>
-      <View style={styles.expectPair}>
-        <Text style={styles.expectExpected}>{expected}</Text>
-        <Text style={styles.expectArrow}>→</Text>
-        <Text style={[styles.expectActual, { color: tint }]}>{actual}</Text>
+    <View style={styles.oddsCol}>
+      <Text style={styles.oddsKey}>{label}</Text>
+      <View style={styles.oddsPair}>
+        <View style={styles.oddsHalf}>
+          <Text style={styles.oddsPromised} allowFontScaling={false}>
+            {promised}
+          </Text>
+          <Text style={styles.oddsCap}>Promised</Text>
+        </View>
+        <Text style={styles.oddsArrow} allowFontScaling={false}>
+          {'→'}
+        </Text>
+        <View style={styles.oddsHalf}>
+          <Text style={[styles.oddsActual, { color: tint }]} allowFontScaling={false}>
+            {actual}
+          </Text>
+          <Text style={styles.oddsCap}>Actual</Text>
+        </View>
       </View>
-      <Text style={[styles.expectDelta, { color: tint }]}>
+      <Text style={[styles.oddsDelta, { color: tint }]}>
         {delta === 0
-          ? 'exactly as predicted'
-          : `${good ? '+' : ''}${delta} ${unit} ${good ? 'better' : 'worse'}`}
+          ? `Exactly as promised`
+          : `${Math.abs(delta)} ${unit} ${delta > 0 ? 'better' : 'worse'}`}
       </Text>
     </View>
   );
 }
 
-function Cell({ v, l }: { v: string; l: string }) {
-  return (
-    <View style={styles.cell}>
-      <Text style={styles.cellValue} allowFontScaling={false}>
-        {v}
-      </Text>
-      <Text style={styles.cellLabel}>{l}</Text>
-    </View>
-  );
-}
-
-function AwardRow({
+function Award({
+  mark,
   label,
   name,
-  value,
-  tint,
+  stat,
+  squad,
+  top,
 }: {
+  mark: string;
   label: string;
-  name: string;
-  value: string;
-  tint: string;
+  name?: string;
+  stat?: string;
+  squad: (Slot & { player: NonNullable<Slot['player']> })[];
+  top?: boolean;
 }) {
+  const slot = name ? squad.find((s) => s.player.n === name) : undefined;
   return (
-    <View style={[styles.award, { borderLeftColor: tint }]}>
-      <View style={styles.awardBody}>
-        <Text style={[styles.awardLabel, { color: tint }]}>{label}</Text>
-        <Text style={styles.awardName} numberOfLines={1}>
-          {name}
+    <View style={[styles.aw, top ? styles.awTop : null]}>
+      <Text style={styles.awMark} allowFontScaling={false}>
+        {mark}
+      </Text>
+      <View style={styles.awBody}>
+        <Text style={styles.awLabel}>{label}</Text>
+        <Text style={styles.awName} numberOfLines={1}>
+          {name ?? 'Not awarded'}
         </Text>
+        {stat ? <Text style={styles.awStat}>{stat}</Text> : null}
       </View>
-      <Text style={styles.awardValue}>{value}</Text>
+      {slot ? <ClubDisc club={slot.player.club} size={32} /> : null}
     </View>
   );
 }
 
-function MatchDetail({ match, tone }: { match: MatchResult; tone: string }) {
-  const oc = OUTCOME[match.oc];
+function PlStat({ value, label }: { value: number; label: string }) {
   return (
-    <View style={styles.detail}>
-      <Text style={styles.detailOverline}>Match {match.n} of 38</Text>
-      <Text style={styles.detailOpp}>
-        {match.home ? 'v ' : 'at '}
+    <View style={styles.plStat}>
+      <Text style={styles.plStatValue} allowFontScaling={false}>
+        {value}
+      </Text>
+      <Text style={styles.plStatLabel}>{label}</Text>
+    </View>
+  );
+}
+
+/** One of the thirty eight, tappable, colour coded by what happened. */
+function ResultTile({ match, onPress }: { match: MatchResult; onPress: () => void }) {
+  const tint = OUTCOME[match.oc];
+  return (
+    <Press
+      onPress={onPress}
+      feel="none"
+      scaleTo={0.94}
+      style={[styles.rt, { borderColor: tint + '4D' }]}
+    >
+      <View style={[styles.rtBar, { backgroundColor: tint }]} />
+      <Text style={styles.rtKey} allowFontScaling={false}>
+        {match.n} {match.home ? 'H' : 'A'}
+      </Text>
+      <Text style={[styles.rtScore, { color: tint }]} allowFontScaling={false}>
+        {match.gf}
+        {'–'}
+        {match.ga}
+      </Text>
+      <Text style={styles.rtOpp} numberOfLines={1}>
         {match.opp}
       </Text>
-      <View style={[styles.detailScore, { borderColor: oc.tint, backgroundColor: oc.tint + '1f' }]}>
-        <Text style={[styles.detailScoreText, { color: oc.tint }]} allowFontScaling={false}>
-          {match.gf}-{match.ga}
-        </Text>
-      </View>
-      {match.scorers.length ? (
-        <View style={styles.detailScorers}>
-          {match.scorers.map((s, i) => (
-            <View key={i} style={styles.detailScorer}>
-              <Text style={styles.detailMin}>{s.min}&apos;</Text>
-              <Text style={styles.detailName} numberOfLines={1}>
-                {lastName(s.name)}
-              </Text>
-            </View>
-          ))}
-        </View>
-      ) : (
-        <Text style={styles.detailNone}>No goals.</Text>
-      )}
-      <Text style={styles.detailXg}>
-        Expected {match.xgF} for, {match.xgA} against
+    </Press>
+  );
+}
+
+function Row({ row, pos, tint }: { row: TableRow; pos: number; tint: string }) {
+  const zone =
+    pos === 1
+      ? color.gold
+      : pos <= 4
+        ? color.blue
+        : pos <= 7
+          ? color.accent
+          : pos >= 18
+            ? color.danger
+            : 'transparent';
+  return (
+    <View style={[styles.tr, row.isYou ? { backgroundColor: tint + '14' } : null]}>
+      <View style={[styles.zone, { backgroundColor: zone }]} />
+      <Text style={[styles.td, styles.colPos, { color: zone === 'transparent' ? color.text3 : zone }]} allowFontScaling={false}>
+        {pos}
       </Text>
-      <View style={[styles.detailRule, { backgroundColor: tone }]} />
+      <Text
+        style={[styles.td, styles.colClub, row.isYou ? { color: tint, fontFamily: font.bodyBold } : null]}
+        numberOfLines={1}
+      >
+        {row.isYou ? '★ ' : ''}
+        {row.name}
+      </Text>
+      <Text style={[styles.td, styles.colNum]} allowFontScaling={false}>
+        {row.w}
+      </Text>
+      <Text style={[styles.td, styles.colNum]} allowFontScaling={false}>
+        {row.d}
+      </Text>
+      <Text style={[styles.td, styles.colNum]} allowFontScaling={false}>
+        {row.l}
+      </Text>
+      <Text
+        style={[
+          styles.td,
+          styles.colGd,
+          { color: row.gf - row.ga >= 0 ? color.win : color.loss },
+        ]}
+        allowFontScaling={false}
+      >
+        {row.gf - row.ga >= 0 ? '+' : ''}
+        {row.gf - row.ga}
+      </Text>
+      <Text
+        style={[styles.tdPts, styles.colPts, row.isYou ? { color: tint } : null]}
+        allowFontScaling={false}
+      >
+        {row.pts}
+      </Text>
     </View>
   );
 }
 
-const PANEL = {
-  borderRadius: radius.lg,
-  borderWidth: 1,
-  borderColor: line.card,
-  backgroundColor: '#101A14',
-  experimental_backgroundImage: gradient.card,
-} as const;
+function Key({ tint, label }: { tint: string; label: string }) {
+  return (
+    <View style={styles.key}>
+      <View style={[styles.keyDot, { backgroundColor: tint }]} />
+      <Text style={styles.keyText}>{label}</Text>
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
+  fill: { width: '100%', height: '100%' },
+  grain: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.05 },
+
   grade: {
-    width: 38,
-    height: 38,
-    borderRadius: radius.sm,
-    borderWidth: 2,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  gradeText: { fontFamily: font.displayBlack, fontSize: 21, lineHeight: 26 },
+  gradeText: {
+    fontFamily: font.displayBlack,
+    fontSize: 20,
+    lineHeight: 25,
+    letterSpacing: 0.5,
+  },
 
+  sect: { marginTop: space.s6, marginBottom: space.s3 },
+  sectKey: { ...text.key, fontSize: 10, color: color.text3, marginBottom: space.s2 },
+  sectHint: { ...text.small, marginTop: -space.s2, marginBottom: space.s3 },
+
+  /* ---- the finish ---- */
   finish: {
     alignItems: 'center',
-    paddingVertical: space.s5,
-    paddingHorizontal: space.s5,
-    borderRadius: 26,
+    paddingTop: space.s5,
+    paddingHorizontal: space.s4,
+    paddingBottom: space.s5,
+    borderRadius: radius.xl,
     borderWidth: 1,
-    backgroundColor: '#0D1611',
-    experimental_backgroundImage:
-      'linear-gradient(180deg, #17231C 0%, #0C120E 60%, #080C09 100%)',
-    boxShadow:
-      '0px 20px 44px rgba(0,0,0,0.55), inset 0px 1px 0px rgba(255,255,255,0.08)',
+    backgroundColor: '#0A0F0C',
+    boxShadow: '0px 16px 38px rgba(0,0,0,0.55)',
     overflow: 'hidden',
   },
-  finishBloom: { position: 'absolute', top: -30, left: -30, right: -30, bottom: -30 },
-  grain: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.04 },
-  grainImage: { width: '100%', height: '100%' },
+  finishBloom: { position: 'absolute', top: -40, left: -40, right: -40, height: 220 },
   finishEdge: {
     position: 'absolute',
     top: 0,
-    left: '20%',
-    right: '20%',
+    left: '22%',
+    right: '22%',
     height: 1,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.22)',
   },
-  finishMark: { fontSize: 44, lineHeight: 52 },
-  finishBadge: {
-    marginTop: space.s2,
-    paddingHorizontal: space.s4,
-    paddingVertical: 5,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-  },
-  finishBadgeText: { ...text.key, fontSize: 10 },
-  finishPos: { flexDirection: 'row', alignItems: 'flex-start', marginTop: space.s3 },
-  finishNum: {
+  finishMark: { fontSize: 34, lineHeight: 42 },
+  finishNum: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 2 },
+  finishPos: {
     fontFamily: font.hero,
-    fontSize: 72,
-    lineHeight: 94,
-    color: color.text1,
+    fontSize: 86,
+    lineHeight: 112,
     fontVariant: ['tabular-nums'],
   },
   finishOrd: {
     fontFamily: font.displayBlack,
     fontSize: 26,
-    lineHeight: 32,
-    marginTop: space.s4,
+    lineHeight: 44,
+    letterSpacing: 0.5,
+    marginLeft: 3,
   },
-  finishRecord: {
-    fontFamily: font.bodyMed,
-    fontSize: 12.5,
-    color: color.text2,
-    marginTop: -space.s2,
+  finishRest: { alignItems: 'center', marginTop: -space.s2 },
+  finishTitle: {
+    fontFamily: font.displayBlack,
+    fontSize: 28,
+    lineHeight: 34,
+    letterSpacing: 0.3,
+    color: color.text1,
     textAlign: 'center',
-    fontVariant: ['tabular-nums'],
+  },
+  finishSub: {
+    ...text.body,
+    color: color.text2,
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  pv: {
+    marginTop: space.s4,
+    paddingHorizontal: space.s4,
+    paddingVertical: 8,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+  },
+  pvText: { ...text.key, fontSize: 11 },
+  pvSub: {
+    ...text.small,
+    fontSize: 12,
+    color: color.text3,
+    marginTop: space.s2,
+    textAlign: 'center',
   },
 
+  /* ---- six tiles ---- */
+  tiles: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.s2,
+    marginTop: space.s4,
+  },
+  tile: {
+    width: '31.7%',
+    flexGrow: 1,
+    alignItems: 'center',
+    paddingVertical: space.s3,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
+  },
+  tileValue: {
+    fontFamily: font.hero,
+    fontSize: 32,
+    lineHeight: 42,
+    color: color.text1,
+    fontVariant: ['tabular-nums'],
+  },
+  tileLabel: { ...text.key, fontSize: 8.5, color: color.text3, marginTop: 2 },
+
+  /* ---- the papers ---- */
   paper: {
-    ...PANEL,
-    marginTop: space.s3,
-    padding: space.s4,
-    borderLeftWidth: 3,
+    marginTop: space.s6,
+    padding: space.s5,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    backgroundColor: '#0E1712',
+    experimental_backgroundImage: 'linear-gradient(180deg, #16211B 0%, #0C120E 100%)',
+    boxShadow: '0px 10px 26px rgba(0,0,0,0.4)',
+    overflow: 'hidden',
+  },
+  paperKey: { ...text.key, fontSize: 10 },
+  rule: { height: 1, marginTop: space.s3, marginBottom: space.s3 },
+  paperHead: {
+    fontFamily: font.displayBlack,
+    fontSize: 27,
+    lineHeight: 33,
+    letterSpacing: 0.2,
+    color: color.text1,
   },
   paperQuote: {
     fontFamily: font.body,
-    fontSize: 15,
-    lineHeight: 22,
-    color: color.text1,
     fontStyle: 'italic',
-  },
-  paperSource: { ...text.key, fontSize: 9.5, color: color.text3, marginTop: space.s2 },
-
-  sectionTitle: {
-    ...text.label,
-    fontSize: 12.5,
-    color: color.text2,
-    marginTop: space.s6,
-    marginBottom: space.s2,
-  },
-  panel: { ...PANEL, padding: space.s4, gap: space.s3 },
-  note: { ...text.small, color: color.text3 },
-
-  expect: { gap: 2 },
-  expectLabel: { ...text.key, fontSize: 9.5, color: color.text3 },
-  expectPair: { flexDirection: 'row', alignItems: 'baseline', gap: space.s2 },
-  expectExpected: {
-    fontFamily: font.displayBold,
-    fontSize: 20,
+    fontSize: 15,
     lineHeight: 24,
+    color: color.text2,
+    marginTop: space.s3,
+  },
+  paperSource: {
+    ...text.key,
+    fontSize: 9.5,
+    color: color.text3,
+    marginTop: space.s3,
+    textAlign: 'right',
+  },
+
+  /* ---- against the odds ---- */
+  odds: {
+    marginTop: space.s5,
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
+  },
+  oddsLead: { ...text.small, marginBottom: space.s4 },
+  oddsGrid: { flexDirection: 'row', alignItems: 'stretch' },
+  oddsDivide: { width: 1, backgroundColor: line.card, marginHorizontal: space.s3 },
+  oddsCol: { flex: 1, alignItems: 'center' },
+  oddsKey: { ...text.key, fontSize: 9, color: color.text3, marginBottom: space.s2 },
+  oddsPair: { flexDirection: 'row', alignItems: 'center', gap: space.s2 },
+  oddsHalf: { alignItems: 'center', minWidth: 46 },
+  oddsPromised: {
+    fontFamily: font.displayBold,
+    fontSize: 22,
+    lineHeight: 27,
     color: color.text3,
     fontVariant: ['tabular-nums'],
   },
-  expectArrow: { fontFamily: font.body, fontSize: 14, color: color.text3 },
-  expectActual: {
+  oddsActual: {
     fontFamily: font.displayBlack,
     fontSize: 26,
     lineHeight: 32,
     fontVariant: ['tabular-nums'],
   },
-  expectDelta: { fontFamily: font.bodyMed, fontSize: 12.5 },
+  oddsCap: { ...text.key, fontSize: 8, color: color.text3, marginTop: 1 },
+  oddsArrow: { fontSize: 15, lineHeight: 20, color: color.text3 },
+  oddsDelta: { ...text.key, fontSize: 9.5, marginTop: space.s3, textAlign: 'center' },
 
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s2 },
-  cell: {
-    ...PANEL,
-    flexBasis: '47.5%',
+  /* ---- highlights ---- */
+  hlGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s2 },
+  hl: {
+    width: '48.6%',
     flexGrow: 1,
-    alignItems: 'center',
     paddingVertical: space.s3,
+    paddingHorizontal: space.s4,
     borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
   },
-  cellValue: {
+  hlValue: {
     fontFamily: font.displayBlack,
-    fontSize: 21,
-    lineHeight: 26,
+    fontSize: 26,
+    lineHeight: 32,
+    letterSpacing: 0.2,
     color: color.text1,
     fontVariant: ['tabular-nums'],
   },
-  cellLabel: { ...text.key, fontSize: 8.5, color: color.text3, marginTop: 2 },
+  hlLabel: { ...text.key, fontSize: 8.5, color: color.text3, marginTop: 3 },
 
-  awards: { gap: space.s2 },
-  award: {
-    ...PANEL,
+  /* ---- awards ---- */
+  awards: {
+    marginTop: space.s6,
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: line.gold,
+    backgroundColor: '#141207',
+    experimental_backgroundImage:
+      'linear-gradient(180deg, #221D0D 0%, #14120A 60%, #0D0C07 100%)',
+    boxShadow: '0px 10px 26px rgba(0,0,0,0.42)',
+    overflow: 'hidden',
+    gap: space.s2,
+  },
+  awardsKey: { ...text.key, fontSize: 10, color: color.gold, marginBottom: space.s1 },
+  aw: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.s3,
     padding: space.s3,
     borderRadius: radius.md,
-    borderLeftWidth: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(214,178,94,0.20)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
   },
-  awardBody: { flex: 1, minWidth: 0 },
-  awardLabel: { ...text.key, fontSize: 9 },
-  awardName: {
-    fontFamily: font.bodyBold,
-    fontSize: 15.5,
-    lineHeight: 20,
+  awTop: {
+    borderColor: 'rgba(214,178,94,0.48)',
+    backgroundColor: 'rgba(214,178,94,0.09)',
+  },
+  awMark: { fontSize: 22, lineHeight: 28, width: 28, textAlign: 'center' },
+  awBody: { flex: 1, minWidth: 0 },
+  awLabel: { ...text.key, fontSize: 8.5, color: color.text3 },
+  awName: {
+    fontFamily: font.displayBold,
+    fontSize: 19,
+    lineHeight: 24,
     color: color.text1,
+    marginTop: 1,
   },
-  awardValue: { fontFamily: font.bodyMed, fontSize: 12.5, color: color.text2 },
+  awStat: { ...text.small, fontSize: 12, color: color.gold },
 
-  matchGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  pip: {
-    width: 34,
-    height: 34,
-    borderRadius: radius.xs,
+  /* ---- player statistics ---- */
+  players: { gap: space.s2 },
+  pl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s2,
+    paddingVertical: space.s2,
+    paddingHorizontal: space.s3,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
+  },
+  plPos: {
+    width: 38,
+    height: 26,
+    borderRadius: 7,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pipText: { fontFamily: font.displayBlack, fontSize: 13, lineHeight: 16 },
-
-  table: { ...PANEL, overflow: 'hidden' },
-  tableHead: {
-    flexDirection: 'row',
+  plPosText: { ...text.key, fontSize: 9 },
+  plRtg: {
+    width: 32,
+    height: 26,
+    borderRadius: 7,
     alignItems: 'center',
-    gap: space.s2,
-    paddingVertical: space.s2,
-    paddingHorizontal: space.s3,
-    borderBottomWidth: 1,
-    borderBottomColor: line.card,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(31,197,126,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(31,197,126,0.32)',
   },
-  tHeadText: { ...text.key, fontSize: 8.5, color: color.text3 },
-  tableRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.s2,
-    paddingVertical: space.s2 + 1,
-    paddingHorizontal: space.s3,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.04)',
-  },
-  zone: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 3 },
-  tPos: {
-    fontFamily: font.displaySemi,
-    fontSize: 12,
-    color: color.text3,
-    minWidth: 18,
+  plRtgText: {
+    fontFamily: font.displayBold,
+    fontSize: 14,
+    lineHeight: 18,
+    color: color.accentHi,
     fontVariant: ['tabular-nums'],
   },
-  tName: { flex: 1, fontFamily: font.bodyMed, fontSize: 13.5, color: color.text1 },
-  tNum: {
+  plName: { flex: 1, minWidth: 0 },
+  plNameText: {
+    fontFamily: font.bodySemi,
+    fontSize: 14,
+    lineHeight: 19,
+    color: color.text1,
+  },
+  plClub: { fontFamily: font.body, fontSize: 10.5, lineHeight: 14, color: color.text3 },
+  plStat: { alignItems: 'center', minWidth: 34 },
+  plStatValue: {
+    fontFamily: font.displayBold,
+    fontSize: 17,
+    lineHeight: 21,
+    color: color.text1,
+    fontVariant: ['tabular-nums'],
+  },
+  plStatLabel: { ...text.key, fontSize: 7.5, color: color.text3 },
+
+  /* ---- every result ---- */
+  results: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s2 },
+  rt: {
+    width: '22.7%',
+    flexGrow: 1,
+    alignItems: 'center',
+    paddingTop: space.s2,
+    paddingBottom: 7,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
+    overflow: 'hidden',
+  },
+  rtBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 2 },
+  rtKey: {
+    ...text.key,
+    fontSize: 7.5,
+    color: color.text3,
+    fontVariant: ['tabular-nums'],
+  },
+  rtScore: {
+    fontFamily: font.displayBlack,
+    fontSize: 19,
+    lineHeight: 24,
+    letterSpacing: 0.3,
+    fontVariant: ['tabular-nums'],
+  },
+  rtOpp: {
+    fontFamily: font.body,
+    fontSize: 9,
+    lineHeight: 12,
+    color: color.text3,
+    maxWidth: '92%',
+  },
+
+  /* ---- the table ---- */
+  table: {
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#0D1610',
+    overflow: 'hidden',
+  },
+  thead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: space.s2,
+    paddingRight: space.s3,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+  },
+  th: { ...text.key, fontSize: 8.5, color: color.text3 },
+  tr: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 9,
+    paddingRight: space.s3,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.05)',
+  },
+  zone: { width: 3, alignSelf: 'stretch', marginRight: space.s2 },
+  td: {
     fontFamily: font.body,
     fontSize: 12.5,
-    color: color.text3,
-    minWidth: 18,
-    textAlign: 'right',
+    lineHeight: 17,
+    color: color.text2,
     fontVariant: ['tabular-nums'],
   },
-  tGd: { minWidth: 30 },
-  tPts: {
+  tdPts: {
     fontFamily: font.displayBold,
     fontSize: 15,
-    lineHeight: 18,
+    lineHeight: 19,
     color: color.text1,
-    minWidth: 26,
-    textAlign: 'right',
     fontVariant: ['tabular-nums'],
   },
-  tYou: { color: color.text1, fontFamily: font.bodyBold },
+  colPos: { width: 22, textAlign: 'center' },
+  colClub: { flex: 1, paddingLeft: space.s2 },
+  colNum: { width: 24, textAlign: 'center' },
+  colGd: { width: 38, textAlign: 'right' },
+  colPts: { width: 34, textAlign: 'right' },
 
-  cta: { marginTop: space.s6, marginBottom: space.s5 },
+  legend: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.s3,
+    padding: space.s3,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.05)',
+  },
+  key: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  keyDot: { width: 8, height: 8, borderRadius: 2 },
+  keyText: { ...text.key, fontSize: 8, color: color.text3 },
 
-  sheet: {
-    backgroundColor: '#0B120E',
-    experimental_backgroundImage:
-      'linear-gradient(180deg, #16231B 0%, #0B120E 52%, #070B08 100%)',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.10)',
-    paddingHorizontal: space.s5,
-    paddingTop: space.s3,
-    paddingBottom: space.s8,
-  },
-  sheetGrab: {
-    alignSelf: 'center',
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    marginBottom: space.s4,
-  },
-
-  detail: { alignItems: 'center', gap: space.s2 },
-  detailOverline: { ...text.key, fontSize: 9.5, color: color.text3 },
-  detailOpp: {
-    fontFamily: font.displayBlack,
-    fontSize: 26,
-    lineHeight: 32,
-    color: color.text1,
-  },
-  detailScore: {
-    paddingHorizontal: space.s5,
-    paddingVertical: space.s2,
+  /* ---- actions ---- */
+  cta: { marginTop: space.s6, gap: space.s3, paddingBottom: space.s5 },
+  again: {
+    minHeight: 58,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: radius.md,
-    borderWidth: 1.5,
-    marginTop: space.s1,
+    borderWidth: 1,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    experimental_backgroundImage: gradient.cardLift,
   },
-  detailScoreText: {
-    fontFamily: font.hero,
-    fontSize: 40,
-    lineHeight: 52,
-    fontVariant: ['tabular-nums'],
+  againText: { ...text.button },
+  home: {
+    minHeight: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: line.card,
   },
-  detailScorers: { alignSelf: 'stretch', gap: space.s1, marginTop: space.s2 },
-  detailScorer: { flexDirection: 'row', alignItems: 'baseline', gap: space.s3 },
-  detailMin: {
+  homeText: {
     fontFamily: font.displayBold,
-    fontSize: 13,
-    lineHeight: 16,
-    color: color.accent,
-    minWidth: 34,
-    fontVariant: ['tabular-nums'],
-  },
-  detailName: { flex: 1, fontFamily: font.bodySemi, fontSize: 15, color: color.text1 },
-  detailNone: { ...text.small, color: color.text3, marginTop: space.s2 },
-  detailXg: { ...text.small, color: color.text3, marginTop: space.s2 },
-  detailRule: {
-    alignSelf: 'stretch',
-    height: 2,
-    borderRadius: 1,
-    marginTop: space.s3,
-    opacity: 0.5,
+    fontSize: 15,
+    lineHeight: 19,
+    letterSpacing: 0.4,
+    color: color.text2,
   },
 });
