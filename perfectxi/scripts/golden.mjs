@@ -29,6 +29,7 @@ const {
   slotsForPlayer,
   canPlay,
   squadAvg,
+  squadChem,
   chemBonus,
   simulateSeason,
   dcExpected,
@@ -68,6 +69,8 @@ let championPts = 0;
 let yourPts = 0;
 let avgRating = 0;
 let unbeaten = 0;
+let chemTotal = 0;
+let bonusTotal = 0;
 
 for (let seed = 1; seed <= RUNS; seed++) {
   const rnd = mulberry32(seed);
@@ -88,6 +91,8 @@ for (let seed = 1; seed <= RUNS; seed++) {
   championPts += season.table[0].pts;
   yourPts += season.pts;
   avgRating += squadAvg(state.squad);
+  chemTotal += squadChem(state.squad);
+  bonusTotal += chemBonus(state.squad);
   if (season.losses === 0) unbeaten++;
 }
 
@@ -117,6 +122,12 @@ console.log('\nDRAFT');
 check('average squad rating', avgRating / RUNS, 78, 88, (v) => v.toFixed(1));
 check('points for a random XI', yourPts / RUNS, 40, 80, (v) => v.toFixed(1));
 check('unbeaten seasons', (unbeaten / RUNS) * 100, 0, 5, (v) => v.toFixed(1) + '%');
+
+// Chemistry counts club, season and nationality. A randomly drafted side
+// should have some by accident but nowhere near a side built for it, or the
+// mechanic is not asking anything of the player.
+check('chemistry, random XI', chemTotal / RUNS, 15, 45, (v) => v.toFixed(1) + '%');
+check('chemistry bonus, random XI', bonusTotal / RUNS, 0.4, 1.4);
 
 // A run is verified on the server by replaying it. If the same seed and the
 // same picks can produce two different seasons then no run can ever be

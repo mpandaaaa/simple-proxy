@@ -39,6 +39,7 @@ export {
   squadChem,
   chemBonus,
   chemistryLinks,
+  CHEM_WEIGHT,
 } from './draft';
 export type { DraftState, SpinResult, ChemLink } from './draft';
 export {

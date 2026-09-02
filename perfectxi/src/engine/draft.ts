@@ -227,9 +227,30 @@ export function squadAvg(squad: Slot[], only?: Position): number {
 }
 
 /**
- * Squad chemistry: how many of your eleven share a club or a season with
- * each other, capped at three links each. A side drafted from one era
- * hangs together; eleven strangers do not.
+ * What one teammate is worth to another.
+ *
+ * A shared club is the real thing: they actually played together. A shared
+ * season is an era, which is nearly as good. A shared nationality is the
+ * weakest of the three and deliberately so, because England turns up in
+ * roughly every squad in the database and a link everyone has for free is
+ * not a link worth drafting for.
+ *
+ * A pair is worth its strongest connection, not the sum of them. Two
+ * Liverpool players who are both English are still one pairing.
+ */
+export const CHEM_WEIGHT = { club: 1, season: 0.75, nation: 0.5 } as const;
+
+function pairChem(a: Pick, b: Pick): number {
+  if (a.club && a.club === b.club) return CHEM_WEIGHT.club;
+  if (a.season && a.season === b.season) return CHEM_WEIGHT.season;
+  if (a.nat && a.nat === b.nat) return CHEM_WEIGHT.nation;
+  return 0;
+}
+
+/**
+ * Squad chemistry: how much of your eleven knows each other, capped at
+ * three links a player. A side drafted from one club, one era or one
+ * country hangs together; eleven strangers do not.
  */
 export function squadChem(squad: Slot[]): number {
   const pl = squad.filter((s) => s.player).map((s) => s.player!);
@@ -237,11 +258,9 @@ export function squadChem(squad: Slot[]): number {
   let total = 0;
   for (let i = 0; i < pl.length; i++) {
     let links = 0;
-    for (let j = 0; j < pl.length; j++) {
+    for (let j = 0; j < pl.length && links < 3; j++) {
       if (i === j) continue;
-      if (pl[i].club && pl[i].club === pl[j].club) links++;
-      else if (pl[i].season && pl[i].season === pl[j].season) links++;
-      if (links >= 3) break;
+      links += pairChem(pl[i], pl[j]);
     }
     total += Math.min(3, links);
   }
@@ -262,20 +281,23 @@ export type ChemLink = { name: string; count: number };
 export function chemistryLinks(squad: Slot[]): {
   clubs: ChemLink[];
   seasons: ChemLink[];
+  nations: ChemLink[];
 } {
   const clubs = new Map<string, number>();
   const seasons = new Map<string, number>();
+  const nations = new Map<string, number>();
   for (const s of squad) {
     if (!s.player) continue;
     clubs.set(s.player.club, (clubs.get(s.player.club) ?? 0) + 1);
     seasons.set(s.player.season, (seasons.get(s.player.season) ?? 0) + 1);
+    if (s.player.nat) nations.set(s.player.nat, (nations.get(s.player.nat) ?? 0) + 1);
   }
   const top = (m: Map<string, number>): ChemLink[] =>
     [...m.entries()]
       .filter(([, n]) => n >= 2)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count);
-  return { clubs: top(clubs), seasons: top(seasons) };
+  return { clubs: top(clubs), seasons: top(seasons), nations: top(nations) };
 }
 
 /** Chemistry is worth at most three rating points on top of the average. */

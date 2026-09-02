@@ -67,9 +67,9 @@ const ERAS = [
  *
  * The XI is shown as the shape you actually built, not only as a list. The
  * overall gets a verdict, so 89 means "title favourites" rather than being
- * a number you have to interpret. Chemistry is broken into the clubs and
- * seasons it came from, which turns it from a score you are handed into
- * something you can draft towards. The eras are counted, because a side
+ * a number you have to interpret. Chemistry is broken into the clubs,
+ * seasons and countries it came from, which turns it from a score you are
+ * handed into something you can draft towards. The eras are counted, because a side
  * pulled from four decades is a different achievement to one from four
  * seasons. And the strength is put against the nineteen clubs you will
  * actually face, which is the way a football fan asks the question.
@@ -161,33 +161,48 @@ export default function SquadComplete() {
             <Text style={styles.chemWorth}>
               {bonus > 0
                 ? `worth +${bonus.toFixed(2)} to your rating`
-                : 'no shared clubs or seasons'}
+                : 'no shared clubs, seasons or countries'}
             </Text>
           </View>
 
-          {links.clubs.length || links.seasons.length ? (
-            <View style={styles.chemLinks}>
-              {links.clubs.slice(0, 3).map((l) => (
-                <View key={`c${l.name}`} style={styles.chemChip}>
-                  <Text style={styles.chemChipN}>{l.count}</Text>
-                  <Text style={styles.chemChipL} numberOfLines={1}>
-                    {l.name}
-                  </Text>
-                </View>
-              ))}
-              {links.seasons.slice(0, 2).map((l) => (
-                <View key={`s${l.name}`} style={[styles.chemChip, styles.chemChipSeason]}>
-                  <Text style={styles.chemChipN}>{l.count}</Text>
-                  <Text style={styles.chemChipL} numberOfLines={1}>
-                    {l.name}
-                  </Text>
-                </View>
-              ))}
-            </View>
+          {links.clubs.length || links.seasons.length || links.nations.length ? (
+            <>
+              {/* Ordered by what each link is actually worth, so the chips
+                  read in the same order the maths values them. */}
+              <View style={styles.chemLinks}>
+                {links.clubs.slice(0, 3).map((l) => (
+                  <View key={`c${l.name}`} style={styles.chemChip}>
+                    <Text style={styles.chemChipN}>{l.count}</Text>
+                    <Text style={styles.chemChipL} numberOfLines={1}>
+                      {l.name}
+                    </Text>
+                  </View>
+                ))}
+                {links.seasons.slice(0, 2).map((l) => (
+                  <View key={`s${l.name}`} style={[styles.chemChip, styles.chemChipSeason]}>
+                    <Text style={styles.chemChipN}>{l.count}</Text>
+                    <Text style={styles.chemChipL} numberOfLines={1}>
+                      {l.name}
+                    </Text>
+                  </View>
+                ))}
+                {links.nations.slice(0, 3).map((l) => (
+                  <View key={`n${l.name}`} style={[styles.chemChip, styles.chemChipNation]}>
+                    <Text style={styles.chemChipN}>{l.count}</Text>
+                    <Text style={styles.chemChipL} numberOfLines={1}>
+                      {l.name}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+              <Text style={styles.chemKey}>
+                Club counts most, then season, then nationality.
+              </Text>
+            </>
           ) : (
             <Text style={styles.chemNone}>
-              Eleven strangers. Draft from one club or one season and they will
-              play like they know each other.
+              Eleven strangers. Draft from one club, one season or one country
+              and they will play like they know each other.
             </Text>
           )}
         </View>
@@ -656,6 +671,11 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(185,140,242,0.4)',
     backgroundColor: 'rgba(185,140,242,0.12)',
   },
+  chemChipNation: {
+    borderColor: 'rgba(76,160,255,0.4)',
+    backgroundColor: 'rgba(76,160,255,0.12)',
+  },
+  chemKey: { ...text.small, fontSize: 11.5, color: color.text3 },
   chemChipN: {
     fontFamily: font.displayBlack,
     fontSize: 13,

@@ -12,4 +12,4 @@
  * league, or the order in which random numbers are drawn. Do not change it
  * for anything that only affects what is drawn on screen.
  */
-export const ENGINE_VERSION = 1;
+export const ENGINE_VERSION = 2;
