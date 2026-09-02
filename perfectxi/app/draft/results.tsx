@@ -698,9 +698,12 @@ export default function Results() {
         onConfirm={() => {
           setCarrying(false);
           setCareer(startDynasty(squad, config.formation, 'Your XI', run.seed));
+          // The run is deliberately left alone. Clearing it is what every
+          // draft screen underneath reacts to, and this path does not need
+          // it cleared: starting another draft overwrites it anyway. The
+          // eleven have already been copied into the career by now.
           router.dismissAll();
           router.push('/dynasty');
-          clearRun();
         }}
       />
 
