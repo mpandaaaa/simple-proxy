@@ -29,6 +29,8 @@ export function PlayerSheet({
   onSell,
   onBench,
   benchLabel,
+  onSwap,
+  swapLabel,
   youth,
   onScout,
   onRelease,
@@ -41,6 +43,8 @@ export function PlayerSheet({
   onSell?: () => void;
   onBench?: () => void;
   benchLabel?: string;
+  onSwap?: () => void;
+  swapLabel?: string;
   youth?: boolean;
   onScout?: () => void;
   onRelease?: () => void;
@@ -237,6 +241,19 @@ export function PlayerSheet({
             <Text style={styles.actionText}>
               Scout him{scoutCost ? ` · £${scoutCost}m` : ''}
             </Text>
+          </Press>
+        ) : null}
+        {onSwap ? (
+          <Press
+            onPress={() => {
+              haptic('medium');
+              onSwap();
+            }}
+            feel="none"
+            style={styles.action}
+            scaleTo={0.98}
+          >
+            <Text style={styles.actionText}>{swapLabel ?? 'Swap him with somebody'}</Text>
           </Press>
         ) : null}
         {onBench ? (

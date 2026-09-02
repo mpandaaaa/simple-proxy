@@ -286,6 +286,38 @@ export default function Summer() {
           <Tile value={result.pts} label="Points" tint={tone.tint} />
         </View>
 
+        {/* ================= who is following now ================= */}
+        <View style={styles.fans}>
+          <View style={styles.fansRow}>
+            <View style={styles.fansCol}>
+              <Text style={styles.fansValue} allowFontScaling={false}>
+                {(report.fansBefore + report.fansSwing).toFixed(1)}m
+              </Text>
+              <Text style={styles.fansKey}>supporters</Text>
+            </View>
+            <View style={styles.fansCol}>
+              <Text
+                style={[
+                  styles.fansSwing,
+                  { color: report.fansSwing >= 0 ? hue.emerald : hue.crimson },
+                ]}
+                allowFontScaling={false}
+              >
+                {report.fansSwing >= 0 ? '+' : ''}
+                {report.fansSwing.toFixed(2)}m
+              </Text>
+              <Text style={styles.fansKey}>this season</Text>
+            </View>
+          </View>
+          <Text style={styles.fansNote}>
+            {report.fansSwing > 0.3
+              ? 'A season people will talk about. The shop will feel it.'
+              : report.fansSwing > 0
+                ? 'A few more through the turnstiles than last year.'
+                : 'People drifted away. Winning is what brings them back.'}
+          </Text>
+        </View>
+
         {/* ================= the papers ================= */}
         <Rise delay={0}>
           <View style={[styles.paper, { borderColor: tone.edge }]}>
@@ -981,6 +1013,35 @@ const styles = StyleSheet.create({
   },
   pvText: { ...text.key, fontSize: 11 },
   pvSub: { ...text.small, fontSize: 12, marginTop: space.s2, textAlign: 'center' },
+
+  fans: {
+    marginTop: space.s4,
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: alpha(hue.rose, 0.24),
+    backgroundColor: '#170F13',
+    experimental_backgroundImage:
+      'linear-gradient(180deg, #261520 0%, #150E12 70%, #0B0709 100%)',
+    gap: space.s2,
+  },
+  fansRow: { flexDirection: 'row' },
+  fansCol: { flex: 1, alignItems: 'center', gap: 1 },
+  fansValue: {
+    fontFamily: font.displayBlack,
+    fontSize: 28,
+    lineHeight: 35,
+    color: hue.rose,
+    fontVariant: ['tabular-nums'],
+  },
+  fansSwing: {
+    fontFamily: font.displayBlack,
+    fontSize: 28,
+    lineHeight: 35,
+    fontVariant: ['tabular-nums'],
+  },
+  fansKey: { ...text.key, fontSize: 8, color: color.text3 },
+  fansNote: { ...text.small, fontSize: 12, lineHeight: 16, textAlign: 'center' },
 
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s2, marginTop: space.s4 },
   tile: {

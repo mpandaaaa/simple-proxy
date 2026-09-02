@@ -11,8 +11,10 @@ import {
   Confirm,
   Ticker,
   PlayerSheet,
+  SwapSheet,
+  type SwapOption,
 } from '../../src/ui/components';
-import { color, gradient, line, positionColor, radius, space, hue, alpha, type Hue } from '../../src/ui/tokens';
+import { color, gradient, line, positionColor, radius, space, hue, alpha, wear, vivid, type Hue } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { GRAIN_URI } from '../../src/ui/grain';
 import { haptic } from '../../src/ui/feel';
@@ -28,6 +30,7 @@ import {
   squadRating,
   squadValue,
   slotAccepts,
+  clubColour,
   starters,
   type Dynasty,
   type DynastyPlayer,
@@ -139,6 +142,10 @@ export default function DynastyHub() {
   const [ending, setEnding] = useState(false);
   const [reallyEnding, setReallyEnding] = useState(false);
   const [open, setOpen] = useState<{ p: DynastyPlayer; slot: number } | null>(null);
+  /* Which player is being moved, and who he might change places with. A
+     substitution is two decisions and this screen used to make one of
+     them for you. */
+  const [swapping, setSwapping] = useState<number | null>(null);
 
   const played = useMemo(
     () => (career ? career.seasons.some((s) => s.s === career.year) : false),
@@ -168,6 +175,40 @@ export default function DynastyHub() {
       roster[target] = p;
       return { ...d, roster };
     });
+    setOpen(null);
+  }, []);
+
+  // The club's own colours.
+  const kit = wear(clubColour(career?.club ?? ''));
+
+  const swapOptions: SwapOption[] = useMemo(() => {
+    if (!career || swapping === null) return [];
+    const me = career.roster[swapping];
+    if (!me) return [];
+    const out: SwapOption[] = [];
+    career.roster.forEach((q, i) => {
+      if (!q || i === swapping) return;
+      // both have to be able to stand where the other one is standing
+      if (!slotAccepts(career, i, me.pos)) return;
+      if (!slotAccepts(career, swapping, q.pos)) return;
+      out.push({ index: i, player: q, slot: career.slots[i] ?? q.pos });
+    });
+    return out;
+  }, [career, swapping]);
+
+  const doSwap = useCallback((a: number, b: number) => {
+    updateCareer((d) => {
+      const roster = [...d.roster];
+      const x = roster[a];
+      const y = roster[b];
+      if (!x || !y) return d;
+      if (!slotAccepts(d, b, x.pos) || !slotAccepts(d, a, y.pos)) return d;
+      roster[a] = y;
+      roster[b] = x;
+      return { ...d, roster };
+    });
+    haptic('success');
+    setSwapping(null);
     setOpen(null);
   }, []);
 
@@ -218,14 +259,19 @@ export default function DynastyHub() {
         onBack={() => router.back()}
       >
         {/* ---- the club ---- */}
-        <View style={styles.hero}>
+        <View
+          style={[
+            styles.hero,
+            { borderColor: kit.lineSoft, experimental_backgroundImage: kit.grad },
+          ]}
+        >
           <Shine radius={radius.xl} group="feature" bevel={false} clip={false} />
           <View style={styles.bloom} pointerEvents="none">
             <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
               <Defs>
                 <RadialGradient id="dyBloom" cx="50%" cy="50%" r="50%">
-                  <Stop offset="0" stopColor={color.accent} stopOpacity={0.26} />
-                  <Stop offset="1" stopColor={color.accent} stopOpacity={0} />
+                  <Stop offset="0" stopColor={vivid(kit.key)} stopOpacity={0.3} />
+                  <Stop offset="1" stopColor={vivid(kit.key)} stopOpacity={0} />
                 </RadialGradient>
               </Defs>
               <Ellipse cx="50" cy="4" rx="66" ry="44" fill="url(#dyBloom)" />
@@ -235,17 +281,61 @@ export default function DynastyHub() {
             <Image source={{ uri: GRAIN_URI }} resizeMode="repeat" style={styles.fill} />
           </View>
 
-          <ClubDisc club={career.club} size={54} />
-          <Ticker value={rating} from={0} duration={620} style={styles.heroRating} />
-          <Text style={styles.heroKey}>
-            Squad rating{effective !== rating ? ` · ${effective} as picked` : ''}
-          </Text>
+          {/* the club, the year and where you finished last time */}
+          <View style={styles.crestRow}>
+            <ClubDisc club={career.club} size={46} />
+            <View style={styles.crestBody}>
+              <Text style={styles.crestClub} numberOfLines={1}>
+                {career.club}
+              </Text>
+              <Text style={styles.crestLine} numberOfLines={1}>
+                Season {career.year}
+                {last ? ` · ${ordinal(last.fin)} last year on ${last.pts}` : ' · your first'}
+              </Text>
+            </View>
+            <View style={styles.crestRight}>
+              <Ticker value={rating} from={0} duration={620} style={styles.heroRating} />
+              <Text style={styles.heroKey}>
+                {effective !== rating ? `${effective} as picked` : 'squad rating'}
+              </Text>
+            </View>
+          </View>
+
+          {/* the shape of the squad, by line */}
+          <View style={styles.lines}>
+            {(['GK', 'DEF', 'MID', 'ATT'] as Position[]).map((pos) => {
+              const men = all.filter((p) => p.pos === pos);
+              const avg = men.length
+                ? Math.round(men.reduce((a, p) => a + p.rtg, 0) / men.length)
+                : 0;
+              return (
+                <View key={pos} style={styles.line}>
+                  <Text style={[styles.lineKey, { color: positionColor[pos] }]}>{pos}</Text>
+                  <View style={styles.lineTrack}>
+                    <View
+                      style={[
+                        styles.lineFill,
+                        {
+                          width: `${Math.max(4, ((avg - 55) / 45) * 100)}%`,
+                          backgroundColor: positionColor[pos],
+                        },
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.lineValue} allowFontScaling={false}>
+                    {avg || '–'}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
 
           <View style={styles.heroStats}>
-            <HeroStat label="Budget" value={`£${career.budget}m`} tint={color.accent} />
-            <HeroStat label="Value" value={`£${squadValue(all)}m`} />
-            <HeroStat label="Wages" value={`£${clubWageBill(career)}m`} />
-            <HeroStat label="Titles" value={String(career.titles)} tint={color.gold} />
+            <HeroStat label="Budget" value={`£${career.budget}m`} tint={hue.sky} />
+            <HeroStat label="Value" value={`£${squadValue(all)}m`} tint={hue.violet} />
+            <HeroStat label="Wages" value={`£${clubWageBill(career)}m`} tint={hue.amber} />
+            <HeroStat label="Fans" value={`${career.fans.toFixed(1)}m`} tint={hue.rose} />
+            <HeroStat label="Titles" value={String(career.titles)} tint={hue.gold} />
           </View>
         </View>
 
@@ -476,6 +566,33 @@ export default function DynastyHub() {
         onSell={open ? () => doSell(open.slot) : undefined}
         onBench={open && open.slot < 11 ? () => toBench(open.slot) : undefined}
         benchLabel="Move to the bench"
+        onSwap={
+          open
+            ? () => {
+                const slot = open.slot;
+                setOpen(null);
+                setSwapping(slot);
+              }
+            : undefined
+        }
+        swapLabel={open && open.slot >= 11 ? 'Bring him into the eleven' : 'Swap him with somebody'}
+      />
+
+      <SwapSheet
+        open={swapping !== null}
+        title={swapping !== null ? (career.roster[swapping]?.n ?? '') : ''}
+        subtitle={
+          swapping !== null && swapping >= 11
+            ? 'He comes into the eleven and the man you pick drops to the bench.'
+            : 'They change places. The number is what the eleven gains.'
+        }
+        incoming={swapping !== null ? career.roster[swapping] : null}
+        incomingSlot={
+          swapping !== null ? (career.roster[swapping]?.pos ?? 'MID') : 'MID'
+        }
+        options={swapOptions}
+        onClose={() => setSwapping(null)}
+        onPick={(i) => swapping !== null && doSwap(swapping, i)}
       />
 
       {/* Two steps, because there is no way back from this one. */}
@@ -661,8 +778,7 @@ const styles = StyleSheet.create({
   ctaText: { ...text.button, color: color.accent },
 
   hero: {
-    alignItems: 'center',
-    paddingTop: space.s5,
+    paddingTop: space.s4,
     paddingHorizontal: space.s4,
     paddingBottom: space.s4,
     borderRadius: radius.xl,
@@ -675,21 +791,60 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   bloom: { position: 'absolute', top: -30, left: -30, right: -30, height: 180 },
+
+  crestRow: { flexDirection: 'row', alignItems: 'center', gap: space.s3 },
+  crestBody: { flex: 1, minWidth: 0 },
+  crestClub: {
+    fontFamily: font.displayBlack,
+    fontSize: 24,
+    lineHeight: 30,
+    color: color.text1,
+  },
+  crestLine: { ...text.small, fontSize: 11.5, lineHeight: 16, color: color.text3 },
+  crestRight: { alignItems: 'flex-end' },
   heroRating: {
     fontFamily: font.hero,
-    fontSize: 58,
-    lineHeight: 76,
+    fontSize: 46,
+    lineHeight: 58,
     color: color.text1,
     fontVariant: ['tabular-nums'],
-    marginTop: space.s2,
   },
-  heroKey: { ...text.key, fontSize: 9, color: color.text3, marginTop: -space.s2 },
-  heroStats: { flexDirection: 'row', alignSelf: 'stretch', marginTop: space.s4 },
+  heroKey: { ...text.key, fontSize: 8, color: color.text3, marginTop: -6 },
+
+  lines: { marginTop: space.s4, gap: 6 },
+  line: { flexDirection: 'row', alignItems: 'center', gap: space.s3 },
+  lineKey: { ...text.key, fontSize: 8.5, width: 26 },
+  lineTrack: {
+    flex: 1,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    overflow: 'hidden',
+  },
+  lineFill: { height: 6, borderRadius: 3 },
+  lineValue: {
+    fontFamily: font.displayBold,
+    fontSize: 13,
+    lineHeight: 17,
+    color: color.text2,
+    width: 22,
+    textAlign: 'right',
+    fontVariant: ['tabular-nums'],
+  },
+
+  heroStats: {
+    flexDirection: 'row',
+    alignSelf: 'stretch',
+    marginTop: space.s4,
+    paddingTop: space.s3,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.07)',
+  },
   heroStat: { flex: 1, alignItems: 'center', gap: 2 },
   heroStatValue: {
     fontFamily: font.displayBold,
-    fontSize: 18,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 20,
     color: color.text1,
     fontVariant: ['tabular-nums'],
   },
