@@ -25,3 +25,4 @@ export { Sheet } from './Sheet';
 export { Ticker } from './Ticker';
 export { Confirm } from './Confirm';
 export { RangeSlider } from './RangeSlider';
+export { MatchLive } from './MatchLive';

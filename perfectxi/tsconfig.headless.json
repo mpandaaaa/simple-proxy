@@ -12,5 +12,5 @@
     "rootDir": "src",
     "noEmit": false
   },
-  "include": ["src/engine/**/*.ts", "src/data/**/*.ts", "src/game/wheel.ts"]
+  "include": ["src/engine/**/*.ts", "src/data/**/*.ts", "src/game/wheel.ts", "src/game/commentary.ts"]
 }

@@ -1,60 +1,85 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, Image, StyleSheet } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
 import { router, Stack } from 'expo-router';
-import { ModeScreen, Press, Ticker, Confirm } from '../../src/ui/components';
+import {
+  ModeScreen,
+  Press,
+  Ticker,
+  Confirm,
+  ClubDisc,
+  MatchLive,
+  Rise,
+} from '../../src/ui/components';
 import { color, space, radius, line, gradient } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
+import { GRAIN_URI } from '../../src/ui/grain';
 import { haptic, useReduceMotion } from '../../src/ui/feel';
 import {
+  SIM_LEAGUE,
   chemBonus,
   livePosition,
   ordinal,
   simulateSeason,
+  squadAvg,
   type MatchResult,
 } from '../../src/engine';
 import { clearRun, runRng, setResult, useRun } from '../../src/game/run';
 
-/** How long a match holds before the next one lands. */
-const TICK = 360;
-/** The pause on the last whistle before the results arrive. */
-const FINAL_HOLD = 700;
+/** How fast auto sim runs through the fixtures it is not showing you. */
+const AUTO_MS = 560;
+/** The pause on the final whistle of the season before the papers arrive. */
+const FINAL_HOLD = 800;
+
+/* Match night, the same purple the live match is dressed in. */
+const NIGHT = {
+  hero:
+    'radial-gradient(130% 100% at 50% 0%, rgba(233,0,82,0.22) 0%, rgba(55,0,60,0.62) 46%, #14031B 86%)',
+  edge: 'rgba(233,0,82,0.30)',
+  hot: '#FF2D78',
+  play: 'linear-gradient(100deg, #E90052 0%, #FF2D78 100%)',
+};
 
 const OUTCOME = {
-  win: { tint: color.win, letter: 'W' },
-  draw: { tint: color.draw, letter: 'D' },
-  loss: { tint: color.loss, letter: 'L' },
+  win: { tint: color.win, letter: 'W', label: 'Win' },
+  draw: { tint: color.draw, letter: 'D', label: 'Draw' },
+  loss: { tint: color.loss, letter: 'L', label: 'Loss' },
 } as const;
 
+const STRENGTH: Record<string, number> = {};
+for (const t of SIM_LEAGUE) STRENGTH[t.name] = t.str;
+
 /**
- * The season playing out.
+ * The season, played one match at a time.
  *
- * The whole thing is decided the moment the screen opens. Revealing it a
- * match at a time is theatre, and it is also what makes the result
- * replayable: nothing here can change what was already drawn.
+ * This is the shape the site has and the shape I had missed: a hub you come
+ * back to, with the fixture list running down it and a match you choose to
+ * watch. A season that plays itself while you sit there is a progress bar
+ * with football written on it.
  *
- * Same readout as the site: points, goals, conceded and position, a recent
- * form strip, a progress bar and the fixtures as they come in. Position is
- * live, which means pro-rating the other nineteen to the number of games
- * you have actually played, or it reads twentieth until the final whistle.
+ * The whole season is decided the moment this screen opens, so nothing
+ * pressed here changes a result. What is being chosen is how much of it you
+ * want to see: every minute of every game, a score at a time, or none of it.
  */
 export default function Season() {
   const run = useRun();
   const reduce = useReduceMotion();
-  const [shown, setShown] = useState(0);
+  const [played, setPlayed] = useState(0);
+  const [watching, setWatching] = useState<{ index: number; live: boolean } | null>(null);
+  const [auto, setAuto] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const feed = useRef<ScrollView>(null);
+  const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const progress = useSharedValue(0);
 
-  // Played the moment the screen opens, in an effect rather than a memo:
-  // a memo runs during render and this writes to the run store.
+  // Played the moment the screen opens, in an effect rather than a memo: a
+  // memo runs during render and this writes to the run store.
   useEffect(() => {
     if (!run || run.result) return;
     setResult(
@@ -67,53 +92,110 @@ export default function Season() {
     );
   }, [run]);
 
-  const result = run?.result ?? null;
-  const total = result ? result.matches.length : 0;
-  const done = total > 0 && shown >= total;
-
   useEffect(() => {
     if (!run) router.replace('/draft');
   }, [run]);
 
-  useEffect(() => {
-    if (!result) return;
-    if (reduce) {
-      setShown(result.matches.length);
-      return;
+  const result = run?.result ?? null;
+  const total = result ? result.matches.length : 38;
+  const done = result !== null && played >= total;
+
+  const avg = useMemo(() => (run ? Math.round(squadAvg(run.state.squad)) : 0), [run]);
+
+  /* ---- the table as it stands ---- */
+  const standing = useMemo(() => {
+    const seen = result ? result.matches.slice(0, played) : [];
+    let w = 0;
+    let d = 0;
+    let l = 0;
+    let gf = 0;
+    let ga = 0;
+    for (const m of seen) {
+      gf += m.gf;
+      ga += m.ga;
+      if (m.oc === 'win') w++;
+      else if (m.oc === 'draw') d++;
+      else l++;
     }
-    if (shown >= result.matches.length) return;
-    timer.current = setTimeout(() => {
-      // Fired here rather than in the updater: React may run an updater
-      // more than once, and a win would then buzz twice.
-      const m = result.matches[shown];
-      haptic(m.oc === 'win' ? 'light' : m.oc === 'loss' ? 'warning' : 'select');
-      setShown((n) => n + 1);
-    }, TICK);
-    return () => {
-      if (timer.current) clearTimeout(timer.current);
+    const pts = w * 3 + d;
+    return {
+      w,
+      d,
+      l,
+      gf,
+      ga,
+      pts,
+      form: seen.slice(-6),
+      pos: result ? livePosition(pts, played, result.table) : 20,
     };
-  }, [result, shown, reduce]);
+  }, [result, played]);
 
   useEffect(() => {
-    progress.value = withTiming(total ? shown / total : 0, {
-      duration: reduce ? 0 : 220,
-      easing: Easing.out(Easing.quad),
+    progress.value = withTiming(total ? played / total : 0, {
+      duration: reduce ? 0 : 300,
+      easing: Easing.out(Easing.cubic),
     });
-  }, [shown, total, progress, reduce]);
+  }, [played, total, progress, reduce]);
 
-  // The final whistle, then the papers.
+  /* ---- auto sim ---- */
+  const stopAuto = useCallback(() => {
+    setAuto(false);
+    if (autoTimer.current) {
+      clearTimeout(autoTimer.current);
+      autoTimer.current = null;
+    }
+  }, []);
+
   useEffect(() => {
-    if (!done || !result) return;
-    haptic(result.position === 1 ? 'success' : 'medium');
+    if (!auto || !result || done) return;
+    autoTimer.current = setTimeout(() => {
+      // Fired here rather than inside the updater: React may run an updater
+      // more than once and a win would then buzz twice.
+      const m = result.matches[played];
+      haptic(m.oc === 'win' ? 'light' : m.oc === 'loss' ? 'warning' : 'select');
+      setPlayed((n) => n + 1);
+    }, AUTO_MS);
+    return () => {
+      if (autoTimer.current) clearTimeout(autoTimer.current);
+    };
+  }, [auto, result, played, done]);
+
+  // The final whistle of the season, then the papers. Held back while a
+  // match is still on screen so the last game is not cut off mid sentence.
+  useEffect(() => {
+    if (!done || watching) return;
+    stopAuto();
+    haptic('success');
     const t = setTimeout(() => router.replace('/draft/results'), FINAL_HOLD);
     return () => clearTimeout(t);
-  }, [done, result]);
+  }, [done, watching, stopAuto]);
 
-  const skip = useCallback(() => {
-    if (timer.current) clearTimeout(timer.current);
+  /* ---- what the buttons do ---- */
+  const playNext = useCallback(() => {
+    if (!result || done) return;
+    stopAuto();
+    setWatching({ index: played, live: true });
+  }, [result, done, played, stopAuto]);
+
+  const rewatch = useCallback(
+    (index: number) => {
+      stopAuto();
+      setWatching({ index, live: false });
+    },
+    [stopAuto],
+  );
+
+  const closeMatch = useCallback(() => {
+    const live = watching?.live;
+    setWatching(null);
+    if (live) setPlayed((n) => n + 1);
+  }, [watching]);
+
+  const simRest = useCallback(() => {
+    stopAuto();
     haptic('medium');
-    setShown(total);
-  }, [total]);
+    setPlayed(total);
+  }, [total, stopAuto]);
 
   const barStyle = useAnimatedStyle(() => ({
     transform: [{ scaleX: progress.value }],
@@ -121,301 +203,502 @@ export default function Season() {
 
   if (!run || !result) return null;
 
-  const played = result.matches.slice(0, shown);
-  let w = 0;
-  let d = 0;
-  let l = 0;
-  let gf = 0;
-  let ga = 0;
-  for (const m of played) {
-    if (m.oc === 'win') w++;
-    else if (m.oc === 'draw') d++;
-    else l++;
-    gf += m.gf;
-    ga += m.ga;
-  }
-  const pts = w * 3 + d;
-  const pos = livePosition(pts, shown, result.table);
-  const form = played.slice(-6);
+  const next: MatchResult | null = done ? null : result.matches[played];
 
   return (
     <>
       <Stack.Screen options={{ gestureEnabled: false }} />
+
       <ModeScreen
-        overline={done ? 'Full time' : `Match ${shown} of ${total}`}
-        title={`${pts} point${pts === 1 ? '' : 's'}`}
-        scroll={false}
-        onBack={() => setLeaving(true)}
-        right={
-          done ? undefined : (
-            <Press onPress={skip} feel="none" scaleTo={0.94} style={styles.skip}>
-              <Text style={styles.skipText}>Skip</Text>
-            </Press>
-          )
-        }
+        overline="Premier League"
+        title="Season"
+        onBack={() => {
+          stopAuto();
+          setLeaving(true);
+        }}
       >
-        <View style={styles.bar}>
-          <Animated.View style={[styles.barFill, barStyle]} />
+        {/* ---- the club, and how far through ---- */}
+        <View style={styles.hero}>
+          <View style={styles.heroBloom} pointerEvents="none">
+            <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <Defs>
+                <RadialGradient id="seasonBloom" cx="50%" cy="50%" r="50%">
+                  <Stop offset="0" stopColor={NIGHT.hot} stopOpacity={0.3} />
+                  <Stop offset="1" stopColor={NIGHT.hot} stopOpacity={0} />
+                </RadialGradient>
+              </Defs>
+              <Ellipse cx="50" cy="2" rx="64" ry="48" fill="url(#seasonBloom)" />
+            </Svg>
+          </View>
+          <View style={styles.grain} pointerEvents="none">
+            <Image source={{ uri: GRAIN_URI }} resizeMode="repeat" style={styles.fill} />
+          </View>
+          <View style={styles.heroEdge} pointerEvents="none" />
+
+          <ClubDisc club={null} code="XI" size={54} />
+          <Text style={styles.heroName}>Your XI</Text>
+          <Text style={styles.heroMeta}>
+            Squad rating {avg} {'·'} {run.state.config.formation}
+          </Text>
+
+          <View style={styles.progressTrack}>
+            <Animated.View style={[styles.progressFill, barStyle]} />
+          </View>
+          <Text style={styles.heroProg}>
+            {done ? 'Season complete' : `Matchday ${played + 1} of ${total}`}
+            {played > 0 ? ` · ${ordinal(standing.pos)} in the table` : ''}
+          </Text>
         </View>
 
+        {/* ---- the season so far ---- */}
         <View style={styles.statRow}>
-          <Stat value={pts} label="Points" />
-          <Stat value={gf} label="Goals" tint={color.win} />
-          <Stat value={ga} label="Conceded" tint={color.loss} />
-          <Stat
-            value={shown ? pos : 0}
-            label="Position"
-            tint={pos <= 4 ? color.accent : pos >= 18 ? color.danger : undefined}
-            ordinalise
-          />
+          <Stat label="W" value={standing.w} tint={color.win} />
+          <Stat label="D" value={standing.d} tint={color.draw} />
+          <Stat label="L" value={standing.l} tint={color.loss} />
+          <Stat label="GF" value={standing.gf} />
+          <Stat label="GA" value={standing.ga} />
+          <Stat label="Pts" value={standing.pts} tint={NIGHT.hot} big />
         </View>
 
-        <View style={styles.formRow}>
-          <Text style={styles.formLabel}>Recent form</Text>
-          <View style={styles.formStrip}>
-            {form.length ? (
-              form.map((m) => (
+        {standing.form.length ? (
+          <View style={styles.form}>
+            <Text style={styles.formKey}>Form</Text>
+            <View style={styles.formRow}>
+              {standing.form.map((m) => (
                 <View
                   key={m.n}
                   style={[
                     styles.formPip,
                     {
-                      borderColor: OUTCOME[m.oc].tint,
-                      backgroundColor: OUTCOME[m.oc].tint + '22',
+                      borderColor: OUTCOME[m.oc].tint + '66',
+                      backgroundColor: OUTCOME[m.oc].tint + '1F',
                     },
                   ]}
                 >
-                  <Text style={[styles.formPipText, { color: OUTCOME[m.oc].tint }]}>
+                  <Text
+                    style={[styles.formLetter, { color: OUTCOME[m.oc].tint }]}
+                    allowFontScaling={false}
+                  >
                     {OUTCOME[m.oc].letter}
                   </Text>
                 </View>
-              ))
-            ) : (
-              <Text style={styles.formNone}>Kick off</Text>
-            )}
+              ))}
+            </View>
           </View>
+        ) : null}
+
+        {/* ---- the next match, and the ways past it ---- */}
+        {next ? (
+          <Rise delay={0}>
+            <View style={styles.nextCard}>
+              <Text style={styles.nextKey}>
+                Next {'·'} Matchday {next.n} {'·'} {next.home ? 'Home' : 'Away'}
+              </Text>
+              <View style={styles.nextRow}>
+                <ClubDisc club={next.opp} size={44} />
+                <View style={styles.nextInfo}>
+                  <Text style={styles.nextName} numberOfLines={1}>
+                    {next.opp}
+                  </Text>
+                  <Strength value={STRENGTH[next.opp] ?? 0.5} />
+                </View>
+              </View>
+
+              <Press onPress={playNext} feel="medium" style={styles.play} scaleTo={0.98}>
+                <Text style={styles.playText}>Play the match</Text>
+              </Press>
+
+              <View style={styles.subRow}>
+                <Press
+                  onPress={() => {
+                    haptic('light');
+                    setAuto((a) => !a);
+                  }}
+                  feel="none"
+                  style={[styles.sub, auto ? styles.subOn : null]}
+                  scaleTo={0.97}
+                >
+                  <Text style={[styles.subText, auto ? { color: NIGHT.hot } : null]}>
+                    {auto ? 'Stop auto sim' : 'Auto sim'}
+                  </Text>
+                </Press>
+                <Press onPress={simRest} feel="none" style={styles.sub} scaleTo={0.97}>
+                  <Text style={styles.subText}>Sim to end</Text>
+                </Press>
+              </View>
+            </View>
+          </Rise>
+        ) : null}
+
+        {/* ---- all thirty eight ---- */}
+        <Text style={[text.label, styles.sect]}>Fixtures</Text>
+        <View style={styles.fixtures}>
+          {result.matches.map((m, i) => (
+            <Fixture
+              key={m.n}
+              match={m}
+              state={i < played ? 'played' : i === played ? 'next' : 'later'}
+              onPress={i < played ? () => rewatch(i) : i === played ? playNext : undefined}
+            />
+          ))}
         </View>
-
-        <ScrollView
-          ref={feed}
-          style={styles.feed}
-          contentContainerStyle={styles.feedPad}
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-        >
-          {played
-            .slice()
-            .reverse()
-            .map((m, i) => (
-              <MatchRow key={m.n} match={m} fresh={i === 0 && !done} />
-            ))}
-        </ScrollView>
-
-        <Confirm
-          visible={leaving}
-          title="Leave the season?"
-          body="The season and your XI will be lost. This cannot be undone."
-          confirmLabel="Leave"
-          cancelLabel="Stay"
-          onCancel={() => setLeaving(false)}
-          onConfirm={() => {
-            setLeaving(false);
-            clearRun();
-            router.dismissAll();
-          }}
-        />
       </ModeScreen>
+
+      <MatchLive
+        match={watching ? result.matches[watching.index] : null}
+        seed={run.seed}
+        live={watching?.live ?? false}
+        visible={watching !== null}
+        onDone={closeMatch}
+      />
+
+      <Confirm
+        visible={leaving}
+        title="Leave the season?"
+        body="This XI and everything it has done so far will be gone. The draft starts again from the beginning."
+        confirmLabel="Leave"
+        onCancel={() => setLeaving(false)}
+        onConfirm={() => {
+          setLeaving(false);
+          clearRun();
+          router.dismissAll();
+        }}
+      />
     </>
   );
 }
 
 function Stat({
-  value,
   label,
+  value,
   tint,
-  ordinalise,
+  big,
 }: {
-  value: number;
   label: string;
+  value: number;
   tint?: string;
-  ordinalise?: boolean;
+  big?: boolean;
 }) {
   return (
     <View style={styles.stat}>
-      {ordinalise ? (
-        <Text
-          style={[styles.statValue, tint ? { color: tint } : null]}
-          allowFontScaling={false}
-        >
-          {value ? ordinal(value) : '—'}
-        </Text>
-      ) : (
-        <Ticker
-          value={value}
-          duration={280}
-          style={[styles.statValue, tint ? { color: tint } : null]}
-        />
-      )}
+      <Ticker
+        value={value}
+        blank="0"
+        duration={340}
+        style={[styles.statValue, big ? styles.statValueBig : null, tint ? { color: tint } : null]}
+      />
       <Text style={styles.statLabel}>{label}</Text>
     </View>
   );
 }
 
-/** The newest result lands rather than appearing. */
-function MatchRow({ match, fresh }: { match: MatchResult; fresh: boolean }) {
-  const reduce = useReduceMotion();
-  const land = useSharedValue(fresh && !reduce ? 0 : 1);
-
-  useEffect(() => {
-    if (!fresh || reduce) return;
-    land.value = withSpring(1, { stiffness: 260, damping: 18, mass: 1 });
-  }, [fresh, land, reduce]);
-
-  const style = useAnimatedStyle(() => ({
-    opacity: land.value,
-    transform: [{ translateY: (1 - land.value) * -10 }],
-  }));
-
-  const oc = OUTCOME[match.oc];
-
+/**
+ * How good the club you are about to play is, as five bars.
+ *
+ * The engine already knows: every club in the league has a strength and it
+ * is the number the match is decided with. Showing it turns a fixture list
+ * into a run of games with easy weeks and hard ones in it.
+ */
+function Strength({ value }: { value: number }) {
+  const lit = Math.max(1, Math.min(5, Math.round(((value - 0.25) / 0.68) * 5)));
+  const tint =
+    lit >= 5 ? color.danger : lit >= 4 ? color.warning : lit >= 3 ? color.gold : color.text3;
   return (
-    <Animated.View style={[styles.match, style, { borderLeftColor: oc.tint }]}>
-      <Text style={styles.matchNo}>{match.n}</Text>
-      <View style={styles.matchBody}>
-        <Text style={styles.matchOpp} numberOfLines={1}>
-          {match.home ? 'v ' : 'at '}
+    <View style={styles.strength}>
+      {[0, 1, 2, 3, 4].map((i) => (
+        <View
+          key={i}
+          style={[
+            styles.strengthBar,
+            {
+              height: 5 + i * 2,
+              backgroundColor: i < lit ? tint : 'rgba(255,255,255,0.10)',
+            },
+          ]}
+        />
+      ))}
+    </View>
+  );
+}
+
+/** One line of the fixture list. */
+function Fixture({
+  match,
+  state,
+  onPress,
+}: {
+  match: MatchResult;
+  state: 'played' | 'next' | 'later';
+  onPress?: () => void;
+}) {
+  const oc = OUTCOME[match.oc];
+  const body = (
+    <>
+      <ClubDisc club={match.opp} size={34} />
+      <View style={styles.fxInfo}>
+        <Text style={styles.fxKey}>
+          Matchday {match.n} {'·'} {match.home ? 'Home' : 'Away'}
+        </Text>
+        <Text style={styles.fxName} numberOfLines={1}>
           {match.opp}
         </Text>
-        {match.scorers.length ? (
-          <Text style={styles.matchScorers} numberOfLines={1}>
-            {match.scorers.map((s) => `${s.name} ${s.min}'`).join('  ·  ')}
+        {state === 'played' ? (
+          <Text style={styles.fxHint}>Watch it back</Text>
+        ) : (
+          <Strength value={STRENGTH[match.opp] ?? 0.5} />
+        )}
+      </View>
+
+      {state === 'played' ? (
+        <View style={styles.fxRes}>
+          <Text style={[styles.fxScore, { color: oc.tint }]} allowFontScaling={false}>
+            {match.gf}
+            {'–'}
+            {match.ga}
           </Text>
-        ) : null}
-      </View>
-      <View style={[styles.score, { borderColor: oc.tint + '77', backgroundColor: oc.tint + '1a' }]}>
-        <Text style={[styles.scoreText, { color: oc.tint }]} allowFontScaling={false}>
-          {match.gf}-{match.ga}
+          <Text style={[styles.fxOc, { color: oc.tint }]}>{oc.label}</Text>
+        </View>
+      ) : state === 'next' ? (
+        <View style={styles.fxPlay}>
+          <Text style={styles.fxPlayText}>Play</Text>
+        </View>
+      ) : (
+        <Text style={styles.fxDash} allowFontScaling={false}>
+          {'–'}
         </Text>
-      </View>
-    </Animated.View>
+      )}
+    </>
+  );
+
+  const style = [
+    styles.fx,
+    state === 'next' ? styles.fxNext : null,
+    state === 'later' ? styles.fxLater : null,
+    state === 'played' ? { borderColor: OUTCOME[match.oc].tint + '3D' } : null,
+  ];
+
+  if (!onPress) return <View style={style}>{body}</View>;
+  return (
+    <Press onPress={onPress} feel="light" style={style} scaleTo={0.985}>
+      {body}
+    </Press>
   );
 }
 
 const styles = StyleSheet.create({
-  skip: {
-    paddingHorizontal: space.s3 + 2,
-    paddingVertical: space.s2 + 1,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: line.cardHot,
-    backgroundColor: '#101A14',
-    experimental_backgroundImage: gradient.card,
-  },
-  skipText: { ...text.key, fontSize: 10, color: color.text2 },
+  fill: { width: '100%', height: '100%' },
+  grain: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.05 },
 
-  bar: {
+  /* hero */
+  hero: {
+    alignItems: 'center',
+    paddingTop: space.s5,
+    paddingHorizontal: space.s4,
+    paddingBottom: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: NIGHT.edge,
+    backgroundColor: '#14031B',
+    experimental_backgroundImage: NIGHT.hero,
+    boxShadow: '0px 14px 34px rgba(0,0,0,0.5)',
+    overflow: 'hidden',
+    marginBottom: space.s4,
+  },
+  heroBloom: { position: 'absolute', top: -30, left: -30, right: -30, height: 180 },
+  heroEdge: {
+    position: 'absolute',
+    top: 0,
+    left: '20%',
+    right: '20%',
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  heroName: {
+    fontFamily: font.displayBlack,
+    fontSize: 34,
+    lineHeight: 40,
+    letterSpacing: 0.4,
+    color: '#FFFFFF',
+    marginTop: space.s2,
+  },
+  heroMeta: { ...text.small, color: 'rgba(255,255,255,0.6)', marginTop: 2 },
+  progressTrack: {
+    alignSelf: 'stretch',
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: line.card,
+    backgroundColor: 'rgba(255,255,255,0.12)',
     overflow: 'hidden',
+    marginTop: space.s4,
   },
-  barFill: {
+  progressFill: {
     height: 6,
     width: '100%',
-    backgroundColor: color.accent,
+    borderRadius: 3,
     alignSelf: 'flex-start',
     transformOrigin: 'left',
-    boxShadow: `0px 0px 10px ${color.accent}88`,
+    backgroundColor: NIGHT.hot,
+    experimental_backgroundImage: 'linear-gradient(90deg, #E90052 0%, #FF2D78 100%)',
+    boxShadow: `0px 0px 10px ${NIGHT.hot}AA`,
+  },
+  heroProg: {
+    ...text.key,
+    fontSize: 10,
+    color: NIGHT.hot,
+    marginTop: space.s3,
+    textAlign: 'center',
   },
 
-  statRow: { flexDirection: 'row', gap: space.s2, marginTop: space.s4 },
-  stat: {
-    flex: 1,
-    alignItems: 'center',
+  /* the season so far */
+  statRow: {
+    flexDirection: 'row',
     paddingVertical: space.s3,
+    paddingHorizontal: space.s2,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: line.card,
     backgroundColor: '#101A14',
     experimental_backgroundImage: gradient.card,
   },
+  stat: { flex: 1, alignItems: 'center', gap: 2 },
   statValue: {
-    fontFamily: font.displayBlack,
-    fontSize: 22,
-    lineHeight: 27,
+    fontFamily: font.displayBold,
+    fontSize: 19,
+    lineHeight: 23,
     color: color.text1,
     fontVariant: ['tabular-nums'],
   },
-  statLabel: { ...text.key, fontSize: 8.5, color: color.text3, marginTop: 2 },
+  statValueBig: { fontSize: 23, lineHeight: 27 },
+  statLabel: { ...text.key, fontSize: 8.5, color: color.text3 },
 
-  formRow: {
+  form: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.s3,
     marginTop: space.s3,
+    paddingHorizontal: space.s1,
   },
-  formLabel: { ...text.key, fontSize: 9.5, color: color.text3 },
-  formStrip: { flexDirection: 'row', gap: 5, flex: 1 },
+  formKey: { ...text.key, fontSize: 9, color: color.text3 },
+  formRow: { flexDirection: 'row', gap: 6 },
   formPip: {
     width: 26,
     height: 26,
-    borderRadius: radius.xs,
+    borderRadius: 8,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  formPipText: { fontFamily: font.displayBlack, fontSize: 12, lineHeight: 15 },
-  formNone: { ...text.small, color: color.text3 },
+  formLetter: { fontFamily: font.displayBold, fontSize: 13, lineHeight: 16 },
 
-  feed: { flex: 1, marginTop: space.s4 },
-  feedPad: { paddingBottom: space.s7 },
-  match: {
+  /* next match */
+  nextCard: {
+    marginTop: space.s5,
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: NIGHT.edge,
+    backgroundColor: '#150A18',
+    experimental_backgroundImage:
+      'linear-gradient(180deg, #221029 0%, #140A18 70%, #0E0712 100%)',
+    boxShadow: '0px 10px 26px rgba(0,0,0,0.45)',
+    gap: space.s3,
+  },
+  nextKey: { ...text.key, fontSize: 9.5, color: NIGHT.hot },
+  nextRow: { flexDirection: 'row', alignItems: 'center', gap: space.s3 },
+  nextInfo: { flex: 1, gap: 5 },
+  nextName: {
+    fontFamily: font.displayBold,
+    fontSize: 22,
+    lineHeight: 26,
+    color: color.text1,
+  },
+  play: {
+    minHeight: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    backgroundColor: '#E90052',
+    experimental_backgroundImage: NIGHT.play,
+    boxShadow: '0px 8px 22px rgba(233,0,82,0.36), inset 0px 1px 0px rgba(255,255,255,0.22)',
+  },
+  playText: { ...text.button, color: '#FFFFFF' },
+  subRow: { flexDirection: 'row', gap: space.s3 },
+  sub: {
+    flex: 1,
+    minHeight: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  subOn: { borderColor: NIGHT.edge, backgroundColor: 'rgba(233,0,82,0.12)' },
+  subText: {
+    fontFamily: font.displayBold,
+    fontSize: 15,
+    lineHeight: 18,
+    letterSpacing: 0.4,
+    color: color.text2,
+  },
+
+  /* fixtures */
+  sect: { marginTop: space.s6, marginBottom: space.s3 },
+  fixtures: { gap: space.s2, paddingBottom: space.s5 },
+  fx: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.s3,
-    marginBottom: space.s2,
-    paddingVertical: space.s2 + 2,
-    paddingHorizontal: space.s3,
+    padding: space.s3,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: line.card,
-    borderLeftWidth: 3,
     backgroundColor: '#101A14',
     experimental_backgroundImage: gradient.card,
   },
-  matchNo: {
-    ...text.key,
-    fontSize: 10,
-    color: color.text3,
-    minWidth: 22,
-    fontVariant: ['tabular-nums'],
+  fxNext: {
+    borderColor: NIGHT.edge,
+    backgroundColor: '#170B1B',
+    experimental_backgroundImage: 'linear-gradient(180deg, #24122B 0%, #150A19 100%)',
+    boxShadow: '0px 0px 18px rgba(233,0,82,0.20)',
   },
-  matchBody: { flex: 1, minWidth: 0 },
-  matchOpp: {
-    fontFamily: font.bodySemi,
-    fontSize: 15,
-    lineHeight: 20,
-    color: color.text1,
-  },
-  matchScorers: {
-    fontFamily: font.body,
-    fontSize: 11,
-    lineHeight: 15,
-    color: color.text3,
-  },
-  score: {
-    minWidth: 60,
-    alignItems: 'center',
-    paddingVertical: 5,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-  },
-  scoreText: {
+  fxLater: { opacity: 0.52 },
+  fxInfo: { flex: 1, gap: 2 },
+  fxKey: { ...text.key, fontSize: 8.5, color: color.text3 },
+  fxName: { fontFamily: font.displayBold, fontSize: 17, lineHeight: 20, color: color.text1 },
+  fxHint: { ...text.small, fontSize: 11, color: color.text3 },
+  fxRes: { alignItems: 'flex-end' },
+  fxScore: {
     fontFamily: font.displayBlack,
-    fontSize: 17,
-    lineHeight: 21,
+    fontSize: 20,
+    lineHeight: 23,
+    letterSpacing: 0.4,
     fontVariant: ['tabular-nums'],
   },
+  fxOc: { ...text.key, fontSize: 8.5 },
+  fxPlay: {
+    paddingHorizontal: space.s4,
+    paddingVertical: 9,
+    borderRadius: radius.pill,
+    backgroundColor: '#E90052',
+    experimental_backgroundImage: NIGHT.play,
+    boxShadow: 'inset 0px 1px 0px rgba(255,255,255,0.24)',
+  },
+  fxPlayText: {
+    fontFamily: font.displayBold,
+    fontSize: 13,
+    lineHeight: 16,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    color: '#FFFFFF',
+  },
+  fxDash: {
+    fontFamily: font.displayBold,
+    fontSize: 18,
+    lineHeight: 22,
+    color: color.text3,
+    paddingRight: space.s2,
+  },
+
+  strength: { flexDirection: 'row', alignItems: 'flex-end', gap: 2.5, height: 13 },
+  strengthBar: { width: 4, borderRadius: 1.5 },
 });

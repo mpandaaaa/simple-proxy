@@ -7,6 +7,7 @@ export const CLUB_COLOURS: Record<string, string> = {
   Arsenal: '#EF0107', Chelsea: '#034694', Liverpool: '#C8102E',
   'Man City': '#6CABDD', 'Man United': '#DA291C', Tottenham: '#132257',
   'Aston Villa': '#670E36', Newcastle: '#FFD700', 'West Ham': '#7A263A',
+  Spurs: '#132257',
   Everton: '#003399', Fulham: '#CC0000', Brighton: '#0057B8',
   Bournemouth: '#DA291C', Brentford: '#D20000', 'Crystal Palace': '#1B458F',
   'Nottm Forest': '#DD0000', Wolves: '#FDB913', Sunderland: '#EB172B',
