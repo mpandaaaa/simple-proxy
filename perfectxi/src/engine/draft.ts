@@ -53,6 +53,44 @@ export function clubSeasons(from: number, to: number): { club: string; season: s
   return out;
 }
 
+const eraSummaryCache = new Map<string, EraSummary>();
+
+export type EraSummary = {
+  /** distinct clubs with at least one season in range */
+  clubs: number;
+  /** how many seasons the range covers */
+  seasons: number;
+  /** club-seasons the wheel can land on */
+  entries: number;
+};
+
+/**
+ * What an era range actually contains.
+ *
+ * The site shows this live under its slider, and it is the only feedback
+ * that tells you whether you have narrowed the draft to something
+ * interesting or to something with four clubs in it.
+ */
+export function eraSummary(from: number, to: number): EraSummary {
+  const key = from + ':' + to;
+  const hit = eraSummaryCache.get(key);
+  if (hit) return hit;
+
+  const clubs = new Set<string>();
+  let entries = 0;
+  for (const k of ALL_KEYS) {
+    const bar = k.indexOf('|');
+    const year = Number(k.slice(bar + 1));
+    if (year >= from && year <= to) {
+      clubs.add(k.slice(0, bar));
+      entries++;
+    }
+  }
+  const out = { clubs: clubs.size, seasons: to - from + 1, entries };
+  eraSummaryCache.set(key, out);
+  return out;
+}
+
 export type DraftState = {
   config: DraftConfig;
   squad: Slot[];

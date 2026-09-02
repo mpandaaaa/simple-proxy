@@ -24,3 +24,4 @@ export { OverallStrip } from './OverallStrip';
 export { Sheet } from './Sheet';
 export { Ticker } from './Ticker';
 export { Confirm } from './Confirm';
+export { RangeSlider } from './RangeSlider';

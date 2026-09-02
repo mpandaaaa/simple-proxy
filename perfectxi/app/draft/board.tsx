@@ -27,6 +27,7 @@ import {
   lastName,
   slotsForPlayer,
   squadAvg,
+  ratingsHidden,
   visibleBoard,
   type Pick,
   type Position,
@@ -216,7 +217,7 @@ export default function DraftBoard() {
   const left = state.total - state.filled;
   const avg = squadAvg(state.squad);
   const rerollsLeft = state.rerollsMax - state.rerolls;
-  const hideRatings = state.config.diff === 'hard';
+  const hideRatings = ratingsHidden(state.config);
   const boardAvg = shown.length
     ? Math.round(shown.reduce((n, p) => n + p.rtg, 0) / shown.length)
     : 0;

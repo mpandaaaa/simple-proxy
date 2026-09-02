@@ -29,6 +29,7 @@ import {
   chemistryLinks,
   eraOf,
   ordinal,
+  ratingsHidden,
   squadAvg,
   squadChem,
   strongerThan,
@@ -91,7 +92,7 @@ export default function SquadComplete() {
   const bonus = chemBonus(squad);
   const odds = calcOdds(avg, bonus);
   const overall = Math.round(avg);
-  const hideRatings = config.diff === 'hard';
+  const hideRatings = ratingsHidden(config);
   const links = chemistryLinks(squad);
   const beats = strongerThan(avg, bonus);
 

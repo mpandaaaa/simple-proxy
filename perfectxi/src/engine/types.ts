@@ -38,7 +38,18 @@ export type DraftConfig = {
   eraTo: number;
   /** only the top three of a board are offered */
   blitz: boolean;
+  /**
+   * Whether ratings are visible on a board. Hard always hides them, whatever
+   * this says, which is why the two are separate: the toggle is a choice
+   * everywhere else.
+   */
+  showRatings: boolean;
 };
+
+/** Ratings are hidden on Hard regardless of the toggle. */
+export function ratingsHidden(config: DraftConfig): boolean {
+  return config.diff === 'hard' || !config.showRatings;
+}
 
 export const defaultConfig: DraftConfig = {
   formation: '4-3-3',
@@ -48,4 +59,5 @@ export const defaultConfig: DraftConfig = {
   eraFrom: 1992,
   eraTo: 2026,
   blitz: false,
+  showRatings: true,
 };

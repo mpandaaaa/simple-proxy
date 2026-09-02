@@ -28,6 +28,7 @@ export {
   AT20_CLUBS,
   seasonStr,
   clubSeasons,
+  eraSummary,
   newDraft,
   rerollsFor,
   spin,
@@ -41,7 +42,7 @@ export {
   chemistryLinks,
   CHEM_WEIGHT,
 } from './draft';
-export type { DraftState, SpinResult, ChemLink } from './draft';
+export type { DraftState, SpinResult, ChemLink, EraSummary } from './draft';
 export {
   SIM_LEAGUE,
   strFromAvg,
