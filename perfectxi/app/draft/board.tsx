@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
@@ -14,6 +14,8 @@ import {
   ClubDisc,
   Sheet,
 } from '../../src/ui/components';
+import type { Anchor } from '../../src/ui/components/PlayerCard';
+import type { SlotRect } from '../../src/ui/components/Pitch';
 import { color, space, radius, positionColor, gradient, line } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic, useReduceMotion } from '../../src/ui/feel';
@@ -45,7 +47,26 @@ export default function DraftBoard() {
   const reduceMotion = useReduceMotion();
   const [pending, setPending] = useState<SpinResult | null>(null);
   const [chooser, setChooser] = useState<{ player: Pick; slots: number[] } | null>(null);
-  const [reveal, setReveal] = useState<{ player: Pick; pos: Position } | null>(null);
+  const [reveal, setReveal] = useState<{
+    player: Pick;
+    pos: Position;
+    slot: number;
+    from: Anchor | null;
+  } | null>(null);
+  /** the slot a signing has just been flown into, so it can light up */
+  const [struck, setStruck] = useState<number | null>(null);
+
+  /**
+   * Where every pitch slot sits on screen, so the signing card can fly into
+   * the one it filled. Kept in a ref: these change on layout, not on state,
+   * and nothing should re-render because a slot moved a pixel.
+   */
+  const slotRects = useRef(new Map<number, SlotRect>());
+  const onSlotRect = useCallback((i: number, r: SlotRect) => {
+    slotRects.current.set(i, r);
+  }, []);
+  /** the row that was tapped, measured at the moment of the tap */
+  const tapped = useRef<Anchor | null>(null);
 
   // Scenery for the reel: every club-season in the era being drafted, so
   // the cards flying past are real sides rather than invented ones.
@@ -95,14 +116,16 @@ export default function DraftBoard() {
       if (!run) return;
       const pos = run.state.squad[slotIndex].pos;
       pickPlayer(player, slotIndex);
-      setReveal({ player, pos });
+      setReveal({ player, pos, slot: slotIndex, from: tapped.current });
     },
     [run],
   );
 
   const onPick = useCallback(
-    (player: Pick) => {
+    (player: Pick, rect?: Anchor) => {
       if (!run) return;
+      // Remember the row so the card can grow out of exactly where it was.
+      tapped.current = rect ?? null;
       const slots = slotsForPlayer(run.state, player);
       if (!slots.length) {
         haptic('warning');
@@ -184,6 +207,8 @@ export default function DraftBoard() {
           squad={state.squad}
           formation={state.config.formation}
           highlight={chooser?.slots}
+          onSlotRect={onSlotRect}
+          flash={struck}
         />
       </View>
 
@@ -437,7 +462,14 @@ export default function DraftBoard() {
       <PlayerCard
         player={reveal?.player ?? null}
         slotPos={reveal?.pos ?? null}
+        from={reveal?.from ?? null}
+        to={reveal ? (slotRects.current.get(reveal.slot) ?? null) : null}
         onDone={() => setReveal(null)}
+        onLanded={() => {
+          const at = reveal?.slot ?? null;
+          setStruck(at);
+          setTimeout(() => setStruck(null), 500);
+        }}
       />
     </ModeScreen>
   );
@@ -452,21 +484,36 @@ function PlayerRow({
   player: Pick;
   playable: boolean;
   hideRatings: boolean;
-  onPress: (p: Pick) => void;
+  onPress: (p: Pick, rect?: Anchor) => void;
 }) {
   const pos = player.pos[0] as Position;
   const tint = positionColor[pos] ?? color.text3;
   const fill = ratingFill(player.rtg);
+  const box = useRef<View>(null);
+
+  // Measure at the moment of the tap, not on layout: the list scrolls, and
+  // where the row was when it rendered is not where it is when you hit it.
+  const press = useCallback(() => {
+    if (!box.current) return onPress(player);
+    box.current.measureInWindow((x, y, w, h) =>
+      onPress(player, w > 0 ? { x, y, w, h } : undefined),
+    );
+  }, [player, onPress]);
 
   return (
     <Press
-      onPress={() => onPress(player)}
+      onPress={press}
       feel="none"
       scaleTo={0.98}
       disabled={!playable}
-      style={[styles.player, !playable && styles.playerOff]}
+      style={[
+        styles.player,
+        !playable && styles.playerOff,
+        playable && player.rtg >= 88 && { borderColor: fill + '88' },
+      ]}
       accessibilityLabel={`${player.n}, rated ${player.rtg}, ${POSITION_LABEL[pos] ?? pos}`}
     >
+      <View ref={box} style={styles.rowMeasure} pointerEvents="none" />
       <View style={[styles.posBadge, { backgroundColor: tint + '20', borderColor: tint + '77' }]}>
         <Text style={[styles.posText, { color: tint }]}>{pos}</Text>
       </View>
@@ -601,6 +648,15 @@ const styles = StyleSheet.create({
     boxShadow: 'inset 0px 1px 0px rgba(255,255,255,0.05)',
   },
   playerOff: { opacity: 0.32 },
+  // Invisible, and exactly the row's box. Measuring the Press itself would
+  // catch it mid press, when it is scaled down under the thumb.
+  rowMeasure: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
   posBadge: {
     width: 50,
     height: 30,

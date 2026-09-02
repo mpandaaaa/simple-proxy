@@ -1,9 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, Text, View, StyleSheet } from 'react-native';
+import {
+  Modal,
+  Pressable,
+  Text,
+  View,
+  StyleSheet,
+  useWindowDimensions,
+} from 'react-native';
 import Animated, {
+  Easing,
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
@@ -18,12 +29,31 @@ import {
   lastName,
   tierFor,
   tierLabel,
+  type CardTier,
   type Pick,
   type Position,
 } from '../../engine';
 
-/** How long the card holds before it gets out of the way on its own. */
-const HOLD = 1500;
+const CARD_W = 300;
+/** near enough the drawn height; only used to size the flight, not to lay out */
+const CARD_H = 372;
+
+export type Anchor = { x: number; y: number; w: number; h: number };
+
+/**
+ * How long the card holds, by who it is.
+ *
+ * A squad filler and a legend were getting the identical two seconds, which
+ * is what made signing Bergkamp feel like signing nobody. The ceremony
+ * scales with the signing, exactly as the report's rule says it should, and
+ * every one of them can still be tapped straight through.
+ */
+const HOLD: Record<CardTier, number> = {
+  bronze: 1100,
+  silver: 1250,
+  gold: 1750,
+  icon: 2400,
+};
 
 const TIERS = {
   bronze: { m1: '#5E3A1C', m2: '#C88A4A', ink: '#2B1A08', edge: '#E0A868' },
@@ -33,74 +63,164 @@ const TIERS = {
 } as const;
 
 /**
- * The signing reveal. Every pick earns one.
+ * The signing reveal.
  *
- * This is the moment the draft is actually about, and it is the single
- * biggest thing the app was missing against the site: there, landing a 92
- * rated Aguero produces a gold card; here it was a row quietly going grey.
+ * The card is not a dialog that appears over the game. It grows out of the
+ * row you tapped, and when it is done it flies into the slot it filled on
+ * the pitch, which then takes the hit. The web build cuts between those
+ * states because a browser cannot carry an element across them.
  *
- * The tier, the six face stats and the layout are the web build's. The
- * spring, the haptic and the counting rating are not, because a browser
- * cannot do them properly.
+ * The rating counts up rather than being printed, the foil sweeps on the
+ * cards worth sweeping, and the haptic gets heavier with the player.
  */
 export function PlayerCard({
   player,
   slotPos,
+  from,
+  to,
   onDone,
+  onLanded,
 }: {
   player: Pick | null;
   slotPos: Position | null;
+  /** the row that was tapped, so the card can grow out of it */
+  from?: Anchor | null;
+  /** the pitch slot it filled, so the card can fly into it */
+  to?: Anchor | null;
   onDone: () => void;
+  /** fired as the card reaches the slot, so the slot can light up */
+  onLanded?: () => void;
 }) {
   const reduce = useReduceMotion();
-  const t = useSharedValue(0);
+  const { width: winW, height: winH } = useWindowDimensions();
+
+  /** 0 at the anchor, 1 at rest in the middle of the screen */
+  const p = useSharedValue(0);
+  /** where 0 means: the row on the way in, the slot on the way out */
+  const ax = useSharedValue(0);
+  const ay = useSharedValue(0);
+  const as = useSharedValue(0.15);
+  /** the light travelling across the foil */
+  const foil = useSharedValue(0);
+
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /**
-   * The card the modal is showing, held past the moment the parent clears
-   * it. Unmounting on the tap is what made the card vanish instead of
-   * leaving, so it stays until its exit has actually played.
-   */
   const [card, setCard] = useState<Pick | null>(null);
+  const [rating, setRating] = useState(0);
+  const frame = useRef<number | null>(null);
 
   const drop = useCallback(() => setCard(null), []);
+  const land = useCallback(() => onLanded?.(), [onLanded]);
+
+  /** Put the flight's zero point on a rect, in screen coordinates. */
+  const anchorTo = useCallback(
+    (rect: Anchor | null | undefined) => {
+      if (!rect || rect.w <= 0) {
+        // No rect to work from: fall back to growing out of the centre.
+        ax.value = 0;
+        ay.value = 0;
+        as.value = 0.86;
+        return;
+      }
+      ax.value = rect.x + rect.w / 2 - winW / 2;
+      ay.value = rect.y + rect.h / 2 - winH / 2;
+      // Matched on height. A list row is wider than the card but a fraction
+      // of its height, so width would start the card larger than it ends.
+      as.value = Math.min(0.5, Math.max(0.12, rect.h / CARD_H));
+    },
+    [ax, ay, as, winW, winH],
+  );
 
   useEffect(() => {
     if (player) {
+      const tier = tierFor(player.rtg);
       setCard(player);
-      haptic('success');
-      t.value = 0;
-      t.value = reduce
+      anchorTo(from);
+
+      // The haptic gets heavier with the signing.
+      haptic(tier === 'icon' ? 'heavy' : tier === 'gold' ? 'medium' : 'light');
+      if (tier === 'icon' || tier === 'gold') {
+        timer.current = setTimeout(() => haptic('success'), 140);
+      }
+
+      p.value = 0;
+      p.value = reduce
         ? withTiming(1, { duration: 120 })
-        : withSpring(1, { stiffness: 210, damping: 14, mass: 1 });
-      timer.current = setTimeout(onDone, HOLD);
+        : withSpring(1, { stiffness: 190, damping: 15, mass: 1 });
+
+      // Foil only on the cards worth sweeping, and twice for an icon.
+      foil.value = 0;
+      if (!reduce && (tier === 'gold' || tier === 'icon')) {
+        foil.value = withDelay(
+          220,
+          withRepeat(
+            withTiming(1, { duration: 900, easing: Easing.inOut(Easing.quad) }),
+            tier === 'icon' ? 2 : 1,
+            false,
+          ),
+        );
+      }
+
+      // The rating arrives rather than being printed.
+      if (reduce) {
+        setRating(player.rtg);
+      } else {
+        const start = Date.now();
+        const run = () => {
+          const q = Math.min(1, (Date.now() - start) / 620);
+          setRating(Math.round(player.rtg * (1 - Math.pow(1 - q, 3))));
+          if (q < 1) frame.current = requestAnimationFrame(run);
+        };
+        setRating(0);
+        frame.current = requestAnimationFrame(run);
+      }
+
+      const hold = setTimeout(onDone, HOLD[tier]);
       return () => {
+        clearTimeout(hold);
         if (timer.current) clearTimeout(timer.current);
+        if (frame.current !== null) cancelAnimationFrame(frame.current);
       };
     }
-    // Cleared from outside: play the exit, then let go of the card.
-    t.value = withTiming(0, { duration: reduce ? 100 : 190 }, (f) => {
-      'worklet';
-      if (f) runOnJS(drop)();
-    });
-  }, [player, t, reduce, onDone, drop]);
+
+    if (!card) return;
+    // Done: fly into the slot it filled, and knock on the way in.
+    anchorTo(to);
+    p.value = withTiming(
+      0,
+      { duration: reduce ? 100 : 340, easing: Easing.in(Easing.cubic) },
+      (f) => {
+        'worklet';
+        if (!f) return;
+        runOnJS(land)();
+        runOnJS(drop)();
+      },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [player]);
 
   const cardStyle = useAnimatedStyle(() => ({
-    opacity: t.value,
+    opacity: Math.min(1, p.value * 1.6),
     transform: [
-      { scale: 0.9 + t.value * 0.1 },
-      { translateY: (1 - t.value) * 22 },
+      { translateX: ax.value * (1 - p.value) },
+      { translateY: ay.value * (1 - p.value) },
+      { scale: as.value + (1 - as.value) * p.value },
     ],
   }));
-  const dimStyle = useAnimatedStyle(() => ({ opacity: t.value }));
+  const dimStyle = useAnimatedStyle(() => ({ opacity: p.value }));
+  const foilStyle = useAnimatedStyle(() => ({
+    opacity: foil.value > 0 && foil.value < 1 ? 1 : 0,
+    transform: [{ translateX: -CARD_W + foil.value * (CARD_W * 2.4) }],
+  }));
 
   if (!card) return null;
 
-  const tier = TIERS[tierFor(card.rtg)];
+  const tierKey = tierFor(card.rtg);
+  const tier = TIERS[tierKey];
   const pos = slotPos ?? (card.pos[0] as Position);
-  const isGK = pos === 'GK';
-  const stats = faceStats(card.rtg, isGK);
+  const stats = faceStats(card.rtg, pos === 'GK');
   const sur = lastName(card.n);
   const club = clubColour(card.club);
+  const grand = tierKey === 'gold' || tierKey === 'icon';
 
   return (
     <Modal visible transparent animationType="none" onRequestClose={onDone}>
@@ -114,6 +234,9 @@ export function PlayerCard({
               backgroundColor: tier.m2,
               experimental_backgroundImage: `linear-gradient(160deg, ${tier.m1} 0%, ${tier.m2} 52%, ${tier.m1} 100%)`,
               borderColor: tier.edge,
+              boxShadow: grand
+                ? `0px 26px 60px rgba(0,0,0,0.6), 0px 0px 40px ${tier.edge}55`
+                : '0px 26px 60px rgba(0,0,0,0.6)',
             },
           ]}
         >
@@ -126,7 +249,9 @@ export function PlayerCard({
 
           <View style={styles.top}>
             <View style={styles.spine}>
-              <Text style={[styles.ovr, { color: tier.ink }]}>{card.rtg}</Text>
+              <Text style={[styles.ovr, { color: tier.ink }]} allowFontScaling={false}>
+                {rating || card.rtg}
+              </Text>
               <Text style={[styles.pos, { color: tier.ink }]}>{pos}</Text>
               <View style={[styles.spineRule, { backgroundColor: tier.ink }]} />
             </View>
@@ -193,6 +318,11 @@ export function PlayerCard({
             </View>
             <Text style={[styles.signed, { color: tier.ink }]}>SIGNED</Text>
           </View>
+
+          {/* the light crossing the foil, on the cards that earn it */}
+          {grand ? (
+            <Animated.View style={[styles.foil, foilStyle]} pointerEvents="none" />
+          ) : null}
         </Animated.View>
 
         <Animated.Text style={[styles.tap, dimStyle]}>Tap to continue</Animated.Text>
@@ -217,22 +347,29 @@ const styles = StyleSheet.create({
     padding: space.s5,
   },
   card: {
-    width: 300,
+    width: CARD_W,
     maxWidth: '92%',
     borderRadius: 22,
     borderWidth: 1,
     overflow: 'hidden',
     paddingBottom: space.s2,
-    boxShadow: '0px 26px 60px rgba(0,0,0,0.60)',
   },
   topEdge: { position: 'absolute', left: 0, right: 0, top: 0, height: 3, opacity: 0.9 },
+  foil: {
+    position: 'absolute',
+    top: -40,
+    bottom: -40,
+    width: 90,
+    experimental_backgroundImage:
+      'linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.42) 50%, rgba(255,255,255,0) 100%)',
+  },
   watermark: {
     position: 'absolute',
     right: -6,
     top: 40,
     fontFamily: font.hero,
     fontSize: 118,
-    lineHeight: 153,
+    lineHeight: 154,
     opacity: 0.09,
   },
   top: {
@@ -294,7 +431,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontFamily: font.displayBlack,
     fontSize: 16,
-    lineHeight: 19,
+    lineHeight: 20,
     minWidth: 26,
     fontVariant: ['tabular-nums'],
   },
@@ -323,7 +460,7 @@ const styles = StyleSheet.create({
   discText: {
     fontFamily: font.displayBold,
     fontSize: 11,
-    lineHeight: 13,
+    lineHeight: 14,
     letterSpacing: 0.4,
     color: '#FFFFFF',
   },

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 import Animated, {
   Easing,
@@ -35,11 +35,15 @@ const LEGEND: Position[] = ['GK', 'DEF', 'MID', 'ATT'];
  * equally "not filled yet", and colouring them by position makes an empty
  * pitch look like a finished one. The colour arrives when a player does.
  */
+export type SlotRect = { x: number; y: number; w: number; h: number };
+
 export function Pitch({
   squad,
   formation,
   highlight,
   preview,
+  onSlotRect,
+  flash,
 }: {
   squad: Slot[];
   formation: string;
@@ -47,6 +51,10 @@ export function Pitch({
   highlight?: number[];
   /** the shorter, label only version used on the setup screen */
   preview?: boolean;
+  /** where each slot sits on screen, so a signing can be flown into it */
+  onSlotRect?: (index: number, rect: SlotRect) => void;
+  /** the slot a signing has just landed in, which lights up */
+  flash?: number | null;
 }) {
   const fm = FORMATIONS[formation];
   if (!fm) return null;
@@ -113,9 +121,12 @@ export function Pitch({
               {indexes.map((si) => (
                 <PitchSlot
                   key={si}
+                  index={si}
                   slot={squad[si]}
                   lit={!!highlight?.includes(si)}
                   preview={!!preview}
+                  onRect={onSlotRect}
+                  flash={flash === si}
                 />
               ))}
             </View>
@@ -133,13 +144,19 @@ export function Pitch({
  * "where can he go" without anyone having to read anything.
  */
 function PitchSlot({
+  index,
   slot,
   lit,
   preview,
+  onRect,
+  flash,
 }: {
+  index: number;
   slot: Slot;
   lit: boolean;
   preview: boolean;
+  onRect?: (index: number, rect: SlotRect) => void;
+  flash?: boolean;
 }) {
   const reduce = useReduceMotion();
   const filled = !!slot.player;
@@ -147,6 +164,31 @@ function PitchSlot({
 
   const land = useSharedValue(filled ? 1 : 0);
   const pulse = useSharedValue(0);
+  const hit = useSharedValue(0);
+  const box = useRef<View>(null);
+
+  /**
+   * Where this slot is on screen. Measured after layout has settled, so a
+   * signing card can be flown into the exact box it belongs in rather than
+   * fading out over the middle of the pitch.
+   */
+  const measure = useCallback(() => {
+    if (!onRect) return;
+    requestAnimationFrame(() => {
+      box.current?.measureInWindow((x, y, w, h) => {
+        if (w > 0) onRect(index, { x, y, w, h });
+      });
+    });
+  }, [index, onRect]);
+
+  // The card arriving in the slot.
+  useEffect(() => {
+    if (!flash || reduce) return;
+    hit.value = withSequence(
+      withSpring(1, { stiffness: 380, damping: 10, mass: 1 }),
+      withSpring(0, { stiffness: 200, damping: 16, mass: 1 }),
+    );
+  }, [flash, hit, reduce]);
 
   // The signing arriving in its slot.
   useEffect(() => {
@@ -183,13 +225,19 @@ function PitchSlot({
 
   const style = useAnimatedStyle(() => ({
     transform: [
-      { scale: filled ? 0.86 + land.value * 0.14 : 1 + pulse.value * 0.05 },
+      {
+        scale:
+          (filled ? 0.86 + land.value * 0.14 : 1 + pulse.value * 0.05) *
+          (1 + hit.value * 0.16),
+      },
     ],
     opacity: filled ? 0.35 + land.value * 0.65 : 1,
   }));
 
   return (
     <Animated.View
+      ref={box}
+      onLayout={measure}
       style={[
         styles.slot,
         preview && styles.slotPreview,
@@ -197,11 +245,13 @@ function PitchSlot({
         {
           borderColor: tint,
           backgroundColor: filled ? tint + '26' : 'rgba(8,26,14,0.36)',
-          boxShadow: lit
-            ? `0px 0px 18px ${tint}`
-            : filled
-              ? `0px 3px 10px rgba(0,0,0,0.45), 0px 0px 10px ${tint}44`
-              : `0px 0px 8px ${tint}44`,
+          boxShadow: flash
+            ? `0px 0px 26px ${tint}, 0px 0px 10px ${tint}`
+            : lit
+              ? `0px 0px 18px ${tint}`
+              : filled
+                ? `0px 3px 10px rgba(0,0,0,0.45), 0px 0px 10px ${tint}44`
+                : `0px 0px 8px ${tint}44`,
         },
         lit && styles.slotLit,
       ]}
