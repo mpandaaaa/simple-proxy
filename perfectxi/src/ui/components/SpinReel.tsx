@@ -1,5 +1,5 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { Text, View, StyleSheet, type LayoutChangeEvent } from 'react-native';
+import { memo, useCallback, useEffect, useState } from 'react';
+import { Image, Text, View, StyleSheet, type LayoutChangeEvent } from 'react-native';
 import Animated, {
   Easing,
   Extrapolation,
@@ -18,13 +18,16 @@ import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
 import { color, radius, space, line } from '../tokens';
 import { font } from '../type';
 import { haptic, useReduceMotion } from '../feel';
+import { GRAIN_URI } from '../grain';
 import { eraOf } from '../../engine';
 import {
+  NEAR_MISS_AT,
+  OVERSHOOT_AT,
+  SETTLE_SPRING,
   WHEEL,
+  WINNER_AT,
   buildReel,
-  spinMs,
-  tickIndices,
-  travelDistance,
+  offsetFor,
   type ReelItem,
 } from '../../game/wheel';
 import { ClubDisc } from './ClubDisc';
@@ -33,53 +36,48 @@ import { ClubDisc } from './ClubDisc';
 const HOLD_MS = 520;
 
 /**
- * The spin, as a reel that actually travels.
+ * The spin.
  *
- * The web build ships its reel with `display:none` and cycles the club
- * name as text instead, because that is all a browser could do well. This
- * is what the site was reaching for: cards crossing a lit window, scaling
- * and turning away on a drum.
+ * A reel is stepped, not swept. It clicks through thirteen detents on a
+ * three phase schedule, drags the last two out, then stops one short and
+ * holds there before lurching the final card, carrying one past the winner
+ * and springing back onto it.
+ *
+ * The card hanging in the window during that held beat is deliberately a
+ * big club. It changes nothing: the result was drawn before the reel moved
+ * a pixel. It is there because a spin that visibly nearly lands somewhere
+ * else has a shape, and one that simply stops does not.
  *
  * Every transform is a worklet reading one shared value, so the reel runs
- * entirely on the UI thread and a slow JavaScript frame cannot stutter it.
- *
- * The ticks are fired from real position, not from a stopwatch: a reaction
- * on the UI thread watches the scroll cross card boundaries. Which
- * boundaries earn a tick is decided up front in src/game/wheel.ts, because
- * a naive tick on every boundary fires them 32ms apart at full pace and
- * the Taptic Engine renders that as one buzz rather than as ticking.
- *
- * The motion blur is a horizontal stretch rather than a Gaussian. Real
- * blur exists here but wraps the view in a SwiftUI host, and changing it
- * mid spin means tearing that down at the exact moment there is no frame
- * to spare.
+ * on the UI thread and a slow JavaScript frame cannot stutter it. The ticks
+ * come off real position: a reaction watches the scroll cross detents. No
+ * thinning is needed any more, because the step schedule already spaces
+ * them further apart than the Taptic Engine can resolve.
  */
 export function SpinReel({
   target,
   pool,
-  allTime,
   onSettled,
 }: {
   /** set this to a club-season and the reel runs to it */
   target: ReelItem | null;
   pool: readonly ReelItem[];
-  allTime?: boolean;
   onSettled: () => void;
 }) {
   const reduce = useReduceMotion();
 
-  const x = useSharedValue(0);
+  const x = useSharedValue(offsetFor(0));
   /** 1 at full pace, 0 once still: drives the smear and the dimming */
   const speed = useSharedValue(0);
-  /** the accent bloom behind the window, low while the reel is quick */
-  const bloom = useSharedValue(0.25);
+  /** the accent bloom behind the window */
+  const bloom = useSharedValue(0.22);
   /** the sweep of light across the window on landing */
   const flash = useSharedValue(0);
   /** the window flexing as the reel locks home */
   const pop = useSharedValue(0);
 
-  /** highest card boundary the reel has crossed this spin */
-  const crossed = useSharedValue(0);
+  /** highest detent the reel has clicked past this spin */
+  const detent = useSharedValue(0);
   const ticking = useSharedValue(false);
 
   const [width, setWidth] = useState(0);
@@ -92,69 +90,68 @@ export function SpinReel({
     setWidth(e.nativeEvent.layout.width);
   }, []);
 
-  const fireTick = useCallback((strong: boolean) => {
-    haptic(strong ? 'medium' : 'light');
-  }, []);
+  /** A detent clicking into the window. Selection is Apple's own reel tick. */
+  const tick = useCallback(() => haptic('select'), []);
 
   const land = useCallback(
     (item: ReelItem) => {
+      // The report's landing stack: a soft body, then a sharp beat on top.
+      haptic('medium');
+      setTimeout(() => haptic('success'), 80);
       setLanded(item);
       flash.value = withSequence(
         withTiming(1, { duration: 320, easing: Easing.out(Easing.quad) }),
         withTiming(0, { duration: 0 }),
       );
       pop.value = withSequence(
-        withSpring(1, { damping: 8, stiffness: 320 }),
-        withSpring(0, { damping: 14, stiffness: 180 }),
+        withSpring(1, { stiffness: 320, damping: 9, mass: 1 }),
+        withSpring(0, { stiffness: 180, damping: 15, mass: 1 }),
       );
       setTimeout(onSettled, HOLD_MS);
     },
     [flash, pop, onSettled],
   );
 
-  // Position driven ticks. A reaction runs on the UI thread every frame the
-  // scroll changes, so a tick lands when the boundary actually crosses
-  // rather than when a timer thinks it should have.
-  // Memoised: the reaction worklet captures this, and rebuilding the array
-  // on every render would rebuild the worklet with it.
-  const keep = useMemo(() => tickIndices(allTime), [allTime]);
+  // Position driven ticks. Each step ends exactly on a detent, so crossing
+  // one is the same event as a card clicking into the window.
   useAnimatedReaction(
     () => x.value,
     (cur) => {
       'worklet';
       if (!ticking.value) return;
-      const travelled = -cur;
-      if (travelled <= 0) return;
-
-      const idx = Math.min(WHEEL.TRAVEL, Math.floor(travelled / WHEEL.CARD) + 1);
-      if (idx <= crossed.value) return;
-
-      const from = crossed.value;
-      crossed.value = idx;
-
-      // A dropped frame can carry the reel past more than one boundary.
-      // Fire once for the newest kept one rather than a burst for each.
-      for (let k = idx; k > from; k--) {
-        if (keep[k]) {
-          runOnJS(fireTick)(k === WHEEL.TRAVEL);
-          return;
-        }
-      }
+      const progress = -cur / WHEEL.CARD - WHEEL.PAD;
+      const d = Math.floor(progress + 0.0001);
+      if (d <= detent.value) return;
+      detent.value = d;
+      // Only the detents before the held beat tick. The landing gets its
+      // own, heavier stack when the settle spring finishes.
+      if (d >= 1 && d <= NEAR_MISS_AT) runOnJS(tick)();
     },
   );
 
   useEffect(() => {
-    if (!target || !pool.length) return;
+    // No spin in flight: sit on a fresh strip with cards either side.
+    if (!target) {
+      if (pool.length) setStrip(buildReel(pool[0], pool));
+      setLanded(null);
+      x.value = offsetFor(0);
+      speed.value = 0;
+      bloom.value = 0.22;
+      detent.value = 0;
+      ticking.value = false;
+      return;
+    }
+    if (!pool.length) return;
 
     setLanded(null);
     setStrip(buildReel(target, pool));
-    x.value = 0;
+    x.value = offsetFor(0);
     flash.value = 0;
     pop.value = 0;
-    crossed.value = 0;
+    detent.value = 0;
 
     if (reduce) {
-      x.value = -WHEEL.TRAVEL * WHEEL.CARD;
+      x.value = offsetFor(WINNER_AT);
       speed.value = 0;
       bloom.value = 1;
       haptic('medium');
@@ -163,43 +160,54 @@ export function SpinReel({
       return () => clearTimeout(t);
     }
 
-    speed.value = 0;
-    bloom.value = 0.25;
     ticking.value = true;
 
-    const D = spinMs(!!allTime);
+    // creep back, then one timed step per detent, then the held beat, the
+    // lurch past the winner, and the spring back onto it
+    const steps = WHEEL.STEPS.map((ms, i) =>
+      withTiming(offsetFor(i + 1), { duration: ms, easing: Easing.linear }),
+    );
 
     x.value = withSequence(
-      // Anticipation: the reel eases back before it goes, the way a wheel
-      // is wound. Without it the first frame is already at full speed.
-      withTiming(WHEEL.CREEP, {
+      withTiming(offsetFor(0) + WHEEL.CREEP, {
         duration: WHEEL.CREEP_MS,
         easing: Easing.inOut(Easing.quad),
       }),
-      withTiming(-travelDistance, { duration: D, easing: Easing.out(Easing.quad) }),
-      withSpring(
-        -WHEEL.TRAVEL * WHEEL.CARD,
-        { damping: 13, stiffness: 210, mass: 1 },
-        (finished) => {
-          'worklet';
-          ticking.value = false;
-          if (finished) runOnJS(land)(target);
-        },
+      ...steps,
+      withDelay(
+        WHEEL.HELD_MS,
+        withTiming(offsetFor(OVERSHOOT_AT), {
+          duration: WHEEL.LURCH_MS,
+          easing: Easing.out(Easing.quad),
+        }),
       ),
+      withSpring(offsetFor(WINNER_AT), SETTLE_SPRING, (finished) => {
+        'worklet';
+        ticking.value = false;
+        if (finished) runOnJS(land)(target);
+      }),
     );
 
-    // Velocity of an out-quad falls off linearly, so the smear does too.
+    const runMs = WHEEL.STEPS.reduce((n, ms) => n + ms, 0);
+
+    // Smear tracks the schedule rather than the position: it is at its
+    // strongest through the fast phase and gone by the held beat.
     speed.value = withDelay(
       WHEEL.CREEP_MS,
       withSequence(
         withTiming(1, { duration: 0 }),
-        withTiming(0, { duration: D, easing: Easing.linear }),
+        withTiming(0, { duration: runMs, easing: Easing.in(Easing.quad) }),
       ),
     );
 
+    // The window dims for the held beat, then comes up hard on the landing.
     bloom.value = withDelay(
       WHEEL.CREEP_MS,
-      withTiming(1, { duration: D, easing: Easing.in(Easing.quad) }),
+      withSequence(
+        withTiming(0.5, { duration: runMs, easing: Easing.linear }),
+        withTiming(0.18, { duration: WHEEL.HELD_MS, easing: Easing.out(Easing.quad) }),
+        withTiming(1, { duration: WHEEL.LURCH_MS + 120, easing: Easing.out(Easing.quad) }),
+      ),
     );
     // A new target is a new spin. Nothing else may restart one in flight.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -225,6 +233,25 @@ export function SpinReel({
 
   return (
     <View style={styles.housing} onLayout={onLayout}>
+      {/* ambient orbs: low frequency light under everything, so the panel
+          is lit rather than filled */}
+      <View style={styles.orbs} pointerEvents="none">
+        <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <Defs>
+            <RadialGradient id="orbA" cx="50%" cy="50%" r="50%">
+              <Stop offset="0" stopColor={color.accent} stopOpacity={0.16} />
+              <Stop offset="1" stopColor={color.accent} stopOpacity={0} />
+            </RadialGradient>
+            <RadialGradient id="orbB" cx="50%" cy="50%" r="50%">
+              <Stop offset="0" stopColor={color.gold} stopOpacity={0.08} />
+              <Stop offset="1" stopColor={color.gold} stopOpacity={0} />
+            </RadialGradient>
+          </Defs>
+          <Ellipse cx="18" cy="14" rx="46" ry="40" fill="url(#orbA)" />
+          <Ellipse cx="88" cy="92" rx="42" ry="38" fill="url(#orbB)" />
+        </Svg>
+      </View>
+
       <View style={styles.topEdge} pointerEvents="none" />
 
       <Animated.View style={[styles.window, windowStyle]}>
@@ -232,12 +259,12 @@ export function SpinReel({
           <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
             <Defs>
               <RadialGradient id="reelBloom" cx="50%" cy="50%" r="50%">
-                <Stop offset="0" stopColor={glow} stopOpacity={0.6} />
+                <Stop offset="0" stopColor={glow} stopOpacity={0.62} />
                 <Stop offset="0.5" stopColor={glow} stopOpacity={0.18} />
                 <Stop offset="1" stopColor={glow} stopOpacity={0} />
               </RadialGradient>
             </Defs>
-            <Ellipse cx="50" cy="50" rx="34" ry="60" fill="url(#reelBloom)" />
+            <Ellipse cx="50" cy="50" rx="34" ry="62" fill="url(#reelBloom)" />
           </Svg>
         </Animated.View>
 
@@ -273,6 +300,15 @@ export function SpinReel({
 
         <Animated.View pointerEvents="none" style={[styles.flash, flashStyle]} />
 
+        {/* Image has no pointerEvents prop, so it is wrapped rather than
+            left able to swallow a touch. */}
+        <View style={styles.grain} pointerEvents="none">
+          <Image
+            source={{ uri: GRAIN_URI }}
+            resizeMode="repeat"
+            style={styles.grainImage}
+          />
+        </View>
         <View style={styles.inset} pointerEvents="none" />
       </Animated.View>
     </View>
@@ -303,12 +339,12 @@ const ReelCard = memo(function ReelCard({
     const c = Extrapolation.CLAMP;
 
     const scale = interpolate(ad, [0, 1, 2], [1, 0.9, 0.8], c);
-    const smear = interpolate(speed.value, [0, 1], [1, 1.55]);
+    const smear = interpolate(speed.value, [0, 1], [1, 1.5]);
 
     return {
       opacity:
-        interpolate(ad, [0, 1, 2], [1, 0.6, 0.22], c) *
-        interpolate(speed.value, [0, 1], [1, 0.7]),
+        interpolate(ad, [0, 1, 2], [1, 0.62, 0.24], c) *
+        interpolate(speed.value, [0, 1], [1, 0.72]),
       transform: [
         { perspective: 760 },
         // cards bunch toward the centre, the way a drum foreshortens
@@ -324,7 +360,7 @@ const ReelCard = memo(function ReelCard({
 
   return (
     <Animated.View style={[styles.cardSlot, style]}>
-      <View style={[styles.card, dim && styles.cardDim, { borderColor: hexA(tint, 0.3) }]}>
+      <View style={[styles.card, dim && styles.cardDim, { borderColor: hexA(tint, 0.32) }]}>
         <ClubDisc club={item.club} size={44} />
         <Text style={styles.club} numberOfLines={2}>
           {item.club}
@@ -346,30 +382,42 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     borderWidth: 1,
     borderColor: line.card,
-    backgroundColor: '#0B120E',
+    // Elevation on dark comes from the surface getting lighter, not from a
+    // shadow nobody can see.
+    backgroundColor: '#0D1611',
     experimental_backgroundImage:
-      'linear-gradient(180deg, #131E17 0%, #0A100C 55%, #070B08 100%)',
+      'linear-gradient(180deg, #16231B 0%, #0C120E 55%, #080C09 100%)',
     boxShadow:
-      '0px 20px 40px rgba(0,0,0,0.55), inset 0px 1px 0px rgba(255,255,255,0.07)',
+      '0px 20px 40px rgba(0,0,0,0.55), inset 0px 1px 0px rgba(255,255,255,0.08)',
     padding: space.s3,
     overflow: 'hidden',
   },
+  orbs: { position: 'absolute', top: -40, left: -40, right: -40, bottom: -40 },
   topEdge: {
     position: 'absolute',
     top: 0,
     left: '16%',
     right: '16%',
     height: 1,
-    backgroundColor: 'rgba(255,255,255,0.16)',
+    backgroundColor: 'rgba(255,255,255,0.18)',
   },
 
   window: {
     height: WHEEL.CARD_H + space.s3 * 2,
     borderRadius: radius.lg,
-    backgroundColor: '#060A07',
+    backgroundColor: '#070C09',
     justifyContent: 'center',
     overflow: 'hidden',
   },
+  grain: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.04,
+  },
+  grainImage: { width: '100%', height: '100%' },
   inset: {
     position: 'absolute',
     top: 0,
@@ -392,15 +440,15 @@ const styles = StyleSheet.create({
     height: WHEEL.CARD_H,
     borderRadius: radius.md,
     borderWidth: 1,
-    backgroundColor: '#101A14',
-    experimental_backgroundImage: 'linear-gradient(180deg, #17241C 0%, #0D150F 100%)',
-    boxShadow: '0px 6px 16px rgba(0,0,0,0.45)',
+    backgroundColor: '#111C15',
+    experimental_backgroundImage: 'linear-gradient(180deg, #19271E 0%, #0E1710 100%)',
+    boxShadow: 'inset 0px 1px 0px rgba(255,255,255,0.06)',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
     paddingHorizontal: space.s2,
   },
-  cardDim: { opacity: 0.5 },
+  cardDim: { opacity: 0.55 },
   club: {
     fontFamily: font.displayBold,
     fontSize: 15,
@@ -442,18 +490,18 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     left: 0,
-    width: 64,
+    width: 58,
     experimental_backgroundImage:
-      'linear-gradient(90deg, rgba(6,10,7,1) 6%, rgba(6,10,7,0) 100%)',
+      'linear-gradient(90deg, rgba(7,12,9,1) 4%, rgba(7,12,9,0) 100%)',
   },
   fadeRight: {
     position: 'absolute',
     top: 0,
     bottom: 0,
     right: 0,
-    width: 64,
+    width: 58,
     experimental_backgroundImage:
-      'linear-gradient(270deg, rgba(6,10,7,1) 6%, rgba(6,10,7,0) 100%)',
+      'linear-gradient(270deg, rgba(7,12,9,1) 4%, rgba(7,12,9,0) 100%)',
   },
 
   flash: {

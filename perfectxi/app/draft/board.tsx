@@ -217,7 +217,6 @@ export default function DraftBoard() {
               <SpinReel
                 target={pending ? { club: pending.club, season: pending.season } : null}
                 pool={pool}
-                allTime={state.config.mode === 'alltime'}
                 onSettled={onSettled}
               />
             </View>
