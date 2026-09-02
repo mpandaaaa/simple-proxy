@@ -7,7 +7,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
-import { router, Stack, useIsFocused } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import {
   ModeScreen,
   Press,
@@ -93,16 +93,22 @@ export default function Season() {
     );
   }, [run]);
 
-  // Only while this screen is the one on top.
-  //
-  // Clearing the run from the results screen also empties it here, and an
-  // unfocused screen sitting underneath was replacing the root with the
-  // setup screen as it went. That left the setup screen as the only route
-  // in the stack, and its back button had nowhere to go.
-  const focused = useIsFocused();
+  /**
+   * Only when there was never a run to begin with.
+   *
+   * This redirect is for arriving here with nothing, which is a reload or
+   * a link, not for the run ending. Finishing a run clears it, and this
+   * screen is still sitting under the results while that happens. Watching
+   * for focus was not enough: a stack pops through its screens, so this
+   * one becomes the top for a frame on the way out and was sending
+   * everybody to the draft setup as it went. Once a run has existed here,
+   * losing it means the flow is finishing rather than broken.
+   */
+  const everHadRun = useRef(false);
+  if (run) everHadRun.current = true;
   useEffect(() => {
-    if (!run && focused) router.replace('/draft');
-  }, [run, focused]);
+    if (!run && !everHadRun.current) router.replace('/draft');
+  }, [run]);
 
   const result = run?.result ?? null;
   const total = result ? result.matches.length : 38;

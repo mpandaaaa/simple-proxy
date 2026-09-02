@@ -261,6 +261,9 @@ export default function Results() {
   const card = useRef<View>(null);
   const [sharing, setSharing] = useState(false);
   const [carrying, setCarrying] = useState(false);
+  // Read when the dialog opens rather than on every render, so writing the
+  // new career cannot change the wording underneath the player's thumb.
+  const replacing = useRef(false);
 
   /**
    * The picture comes off a real view rendered off screen at a fixed size,
@@ -607,6 +610,7 @@ export default function Results() {
           <Press
             onPress={() => {
               haptic('medium');
+              replacing.current = dynastyStore.read() !== null;
               setCarrying(true);
             }}
             feel="none"
@@ -631,9 +635,9 @@ export default function Results() {
           <Press
             onPress={() => {
               haptic('medium');
-              clearRun();
               router.dismissAll();
               router.push('/draft');
+              clearRun();
             }}
             feel="none"
             style={[styles.again, { borderColor: tone.edge }]}
@@ -644,8 +648,8 @@ export default function Results() {
           <Press
             onPress={() => {
               haptic('light');
-              clearRun();
               router.dismissAll();
+              clearRun();
             }}
             feel="none"
             style={styles.home}
@@ -683,24 +687,22 @@ export default function Results() {
 
       <Confirm
         visible={carrying}
-        title={
-          dynastyStore.read() ? 'Replace your career?' : 'Start a Dynasty?'
-        }
+        title={replacing.current ? 'Replace your career?' : 'Start a Dynasty?'}
         body={
-          dynastyStore.read()
+          replacing.current
             ? 'You already have a career running. Starting a new one with this XI ends that one, and there is no way back to it.'
             : 'These eleven become a club. They age every season, they decline, and one day they retire. Signings are not built yet, so this is the squad you keep.'
         }
-        confirmLabel={dynastyStore.read() ? 'Replace it' : 'Start it'}
+        confirmLabel={replacing.current ? 'Replace it' : 'Start it'}
         onCancel={() => setCarrying(false)}
         onConfirm={() => {
           setCarrying(false);
           dynastyStore.write(
             startDynasty(squad, config.formation, 'Your XI', run.seed),
           );
-          clearRun();
           router.dismissAll();
           router.push('/dynasty');
+          clearRun();
         }}
       />
 
@@ -712,8 +714,8 @@ export default function Results() {
         onCancel={() => setLeaving(false)}
         onConfirm={() => {
           setLeaving(false);
-          clearRun();
           router.dismissAll();
+          clearRun();
         }}
       />
     </>

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import {
   ModeScreen,
   Press,
@@ -51,6 +51,14 @@ export default function DynastyHub() {
   const [career, setCareer] = useState<Dynasty | null>(() => dynastyStore.read());
   const [busy, setBusy] = useState(false);
   const [ending, setEnding] = useState(false);
+
+  // Re-read whenever the hub comes back to the front, so it can never sit
+  // showing an empty state next to a career that exists.
+  useFocusEffect(
+    useCallback(() => {
+      setCareer(dynastyStore.read());
+    }, []),
+  );
 
   const played = useMemo(
     () => (career ? career.seasons.some((s) => s.year === career.year) : false),
