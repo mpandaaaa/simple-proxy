@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import {
   ModeScreen,
   Button,
@@ -13,6 +13,7 @@ import {
   OverallStrip,
   ClubDisc,
   Sheet,
+  Confirm,
 } from '../../src/ui/components';
 import type { Anchor } from '../../src/ui/components/PlayerCard';
 import type { SlotRect } from '../../src/ui/components/Pitch';
@@ -33,6 +34,7 @@ import {
 } from '../../src/engine';
 import {
   autoFill,
+  clearRun,
   doSpin,
   pickPlayer,
   settleSpin,
@@ -60,6 +62,7 @@ export default function DraftBoard() {
   } | null>(null);
   /** the slot a signing has just been flown into, so it can light up */
   const [struck, setStruck] = useState<number | null>(null);
+  const [leaving, setLeaving] = useState(false);
 
   /**
    * Where every pitch slot sits on screen, so the signing card can fly into
@@ -349,10 +352,15 @@ export default function DraftBoard() {
   );
 
   return (
+    <>
+      <Stack.Screen options={{ gestureEnabled: false }} />
     <ModeScreen
       overline={`${left} left to fill`}
       title={`${state.filled} of ${state.total} picked`}
       scroll={false}
+      // Backing out of a draft in progress throws away every pick, so it
+      // asks first, exactly as leaving squad complete does.
+      onBack={() => setLeaving(true)}
       right={
         avg > 0 ? (
           <View style={styles.avgChip}>
@@ -501,6 +509,20 @@ export default function DraftBoard() {
         </View>
       </Sheet>
 
+      <Confirm
+        visible={leaving}
+        title="Leave this draft?"
+        body="Your picks will be lost and the draft reset. This cannot be undone."
+        confirmLabel="Leave"
+        cancelLabel="Stay"
+        onCancel={() => setLeaving(false)}
+        onConfirm={() => {
+          setLeaving(false);
+          clearRun();
+          router.dismissAll();
+        }}
+      />
+
       <PlayerCard
         player={reveal?.player ?? null}
         slotPos={reveal?.pos ?? null}
@@ -513,6 +535,7 @@ export default function DraftBoard() {
         }}
       />
     </ModeScreen>
+    </>
   );
 }
 

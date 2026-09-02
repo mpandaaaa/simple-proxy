@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Image, Text, View, StyleSheet } from 'react-native';
 import Animated, {
   Easing,
@@ -9,7 +9,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import {
   ModeScreen,
   Button,
@@ -17,6 +17,7 @@ import {
   Rise,
   ClubDisc,
   Pitch,
+  Confirm,
 } from '../../src/ui/components';
 import { color, space, radius, line, gradient, positionColor } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
@@ -35,7 +36,7 @@ import {
   type Position,
   type Slot,
 } from '../../src/engine';
-import { useRun } from '../../src/game/run';
+import { clearRun, useRun } from '../../src/game/run';
 
 const LINES: { key: Position; title: string }[] = [
   { key: 'GK', title: 'Goalkeeper' },
@@ -76,6 +77,7 @@ const ERAS = [
  */
 export default function SquadComplete() {
   const run = useRun();
+  const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
     if (!run) router.replace('/draft');
@@ -109,12 +111,15 @@ export default function SquadComplete() {
   })).filter((e) => e.n > 0);
 
   return (
+    <>
+      {/* The edge swipe would go round the warning, so it is off here. */}
+      <Stack.Screen options={{ gestureEnabled: false }} />
     <ModeScreen
       overline="Squad complete"
       title="Your XI"
-      // The board was replaced by this screen, so popping would land on the
-      // setup screen mid run. Back belongs at home.
-      onBack={() => router.dismissAll()}
+      // Leaving throws the XI away, so it asks first. The board was
+      // replaced by this screen, so there is no draft to go back to.
+      onBack={() => setLeaving(true)}
       right={
         <View style={styles.fmPill}>
           <Text style={styles.fmText}>{config.formation}</Text>
@@ -284,7 +289,22 @@ export default function SquadComplete() {
           onPress={() => router.push('/draft/season')}
         />
       </Rise>
+
+      <Confirm
+        visible={leaving}
+        title="Leave this draft?"
+        body="Your XI will be lost and the draft reset. This cannot be undone."
+        confirmLabel="Leave"
+        cancelLabel="Stay"
+        onCancel={() => setLeaving(false)}
+        onConfirm={() => {
+          setLeaving(false);
+          clearRun();
+          router.dismissAll();
+        }}
+      />
     </ModeScreen>
+    </>
   );
 }
 
