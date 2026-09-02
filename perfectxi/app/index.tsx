@@ -23,7 +23,14 @@ import {
 } from '../src/ui/icons';
 import { color, space, radius, gradient, shadow, line } from '../src/ui/tokens';
 import { font, text } from '../src/ui/type';
-import { progressStore, dynastyStore } from '../src/save';
+import {
+  progressStore,
+  dynastyStore,
+  historyStore,
+  careerStore,
+  ranked,
+} from '../src/save';
+import { ACHIEVEMENTS } from '../src/game/achievements';
 import type { Progress, DynastySummary } from '../src/save';
 
 /**
@@ -37,11 +44,34 @@ import type { Progress, DynastySummary } from '../src/save';
  * Copy comes from the live site rather than being written fresh, so the app
  * and the website say the same things about the same modes.
  */
+/**
+ * What the two record rows say, read off what has actually been played.
+ *
+ * A row that promises "your greatest seasons" and leads to an empty page
+ * is worse than one that admits there is nothing there yet.
+ */
+function readRecord(): { hall: string; cabinet: string } {
+  const runs = historyStore.read().runs;
+  const career = careerStore.read();
+  const got = career.earned.length;
+
+  const hall = runs.length
+    ? `${runs.length} season${runs.length === 1 ? '' : 's'} kept · best ${ranked(runs)[0].pts} points`
+    : 'Your greatest seasons, ranked';
+
+  const cabinet = got
+    ? `${got} of ${ACHIEVEMENTS.length} earned${career.titles ? ` · ${career.titles} title${career.titles === 1 ? '' : 's'}` : ''}`
+    : 'Every achievement you have earned';
+
+  return { hall, cabinet };
+}
+
 export default function Home() {
   const [progress, setProgress] = useState<Progress>(() => progressStore.read());
   const [dynasty, setDynasty] = useState<DynastySummary | null>(() =>
     dynastyStore.read(),
   );
+  const [record, setRecord] = useState(() => readRecord());
 
   // Saves change while you are inside a mode, so the status lines are read
   // again every time Home comes back to the front rather than once on mount.
@@ -49,6 +79,7 @@ export default function Home() {
     useCallback(() => {
       setProgress(progressStore.read());
       setDynasty(dynastyStore.read());
+      setRecord(readRecord());
     }, []),
   );
 
@@ -207,10 +238,8 @@ export default function Home() {
             icon={IconMedal}
             tone="gold"
             title="Hall of Fame"
-            subtitle="Your greatest seasons, ranked"
-            onPress={() =>
-              soon('Your game', 'Hall of Fame', 'Your greatest seasons, ranked.')
-            }
+            subtitle={record.hall}
+            onPress={() => router.push('/hall')}
           />
         </Collapse>
 
@@ -219,14 +248,8 @@ export default function Home() {
             icon={IconTrophy}
             tone="gold"
             title="Trophy cabinet"
-            subtitle="Every achievement you have earned"
-            onPress={() =>
-              soon(
-                'Records',
-                'Trophy cabinet',
-                'Every achievement you have earned, across the draft, Dynasty and the World Cup.',
-              )
-            }
+            subtitle={record.cabinet}
+            onPress={() => router.push('/cabinet')}
           />
           <Row
             icon={IconCalendar}

@@ -54,7 +54,13 @@ import {
   type TableRow,
 } from '../../src/engine';
 import { clearRun, useRun } from '../../src/game/run';
-import { progressStore } from '../../src/save';
+import {
+  careerStore,
+  progressStore,
+  remember,
+  type SeasonRecord,
+} from '../../src/save';
+import { achievementFor, earn, foldSeason } from '../../src/game/achievements';
 
 /**
  * The season review.
@@ -142,12 +148,80 @@ export default function Results() {
   const [leaving, setLeaving] = useState(false);
   const [watching, setWatching] = useState<number | null>(null);
 
+  const [unlocked, setUnlocked] = useState<string[]>([]);
+
   // The season goes on the record here rather than while it was playing, so
   // a season abandoned halfway never counts.
   useEffect(() => {
     const r = run?.result;
     if (!r || banked.current) return;
     banked.current = true;
+
+    const squad = run.state.squad;
+    const config = run.state.config;
+    const rating = squadAvg(squad);
+    const won = simulateCups(rating, r.position, run.seed);
+    const exp = expectation(rating, r.position);
+
+    // The career counts the season first, then judges it, so "five seasons
+    // played" is earned by the fifth season rather than the sixth.
+    const before = careerStore.read();
+    const after = foldSeason(before, r, won, config);
+    const fresh = earn({
+      career: after,
+      result: r,
+      cups: won,
+      config,
+      avg: rating,
+      above: exp.diff,
+      wasRelegated: before.lastRelegated,
+    });
+    careerStore.write({ ...after, earned: [...after.earned, ...fresh] });
+    setUnlocked(fresh);
+
+    const scorers = Object.entries(r.playerStats)
+      .map(([name, st]) => ({ name, goals: st.g }))
+      .sort((a, b) => b.goals - a.goals);
+
+    const won_: string[] = [];
+    if (r.position === 1) won_.push('League champions');
+    if (won.national.won) won_.push('National Cup');
+    if (won.continental.won) won_.push('Continental Cup');
+    if (won.treble) won_.push('The Treble');
+    else if (won.double) won_.push('The Double');
+
+    const record: SeasonRecord = {
+      at: Date.now(),
+      seed: run.seed,
+      engineVersion: run.engineVersion,
+      formation: config.formation,
+      mode: config.mode,
+      diff: config.diff,
+      avg: Math.round(rating),
+      position: r.position,
+      pts: r.pts,
+      w: r.wins,
+      d: r.draws,
+      l: r.losses,
+      gf: r.gf,
+      ga: r.ga,
+      grade: r.grade,
+      cleanSheets: r.cleanSheets,
+      honours: won_,
+      nationalCup: won.national.won,
+      continentalCup: won.continental.won,
+      topScorer: scorers[0] && scorers[0].goals > 0 ? scorers[0] : null,
+      xi: squad
+        .filter((sl) => sl.player)
+        .map((sl) => ({
+          n: sl.player!.n,
+          pos: sl.pos,
+          rtg: sl.player!.rtg,
+          club: sl.player!.club,
+          season: sl.player!.season,
+        })),
+    };
+    remember(record);
     progressStore.update((p) => ({
       ...p,
       seasons: p.seasons + 1,
@@ -451,6 +525,33 @@ export default function Results() {
             );
           })}
         </View>
+
+        {unlocked.length ? (
+          <Rise delay={0}>
+            <View style={styles.unlocked}>
+              <Text style={styles.unlockedKey}>
+                {unlocked.length === 1
+                  ? 'Achievement unlocked'
+                  : `${unlocked.length} achievements unlocked`}
+              </Text>
+              {unlocked.map((key) => {
+                const a = achievementFor(key);
+                if (!a) return null;
+                return (
+                  <View key={key} style={styles.unlock}>
+                    <Text style={styles.unlockMark} allowFontScaling={false}>
+                      {a.mark}
+                    </Text>
+                    <View style={styles.unlockBody}>
+                      <Text style={styles.unlockName}>{a.name}</Text>
+                      <Text style={styles.unlockDesc}>{a.desc}</Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          </Rise>
+        ) : null}
 
         {/* ================= the cups ================= */}
         <Text style={[text.label, styles.sect]}>Cup competitions</Text>
@@ -1348,6 +1449,30 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   plStatLabel: { ...text.key, fontSize: 7.5, color: color.text3 },
+
+  /* ---- achievements just earned ---- */
+  unlocked: {
+    marginTop: space.s5,
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: line.gold,
+    backgroundColor: '#141207',
+    experimental_backgroundImage:
+      'linear-gradient(180deg, #221D0D 0%, #14120A 60%, #0D0C07 100%)',
+    gap: space.s2,
+  },
+  unlockedKey: { ...text.key, fontSize: 10, color: color.gold, marginBottom: 2 },
+  unlock: { flexDirection: 'row', alignItems: 'center', gap: space.s3 },
+  unlockMark: { fontSize: 22, lineHeight: 28, width: 28, textAlign: 'center' },
+  unlockBody: { flex: 1, minWidth: 0 },
+  unlockName: {
+    fontFamily: font.displayBold,
+    fontSize: 17,
+    lineHeight: 21,
+    color: color.text1,
+  },
+  unlockDesc: { ...text.small, fontSize: 12 },
 
   /* ---- the cups ---- */
   cups: { gap: space.s3 },

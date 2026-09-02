@@ -6,3 +6,7 @@ export { progressStore } from './progress';
 export type { Progress } from './progress';
 export { dynastyStore } from './dynasty';
 export type { DynastySummary } from './dynasty';
+export { historyStore, remember, ranked, HISTORY_CAP } from './history';
+export type { History, SeasonRecord, HistoryPlayer } from './history';
+export { careerStore } from './career';
+export type { Career } from './career';

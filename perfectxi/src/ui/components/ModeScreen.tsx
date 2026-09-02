@@ -7,6 +7,18 @@ import { font, text } from '../type';
 import { IconBack } from '../icons';
 import { Press } from './Press';
 
+/**
+ * Back, and home if there is no back.
+ *
+ * A screen can end up as the only route in the stack, and asking a stack
+ * of one to go back throws GO_BACK straight into the player's face. Home
+ * is the honest destination when there is nowhere to return to.
+ */
+function goBack() {
+  if (router.canGoBack()) router.back();
+  else router.replace('/');
+}
+
 const BAR = 56;
 /**
  * How far the page dissolves under the bar rather than being cut by it.
@@ -91,7 +103,7 @@ export function ModeScreen({
 
       <View style={[styles.bar, { paddingTop: insets.top, height: headerHeight }]}>
         <Press
-          onPress={onBack ?? (() => router.back())}
+          onPress={onBack ?? goBack}
           feel="light"
           scaleTo={0.9}
           style={styles.backHit}
