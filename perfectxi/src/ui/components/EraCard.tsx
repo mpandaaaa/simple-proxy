@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 import Animated, {
   Easing,
@@ -27,6 +27,7 @@ import {
   type ReelItem,
 } from '../../game/wheel';
 import { ClubDisc } from './ClubDisc';
+import { Ticker } from './Ticker';
 
 /**
  * The era card, which on this game is also the spinner.
@@ -267,7 +268,7 @@ export function EraCard({
             </View>
             {live ? (
               <View style={styles.strengthWrap}>
-                <CountUp to={strength} />
+                <Ticker value={strength} style={styles.strengthValue} />
                 <Text style={styles.strengthLabel}>Squad</Text>
               </View>
             ) : null}
@@ -338,39 +339,6 @@ const ReelRow = memo(function ReelRow({
     </Animated.View>
   );
 });
-
-/**
- * A number that arrives rather than appears. Driven from JavaScript
- * because glyphs in a Text node cannot be animated from the native side.
- */
-function CountUp({ to }: { to: number }) {
-  const reduce = useReduceMotion();
-  const [n, setN] = useState(reduce ? to : 0);
-  const frame = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (reduce || !to) {
-      setN(to);
-      return;
-    }
-    const start = Date.now();
-    const step = () => {
-      const p = Math.min(1, (Date.now() - start) / 560);
-      setN(Math.round(to * (1 - Math.pow(1 - p, 3))));
-      if (p < 1) frame.current = requestAnimationFrame(step);
-    };
-    frame.current = requestAnimationFrame(step);
-    return () => {
-      if (frame.current !== null) cancelAnimationFrame(frame.current);
-    };
-  }, [to, reduce]);
-
-  return (
-    <Text style={styles.strengthValue} allowFontScaling={false}>
-      {n || '—'}
-    </Text>
-  );
-}
 
 function hexA(hex: string, a: number): string {
   const h = hex.replace('#', '');
