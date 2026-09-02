@@ -31,7 +31,14 @@ import {
   type Position,
   type SpinResult,
 } from '../../src/engine';
-import { doSpin, pickPlayer, settleSpin, spendReroll, useRun } from '../../src/game/run';
+import {
+  autoFill,
+  doSpin,
+  pickPlayer,
+  settleSpin,
+  spendReroll,
+  useRun,
+} from '../../src/game/run';
 
 /** A player, or the rule that separates the ones you can use from the rest. */
 type Row =
@@ -289,6 +296,22 @@ export default function DraftBoard() {
           onPress={onSpin}
           style={styles.spinBtn}
         />
+      ) : null}
+
+      {/* Testing only. __DEV__ is false in any build that ships, so this
+          cannot reach the App Store even if everyone forgets it is here. */}
+      {__DEV__ && !pending ? (
+        <Press
+          onPress={() => {
+            haptic('medium');
+            autoFill();
+          }}
+          feel="none"
+          scaleTo={0.96}
+          style={styles.autoFill}
+        >
+          <Text style={styles.autoFillText}>Auto fill the XI · testing</Text>
+        </Press>
       ) : null}
 
       {board ? (
@@ -607,6 +630,17 @@ const styles = StyleSheet.create({
   },
 
   spinBtn: { marginTop: space.s2 },
+  autoFill: {
+    alignSelf: 'center',
+    marginTop: space.s3,
+    paddingHorizontal: space.s4,
+    paddingVertical: space.s2,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(255,255,255,0.22)',
+  },
+  autoFillText: { ...text.key, fontSize: 9.5, color: color.text3 },
 
   rerollRow: { flexDirection: 'row', alignItems: 'center', gap: space.s3 },
   rerollBtn: {

@@ -1,9 +1,11 @@
 import { useSyncExternalStore } from 'react';
 import {
   ENGINE_VERSION,
+  canPlay,
   mulberry32,
   newDraft,
   place,
+  slotsForPlayer,
   spin,
   type DraftConfig,
   type DraftState,
@@ -130,6 +132,38 @@ export function spendReroll(): boolean {
   };
   emit();
   return true;
+}
+
+/**
+ * Fill the rest of the XI, taking the best playable player off every board.
+ *
+ * A testing tool, so the draft does not have to be played by hand to reach
+ * squad complete and the season. It is not a shortcut around the rules: it
+ * spins through the same engine, draws from the run's own generator, and
+ * respects position eligibility, so the squad it produces is one that could
+ * have been drafted by hand.
+ *
+ * The whole run happens before anything is emitted, so the eleven picks are
+ * one update rather than eleven renders.
+ */
+export function autoFill(): void {
+  if (!run) return;
+
+  let state = run.state;
+  let guard = 0;
+  while (state.filled < state.total) {
+    if (++guard > 500) break;
+    const result = spin(state, rnd);
+    if (!result) break;
+    const choice = result.board.find((p) => canPlay(state, p));
+    if (!choice) continue;
+    const slots = slotsForPlayer(state, choice);
+    if (!slots.length) continue;
+    state = place(state, choice, slots[0]);
+  }
+
+  run = { ...run, state, board: null, club: null, season: null, spinning: false };
+  emit();
 }
 
 export function setResult(result: SeasonResult): void {
