@@ -104,6 +104,15 @@ export function PlayerCard({
   const foil = useSharedValue(0);
 
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /**
+   * Where this card is going, captured while it is still being told.
+   *
+   * The board clears the reveal to close the card, which also clears the
+   * slot it was flying to, so reading the prop on the way out finds
+   * nothing and the card fades where it stands. It is remembered on the
+   * way in instead.
+   */
+  const target = useRef<Anchor | null>(null);
   const [card, setCard] = useState<Pick | null>(null);
   const [rating, setRating] = useState(0);
   const frame = useRef<number | null>(null);
@@ -134,6 +143,7 @@ export function PlayerCard({
     if (player) {
       const tier = tierFor(player.rtg);
       setCard(player);
+      target.current = to ?? null;
       anchorTo(from);
 
       // The haptic gets heavier with the signing.
@@ -184,7 +194,7 @@ export function PlayerCard({
 
     if (!card) return;
     // Done: fly into the slot it filled, and knock on the way in.
-    anchorTo(to);
+    anchorTo(target.current);
     p.value = withTiming(
       0,
       { duration: reduce ? 100 : 340, easing: Easing.in(Easing.cubic) },

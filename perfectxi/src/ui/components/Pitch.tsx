@@ -44,6 +44,7 @@ export function Pitch({
   preview,
   onSlotRect,
   flash,
+  measureTick,
 }: {
   squad: Slot[];
   formation: string;
@@ -55,6 +56,8 @@ export function Pitch({
   onSlotRect?: (index: number, rect: SlotRect) => void;
   /** the slot a signing has just landed in, which lights up */
   flash?: number | null;
+  /** bump to make every slot measure itself again after a scroll */
+  measureTick?: number;
 }) {
   const fm = FORMATIONS[formation];
   if (!fm) return null;
@@ -127,6 +130,7 @@ export function Pitch({
                   preview={!!preview}
                   onRect={onSlotRect}
                   flash={flash === si}
+                  measureTick={measureTick}
                 />
               ))}
             </View>
@@ -150,6 +154,7 @@ function PitchSlot({
   preview,
   onRect,
   flash,
+  measureTick,
 }: {
   index: number;
   slot: Slot;
@@ -157,6 +162,7 @@ function PitchSlot({
   preview: boolean;
   onRect?: (index: number, rect: SlotRect) => void;
   flash?: boolean;
+  measureTick?: number;
 }) {
   const reduce = useReduceMotion();
   const filled = !!slot.player;
@@ -180,6 +186,11 @@ function PitchSlot({
       });
     });
   }, [index, onRect]);
+
+  // Asked to re-measure: the page has scrolled since layout.
+  useEffect(() => {
+    measure();
+  }, [measureTick, measure]);
 
   // The card arriving in the slot.
   useEffect(() => {

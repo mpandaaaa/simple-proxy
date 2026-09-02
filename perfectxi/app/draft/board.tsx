@@ -67,6 +67,13 @@ export default function DraftBoard() {
   }, []);
   /** the row that was tapped, measured at the moment of the tap */
   const tapped = useRef<Anchor | null>(null);
+  /** the slot the last signing went into, remembered past the reveal */
+  const lastSlot = useRef<number | null>(null);
+  /**
+   * Bumped on every signing so the pitch re-measures. The page scrolls, so
+   * where a slot was when it first laid out is not where it is now.
+   */
+  const [measureTick, setMeasureTick] = useState(0);
 
   // Scenery for the reel: every club-season in the era being drafted, so
   // the cards flying past are real sides rather than invented ones.
@@ -116,6 +123,8 @@ export default function DraftBoard() {
       if (!run) return;
       const pos = run.state.squad[slotIndex].pos;
       pickPlayer(player, slotIndex);
+      lastSlot.current = slotIndex;
+      setMeasureTick((n) => n + 1);
       setReveal({ player, pos, slot: slotIndex, from: tapped.current });
     },
     [run],
@@ -209,6 +218,7 @@ export default function DraftBoard() {
           highlight={chooser?.slots}
           onSlotRect={onSlotRect}
           flash={struck}
+          measureTick={measureTick}
         />
       </View>
 
@@ -466,8 +476,7 @@ export default function DraftBoard() {
         to={reveal ? (slotRects.current.get(reveal.slot) ?? null) : null}
         onDone={() => setReveal(null)}
         onLanded={() => {
-          const at = reveal?.slot ?? null;
-          setStruck(at);
+          setStruck(lastSlot.current);
           setTimeout(() => setStruck(null), 500);
         }}
       />
