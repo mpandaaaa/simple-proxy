@@ -112,6 +112,9 @@ export default function SquadComplete() {
     <ModeScreen
       overline="Squad complete"
       title="Your XI"
+      // The board was replaced by this screen, so popping would land on the
+      // setup screen mid run. Back belongs at home.
+      onBack={() => router.dismissAll()}
       right={
         <View style={styles.fmPill}>
           <Text style={styles.fmText}>{config.formation}</Text>
