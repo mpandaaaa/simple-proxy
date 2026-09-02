@@ -101,28 +101,6 @@ export default function StartCareer() {
             and how long the board gives you.
           </Text>
 
-          <Press
-            onPress={() => {
-              haptic('medium');
-              router.dismissAll();
-              router.push('/draft');
-            }}
-            feel="none"
-            style={styles.own}
-            scaleTo={0.985}
-          >
-            <Text style={styles.ownMark} allowFontScaling={false}>
-              ⚽
-            </Text>
-            <View style={styles.ownBody}>
-              <Text style={styles.ownTitle}>Create your own club</Text>
-              <Text style={styles.ownDesc}>
-                Draft an XI from any era, play a season with it, then carry
-                those eleven into a career.
-              </Text>
-            </View>
-          </Press>
-
           {SCENARIOS.map((s, i) => (
             <Rise key={s.id} delay={Math.min(i, 4)}>
               <Press
@@ -159,6 +137,29 @@ export default function StartCareer() {
               </Press>
             </Rise>
           ))}
+          <Text style={styles.orKey}>Or the long way round</Text>
+          <Press
+            onPress={() => {
+              haptic('light');
+              router.dismissAll();
+              router.push('/draft');
+            }}
+            feel="none"
+            style={styles.own}
+            scaleTo={0.99}
+          >
+            <View style={styles.ownBody}>
+              <Text style={styles.ownTitle}>Create your own club</Text>
+              <Text style={styles.ownDesc}>
+                This one leaves Dynasty. You draft an XI from any era and play
+                a season with it first, and the results screen then offers to
+                carry those eleven into a career.
+              </Text>
+            </View>
+            <Text style={styles.ownArrow} allowFontScaling={false}>
+              {'›'}
+            </Text>
+          </Press>
         </>
       ) : null}
 
@@ -281,7 +282,8 @@ function Offer({ club, sc, mode }: { club: ClubOption; sc: Scenario; mode: Mode 
               seed: Math.floor(Math.random() * 0x7fffffff),
             }),
           );
-          router.replace('/dynasty');
+          router.dismissAll();
+          router.push('/dynasty');
         }}
         feel="none"
         style={styles.take}
@@ -407,26 +409,33 @@ const styles = StyleSheet.create({
   },
   nextText: { ...text.button, color: '#05170E' },
 
+  orKey: {
+    ...text.key,
+    fontSize: 9,
+    color: color.text3,
+    marginTop: space.s5,
+    marginBottom: space.s3,
+  },
   own: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.s3,
-    padding: space.s4,
-    marginBottom: space.s4,
-    borderRadius: radius.lg,
+    padding: space.s3,
+    marginBottom: space.s6,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: line.purple,
-    backgroundColor: 'rgba(185,140,242,0.09)',
+    borderColor: line.card,
+    backgroundColor: 'rgba(255,255,255,0.03)',
   },
-  ownMark: { fontSize: 24, lineHeight: 30 },
   ownBody: { flex: 1, minWidth: 0 },
   ownTitle: {
     fontFamily: font.displayBold,
-    fontSize: 19,
-    lineHeight: 24,
-    color: color.purple,
+    fontSize: 16,
+    lineHeight: 20,
+    color: color.text2,
   },
-  ownDesc: { ...text.small, fontSize: 12, lineHeight: 16 },
+  ownDesc: { ...text.small, fontSize: 11.5, lineHeight: 16 },
+  ownArrow: { fontSize: 18, color: color.text3 },
 
   scen: {
     padding: space.s4,
