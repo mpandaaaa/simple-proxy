@@ -8,8 +8,15 @@ import { IconBack } from '../icons';
 import { Press } from './Press';
 
 const BAR = 56;
-/** how far the page dissolves under the bar rather than being cut by it */
-const FALLOFF = 26;
+/**
+ * How far the page dissolves under the bar rather than being cut by it.
+ *
+ * Short and quick. At 26pt starting from full opacity it was not softening
+ * the edge, it was wiping out the first line of content: the chip values on
+ * Squad Complete were nearly gone while their labels underneath survived.
+ * The point is to take the hard line off, not to hide anything.
+ */
+const FALLOFF = 16;
 
 /**
  * Every screen that is not Home sits on this.
@@ -132,7 +139,7 @@ const styles = StyleSheet.create({
     right: 0,
     height: FALLOFF,
     experimental_backgroundImage:
-      'linear-gradient(180deg, rgba(10,15,12,1) 0%, rgba(10,15,12,0) 100%)',
+      'linear-gradient(180deg, rgba(10,15,12,0.85) 0%, rgba(10,15,12,0.22) 45%, rgba(10,15,12,0) 100%)',
   },
 
   // 44 point target around a 40 point face, so the button is easy to hit
