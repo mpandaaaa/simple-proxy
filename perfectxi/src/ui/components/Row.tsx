@@ -4,6 +4,7 @@ import { color, radius, space, hit, gradient, shadow, line } from '../tokens';
 import { text } from '../type';
 import { IconChevron } from '../icons';
 import { Press } from './Press';
+import { Shine } from './Shine';
 
 export type RowTone = 'accent' | 'gold' | 'blue' | 'danger' | 'purple' | 'neutral';
 
@@ -48,6 +49,8 @@ export function Row({
       style={styles.row}
       accessibilityLabel={`${title}. ${subtitle}`}
     >
+      <Shine radius={radius.md} group="panel" />
+
       <View style={[styles.badge, { backgroundColor: t.bg, borderColor: t.edge }]}>
         {icon({ color: t.fg, size: 20 })}
       </View>

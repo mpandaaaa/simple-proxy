@@ -18,6 +18,7 @@ import { GRAIN_URI } from '../grain';
 import { haptic, useReduceMotion } from '../feel';
 import { ClubDisc } from './ClubDisc';
 import { Press } from './Press';
+import { Shine } from './Shine';
 import { buildMatch, type MatchEvent, type LiveMatch } from '../../game/commentary';
 import type { MatchResult } from '../../engine';
 
@@ -304,6 +305,7 @@ export function MatchLive({
               style={[styles.flash, flashStyle]}
               pointerEvents="none"
             />
+            <Shine radius={0} group="feature" bevel={false} />
             <View style={styles.topEdge} pointerEvents="none" />
 
             <Text style={styles.comp}>

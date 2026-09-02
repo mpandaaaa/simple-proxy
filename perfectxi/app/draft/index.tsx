@@ -15,6 +15,7 @@ import {
   Pitch,
   Rise,
   RangeSlider,
+  Shine,
 } from '../../src/ui/components';
 import { color, space, radius, line, gradient } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
@@ -122,6 +123,7 @@ export default function DraftSetup() {
         <Rise delay={3}>
           <Text style={text.label}>Era</Text>
           <View style={styles.eraPanel}>
+            <Shine radius={radius.lg} group="panel" />
             <View style={styles.eraHead}>
               <Text style={styles.eraYear}>{seasonStr(config.eraFrom)}</Text>
               <Text style={styles.eraCount}>
@@ -165,6 +167,7 @@ export default function DraftSetup() {
         />
 
         <View style={styles.toggles}>
+          <Shine radius={radius.lg} group="panel" />
           <Toggle
             label="Show ratings"
             hint={
@@ -244,6 +247,7 @@ function Trait({
 
   return (
     <View style={styles.trait}>
+      <Shine radius={radius.md} group="panel" />
       <View style={styles.traitHead}>
         <Text style={styles.traitLabel}>{label}</Text>
         <Text style={[styles.traitValue, { color: tint }]} allowFontScaling={false}>

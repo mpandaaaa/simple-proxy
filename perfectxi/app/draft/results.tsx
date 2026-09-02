@@ -17,6 +17,7 @@ import {
   ClubDisc,
   MatchLive,
   Confirm,
+  Shine,
 } from '../../src/ui/components';
 import { color, space, radius, line, gradient, positionColor } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
@@ -236,6 +237,7 @@ export default function Results() {
             <View style={styles.grain} pointerEvents="none">
               <Image source={{ uri: GRAIN_URI }} resizeMode="repeat" style={styles.fill} />
             </View>
+            <Shine radius={radius.lg} group="panel" bevel={false} />
             <Text style={[styles.paperKey, { color: tone.tint }]}>The morning papers</Text>
             <View style={[styles.rule, { backgroundColor: tone.edge }]} />
             <Text style={styles.paperHead}>{paper.headline}</Text>
@@ -247,6 +249,7 @@ export default function Results() {
         {/* ================= against the odds ================= */}
         <Rise delay={1}>
           <View style={styles.odds}>
+            <Shine radius={radius.lg} group="feature" />
             <Text style={styles.sectKey}>Against the odds</Text>
             <Text style={styles.oddsLead}>
               What an {Math.round(avg)} rated XI was promised, against what it did.
@@ -277,6 +280,7 @@ export default function Results() {
         <View style={styles.hlGrid}>
           {stats.map((h) => (
             <View key={h.label} style={styles.hl}>
+              <Shine radius={radius.md} group="panel" />
               <Text
                 style={styles.hlValue}
                 numberOfLines={1}
@@ -297,6 +301,7 @@ export default function Results() {
               <View style={styles.grain} pointerEvents="none">
                 <Image source={{ uri: GRAIN_URI }} resizeMode="repeat" style={styles.fill} />
               </View>
+              <Shine radius={radius.lg} group="feature" bevel={false} />
               <Text style={styles.awardsKey}>Season awards</Text>
 
               <Award
@@ -346,6 +351,7 @@ export default function Results() {
             const keeps = s.pos === 'GK' || s.pos === 'DEF';
             return (
               <View key={s.player.n} style={styles.pl}>
+                <Shine radius={radius.md} group="card" rating={s.player.rtg} />
                 <View
                   style={[styles.plPos, { backgroundColor: positionColor[s.pos] + '26', borderColor: positionColor[s.pos] + '66' }]}
                 >
@@ -386,6 +392,7 @@ export default function Results() {
         {/* ================= the table ================= */}
         <Text style={[text.label, styles.sect]}>Final standings</Text>
         <View style={styles.table}>
+          <Shine radius={radius.md} group="panel" />
           <View style={styles.thead}>
             <Text style={[styles.th, styles.colPos]}>#</Text>
             <Text style={[styles.th, styles.colClub]}>Club</Text>
@@ -532,6 +539,7 @@ function Finish({
       <View style={styles.grain} pointerEvents="none">
         <Image source={{ uri: GRAIN_URI }} resizeMode="repeat" style={styles.fill} />
       </View>
+      <Shine radius={radius.xl} group="feature" bevel={false} />
       <View style={styles.finishEdge} pointerEvents="none" />
 
       <Text style={styles.finishMark} allowFontScaling={false}>
@@ -574,6 +582,7 @@ function Finish({
 function Tile({ value, label, tint }: { value: number; label: string; tint?: string }) {
   return (
     <View style={styles.tile}>
+      <Shine radius={radius.md} group="panel" />
       <Ticker
         value={value}
         from={0}
@@ -683,6 +692,7 @@ function ResultTile({ match, onPress }: { match: MatchResult; onPress: () => voi
       scaleTo={0.94}
       style={[styles.rt, { borderColor: tint + '4D' }]}
     >
+      <Shine radius={radius.sm} group="card" phase={(match.n % 6) / 6} />
       <View style={[styles.rtBar, { backgroundColor: tint }]} />
       <Text style={styles.rtKey} allowFontScaling={false}>
         {match.n} {match.home ? 'H' : 'A'}

@@ -16,6 +16,7 @@ import {
   ClubDisc,
   MatchLive,
   Rise,
+  Shine,
 } from '../../src/ui/components';
 import { color, space, radius, line, gradient } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
@@ -233,6 +234,7 @@ export default function Season() {
           <View style={styles.grain} pointerEvents="none">
             <Image source={{ uri: GRAIN_URI }} resizeMode="repeat" style={styles.fill} />
           </View>
+          <Shine radius={radius.lg} group="card" bevel={false} />
           <View style={styles.heroEdge} pointerEvents="none" />
 
           <ClubDisc club={null} code="XI" size={54} />
@@ -252,6 +254,7 @@ export default function Season() {
 
         {/* ---- the season so far ---- */}
         <View style={styles.statRow}>
+          <Shine radius={radius.md} group="card" />
           <Stat label="W" value={standing.w} tint={color.win} />
           <Stat label="D" value={standing.d} tint={color.draw} />
           <Stat label="L" value={standing.l} tint={color.loss} />
@@ -291,6 +294,7 @@ export default function Season() {
         {next ? (
           <Rise delay={0}>
             <View style={styles.nextCard}>
+              <Shine radius={radius.lg} group="feature" bevel={false} />
               <Text style={styles.nextKey}>
                 Next {'·'} Matchday {next.n} {'·'} {next.home ? 'Home' : 'Away'}
               </Text>
@@ -435,6 +439,12 @@ function Fixture({
   const oc = OUTCOME[match.oc];
   const body = (
     <>
+      <Shine
+        radius={radius.md}
+        group="card"
+        bevel={state !== "later"}
+        phase={(match.n % 6) / 6}
+      />
       <ClubDisc club={match.opp} size={34} />
       <View style={styles.fxInfo}>
         <Text style={styles.fxKey}>
@@ -493,6 +503,7 @@ const styles = StyleSheet.create({
   /* hero */
   hero: {
     alignItems: 'center',
+    position: 'relative',
     paddingTop: space.s5,
     paddingHorizontal: space.s4,
     paddingBottom: space.s4,

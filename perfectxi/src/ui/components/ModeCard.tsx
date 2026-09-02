@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { color, radius, space, gradient, shadow, line } from '../tokens';
+import { Shine } from './Shine';
 import { font, text } from '../type';
 import { IconChevron } from '../icons';
 import { Press } from './Press';
@@ -95,6 +96,8 @@ export function ModeCard({
       ]}
       accessibilityLabel={`${title}. ${status ?? subtitle}`}
     >
+      <Shine radius={radius.lg} group="panel" bevel={false} />
+
       <View
         pointerEvents="none"
         style={[styles.ring, { borderColor: t.ring }]}

@@ -3,6 +3,7 @@ import { color, radius, space } from '../tokens';
 import { font, text } from '../type';
 import { IconChevron } from '../icons';
 import { Press } from './Press';
+import { Shine } from './Shine';
 
 /**
  * The one thing the home screen is asking you to do. It is the largest
@@ -28,6 +29,8 @@ export function Hero({
       style={styles.hero}
       accessibilityLabel={`${title}. ${subtitle}`}
     >
+      <Shine radius={radius.lg} group="feature" bevel={false} />
+
       <View style={styles.body}>
         <Text style={styles.kicker} numberOfLines={1}>
           {kicker}

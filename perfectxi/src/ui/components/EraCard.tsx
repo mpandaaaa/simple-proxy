@@ -14,6 +14,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { color, radius, space, line, gradient } from '../tokens';
+import { Shine } from './Shine';
 import { font, text } from '../type';
 import { haptic, useReduceMotion } from '../feel';
 import { clubColour, eraOf } from '../../engine';
@@ -191,6 +192,7 @@ export function EraCard({
 
   return (
     <View style={[styles.card, live && { borderColor: hexA(tint, 0.5) }]}>
+      <Shine radius={radius.lg} group="card" bevel={false} />
       {live ? (
         <View
           style={[

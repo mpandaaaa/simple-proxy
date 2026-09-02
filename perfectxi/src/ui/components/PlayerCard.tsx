@@ -21,6 +21,7 @@ import Animated, {
 import { radius, space } from '../tokens';
 import { font } from '../type';
 import { haptic, useReduceMotion } from '../feel';
+import { Shine } from './Shine';
 import {
   clubColour,
   clubCode,
@@ -250,6 +251,8 @@ export function PlayerCard({
             },
           ]}
         >
+          <Shine radius={22} group="card" rating={card.rtg} reveal bevel={false} />
+
           <View style={[styles.topEdge, { backgroundColor: tier.edge }]} />
 
           {/* the initials fill the space a player photo would take */}
