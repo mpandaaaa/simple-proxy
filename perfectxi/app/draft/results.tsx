@@ -6,7 +6,7 @@ import Animated, {
   withDelay,
   withSpring,
 } from 'react-native-reanimated';
-import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
+import Svg, { Defs, Ellipse, Path, RadialGradient, Stop } from 'react-native-svg';
 import { router, Stack } from 'expo-router';
 import {
   ModeScreen,
@@ -18,6 +18,10 @@ import {
   MatchLive,
   Confirm,
   Shine,
+  SeasonCurve,
+  CupCard,
+  Confetti,
+  Trophy,
 } from '../../src/ui/components';
 import { color, space, radius, line, gradient, positionColor } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
@@ -30,13 +34,16 @@ import {
   expectation,
   finishFor,
   highlights,
+  livePosition,
   ordinal,
+  simulateCups,
   squadAvg,
   verdict,
   type FinishTone,
   type Grade,
   type MatchResult,
   type Position,
+  type Outcome,
   type Slot,
   type TableRow,
 } from '../../src/engine';
@@ -123,19 +130,6 @@ function suffix(n: number): string {
   return ordinal(n).replace(String(n), '');
 }
 
-/**
- * Chop a list into rows of a fixed size.
- *
- * Thirty eight does not divide by four, and a wrapping flex row handles
- * that by stretching the last two tiles across the width, which is what
- * made the grid look broken. Real rows with real columns do not.
- */
-function rows<T>(items: readonly T[], per: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < items.length; i += per) out.push(items.slice(i, i + per));
-  return out;
-}
-
 export default function Results() {
   const run = useRun();
   const banked = useRef(false);
@@ -189,6 +183,29 @@ export default function Results() {
   const paper = verdict(result);
   const stats = highlights(result);
 
+  const cups = simulateCups(avg, result.position, run.seed);
+
+  // The table position after every game, which is the shape of the season.
+  const curve: number[] = [];
+  const outcomes: Outcome[] = [];
+  {
+    let pts = 0;
+    result.matches.forEach((m, i) => {
+      pts += m.oc === 'win' ? 3 : m.oc === 'draw' ? 1 : 0;
+      curve.push(livePosition(pts, i + 1, result.table));
+      outcomes.push(m.oc);
+    });
+  }
+
+  // Everything the season actually won, named, so a treble is not left to
+  // be worked out from two cards further down the page.
+  const honours: string[] = [];
+  if (result.position === 1) honours.push('League champions');
+  if (cups.national.won) honours.push('National Cup');
+  if (cups.continental.won) honours.push('Continental Cup');
+  if (cups.treble) honours.push('The Treble');
+  else if (cups.double) honours.push('The Double');
+
   const placesBetter = odds.projFinish - result.position;
   const pointsBetter = result.pts - odds.expPts;
 
@@ -227,6 +244,7 @@ export default function Results() {
           title={fin.title}
           sub={fin.sub}
           mark={fin.mark}
+          honours={honours}
           tone={tone}
           expVerdict={exp.verdict}
           expLine={`Avg ${Math.round(avg)} · Expected ${exp.label} · Finished ${ordinal(
@@ -391,26 +409,21 @@ export default function Results() {
           })}
         </View>
 
-        {/* ================= all thirty eight ================= */}
-        <Text style={[text.label, styles.sect]}>Every result</Text>
-        <Text style={styles.sectHint}>Tap any one of them to watch it back.</Text>
-        <View style={styles.results}>
-          {rows(result.matches, 4).map((line, r) => (
-            <View key={r} style={styles.rtRow}>
-              {line.map((m) => (
-                <ResultTile
-                  key={m.n}
-                  match={m}
-                  onPress={() => rewatch(m.n - 1)}
-                />
-              ))}
-              {/* a short last row keeps its columns rather than stretching */}
-              {Array.from({ length: 4 - line.length }, (_, k) => (
-                <View key={`gap${k}`} style={styles.rtGap} />
-              ))}
-            </View>
-          ))}
+        {/* ================= the cups ================= */}
+        <Text style={[text.label, styles.sect]}>Cup competitions</Text>
+        <View style={styles.cups}>
+          <CupCard run={cups.national} mark="🏆" tint={color.gold} />
+          <CupCard run={cups.continental} mark="🌍" tint={color.blue} />
         </View>
+
+        {/* ================= the season, as a shape ================= */}
+        <Text style={[text.label, styles.sect]}>The season</Text>
+        <Text style={styles.sectHint}>
+          Where the XI stood in the table after every game.
+        </Text>
+        <SeasonCurve positions={curve} outcomes={outcomes} tint={tone.tint} />
+
+        <Fixtures matches={result.matches} onWatch={rewatch} />
 
         {/* ================= the table ================= */}
         <Text style={[text.label, styles.sect]}>Final standings</Text>
@@ -468,6 +481,8 @@ export default function Results() {
         </View>
       </ModeScreen>
 
+      <Confetti fire={result.position === 1} />
+
       <MatchLive
         match={watching !== null ? result.matches[watching] : null}
         seed={run.seed}
@@ -506,23 +521,38 @@ function Finish({
   tone,
   expVerdict,
   expLine,
+  honours,
 }: {
   position: number;
   title: string;
   sub: string;
   mark: string;
+  /** the cups won alongside the league, named */
+  honours: string[];
   tone: { tint: string; edge: string; wash: string };
   expVerdict: 'over' | 'met' | 'under';
   expLine: string;
 }) {
   const reduce = useReduceMotion();
   const inn = useSharedValue(reduce ? 1 : 0);
+  const champion = position === 1;
 
   useEffect(() => {
     if (reduce) return;
     inn.value = withDelay(90, withSpring(1, { stiffness: 170, damping: 20, mass: 1 }));
-    haptic('success');
-  }, [inn, reduce]);
+    if (!champion) {
+      haptic('success');
+      return;
+    }
+    // A title arrives as three beats rather than one buzz.
+    haptic('heavy');
+    const a = setTimeout(() => haptic('heavy'), 190);
+    const b = setTimeout(() => haptic('success'), 460);
+    return () => {
+      clearTimeout(a);
+      clearTimeout(b);
+    };
+  }, [inn, reduce, champion]);
 
   const numStyle = useAnimatedStyle(() => ({
     opacity: inn.value,
@@ -564,9 +594,33 @@ function Finish({
       <Shine radius={radius.xl} group="feature" bevel={false} clip={false} />
       <View style={styles.finishEdge} pointerEvents="none" />
 
-      <Text style={styles.finishMark} allowFontScaling={false}>
-        {mark}
-      </Text>
+      {champion ? (
+        <View style={styles.crown}>
+          <View style={styles.rays} pointerEvents="none">
+            <Svg width="100%" height="100%" viewBox="0 0 200 200">
+              {Array.from({ length: 16 }, (_, i) => {
+                const a = (i / 16) * Math.PI * 2;
+                const x = 100 + Math.cos(a) * 150;
+                const y = 100 + Math.sin(a) * 150;
+                return (
+                  <Path
+                    key={i}
+                    d={`M 100 100 L ${x} ${y}`}
+                    stroke={tone.tint}
+                    strokeOpacity={i % 2 ? 0.10 : 0.18}
+                    strokeWidth={i % 2 ? 7 : 13}
+                  />
+                );
+              })}
+            </Svg>
+          </View>
+          <Trophy size={104} tint={tone.tint} />
+        </View>
+      ) : (
+        <Text style={styles.finishMark} allowFontScaling={false}>
+          {mark}
+        </Text>
+      )}
 
       <Animated.View style={[styles.finishNum, numStyle]}>
         <Ticker
@@ -596,6 +650,16 @@ function Finish({
           </Text>
         </View>
         <Text style={styles.pvSub}>{expLine}</Text>
+
+        {honours.length ? (
+          <View style={styles.honours}>
+            {honours.map((h) => (
+              <View key={h} style={styles.honour}>
+                <Text style={styles.honourText}>{h}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
       </Animated.View>
     </View>
   );
@@ -704,30 +768,118 @@ function PlStat({ value, label }: { value: number; label: string }) {
 }
 
 /** One of the thirty eight, tappable, colour coded by what happened. */
-function ResultTile({ match, onPress }: { match: MatchResult; onPress: () => void }) {
-  const tint = OUTCOME[match.oc];
+/**
+ * All thirty eight, folded away.
+ *
+ * A grid of thirty eight chips is a spreadsheet and it looked like one.
+ * The season above says the shape; this says the detail, and it stays shut
+ * until it is asked for, with the run of form and the record on its lid.
+ */
+function Fixtures({
+  matches,
+  onWatch,
+}: {
+  matches: MatchResult[];
+  onWatch: (index: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  let w = 0;
+  let d = 0;
+  let l = 0;
+  for (const m of matches) {
+    if (m.oc === 'win') w++;
+    else if (m.oc === 'draw') d++;
+    else l++;
+  }
+  const form = matches.slice(-5);
+
   return (
-    <Press
-      onPress={onPress}
-      feel="none"
-      scaleTo={0.94}
-      style={[
-        styles.rt,
-        { borderColor: tint + '26', backgroundColor: tint + '12' },
-      ]}
-    >
-      <Text style={styles.rtKey} allowFontScaling={false}>
-        {match.n} {match.home ? 'H' : 'A'}
-      </Text>
-      <Text style={[styles.rtScore, { color: tint }]} allowFontScaling={false}>
-        {match.gf}
-        {'–'}
-        {match.ga}
-      </Text>
-      <Text style={styles.rtOpp} numberOfLines={1}>
-        {match.opp}
-      </Text>
-    </Press>
+    <View style={styles.fixWrap}>
+      <Press
+        onPress={() => {
+          haptic('light');
+          setOpen((o) => !o);
+        }}
+        feel="none"
+        scaleTo={0.99}
+        style={styles.fixHead}
+      >
+        <Text style={styles.fixTitle}>Season fixtures</Text>
+        <View style={styles.fixForm}>
+          {form.map((m) => (
+            <View
+              key={m.n}
+              style={[styles.fixDot, { backgroundColor: OUTCOME[m.oc] }]}
+            />
+          ))}
+        </View>
+        <Text style={styles.fixRecord} allowFontScaling={false}>
+          <Text style={{ color: color.win }}>{w}W </Text>
+          <Text style={{ color: color.draw }}>{d}D </Text>
+          <Text style={{ color: color.loss }}>{l}L</Text>
+        </Text>
+        <Text style={styles.fixChev} allowFontScaling={false}>
+          {open ? '▲' : '▼'}
+        </Text>
+      </Press>
+
+      {open ? (
+        <View style={styles.fixList}>
+          {matches.map((m) => (
+            <Press
+              key={m.n}
+              onPress={() => onWatch(m.n - 1)}
+              feel="none"
+              scaleTo={0.99}
+              style={styles.fixRow}
+            >
+              <Text style={styles.fixMd} allowFontScaling={false}>
+                {m.n}
+              </Text>
+              <View
+                style={[
+                  styles.fixVenue,
+                  m.home
+                    ? { borderColor: 'rgba(255,255,255,0.14)' }
+                    : { borderColor: 'rgba(255,255,255,0.07)' },
+                ]}
+              >
+                <Text style={styles.fixVenueText}>{m.home ? 'H' : 'A'}</Text>
+              </View>
+              <ClubDisc club={m.opp} size={26} />
+              <Text style={styles.fixOpp} numberOfLines={1}>
+                {m.opp}
+              </Text>
+              <Text
+                style={[styles.fixScore, { color: OUTCOME[m.oc] }]}
+                allowFontScaling={false}
+              >
+                {m.gf}
+                {'–'}
+                {m.ga}
+              </Text>
+              <View
+                style={[
+                  styles.fixPip,
+                  {
+                    borderColor: OUTCOME[m.oc] + '66',
+                    backgroundColor: OUTCOME[m.oc] + '1F',
+                  },
+                ]}
+              >
+                <Text
+                  style={[styles.fixPipText, { color: OUTCOME[m.oc] }]}
+                  allowFontScaling={false}
+                >
+                  {m.oc === 'win' ? 'W' : m.oc === 'draw' ? 'D' : 'L'}
+                </Text>
+              </View>
+            </Press>
+          ))}
+          <Text style={styles.fixHint}>Tap any match to watch it back.</Text>
+        </View>
+      ) : null}
+    </View>
   );
 }
 
@@ -839,6 +991,24 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.22)',
   },
   finishMark: { fontSize: 34, lineHeight: 42 },
+  crown: {
+    width: 104,
+    height: 104,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: space.s2,
+  },
+  rays: { position: 'absolute', top: -46, left: -46, right: -46, bottom: -46 },
+  honours: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s2, marginTop: space.s3, justifyContent: 'center' },
+  honour: {
+    paddingHorizontal: space.s3,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: 'rgba(214,178,94,0.5)',
+    backgroundColor: 'rgba(214,178,94,0.14)',
+  },
+  honourText: { ...text.key, fontSize: 9.5, color: color.gold },
   finishNum: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 2 },
   finishPos: {
     fontFamily: font.hero,
@@ -1109,37 +1279,106 @@ const styles = StyleSheet.create({
   },
   plStatLabel: { ...text.key, fontSize: 7.5, color: color.text3 },
 
-  /* ---- every result ---- */
-  results: { gap: space.s2 },
-  rtRow: { flexDirection: 'row', gap: space.s2 },
-  rtGap: { flex: 1 },
-  rt: {
-    flex: 1,
-    alignItems: 'center',
-    paddingTop: 7,
-    paddingBottom: 7,
-    borderRadius: radius.sm,
+  /* ---- the cups ---- */
+  cups: { gap: space.s3 },
+
+  /* ---- the fixture list ---- */
+  fixWrap: {
+    marginTop: space.s3,
+    borderRadius: radius.md,
     borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
+    boxShadow:
+      'inset 0px 1px 0px rgba(255,255,255,0.06), inset 0px 0px 0px 1px rgba(255,255,255,0.035)',
+    overflow: 'hidden',
   },
-  rtKey: {
-    ...text.key,
-    fontSize: 7.5,
+  fixHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s3,
+    paddingVertical: space.s3,
+    paddingHorizontal: space.s4,
+  },
+  fixTitle: {
+    flex: 1,
+    fontFamily: font.displayBold,
+    fontSize: 17,
+    lineHeight: 21,
+    color: color.text1,
+  },
+  fixForm: { flexDirection: 'row', gap: 4 },
+  fixDot: { width: 7, height: 7, borderRadius: 3.5 },
+  fixRecord: {
+    fontFamily: font.displayBold,
+    fontSize: 13,
+    lineHeight: 17,
+    letterSpacing: 0.4,
+    fontVariant: ['tabular-nums'],
+  },
+  fixChev: { fontSize: 9, color: color.text3, width: 12, textAlign: 'right' },
+  fixList: { paddingBottom: space.s2 },
+  fixRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s3,
+    paddingVertical: 9,
+    paddingHorizontal: space.s4,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.05)',
+  },
+  fixMd: {
+    width: 20,
+    textAlign: 'right',
+    fontFamily: font.displayBold,
+    fontSize: 13,
+    lineHeight: 17,
     color: color.text3,
     fontVariant: ['tabular-nums'],
   },
-  rtScore: {
-    fontFamily: font.displayBlack,
-    fontSize: 19,
-    lineHeight: 24,
+  fixVenue: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fixVenueText: {
+    fontFamily: font.displaySemi,
+    fontSize: 10,
+    lineHeight: 13,
+    color: color.text3,
+  },
+  fixOpp: {
+    flex: 1,
+    fontFamily: font.bodySemi,
+    fontSize: 14,
+    lineHeight: 19,
+    color: color.text1,
+  },
+  fixScore: {
+    fontFamily: font.displayBold,
+    fontSize: 17,
+    lineHeight: 21,
     letterSpacing: 0.3,
     fontVariant: ['tabular-nums'],
   },
-  rtOpp: {
-    fontFamily: font.body,
-    fontSize: 9,
-    lineHeight: 12,
-    color: color.text3,
-    maxWidth: '92%',
+  fixPip: {
+    width: 22,
+    height: 22,
+    borderRadius: 7,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fixPipText: { fontFamily: font.displayBold, fontSize: 11, lineHeight: 14 },
+  fixHint: {
+    ...text.small,
+    fontSize: 11,
+    textAlign: 'center',
+    paddingTop: space.s3,
   },
 
   /* ---- the table ---- */

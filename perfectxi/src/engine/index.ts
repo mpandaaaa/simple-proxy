@@ -77,3 +77,6 @@ export type {
   FinishTone,
   Highlight,
 } from './sim';
+
+export { simulateCups, NATIONAL_CLUBS, CONTINENTAL_CLUBS } from './cups';
+export type { Cups, CupRun, CupTie, CupClub } from './cups';

@@ -42,7 +42,8 @@
     "sim": "tsc -p tsconfig.headless.json && node scripts/sim-season.mjs",
     "golden": "tsc -p tsconfig.headless.json && node scripts/golden.mjs",
     "wheel": "tsc -p tsconfig.headless.json && node scripts/wheel-ticks.mjs",
-    "commentary": "tsc -p tsconfig.headless.json && node scripts/check-commentary.mjs"
+    "commentary": "tsc -p tsconfig.headless.json && node scripts/check-commentary.mjs",
+    "cups": "tsc -p tsconfig.headless.json && node scripts/check-cups.mjs"
   },
   "private": true
 }

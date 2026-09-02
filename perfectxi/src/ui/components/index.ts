@@ -28,3 +28,7 @@ export { RangeSlider } from './RangeSlider';
 export { MatchLive } from './MatchLive';
 export { Shine } from './Shine';
 export type { ShineGroup } from './Shine';
+export { Confetti } from './Confetti';
+export { Trophy } from './Trophy';
+export { SeasonCurve } from './SeasonCurve';
+export { CupCard } from './CupCard';
