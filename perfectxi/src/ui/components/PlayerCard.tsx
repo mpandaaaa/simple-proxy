@@ -1,5 +1,12 @@
-import { useEffect, useRef } from 'react';
-import { Animated, Modal, Pressable, Text, View, StyleSheet } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Modal, Pressable, Text, View, StyleSheet } from 'react-native';
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { radius, space } from '../tokens';
 import { font } from '../type';
 import { haptic, useReduceMotion } from '../feel';
@@ -46,53 +53,67 @@ export function PlayerCard({
   onDone: () => void;
 }) {
   const reduce = useReduceMotion();
-  const t = useRef(new Animated.Value(0)).current;
+  const t = useSharedValue(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /**
+   * The card the modal is showing, held past the moment the parent clears
+   * it. Unmounting on the tap is what made the card vanish instead of
+   * leaving, so it stays until its exit has actually played.
+   */
+  const [card, setCard] = useState<Pick | null>(null);
+
+  const drop = useCallback(() => setCard(null), []);
 
   useEffect(() => {
-    if (!player) return;
-
-    haptic('success');
-    t.setValue(reduce ? 1 : 0);
-    if (!reduce) {
-      Animated.spring(t, {
-        toValue: 1,
-        useNativeDriver: true,
-        speed: 13,
-        bounciness: 9,
-      }).start();
+    if (player) {
+      setCard(player);
+      haptic('success');
+      t.value = 0;
+      t.value = reduce
+        ? withTiming(1, { duration: 120 })
+        : withSpring(1, { stiffness: 210, damping: 14, mass: 1 });
+      timer.current = setTimeout(onDone, HOLD);
+      return () => {
+        if (timer.current) clearTimeout(timer.current);
+      };
     }
+    // Cleared from outside: play the exit, then let go of the card.
+    t.value = withTiming(0, { duration: reduce ? 100 : 190 }, (f) => {
+      'worklet';
+      if (f) runOnJS(drop)();
+    });
+  }, [player, t, reduce, onDone, drop]);
 
-    timer.current = setTimeout(onDone, HOLD);
-    return () => {
-      if (timer.current) clearTimeout(timer.current);
-    };
-  }, [player, t, reduce, onDone]);
+  const cardStyle = useAnimatedStyle(() => ({
+    opacity: t.value,
+    transform: [
+      { scale: 0.9 + t.value * 0.1 },
+      { translateY: (1 - t.value) * 22 },
+    ],
+  }));
+  const dimStyle = useAnimatedStyle(() => ({ opacity: t.value }));
 
-  if (!player) return null;
+  if (!card) return null;
 
-  const tier = TIERS[tierFor(player.rtg)];
-  const pos = slotPos ?? (player.pos[0] as Position);
+  const tier = TIERS[tierFor(card.rtg)];
+  const pos = slotPos ?? (card.pos[0] as Position);
   const isGK = pos === 'GK';
-  const stats = faceStats(player.rtg, isGK);
-  const sur = lastName(player.n);
-  const club = clubColour(player.club);
+  const stats = faceStats(card.rtg, isGK);
+  const sur = lastName(card.n);
+  const club = clubColour(card.club);
 
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onDone}>
+    <Modal visible transparent animationType="none" onRequestClose={onDone}>
+      <Animated.View style={[styles.dim, dimStyle]} pointerEvents="none" />
       <Pressable style={styles.backdrop} onPress={onDone}>
         <Animated.View
           style={[
             styles.card,
+            cardStyle,
             {
               backgroundColor: tier.m2,
               experimental_backgroundImage: `linear-gradient(160deg, ${tier.m1} 0%, ${tier.m2} 52%, ${tier.m1} 100%)`,
               borderColor: tier.edge,
-              opacity: t,
-              transform: [
-                { scale: t.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) },
-                { translateY: t.interpolate({ inputRange: [0, 1], outputRange: [22, 0] }) },
-              ],
             },
           ]}
         >
@@ -100,17 +121,17 @@ export function PlayerCard({
 
           {/* the initials fill the space a player photo would take */}
           <Text style={[styles.watermark, { color: tier.ink }]} numberOfLines={1}>
-            {initials(player.n)}
+            {initials(card.n)}
           </Text>
 
           <View style={styles.top}>
             <View style={styles.spine}>
-              <Text style={[styles.ovr, { color: tier.ink }]}>{player.rtg}</Text>
+              <Text style={[styles.ovr, { color: tier.ink }]}>{card.rtg}</Text>
               <Text style={[styles.pos, { color: tier.ink }]}>{pos}</Text>
               <View style={[styles.spineRule, { backgroundColor: tier.ink }]} />
             </View>
             <Text style={[styles.kicker, { color: tier.ink }]}>
-              {tierLabel(player.rtg)}
+              {tierLabel(card.rtg)}
             </Text>
           </View>
 
@@ -123,9 +144,9 @@ export function PlayerCard({
             >
               {sur.toUpperCase()}
             </Text>
-            {player.n !== sur ? (
+            {card.n !== sur ? (
               <Text style={[styles.full, { color: tier.ink }]} numberOfLines={1}>
-                {player.n}
+                {card.n}
               </Text>
             ) : null}
           </View>
@@ -162,31 +183,38 @@ export function PlayerCard({
                 },
               ]}
             >
-              <Text style={styles.discText}>{clubCode(player.club)}</Text>
+              <Text style={styles.discText}>{clubCode(card.club)}</Text>
             </View>
             <View style={styles.footBody}>
               <Text style={[styles.club, { color: tier.ink }]} numberOfLines={1}>
-                {player.club}
+                {card.club}
               </Text>
-              <Text style={[styles.season, { color: tier.ink }]}>{player.season}</Text>
+              <Text style={[styles.season, { color: tier.ink }]}>{card.season}</Text>
             </View>
             <Text style={[styles.signed, { color: tier.ink }]}>SIGNED</Text>
           </View>
         </Animated.View>
 
-        <Text style={styles.tap}>Tap to continue</Text>
+        <Animated.Text style={[styles.tap, dimStyle]}>Tap to continue</Animated.Text>
       </Pressable>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  dim: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(4,8,6,0.88)',
+  },
   backdrop: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: space.s5,
-    backgroundColor: 'rgba(4,8,6,0.86)',
   },
   card: {
     width: 300,

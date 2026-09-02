@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, Modal, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
 import { router } from 'expo-router';
@@ -12,6 +12,7 @@ import {
   EraCard,
   OverallStrip,
   ClubDisc,
+  Sheet,
 } from '../../src/ui/components';
 import { color, space, radius, positionColor, gradient, line } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
@@ -347,18 +348,9 @@ export default function DraftBoard() {
       )}
 
       {/* Where does he play. The player is on a card, each position is a
-          lit tile in its own colour, and the sheet is the app's own black
-          rather than a grey panel. */}
-      <Modal
-        visible={!!chooser}
-        transparent
-        animationType={reduceMotion ? 'fade' : 'slide'}
-        onRequestClose={() => setChooser(null)}
-      >
-        <Press onPress={() => setChooser(null)} feel="none" scaleTo={1} style={styles.backdrop}>
-          <View />
-        </Press>
-
+          lit tile in its own colour, and the whole thing can be thrown
+          back down rather than only tapped away. */}
+      <Sheet visible={!!chooser} onClose={() => setChooser(null)}>
         <View style={styles.sheet}>
           <View style={styles.sheetOrbs} pointerEvents="none">
             <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -440,7 +432,7 @@ export default function DraftBoard() {
             onPress={() => setChooser(null)}
           />
         </View>
-      </Modal>
+      </Sheet>
 
       <PlayerCard
         player={reveal?.player ?? null}
@@ -684,10 +676,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(3,6,4,0.76)',
   },
   sheet: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
     backgroundColor: '#0B120E',
     experimental_backgroundImage:
       'linear-gradient(180deg, #16231B 0%, #0B120E 52%, #070B08 100%)',
