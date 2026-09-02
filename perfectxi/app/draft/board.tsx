@@ -1,12 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  Modal,
-  StyleSheet,
-  type ListRenderItemInfo,
-} from 'react-native';
+import { View, Text, Modal, StyleSheet } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
 import {
   ModeScreen,
@@ -16,16 +10,9 @@ import {
   PlayerCard,
   SpinReel,
   EraCard,
+  OverallStrip,
 } from '../../src/ui/components';
-import {
-  color,
-  space,
-  radius,
-  positionColor,
-  gradient,
-  shadow,
-  line,
-} from '../../src/ui/tokens';
+import { color, space, radius, positionColor, gradient, line } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic, useReduceMotion } from '../../src/ui/feel';
 import {
@@ -44,7 +31,12 @@ import {
 } from '../../src/engine';
 import { doSpin, pickPlayer, settleSpin, spendReroll, useRun } from '../../src/game/run';
 
-const ROW_HEIGHT = 66;
+/** A player, or the rule that separates the ones you can use from the rest. */
+type Row =
+  | { kind: 'player'; player: Pick; playable: boolean }
+  | { kind: 'divider' };
+
+const ORDER: Position[] = ['GK', 'DEF', 'MID', 'ATT'];
 
 export default function DraftBoard() {
   const run = useRun();
@@ -61,16 +53,12 @@ export default function DraftBoard() {
     [cfg?.eraFrom, cfg?.eraTo],
   );
 
-  // A run only exists while the draft is in flight. Coming back here without
-  // one means the stack was restored from a cold start, so go back rather
-  // than draw a screen with nothing behind it.
   useEffect(() => {
     if (!run) router.replace('/draft');
   }, [run]);
 
-  // The club is decided before the reel draws a single frame. The spin is
-  // how the result is shown, never how it is chosen, so a seeded run still
-  // replays exactly.
+  // The club is decided before the reel draws a frame. The spin shows the
+  // result, it never chooses it, so a seeded run still replays exactly.
   const onSpin = useCallback(() => {
     const result = doSpin();
     if (!result) return;
@@ -85,7 +73,6 @@ export default function DraftBoard() {
     });
   }, []);
 
-  /** Place the player, then give the pick the reveal it has earned. */
   const sign = useCallback(
     (player: Pick, slotIndex: number) => {
       if (!run) return;
@@ -114,66 +101,155 @@ export default function DraftBoard() {
     [run, sign],
   );
 
-  if (!run) return null;
+  const state = run?.state;
+  const board = run?.board ?? null;
+  const shown = useMemo(
+    () => (board && state ? visibleBoard(board, state.config.blitz) : []),
+    [board, state],
+  );
 
-  const { state, board, club, season } = run;
+  /**
+   * Playable first, then the rest under a rule.
+   *
+   * The web build leaves unusable players in rating order, so a 92 rated
+   * striker you have no room for sits above every player you can actually
+   * sign. They stay on the list, because seeing what you turned down is
+   * part of it, but they never sit above what you can use.
+   */
+  const rows = useMemo<Row[]>(() => {
+    if (!state || !shown.length) return [];
+    const yes: Row[] = [];
+    const no: Row[] = [];
+    for (const p of shown) {
+      (canPlay(state, p) ? yes : no).push({ kind: 'player', player: p, playable: canPlay(state, p) });
+    }
+    return no.length ? [...yes, { kind: 'divider' }, ...no] : yes;
+  }, [state, shown]);
+
+  if (!run || !state) return null;
+
+  const { club, season } = run;
   const left = state.total - state.filled;
   const complete = state.filled === state.total;
   const avg = squadAvg(state.squad);
-  const shown = board ? visibleBoard(board, state.config.blitz) : [];
   const rerollsLeft = state.rerollsMax - state.rerolls;
   const hideRatings = state.config.diff === 'hard';
   const boardAvg = shown.length
     ? Math.round(shown.reduce((n, p) => n + p.rtg, 0) / shown.length)
     : 0;
 
-  const renderRow = ({ item }: ListRenderItemInfo<Pick>) => {
-    const playable = canPlay(state, item);
-    const pos = item.pos[0] as Position;
-    const tint = positionColor[pos] ?? color.text3;
-    const rt = ratingTint(item.rtg);
-    return (
-      <Press
-        onPress={() => onPick(item)}
-        feel="none"
-        scaleTo={0.975}
-        disabled={!playable}
-        style={[styles.player, !playable && styles.playerOff]}
-        accessibilityLabel={`${item.n}, rated ${item.rtg}, ${POSITION_LABEL[pos] ?? pos}`}
-      >
-        <View
-          style={[
-            styles.posBadge,
-            { backgroundColor: tint + '24', borderColor: tint + '66' },
-          ]}
-        >
-          <Text style={[styles.posText, { color: tint }]}>{pos}</Text>
-        </View>
+  const lines = {
+    GK: squadAvg(state.squad, 'GK'),
+    DEF: squadAvg(state.squad, 'DEF'),
+    MID: squadAvg(state.squad, 'MID'),
+    ATT: squadAvg(state.squad, 'ATT'),
+  } as Record<Position, number>;
 
-        <View style={styles.playerBody}>
-          <Text style={styles.playerName} numberOfLines={1}>
-            {item.n}
-          </Text>
-          <Text style={styles.playerMeta} numberOfLines={1}>
-            {item.nat} · {item.club} {item.season}
-          </Text>
-        </View>
+  // What is still missing, so the list can be read against the shape.
+  const need = ORDER.map((p) => ({
+    pos: p,
+    n: state.squad.filter((s) => !s.player && s.pos === p).length,
+  })).filter((x) => x.n > 0);
 
-        <View
-          style={[
-            styles.ratingBadge,
-            hideRatings
-              ? styles.ratingHidden
-              : { backgroundColor: rt + '1f', borderColor: rt + '77' },
-          ]}
-        >
-          <Text style={[styles.ratingText, { color: hideRatings ? color.text3 : rt }]}>
-            {hideRatings ? '?' : item.rtg}
-          </Text>
+  const header = (
+    <View style={styles.header}>
+      <OverallStrip overall={avg} lines={lines} />
+
+      <View style={styles.block}>
+        <Pitch
+          squad={state.squad}
+          formation={state.config.formation}
+          highlight={chooser?.slots}
+        />
+      </View>
+
+      {!board ? (
+        <View style={styles.block}>
+          <SpinReel
+            target={pending ? { club: pending.club, season: pending.season } : null}
+            pool={pool}
+            onSettled={onSettled}
+          />
         </View>
-      </Press>
-    );
-  };
+      ) : null}
+
+      <View style={styles.block}>
+        <EraCard
+          pick={Math.min(state.filled + 1, state.total)}
+          total={state.total}
+          club={board ? club : null}
+          season={board ? season : null}
+          strength={boardAvg}
+        />
+      </View>
+
+      {board ? (
+        <>
+          <View style={styles.rerollRow}>
+            {state.rerollsMax > 0 ? (
+              <>
+                <Press
+                  onPress={() => {
+                    if (spendReroll()) haptic('warning');
+                  }}
+                  feel="none"
+                  scaleTo={0.94}
+                  disabled={rerollsLeft === 0}
+                  style={[styles.rerollBtn, rerollsLeft === 0 && styles.rerollSpent]}
+                >
+                  <Text style={styles.rerollText}>Reroll</Text>
+                </Press>
+                <View style={styles.dots}>
+                  {Array.from({ length: state.rerollsMax }).map((_, i) => (
+                    <View
+                      key={i}
+                      style={[styles.dot, i < state.rerolls && styles.dotUsed]}
+                    />
+                  ))}
+                </View>
+                <Text style={styles.rerollsLeft}>
+                  {rerollsLeft} reroll{rerollsLeft === 1 ? '' : 's'} left
+                </Text>
+              </>
+            ) : null}
+          </View>
+
+          {need.length ? (
+            <View style={styles.needRow}>
+              <Text style={styles.needLabel}>You need</Text>
+              {need.map((x) => (
+                <View
+                  key={x.pos}
+                  style={[
+                    styles.needChip,
+                    {
+                      borderColor: positionColor[x.pos] + '66',
+                      backgroundColor: positionColor[x.pos] + '1c',
+                    },
+                  ]}
+                >
+                  <Text style={[styles.needText, { color: positionColor[x.pos] }]}>
+                    {x.n} {x.pos}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
+          <View style={styles.listHead}>
+            <Text style={styles.listTitle}>Pick a player</Text>
+            <Text style={styles.listCount}>{shown.length} in squad</Text>
+          </View>
+        </>
+      ) : (
+        <Button
+          label={pending ? 'Spinning' : 'Spin'}
+          onPress={onSpin}
+          style={styles.spinBtn}
+        />
+      )}
+    </View>
+  );
 
   return (
     <ModeScreen
@@ -188,125 +264,59 @@ export default function DraftBoard() {
         ) : undefined
       }
     >
-      <Pitch
-        squad={state.squad}
-        formation={state.config.formation}
-        highlight={chooser?.slots}
-        compact={!complete}
-      />
-
       {complete ? (
-        <View style={styles.done}>
-          <Text style={styles.doneTitle}>Your XI is ready</Text>
-          <Text style={[text.small, styles.doneMeta]}>
-            Average {Math.round(avg)} · chemistry {squadChem(state.squad)}% · worth +
-            {chemBonus(state.squad).toFixed(2)}
-          </Text>
+        <View style={styles.doneWrap}>
+          <Pitch squad={state.squad} formation={state.config.formation} />
+          <View style={styles.done}>
+            <Text style={styles.doneTitle}>Your XI is ready</Text>
+            <Text style={[text.small, styles.doneMeta]}>
+              Average {Math.round(avg)} · chemistry {squadChem(state.squad)}% · worth +
+              {chemBonus(state.squad).toFixed(2)}
+            </Text>
+          </View>
           <Button
             label="Simulate the season"
-            style={styles.doneBtn}
             onPress={() => router.push('/draft/season')}
           />
         </View>
       ) : (
-        <>
-          {/* The reel only exists while there is a spin to show. Once the
-              board has landed the era card carries the club instead. */}
-          {!board ? (
-            <View style={styles.reelWrap}>
-              <SpinReel
-                target={pending ? { club: pending.club, season: pending.season } : null}
-                pool={pool}
-                onSettled={onSettled}
-              />
-            </View>
-          ) : null}
-
-          <View style={styles.eraWrap}>
-            <EraCard
-              pick={state.filled + 1}
-              total={state.total}
-              club={board ? club : null}
-              season={board ? season : null}
-              strength={boardAvg}
-            />
-          </View>
-
-          {board ? (
-            <>
-              <View style={styles.listHead}>
-                <Text style={styles.listTitle}>Pick a player</Text>
-                <View style={styles.listRight}>
-                  {rerollsLeft > 0 ? (
-                    <Press
-                      onPress={() => {
-                        if (spendReroll()) haptic('warning');
-                      }}
-                      feel="none"
-                      scaleTo={0.93}
-                      style={styles.reroll}
-                    >
-                      <Text style={styles.rerollText}>Reroll</Text>
-                      <View style={styles.dots}>
-                        {Array.from({ length: state.rerollsMax }).map((_, i) => (
-                          <View
-                            key={i}
-                            style={[styles.dot, i >= rerollsLeft && styles.dotUsed]}
-                          />
-                        ))}
-                      </View>
-                    </Press>
-                  ) : null}
-                  <Text style={styles.listCount}>{shown.length} in squad</Text>
-                </View>
+        // One list for the whole page, exactly as the site scrolls. Anything
+        // above the players rides in the header rather than in its own
+        // scroll view, so there is never a scroll inside a scroll.
+        <FlashList
+          data={rows}
+          keyExtractor={(row, i) =>
+            row.kind === 'divider' ? 'divider' : row.player.n + row.player.club + i
+          }
+          renderItem={({ item }) =>
+            item.kind === 'divider' ? (
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>Cannot fill your open positions</Text>
+                <View style={styles.dividerLine} />
               </View>
-
-              <FlatList
-                data={shown}
-                keyExtractor={(p) => p.n + p.club + p.season}
-                renderItem={renderRow}
-                style={styles.list}
-                contentContainerStyle={styles.listContent}
-                showsVerticalScrollIndicator={false}
-                bounces={false}
-                initialNumToRender={12}
-                windowSize={9}
-                removeClippedSubviews
-                getItemLayout={(_, index) => ({
-                  length: ROW_HEIGHT,
-                  offset: ROW_HEIGHT * index,
-                  index,
-                })}
-                ListEmptyComponent={
-                  <Text style={[text.small, styles.emptyBoard]}>
-                    No players left from this squad. Spin again.
-                  </Text>
-                }
+            ) : (
+              <PlayerRow
+                player={item.player}
+                playable={item.playable}
+                hideRatings={hideRatings}
+                onPress={onPick}
               />
-            </>
-          ) : (
-            <Button
-              label={pending ? 'Spinning' : 'Spin'}
-              onPress={onSpin}
-              style={styles.spinBtn}
-            />
-          )}
-        </>
+            )
+          }
+          ListHeaderComponent={header}
+          ListFooterComponent={<View style={styles.footer} />}
+          showsVerticalScrollIndicator={false}
+        />
       )}
 
-      {/* Asked only when a player could fill more than one open slot */}
       <Modal
         visible={!!chooser}
         transparent
         animationType={reduceMotion ? 'fade' : 'slide'}
         onRequestClose={() => setChooser(null)}
       >
-        <Press
-          onPress={() => setChooser(null)}
-          feel="none"
-          scaleTo={1}
-          style={styles.backdrop}
-        >
+        <Press onPress={() => setChooser(null)} feel="none" scaleTo={1} style={styles.backdrop}>
           <View />
         </Press>
         <View style={styles.sheet}>
@@ -314,7 +324,7 @@ export default function DraftBoard() {
             Where does {chooser ? lastName(chooser.player.n) : ''} play?
           </Text>
           {chooser?.slots.map((si) => {
-            const pos = run.state.squad[si].pos;
+            const pos = state.squad[si].pos;
             const tint = positionColor[pos];
             return (
               <Press
@@ -328,10 +338,7 @@ export default function DraftBoard() {
                 style={[styles.sheetRow, { borderColor: tint + '66' }]}
               >
                 <View
-                  style={[
-                    styles.posBadge,
-                    { backgroundColor: tint + '24', borderColor: tint + '66' },
-                  ]}
+                  style={[styles.posBadge, { backgroundColor: tint + '24', borderColor: tint + '77' }]}
                 >
                   <Text style={[styles.posText, { color: tint }]}>{pos}</Text>
                 </View>
@@ -357,14 +364,79 @@ export default function DraftBoard() {
   );
 }
 
-/** Gold for the ones worth shouting about, green for the rest. */
-function ratingTint(rtg: number): string {
-  if (rtg >= 88) return color.gold;
-  if (rtg >= 78) return color.accent;
-  return color.text2;
+function PlayerRow({
+  player,
+  playable,
+  hideRatings,
+  onPress,
+}: {
+  player: Pick;
+  playable: boolean;
+  hideRatings: boolean;
+  onPress: (p: Pick) => void;
+}) {
+  const pos = player.pos[0] as Position;
+  const tint = positionColor[pos] ?? color.text3;
+  const fill = ratingFill(player.rtg);
+
+  return (
+    <Press
+      onPress={() => onPress(player)}
+      feel="none"
+      scaleTo={0.98}
+      disabled={!playable}
+      style={[styles.player, !playable && styles.playerOff]}
+      accessibilityLabel={`${player.n}, rated ${player.rtg}, ${POSITION_LABEL[pos] ?? pos}`}
+    >
+      <View style={[styles.posBadge, { backgroundColor: tint + '20', borderColor: tint + '77' }]}>
+        <Text style={[styles.posText, { color: tint }]}>{pos}</Text>
+      </View>
+
+      <View style={styles.playerBody}>
+        <Text style={styles.playerName} numberOfLines={1}>
+          {player.n}
+        </Text>
+        <Text style={styles.playerMeta} numberOfLines={1}>
+          {player.nat} - {player.club} {player.season}
+        </Text>
+      </View>
+
+      <View
+        style={[
+          styles.ratingPill,
+          hideRatings ? styles.ratingHidden : { backgroundColor: fill },
+        ]}
+      >
+        <Text
+          style={[styles.ratingText, hideRatings && { color: color.text3 }]}
+          allowFontScaling={false}
+        >
+          {hideRatings ? '?' : player.rtg}
+        </Text>
+      </View>
+    </Press>
+  );
+}
+
+/**
+ * The rating ramp, read off the site: emerald at the top, through
+ * yellow-green in the mid eighties, to tan at eighty-two and below. Colour
+ * carries the number, so the list is skimmable without reading a digit.
+ */
+function ratingFill(rtg: number): string {
+  if (rtg >= 90) return '#35D07F';
+  if (rtg >= 87) return '#57D46E';
+  if (rtg >= 85) return '#7FD35F';
+  if (rtg >= 83) return '#9BD75F';
+  if (rtg >= 80) return '#D9BE77';
+  return '#C0A579';
 }
 
 const styles = StyleSheet.create({
+  header: { gap: space.s3, paddingBottom: space.s2 },
+  block: {},
+  footer: { height: space.s8 },
+
   avgChip: {
     minWidth: 42,
     paddingHorizontal: space.s2,
@@ -382,97 +454,121 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
 
-  reelWrap: { marginTop: space.s3 },
-  eraWrap: { marginTop: space.s3 },
-  spinBtn: { marginTop: space.s4, marginBottom: space.s4 },
+  spinBtn: { marginTop: space.s2 },
 
-  listHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: space.s4,
-    marginBottom: space.s2,
-  },
-  listTitle: { ...text.label, color: color.accent, fontSize: 12.5 },
-  listRight: { flexDirection: 'row', alignItems: 'center', gap: space.s3 },
-  listCount: { ...text.key, fontSize: 10.5, color: color.text3 },
-  reroll: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.s2,
-    paddingHorizontal: space.s3,
-    paddingVertical: space.s1 + 2,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: line.gold,
-    backgroundColor: 'rgba(214,178,94,0.10)',
-  },
-  rerollText: { ...text.key, fontSize: 10, color: color.gold },
-  dots: { flexDirection: 'row', gap: 3 },
-  dot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: color.gold },
-  dotUsed: { backgroundColor: 'rgba(214,178,94,0.25)' },
-
-  list: { flex: 1, marginHorizontal: -space.s1 },
-  listContent: { paddingBottom: space.s5 },
-  emptyBoard: { textAlign: 'center', paddingVertical: space.s6 },
-
-  player: {
-    height: ROW_HEIGHT - space.s2,
-    marginBottom: space.s2,
-    marginHorizontal: space.s1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.s3,
-    paddingHorizontal: space.s3,
+  rerollRow: { flexDirection: 'row', alignItems: 'center', gap: space.s3 },
+  rerollBtn: {
+    paddingHorizontal: space.s5,
+    paddingVertical: space.s3,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: line.card,
     backgroundColor: '#101A14',
     experimental_backgroundImage: gradient.card,
-    boxShadow: shadow.card,
+  },
+  rerollSpent: { opacity: 0.4 },
+  rerollText: { fontFamily: font.bodySemi, fontSize: 15, color: color.text1 },
+  dots: { flexDirection: 'row', gap: 6 },
+  dot: { width: 9, height: 9, borderRadius: 5, backgroundColor: color.gold },
+  dotUsed: { backgroundColor: 'rgba(255,255,255,0.16)' },
+  rerollsLeft: { fontFamily: font.body, fontSize: 13.5, color: color.text2 },
+
+  needRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space.s2 },
+  needLabel: { ...text.key, fontSize: 9.5, color: color.text3 },
+  needChip: {
+    paddingHorizontal: space.s2 + 2,
+    paddingVertical: 3,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+  },
+  needText: {
+    fontFamily: font.displayBold,
+    fontSize: 11,
+    letterSpacing: 0.6,
+    fontVariant: ['tabular-nums'],
+  },
+
+  listHead: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    marginTop: space.s2,
+  },
+  listTitle: { ...text.label, color: color.accent, fontSize: 13 },
+  listCount: { fontFamily: font.body, fontSize: 13, color: color.text3 },
+
+  player: {
+    minHeight: 58,
+    marginBottom: space.s2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s3,
+    paddingHorizontal: space.s3,
+    paddingVertical: space.s2,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
+    boxShadow: 'inset 0px 1px 0px rgba(255,255,255,0.05)',
   },
   playerOff: { opacity: 0.32 },
   posBadge: {
-    width: 40,
-    height: 34,
+    width: 50,
+    height: 30,
     borderRadius: radius.xs,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  posText: { ...text.key, fontSize: 10.5 },
+  posText: {
+    fontFamily: font.displayBold,
+    fontSize: 11.5,
+    letterSpacing: 0.8,
+  },
   playerBody: { flex: 1, minWidth: 0 },
   playerName: {
-    fontFamily: font.bodySemi,
-    fontSize: 15.5,
-    lineHeight: 20,
+    fontFamily: font.bodyBold,
+    fontSize: 16,
+    lineHeight: 21,
     color: color.text1,
   },
   playerMeta: {
     fontFamily: font.body,
-    fontSize: 11.5,
-    lineHeight: 15,
+    fontSize: 12.5,
+    lineHeight: 16,
     color: color.text3,
   },
-  ratingBadge: {
-    minWidth: 44,
+  ratingPill: {
+    minWidth: 46,
     height: 34,
     borderRadius: radius.sm,
-    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   ratingHidden: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
     borderColor: line.card,
   },
   ratingText: {
     fontFamily: font.displayBlack,
     fontSize: 19,
+    color: '#08160D',
     fontVariant: ['tabular-nums'],
   },
 
-  done: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.s2 },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s3,
+    marginVertical: space.s3,
+  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: line.card },
+  dividerText: { ...text.key, fontSize: 9, color: color.text3 },
+
+  doneWrap: { flex: 1, justifyContent: 'center', gap: space.s5, paddingBottom: space.s6 },
+  done: { alignItems: 'center', gap: space.s2 },
   doneTitle: {
     fontFamily: font.displayBlack,
     fontSize: 30,
@@ -480,7 +576,6 @@ const styles = StyleSheet.create({
     color: color.text1,
   },
   doneMeta: { textAlign: 'center' },
-  doneBtn: { alignSelf: 'stretch', marginTop: space.s4 },
 
   backdrop: {
     position: 'absolute',

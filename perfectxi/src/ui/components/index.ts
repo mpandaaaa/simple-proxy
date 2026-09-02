@@ -21,3 +21,4 @@ export { PlayerCard } from './PlayerCard';
 export { SpinReel } from './SpinReel';
 export { EraCard } from './EraCard';
 export { ClubDisc, lighten, darken } from './ClubDisc';
+export { OverallStrip } from './OverallStrip';

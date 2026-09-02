@@ -1,11 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import Svg, {
-  Circle,
-  Defs,
-  Ellipse,
-  RadialGradient,
-  Stop,
-} from 'react-native-svg';
+import Svg, { Defs, Ellipse, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { clubCode, clubColour } from '../../engine';
 import { font } from '../type';
 
@@ -22,15 +16,18 @@ export function ClubDisc({
   club,
   size = 40,
   code,
+  square,
 }: {
   club: string | null | undefined;
   size?: number;
   /** override the three letters, for anything that is not a club */
   code?: string;
+  /** a rounded tile rather than a circle, as the era card uses */
+  square?: boolean;
 }) {
   const base = clubColour(club);
-  const r = size / 2;
-  const id = `d${Math.abs(hash(base + size))}`;
+  const id = `d${Math.abs(hash(base + size + (square ? 's' : 'c')))}`;
+  const rr = square ? 26 : 50;
 
   return (
     <View style={{ width: size, height: size }}>
@@ -54,23 +51,29 @@ export function ClubDisc({
           </RadialGradient>
         </Defs>
 
-        <Circle cx="50" cy="50" r="49" fill={`url(#${id}f)`} />
+        <Rect x="1" y="1" width="98" height="98" rx={rr} ry={rr} fill={`url(#${id}f)`} />
         <Ellipse cx="50" cy="26" rx="34" ry="20" fill={`url(#${id}h)`} />
         <Ellipse cx="50" cy="82" rx="40" ry="22" fill={`url(#${id}s)`} />
         {/* rim: bright where the light is, dark where it is not */}
-        <Circle
-          cx="50"
-          cy="50"
-          r="48"
+        <Rect
+          x="1"
+          y="1"
+          width="98"
+          height="98"
+          rx={rr}
+          ry={rr}
           fill="none"
           stroke="#FFFFFF"
           strokeOpacity={0.34}
           strokeWidth={2}
         />
-        <Circle
-          cx="50"
-          cy="50"
-          r="45"
+        <Rect
+          x="4"
+          y="4"
+          width="92"
+          height="92"
+          rx={Math.max(0, rr - 3)}
+          ry={Math.max(0, rr - 3)}
           fill="none"
           stroke="#000000"
           strokeOpacity={0.22}

@@ -1,20 +1,29 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Text, View, StyleSheet } from 'react-native';
-import { color, radius, space, line, gradient, shadow } from '../tokens';
+import { Text, View, StyleSheet } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
+import { color, radius, space, line, gradient } from '../tokens';
 import { font, text } from '../type';
 import { useReduceMotion } from '../feel';
-import { eraOf } from '../../engine';
+import { clubColour, eraOf } from '../../engine';
 import { ClubDisc } from './ClubDisc';
 
 /**
  * The card the reel lands into.
  *
- * This is what the web build actually shows a player: a pick counter, the
- * club, the season, and how strong that squad is. The reel above it is the
- * app's addition; this is the part that has to say what was won.
+ * This is what the web build actually shows: a pick counter, the club, the
+ * season, and how strong that squad is. Same anatomy, with the club's own
+ * colour washing the panel and the strength bar filling while the number
+ * counts up.
  *
- * Empty until the reel settles. The bar filling and the number counting
- * are the payoff for the spin, so neither is allowed to simply appear.
+ * Its height never changes. An empty state that is shorter than a full one
+ * makes the whole page jump every time the reel lands, so the empty state
+ * is a skeleton of exactly the right size rather than a gap.
  */
 export function EraCard({
   pick,
@@ -32,47 +41,44 @@ export function EraCard({
   strength: number;
 }) {
   const reduce = useReduceMotion();
-  const fill = useRef(new Animated.Value(0)).current;
-  const rise = useRef(new Animated.Value(0)).current;
+  const fill = useSharedValue(0);
+  const rise = useSharedValue(0);
 
   const live = !!club;
+  const tint = live ? clubColour(club) : color.accent;
   const era = season ? eraOf(season) : null;
-  const tint = era?.tint ?? color.accent;
-  // Ratings live between about 60 and 97, so that is the range the bar
-  // spans. Anchoring it at zero would leave every squad looking identical.
-  const fraction = strength ? Math.max(0.04, Math.min(1, (strength - 58) / 38)) : 0;
+  // Ratings live between about 60 and 97, so that is what the bar spans.
+  const fraction = strength ? Math.max(0.05, Math.min(1, (strength - 58) / 38)) : 0;
 
   useEffect(() => {
     if (!live) {
-      fill.setValue(0);
-      rise.setValue(0);
+      fill.value = 0;
+      rise.value = 0;
       return;
     }
-    Animated.parallel([
-      Animated.timing(fill, {
-        toValue: fraction,
-        duration: reduce ? 0 : 620,
-        delay: reduce ? 0 : 90,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.spring(rise, {
-        toValue: 1,
-        useNativeDriver: true,
-        speed: 14,
-        bounciness: 6,
-      }),
-    ]).start();
+    fill.value = withTiming(fraction, {
+      duration: reduce ? 0 : 600,
+      easing: Easing.out(Easing.cubic),
+    });
+    rise.value = withSpring(1, { stiffness: 210, damping: 15, mass: 1 });
   }, [live, fraction, fill, rise, reduce]);
 
+  const bodyStyle = useAnimatedStyle(() => ({
+    opacity: rise.value,
+    transform: [{ translateY: (1 - rise.value) * 8 }],
+  }));
+  const barStyle = useAnimatedStyle(() => ({
+    transform: [{ scaleX: fill.value }],
+  }));
+
   return (
-    <View style={[styles.card, live && { borderColor: hexA(tint, 0.42) }]}>
+    <View style={[styles.card, live && { borderColor: hexA(tint, 0.5) }]}>
       {live ? (
         <View
           style={[
-            styles.tint,
+            styles.wash,
             {
-              experimental_backgroundImage: `linear-gradient(135deg, ${hexA(tint, 0.16)} 0%, rgba(0,0,0,0) 62%)`,
+              experimental_backgroundImage: `linear-gradient(130deg, ${hexA(tint, 0.22)} 0%, ${hexA(tint, 0.05)} 55%, rgba(0,0,0,0) 100%)`,
             },
           ]}
           pointerEvents="none"
@@ -80,61 +86,65 @@ export function EraCard({
       ) : null}
 
       <View style={styles.head}>
-        <View style={[styles.pickBadge, live && { borderColor: hexA(tint, 0.45), backgroundColor: hexA(tint, 0.12) }]}>
-          <Text style={[styles.pickText, live && { color: tint }]}>
+        <View style={styles.pickWrap}>
+          <View style={[styles.dot, { backgroundColor: live ? tint : color.accent }]} />
+          <Text style={styles.pickText}>
             Pick {pick} of {total}
           </Text>
         </View>
         <Text style={styles.yourSquad}>Your squad</Text>
       </View>
 
-      <Animated.View
-        style={[
-          styles.body,
-          {
-            opacity: live ? rise : 0.45,
-            transform: [
-              {
-                translateY: live
-                  ? rise.interpolate({ inputRange: [0, 1], outputRange: [8, 0] })
-                  : 0,
-              },
-            ],
-          },
-        ]}
-      >
+      <View style={styles.body}>
         {live ? (
-          <ClubDisc club={club} size={56} />
+          <Animated.View style={bodyStyle}>
+            <ClubDisc club={club} size={54} square />
+          </Animated.View>
         ) : (
-          <View style={styles.discEmpty} />
+          <View style={styles.discSkeleton} />
         )}
 
         <View style={styles.names}>
-          <Text
-            style={styles.club}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.65}
-          >
-            {club ?? '—'}
-          </Text>
-          <Text style={styles.season}>{season ?? '. . .'}</Text>
+          {live ? (
+            <Animated.View style={bodyStyle}>
+              <Text
+                style={styles.club}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.6}
+                allowFontScaling={false}
+              >
+                {club}
+              </Text>
+              <Text style={styles.season}>
+                {season}
+                {era ? `  ·  ${era.label}` : ''}
+              </Text>
+            </Animated.View>
+          ) : (
+            <>
+              <View style={[styles.skeleton, styles.skeletonTitle]} />
+              <View style={[styles.skeleton, styles.skeletonSub]} />
+            </>
+          )}
         </View>
-      </Animated.View>
 
-      <View style={styles.strengthRow}>
-        <Text style={styles.strengthLabel}>Squad strength</Text>
-        <CountUp to={live ? strength : 0} />
+        {live ? (
+          <Animated.View style={[styles.strengthWrap, bodyStyle]}>
+            <CountUp to={strength} />
+            <Text style={styles.strengthLabel}>Squad</Text>
+          </Animated.View>
+        ) : null}
       </View>
 
       <View style={styles.track}>
         <Animated.View
           style={[
             styles.fill,
+            barStyle,
             {
               backgroundColor: tint,
-              boxShadow: live ? `0px 0px 12px ${hexA(tint, 0.7)}` : undefined,
-              transform: [{ scaleX: fill }],
+              boxShadow: live ? `0px 0px 10px ${hexA(tint, 0.8)}` : undefined,
             },
           ]}
         />
@@ -147,33 +157,27 @@ export function EraCard({
  * A number that arrives rather than appears.
  *
  * Driven from JavaScript because there is no way to animate the glyphs in
- * a Text node from the native side. It runs for six hundred milliseconds
- * at most, once per spin, while nothing else is moving, and it stops the
- * moment it is unmounted.
+ * a Text node from the native side. It runs for half a second, once per
+ * spin, while nothing else is moving, and stops the moment it unmounts.
  */
 function CountUp({ to }: { to: number }) {
   const reduce = useReduceMotion();
-  const [n, setN] = useState(to);
+  const [n, setN] = useState(reduce ? to : 0);
   const frame = useRef<number | null>(null);
 
   useEffect(() => {
-    if (reduce || to === 0) {
+    if (reduce || !to) {
       setN(to);
       return;
     }
-
-    const from = 0;
     const start = Date.now();
-    const DUR = 600;
-
+    const DUR = 560;
     const step = () => {
       const p = Math.min(1, (Date.now() - start) / DUR);
-      const eased = 1 - Math.pow(1 - p, 3);
-      setN(Math.round(from + (to - from) * eased));
+      setN(Math.round(to * (1 - Math.pow(1 - p, 3))));
       if (p < 1) frame.current = requestAnimationFrame(step);
     };
     frame.current = requestAnimationFrame(step);
-
     return () => {
       if (frame.current !== null) cancelAnimationFrame(frame.current);
     };
@@ -181,7 +185,7 @@ function CountUp({ to }: { to: number }) {
 
   return (
     <Text style={styles.strengthValue} allowFontScaling={false}>
-      {n === 0 ? '—' : n}
+      {n || '—'}
     </Text>
   );
 }
@@ -197,80 +201,73 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: line.card,
     backgroundColor: '#101A14',
-    experimental_backgroundImage: gradient.cardLift,
-    boxShadow: shadow.lift,
+    experimental_backgroundImage: gradient.card,
+    boxShadow:
+      '0px 10px 24px rgba(0,0,0,0.45), inset 0px 1px 0px rgba(255,255,255,0.06)',
     padding: space.s4,
     gap: space.s3,
     overflow: 'hidden',
   },
-  tint: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  wash: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
 
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  pickBadge: {
-    paddingHorizontal: space.s3,
-    paddingVertical: 3,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: line.card,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-  },
+  pickWrap: { flexDirection: 'row', alignItems: 'center', gap: space.s2 },
+  dot: { width: 7, height: 7, borderRadius: 4 },
   pickText: {
-    ...text.key,
-    fontSize: 10,
-    color: color.text2,
+    fontFamily: font.bodySemi,
+    fontSize: 13.5,
+    color: color.text1,
     fontVariant: ['tabular-nums'],
   },
   yourSquad: { ...text.key, fontSize: 10, color: color.text3 },
 
-  body: { flexDirection: 'row', alignItems: 'center', gap: space.s4 },
-  discEmpty: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 1,
-    borderColor: line.card,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-  },
-  names: { flex: 1, minWidth: 0 },
+  // Fixed height so the landing never resizes the page under your thumb.
+  body: { flexDirection: 'row', alignItems: 'center', gap: space.s4, height: 56 },
+  names: { flex: 1, minWidth: 0, gap: 6 },
   club: {
     fontFamily: font.displayBlack,
-    fontSize: 30,
-    lineHeight: 33,
-    letterSpacing: 0.3,
+    fontSize: 31,
+    lineHeight: 34,
+    letterSpacing: 0.2,
     color: color.text1,
   },
   season: {
-    fontFamily: font.displaySemi,
-    fontSize: 12,
-    letterSpacing: 2,
-    color: color.text3,
-    fontVariant: ['tabular-nums'],
+    fontFamily: font.bodyMed,
+    fontSize: 12.5,
+    color: color.text2,
     marginTop: 1,
   },
 
-  strengthRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
+  discSkeleton: {
+    width: 54,
+    height: 54,
+    borderRadius: radius.md,
+    backgroundColor: 'rgba(255,255,255,0.045)',
+    borderWidth: 1,
+    borderColor: line.card,
   },
-  strengthLabel: { ...text.key, fontSize: 10, color: color.text3 },
+  skeleton: { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 5 },
+  skeletonTitle: { height: 24, width: '62%' },
+  skeletonSub: { height: 11, width: '38%' },
+
+  strengthWrap: { alignItems: 'flex-end' },
   strengthValue: {
     fontFamily: font.hero,
-    fontSize: 26,
-    lineHeight: 28,
+    fontSize: 30,
+    lineHeight: 32,
     color: color.text1,
     fontVariant: ['tabular-nums'],
   },
+  strengthLabel: { ...text.key, fontSize: 8.5, color: color.text3, marginTop: 1 },
+
   track: {
-    height: 6,
+    height: 5,
     borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: line.card,
+    backgroundColor: 'rgba(255,255,255,0.07)',
     overflow: 'hidden',
   },
   fill: {
-    height: 6,
+    height: 5,
     width: '100%',
     borderRadius: 3,
     alignSelf: 'flex-start',
