@@ -683,7 +683,7 @@ export default function Summer() {
         {report.retired.length ? (
           <Group title={`${report.retired.length} retired`} tone={color.danger}>
             {report.retired.map((p) => (
-              <Line key={p.n} name={p.n} note={`${p.age} years old, rated ${p.rtg}`} pos={p.pos} />
+              <Line key={`${p.n}-${p.age}`} name={p.n} note={`${p.age} years old, rated ${p.rtg}`} pos={p.pos} />
             ))}
           </Group>
         ) : null}
@@ -739,7 +739,7 @@ export default function Summer() {
         {report.intake.length ? (
           <Group title={`${report.intake.length} through the academy`} tone={color.accent}>
             {report.intake.map((p) => (
-              <Line key={p.n} name={p.n} note={`${p.age} years old, rated ${p.rtg}`} pos={p.pos} />
+              <Line key={`${p.n}-${p.age}`} name={p.n} note={`${p.age} years old, rated ${p.rtg}`} pos={p.pos} />
             ))}
           </Group>
         ) : null}

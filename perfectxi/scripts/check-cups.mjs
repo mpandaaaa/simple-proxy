@@ -22,7 +22,7 @@ function band(label, got, lo, hi, real) {
 }
 const pct = (n) => Math.round((n / N) * 1000) / 10;
 
-function run(myAvg, position, europe, shield) {
+function run(myAvg, position, europe, shield, club = 'Arsenal') {
   const out = { fa: 0, efl: 0, ucl: 0, uel: 0, uecl: 0, shield: 0, treble: 0, double: 0, money: 0 };
   for (let i = 0; i < N; i++) {
     const c = simulateSeasonCups({
@@ -31,6 +31,7 @@ function run(myAvg, position, europe, shield) {
       europe,
       shield,
       runSeed: i * 7919 + 3,
+      club,
     });
     for (const t of c.trophies) out[t]++;
     if (c.double) out.double++;
@@ -88,6 +89,40 @@ for (const [who, got, want] of q) {
     failures++;
     rows.push({ ok: false, label: `${who} go to`, got: String(got), lo: want, hi: want, real: 'the real rule' });
   }
+}
+
+/* ---- and you are never drawn against yourself ---- */
+let selfDraws = 0;
+for (let i = 0; i < N; i++) {
+  const c = simulateSeasonCups({
+    myAvg: 89,
+    leaguePosition: 2,
+    europe: 'ucl',
+    shield: true,
+    runSeed: i * 3571 + 17,
+    club: 'Arsenal',
+  });
+  for (const r of c.runs) for (const t of r.ties) if (t.opp === 'Arsenal') selfDraws++;
+}
+if (selfDraws) {
+  failures++;
+  rows.push({
+    ok: false,
+    label: 'drawn against yourself',
+    got: selfDraws,
+    lo: 0,
+    hi: 0,
+    real: 'Arsenal cannot knock Arsenal out',
+  });
+} else {
+  rows.push({
+    ok: true,
+    label: 'never drawn against yourself',
+    got: 0,
+    lo: 0,
+    hi: 0,
+    real: 'across ' + N + ' seasons as Arsenal',
+  });
 }
 
 /* ---- and it still replays ---- */

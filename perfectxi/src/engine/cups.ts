@@ -283,6 +283,19 @@ function pickOpp(pool: readonly CupClub[], used: Set<string>, rnd: Rng): CupClub
   return from[Math.floor(rnd() * from.length)] ?? pool[0];
 }
 
+/**
+ * The field, without you in it.
+ *
+ * Every pool here is a list of real clubs and one of them is very likely
+ * to be the one you manage. Drawing Arsenal in the semi-final while you
+ * are Arsenal is not a cup tie.
+ */
+function fieldFor(pool: readonly CupClub[], club: string | null): readonly CupClub[] {
+  if (!club) return pool;
+  const out = pool.filter((c) => c.n !== club);
+  return out.length ? out : pool;
+}
+
 function band(pool: readonly CupClub[], lo: number, hi: number): readonly CupClub[] {
   const out = pool.filter((c) => c.r >= lo && c.r <= hi);
   return out.length ? out : pool;
@@ -380,8 +393,10 @@ function domestic(
   id: 'fa' | 'efl',
   myAvg: number,
   inEurope: boolean,
+  club: string | null,
   rnd: Rng,
 ): CupRun {
+  const field = fieldFor(NATIONAL_CLUBS, club);
   const rounds = id === 'fa' ? FA_ROUNDS : EFL_ROUNDS;
   const mds = id === 'fa' ? FA_MD : EFL_MD;
   const bands = id === 'fa' ? FA_BANDS : EFL_BANDS;
@@ -397,7 +412,7 @@ function domestic(
 
   for (let i = from; i < rounds.length; i++) {
     const [lo, hi] = bands[i];
-    const opp = pickOpp(band(NATIONAL_CLUBS, lo, hi), used, rnd);
+    const opp = pickOpp(band(field, lo, hi), used, rnd);
     used.add(opp.n);
     const last = i === rounds.length - 1;
     const semi = i === rounds.length - 2;
@@ -432,9 +447,14 @@ function domestic(
 
 /* ---------- Europe ---------- */
 
-function european(id: 'ucl' | 'uel' | 'uecl', myAvg: number, rnd: Rng): CupRun {
+function european(
+  id: 'ucl' | 'uel' | 'uecl',
+  myAvg: number,
+  club: string | null,
+  rnd: Rng,
+): CupRun {
   const pay = EURO_MONEY[id];
-  const pool = EURO_POOL[id];
+  const pool = fieldFor(EURO_POOL[id], club);
   const bands = EURO_BANDS[id];
   const koBands = EURO_KO_BANDS[id];
   const stages = ['League Phase', 'Playoff', ...EURO_KO];
@@ -604,15 +624,17 @@ export function simulateSeasonCups(args: {
   europe: Europe;
   shield: boolean;
   runSeed: number;
+  /** the club you manage, so you are never drawn against yourself */
+  club?: string | null;
 }): CupSeason {
-  const { myAvg, leaguePosition, europe, shield, runSeed } = args;
+  const { myAvg, leaguePosition, europe, shield, runSeed, club = null } = args;
   const rnd = mulberry32(cupSeed(runSeed));
 
   const runs: CupRun[] = [];
 
   /* The Shield. One match in August, worth nothing but the day out. */
   if (shield) {
-    const opp = pickOpp(band(NATIONAL_CLUBS, 78, 93), new Set(), rnd);
+    const opp = pickOpp(band(fieldFor(NATIONAL_CLUBS, club), 78, 93), new Set(), rnd);
     const tie = oneLeg(myAvg, opp, 0.18, 'Final', 0, true, rnd);
     runs.push({
       id: 'shield',
@@ -630,10 +652,10 @@ export function simulateSeasonCups(args: {
     runs.push(emptyRun('shield'));
   }
 
-  const euroRun = europe ? european(europe, myAvg, rnd) : null;
+  const euroRun = europe ? european(europe, myAvg, club, rnd) : null;
 
-  runs.push(domestic('efl', myAvg, europe !== null, rnd));
-  runs.push(domestic('fa', myAvg, europe !== null, rnd));
+  runs.push(domestic('efl', myAvg, europe !== null, club, rnd));
+  runs.push(domestic('fa', myAvg, europe !== null, club, rnd));
   for (const id of ['ucl', 'uel', 'uecl'] as const) {
     runs.push(europe === id && euroRun ? euroRun : emptyRun(id));
   }

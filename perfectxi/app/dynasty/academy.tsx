@@ -168,7 +168,7 @@ export default function Academy() {
           {order.map((i, n) => {
             const p = career.youth[i];
             return (
-            <Rise key={p.n} delay={Math.min(n, 5)}>
+            <Rise key={`${p.n}-${i}`} delay={Math.min(n, 5)}>
               <Prospect
                 player={p}
                 chief={career.staff.scout}

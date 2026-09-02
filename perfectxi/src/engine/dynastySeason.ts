@@ -111,6 +111,7 @@ export function processSeasonEnd(
     europe: d.europe,
     shield: d.seasons.length > 0 && (d.seasons[d.seasons.length - 1].fin === 1 || (d.honours.fa ?? 0) > 0),
     runSeed: (d.seed ^ Math.imul(d.year, 0x2545f491)) >>> 0,
+    club: d.club,
   });
   next.europe = cups.europeNext;
   next.lastCups = cups;
@@ -359,7 +360,16 @@ export function processSeasonEnd(
   /* 10. the academy */
   const intake: DynastyPlayer[] = [];
   const count = intakeSize(next.infra.academy, rnd);
-  for (let i = 0; i < count; i++) intake.push(makeYouth(next.infra.academy, d.club, rnd));
+  // Nobody at the club, in the academy or in this intake shares a name.
+  const taken = new Set<string>([
+    ...everyone(next).map((p) => p.n),
+    ...next.youth.map((p) => p.n),
+  ]);
+  for (let i = 0; i < count; i++) {
+    const kid = makeYouth(next.infra.academy, d.club, rnd, taken);
+    taken.add(kid.n);
+    intake.push(kid);
+  }
 
   const released: string[] = [];
   const youth: DynastyPlayer[] = [];

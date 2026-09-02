@@ -150,7 +150,13 @@ const YOUTH_POS: Position[] = ['GK', 'DEF', 'DEF', 'MID', 'MID', 'ATT'];
  * players, and the rest never make it. You cannot tell which is which
  * without scouting, and even then you only ever get a range.
  */
-export function makeYouth(academy: number, club: string, rnd: Rng): DynastyPlayer {
+export function makeYouth(
+  academy: number,
+  club: string,
+  rnd: Rng,
+  /** names already at the club, so an intake cannot produce two of them */
+  taken?: ReadonlySet<string>,
+): DynastyPlayer {
   const pos = YOUTH_POS[Math.floor(rnd() * YOUTH_POS.length)];
   const age = rint(16, 18, rnd);
   const cur = clamp(Math.round(52 + gauss(rnd) * 5 + academy * 1.5), 40, 72);
@@ -166,7 +172,22 @@ export function makeYouth(academy: number, club: string, rnd: Rng): DynastyPlaye
           : rint(0, 8, rnd);
 
   const pot = clamp(cur + bump + Math.round(academy - 3), cur, 97);
-  const name = `${FIRST[Math.floor(rnd() * FIRST.length)]} ${LAST[Math.floor(rnd() * LAST.length)]}`;
+  /* Thirty first names and twenty odd surnames will collide inside a
+     single intake sooner or later, and two players with the same name at
+     the same club is a bug wherever a list is keyed by it. Draw again
+     until the name is new, and fall back to a middle initial. */
+  let name = `${FIRST[Math.floor(rnd() * FIRST.length)]} ${LAST[Math.floor(rnd() * LAST.length)]}`;
+  if (taken) {
+    let guard = 0;
+    while (taken.has(name) && guard++ < 40) {
+      name = `${FIRST[Math.floor(rnd() * FIRST.length)]} ${LAST[Math.floor(rnd() * LAST.length)]}`;
+    }
+    if (taken.has(name)) {
+      const initial = String.fromCharCode(65 + Math.floor(rnd() * 26));
+      const [f, ...rest] = name.split(' ');
+      name = `${f} ${initial} ${rest.join(' ')}`;
+    }
+  }
 
   return seedTracks(
     {
