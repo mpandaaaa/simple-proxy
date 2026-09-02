@@ -10,6 +10,7 @@ import Animated, {
   withTiming,
   withRepeat,
 } from 'react-native-reanimated';
+import { DeviceMotion } from 'expo-sensors';
 import { useReduceMotion } from '../feel';
 
 /**
@@ -64,6 +65,53 @@ const running: Record<ShineGroup, boolean> = {
   card: false,
   feature: false,
 };
+
+/**
+ * How far the phone is tilted, left to right, as -1 to 1.
+ *
+ * This is the thing the web physically cannot do. A real foil card moves
+ * its highlight when you tilt it, because the light source has not moved
+ * and you have. Here the tilt is added to the ambient drift rather than
+ * replacing it, so a card still breathes when the phone is flat on a
+ * table, and tilting it pushes the band across by up to half a card.
+ */
+const TILT = makeMutable(0);
+/** how much of a card width a full tilt is worth */
+const TILT_REACH = 0.42;
+
+let watchers = 0;
+let subscription: { remove: () => void } | null = null;
+
+function watchTilt() {
+  watchers++;
+  if (subscription) return;
+  try {
+    DeviceMotion.setUpdateInterval(60);
+    subscription = DeviceMotion.addListener((m) => {
+      const gamma = m?.rotation?.gamma;
+      if (typeof gamma !== 'number' || Number.isNaN(gamma)) return;
+      // gamma runs about -pi/2 to pi/2 across a full roll. Clamped well
+      // inside that, so an ordinary hand movement covers the range and a
+      // phone turned on its side does not run off the end.
+      const t = Math.max(-1, Math.min(1, gamma / 0.7));
+      // Eased towards, not snapped to: raw sensor values jitter, and a
+      // highlight that trembles is worse than one that does not move.
+      TILT.value = TILT.value + (t - TILT.value) * 0.18;
+    });
+  } catch {
+    // A phone without the sensor, or one that refuses it, simply keeps the
+    // ambient drift. There is nothing to tell the player about.
+    subscription = null;
+  }
+}
+
+function unwatchTilt() {
+  watchers = Math.max(0, watchers - 1);
+  if (watchers > 0 || !subscription) return;
+  subscription.remove();
+  subscription = null;
+  TILT.value = 0;
+}
 
 function startClock(group: ShineGroup) {
   if (running[group]) return;
@@ -151,6 +199,9 @@ export function Shine({
   useEffect(() => {
     if (reduce) return;
     startClock(group);
+    // The sensor only runs while something is actually using it.
+    watchTilt();
+    return unwatchTilt;
   }, [group, reduce]);
 
   useEffect(() => {
@@ -173,7 +224,8 @@ export function Shine({
   // 1.5 of it at the end. This is that same travel.
   const sweep = useAnimatedStyle(() => {
     const p = (clock.value + offset) % 1;
-    return { transform: [{ translateX: width.value * (p * 2 - 1.5) }] };
+    const drift = width.value * (p * 2 - 1.5);
+    return { transform: [{ translateX: drift + TILT.value * width.value * TILT_REACH }] };
   });
 
   const flashStyle = useAnimatedStyle(() => ({

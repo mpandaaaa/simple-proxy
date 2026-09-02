@@ -16,6 +16,7 @@ import { color, line, radius, space } from '../tokens';
 import { font, text } from '../type';
 import { GRAIN_URI } from '../grain';
 import { haptic, useReduceMotion } from '../feel';
+import { sfx, soundOn, toggleSound } from '../sound';
 import { ClubDisc } from './ClubDisc';
 import { Press } from './Press';
 import { Shine } from './Shine';
@@ -87,6 +88,7 @@ export function MatchLive({
   const [minute, setMinute] = useState(0);
   const [shown, setShown] = useState<MatchEvent[]>([]);
   const [ended, setEnded] = useState(false);
+  const [audible, setAudible] = useState(soundOn());
 
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cursor = useRef(0);
@@ -134,7 +136,15 @@ export function MatchLive({
     stop();
     setEnded(true);
     haptic('medium');
-  }, [stop]);
+    sfx('ft');
+    // The result lands a beat after the whistle, the way it does on a
+    // broadcast, rather than on top of it.
+    const t = setTimeout(() => {
+      if (!match) return;
+      sfx(match.oc === 'win' ? 'win' : match.oc === 'loss' ? 'lose' : 'ft');
+    }, 650);
+    return () => clearTimeout(t);
+  }, [stop, match]);
 
   // Everything that has not been seen yet, dumped in at once. Used by the
   // skip button and by Reduce Motion, which should not sit through eight
@@ -170,6 +180,7 @@ export function MatchLive({
     }
 
     haptic('light');
+    sfx('whistle');
 
     const step = () => {
       clock.current += 1;
@@ -189,6 +200,7 @@ export function MatchLive({
         landed.push(e);
         if (e.kind === 'goal') {
           haptic(e.side === 'me' ? 'heavy' : 'warning');
+          sfx(e.side === 'me' ? 'goal' : 'against');
           flash.value = withSequence(
             withTiming(1, { duration: 90 }),
             withTiming(0, { duration: 420 }),
@@ -312,6 +324,19 @@ export function MatchLive({
               Premier League {'·'} Matchday {match.n} {'·'}{' '}
               {match.home ? 'Home' : 'Away'}
             </Text>
+
+            {/* the one place sound actually plays is the one place to stop it */}
+            <Press
+              onPress={() => setAudible(toggleSound())}
+              feel="light"
+              scaleTo={0.9}
+              style={styles.mute}
+              accessibilityLabel={audible ? 'Turn sound off' : 'Turn sound on'}
+            >
+              <Text style={styles.muteIcon} allowFontScaling={false}>
+                {audible ? '🔊' : '🔇'}
+              </Text>
+            </Press>
 
             <View style={styles.scoreline}>
               <View style={styles.side}>
@@ -596,6 +621,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.22)',
   },
 
+  mute: {
+    position: 'absolute',
+    top: space.s3,
+    right: space.s3,
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 17,
+    backgroundColor: 'rgba(0,0,0,0.28)',
+    zIndex: 3,
+  },
+  muteIcon: { fontSize: 14, lineHeight: 18, opacity: 0.9 },
   comp: {
     ...text.key,
     fontSize: 10,

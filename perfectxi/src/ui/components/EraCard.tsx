@@ -17,6 +17,7 @@ import { color, radius, space, line, gradient } from '../tokens';
 import { Shine } from './Shine';
 import { font, text } from '../type';
 import { haptic, useReduceMotion } from '../feel';
+import { sfx } from '../sound';
 import { clubColour, eraOf } from '../../engine';
 import {
   WHEEL,
@@ -93,7 +94,10 @@ export function EraCard({
   const fraction = strength ? Math.max(0.05, Math.min(1, (strength - 58) / 38)) : 0;
 
   /** A club clicking past. The site fires a 6ms buzz; selection is Apple's. */
-  const tick = useCallback(() => haptic('select'), []);
+  const tick = useCallback(() => {
+    haptic('select');
+    sfx('tick');
+  }, []);
 
   const settle = useCallback(() => {
     haptic('heavy'); // the site's 40ms landing buzz

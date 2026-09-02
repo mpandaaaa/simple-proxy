@@ -21,6 +21,7 @@ import Animated, {
 import { radius, space } from '../tokens';
 import { font } from '../type';
 import { haptic, useReduceMotion } from '../feel';
+import { sfx } from '../sound';
 import { Shine } from './Shine';
 import {
   clubColour,
@@ -149,6 +150,7 @@ export function PlayerCard({
 
       // The haptic gets heavier with the signing.
       haptic(tier === 'icon' ? 'heavy' : tier === 'gold' ? 'medium' : 'light');
+      sfx('pick');
       if (tier === 'icon' || tier === 'gold') {
         timer.current = setTimeout(() => haptic('success'), 140);
       }

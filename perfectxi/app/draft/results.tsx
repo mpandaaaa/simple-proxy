@@ -8,6 +8,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Defs, Ellipse, Path, RadialGradient, Stop } from 'react-native-svg';
 import { router, Stack } from 'expo-router';
+import { captureRef } from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
 import {
   ModeScreen,
   Press,
@@ -22,11 +24,15 @@ import {
   CupCard,
   Confetti,
   Trophy,
+  ShareCard,
+  CARD_W,
+  CARD_H,
 } from '../../src/ui/components';
 import { color, space, radius, line, gradient, positionColor } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { GRAIN_URI } from '../../src/ui/grain';
 import { haptic, useReduceMotion } from '../../src/ui/feel';
+import { sfx } from '../../src/ui/sound';
 import {
   awards,
   calcOdds,
@@ -171,6 +177,43 @@ export default function Results() {
     haptic('light');
     setWatching(index);
   }, []);
+
+  const card = useRef<View>(null);
+  const [sharing, setSharing] = useState(false);
+
+  /**
+   * The picture comes off a real view rendered off screen at a fixed size,
+   * captured at three times scale, which is 1080 by 1350.
+   *
+   * Capturing the results page itself would be easier and wrong: it would
+   * carry the header, the scroll position and the notch into the picture.
+   */
+  const share = useCallback(async () => {
+    if (sharing || !card.current) return;
+    setSharing(true);
+    haptic('medium');
+    try {
+      const uri = await captureRef(card.current, {
+        format: 'png',
+        quality: 1,
+        result: 'tmpfile',
+        width: CARD_W * 3,
+        height: CARD_H * 3,
+      });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, {
+          mimeType: 'image/png',
+          dialogTitle: 'Your XI',
+          UTI: 'public.png',
+        });
+      }
+    } catch {
+      // A share sheet that will not open is not worth an alert on top of
+      // the results. The button is still there to be pressed again.
+    } finally {
+      setSharing(false);
+    }
+  }, [sharing]);
 
   if (!run || !result) return null;
 
@@ -454,6 +497,16 @@ export default function Results() {
 
         <View style={styles.cta}>
           <Press
+            onPress={share}
+            feel="none"
+            style={[styles.share, { borderColor: tone.edge }]}
+            scaleTo={0.98}
+          >
+            <Text style={[styles.shareText, { color: tone.tint }]}>
+              {sharing ? 'Making the picture' : 'Share this XI'}
+            </Text>
+          </Press>
+          <Press
             onPress={() => {
               haptic('medium');
               clearRun();
@@ -480,6 +533,21 @@ export default function Results() {
           </Press>
         </View>
       </ModeScreen>
+
+      {/* off screen, at print size, waiting to be captured */}
+      <View style={styles.offscreen} pointerEvents="none">
+        <ShareCard
+          ref={card}
+          squad={squad}
+          formation={config.formation}
+          position={result.position}
+          points={result.pts}
+          grade={result.grade}
+          title={fin.title}
+          tint={tone.tint}
+          honours={honours}
+        />
+      </View>
 
       <Confetti fire={result.position === 1} />
 
@@ -542,8 +610,10 @@ function Finish({
     inn.value = withDelay(90, withSpring(1, { stiffness: 170, damping: 20, mass: 1 }));
     if (!champion) {
       haptic('success');
+      sfx(position <= 4 ? 'win' : position >= 18 ? 'lose' : 'ft');
       return;
     }
+    sfx('trophy');
     // A title arrives as three beats rather than one buzz.
     haptic('heavy');
     const a = setTimeout(() => haptic('heavy'), 190);
@@ -552,7 +622,7 @@ function Finish({
       clearTimeout(a);
       clearTimeout(b);
     };
-  }, [inn, reduce, champion]);
+  }, [inn, reduce, champion, position]);
 
   const numStyle = useAnimatedStyle(() => ({
     opacity: inn.value,
@@ -1441,7 +1511,17 @@ const styles = StyleSheet.create({
   keyText: { ...text.key, fontSize: 8, color: color.text3 },
 
   /* ---- actions ---- */
+  offscreen: { position: 'absolute', left: -CARD_W * 4, top: 0, opacity: 0 },
   cta: { marginTop: space.s6, gap: space.s3, paddingBottom: space.s5 },
+  share: {
+    minHeight: 54,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+  },
+  shareText: { ...text.button },
   again: {
     minHeight: 58,
     alignItems: 'center',

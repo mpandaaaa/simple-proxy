@@ -38,7 +38,10 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 180
         }
-      ]
+      ],
+      "expo-audio",
+      "expo-sharing",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true
