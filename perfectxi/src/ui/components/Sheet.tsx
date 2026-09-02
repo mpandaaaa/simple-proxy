@@ -37,10 +37,19 @@ const FLICK = 900;
 export function Sheet({
   visible,
   onClose,
+  onClosed,
   children,
 }: {
   visible: boolean;
   onClose: () => void;
+  /**
+   * Fired once the exit has played and the modal is gone.
+   *
+   * Anything that opens another modal has to wait for this. iOS will not
+   * present a modal while one is dismissing, so starting the next one from
+   * the button press means it silently never appears.
+   */
+  onClosed?: () => void;
   children: ReactNode;
 }) {
   const reduce = useReduceMotion();
@@ -49,7 +58,10 @@ export function Sheet({
   const y = useSharedValue(600);
   const start = useSharedValue(0);
 
-  const unmount = useCallback(() => setMounted(false), []);
+  const unmount = useCallback(() => {
+    setMounted(false);
+    onClosed?.();
+  }, [onClosed]);
 
   useEffect(() => {
     if (visible) {

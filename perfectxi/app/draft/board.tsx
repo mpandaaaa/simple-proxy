@@ -70,6 +70,12 @@ export default function DraftBoard() {
   /** the slot the last signing went into, remembered past the reveal */
   const lastSlot = useRef<number | null>(null);
   /**
+   * A signing chosen from the position sheet, held until the sheet has
+   * finished leaving. Signing straight from the tile would try to present
+   * the card while the sheet is still dismissing, and iOS drops it.
+   */
+  const queued = useRef<{ player: Pick; slot: number } | null>(null);
+  /**
    * Bumped on every signing so the pitch re-measures. The page scrolls, so
    * where a slot was when it first laid out is not where it is now.
    */
@@ -385,7 +391,15 @@ export default function DraftBoard() {
       {/* Where does he play. The player is on a card, each position is a
           lit tile in its own colour, and the whole thing can be thrown
           back down rather than only tapped away. */}
-      <Sheet visible={!!chooser} onClose={() => setChooser(null)}>
+      <Sheet
+        visible={!!chooser}
+        onClose={() => setChooser(null)}
+        onClosed={() => {
+          const q = queued.current;
+          queued.current = null;
+          if (q) sign(q.player, q.slot);
+        }}
+      >
         <View style={styles.sheet}>
           <View style={styles.sheetOrbs} pointerEvents="none">
             <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -435,9 +449,10 @@ export default function DraftBoard() {
                 <Press
                   key={si}
                   onPress={() => {
-                    const c = chooser;
+                    if (!chooser) return;
+                    haptic('light');
+                    queued.current = { player: chooser.player, slot: si };
                     setChooser(null);
-                    sign(c.player, si);
                   }}
                   feel="none"
                   scaleTo={0.955}
