@@ -1,38 +1,60 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, ScrollView, Animated, StyleSheet } from 'react-native';
-import { router } from 'expo-router';
-import { ModeScreen, Button, Press, Pitch } from '../../src/ui/components';
-import { color, space, radius, gradient, shadow, line } from '../../src/ui/tokens';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
+import { router, Stack } from 'expo-router';
+import { ModeScreen, Press, Ticker, Confirm } from '../../src/ui/components';
+import { color, space, radius, line, gradient } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic, useReduceMotion } from '../../src/ui/feel';
-import { chemBonus, simulateSeason, squadAvg, type Grade } from '../../src/engine';
-import { runRng, setResult, useRun } from '../../src/game/run';
-import { progressStore } from '../../src/save';
+import {
+  chemBonus,
+  livePosition,
+  ordinal,
+  simulateSeason,
+  type MatchResult,
+} from '../../src/engine';
+import { clearRun, runRng, setResult, useRun } from '../../src/game/run';
 
-/** How long a match sits on screen before the next one lands. */
-const TICK = 380;
+/** How long a match holds before the next one lands. */
+const TICK = 360;
+/** The pause on the last whistle before the results arrive. */
+const FINAL_HOLD = 700;
 
-const OUTCOME_COLOR = {
-  win: color.win,
-  draw: color.draw,
-  loss: color.loss,
+const OUTCOME = {
+  win: { tint: color.win, letter: 'W' },
+  draw: { tint: color.draw, letter: 'D' },
+  loss: { tint: color.loss, letter: 'L' },
 } as const;
 
+/**
+ * The season playing out.
+ *
+ * The whole thing is decided the moment the screen opens. Revealing it a
+ * match at a time is theatre, and it is also what makes the result
+ * replayable: nothing here can change what was already drawn.
+ *
+ * Same readout as the site: points, goals, conceded and position, a recent
+ * form strip, a progress bar and the fixtures as they come in. Position is
+ * live, which means pro-rating the other nineteen to the number of games
+ * you have actually played, or it reads twentieth until the final whistle.
+ */
 export default function Season() {
   const run = useRun();
-  const reduceMotion = useReduceMotion();
+  const reduce = useReduceMotion();
   const [shown, setShown] = useState(0);
+  const [leaving, setLeaving] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const saved = useRef(false);
-  const progress = useRef(new Animated.Value(0)).current;
+  const feed = useRef<ScrollView>(null);
+  const progress = useSharedValue(0);
 
-  // The whole season is played the moment the screen opens. Revealing it a
-  // match at a time is presentation; the result is already decided, which is
-  // also what makes it replayable from the seed.
-  //
-  // Played in an effect rather than in a useMemo. A memo runs during render
-  // and this writes to the run store, and writing to a store mid render is
-  // how you get a season played twice under StrictMode.
+  // Played the moment the screen opens, in an effect rather than a memo:
+  // a memo runs during render and this writes to the run store.
   useEffect(() => {
     if (!run || run.result) return;
     setResult(
@@ -55,43 +77,36 @@ export default function Season() {
 
   useEffect(() => {
     if (!result) return;
-    if (reduceMotion) {
+    if (reduce) {
       setShown(result.matches.length);
       return;
     }
     if (shown >= result.matches.length) return;
     timer.current = setTimeout(() => {
-      // The haptic fires here, not inside the updater. React is free to run
-      // an updater more than once, and a win would then buzz twice.
-      if (result.matches[shown].oc === 'win') haptic('light');
+      // Fired here rather than in the updater: React may run an updater
+      // more than once, and a win would then buzz twice.
+      const m = result.matches[shown];
+      haptic(m.oc === 'win' ? 'light' : m.oc === 'loss' ? 'warning' : 'select');
       setShown((n) => n + 1);
     }, TICK);
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
-  }, [result, shown, reduceMotion]);
+  }, [result, shown, reduce]);
 
   useEffect(() => {
-    Animated.timing(progress, {
-      toValue: total ? shown / total : 0,
-      duration: reduceMotion ? 0 : 200,
-      useNativeDriver: true,
-    }).start();
-  }, [shown, total, progress, reduceMotion]);
+    progress.value = withTiming(total ? shown / total : 0, {
+      duration: reduce ? 0 : 220,
+      easing: Easing.out(Easing.quad),
+    });
+  }, [shown, total, progress, reduce]);
 
-  // Banked once, when the season actually finishes.
+  // The final whistle, then the papers.
   useEffect(() => {
-    if (!done || !result || saved.current) return;
-    saved.current = true;
+    if (!done || !result) return;
     haptic(result.position === 1 ? 'success' : 'medium');
-    progressStore.update((p) => ({
-      ...p,
-      seasons: p.seasons + 1,
-      titles: p.titles + (result.position === 1 ? 1 : 0),
-      best: Math.max(p.best, result.pts),
-      coins: p.coins + Math.round(result.pts / 2),
-      xp: p.xp + result.pts,
-    }));
+    const t = setTimeout(() => router.replace('/draft/results'), FINAL_HOLD);
+    return () => clearTimeout(t);
   }, [done, result]);
 
   const skip = useCallback(() => {
@@ -99,6 +114,10 @@ export default function Season() {
     haptic('medium');
     setShown(total);
   }, [total]);
+
+  const barStyle = useAnimatedStyle(() => ({
+    transform: [{ scaleX: progress.value }],
+  }));
 
   if (!run || !result) return null;
 
@@ -116,172 +135,173 @@ export default function Season() {
     ga += m.ga;
   }
   const pts = w * 3 + d;
+  const pos = livePosition(pts, shown, result.table);
+  const form = played.slice(-6);
 
   return (
-    <ModeScreen
-      overline={done ? 'Season complete' : `Match ${shown} of ${total}`}
-      title={done ? `${result.pts} points` : `${pts} points`}
-      scroll={false}
-      right={
-        done ? (
-          <GradeBadge grade={result.grade} />
-        ) : (
-          <Press onPress={skip} feel="none" scaleTo={0.94} style={styles.skip}>
-            <Text style={styles.skipText}>Skip</Text>
-          </Press>
-        )
-      }
-    >
-      <View style={styles.bar}>
-        <Animated.View
-          style={[
-            styles.barFill,
-            { transform: [{ scaleX: progress }] },
-          ]}
-        />
-      </View>
+    <>
+      <Stack.Screen options={{ gestureEnabled: false }} />
+      <ModeScreen
+        overline={done ? 'Full time' : `Match ${shown} of ${total}`}
+        title={`${pts} point${pts === 1 ? '' : 's'}`}
+        scroll={false}
+        onBack={() => setLeaving(true)}
+        right={
+          done ? undefined : (
+            <Press onPress={skip} feel="none" scaleTo={0.94} style={styles.skip}>
+              <Text style={styles.skipText}>Skip</Text>
+            </Press>
+          )
+        }
+      >
+        <View style={styles.bar}>
+          <Animated.View style={[styles.barFill, barStyle]} />
+        </View>
 
-      <View style={styles.statRow}>
-        <Stat label="W" value={w} tone={color.win} />
-        <Stat label="D" value={d} tone={color.draw} />
-        <Stat label="L" value={l} tone={color.loss} />
-        <Stat label="GF" value={gf} />
-        <Stat label="GA" value={ga} />
-      </View>
+        <View style={styles.statRow}>
+          <Stat value={pts} label="Points" />
+          <Stat value={gf} label="Goals" tint={color.win} />
+          <Stat value={ga} label="Conceded" tint={color.loss} />
+          <Stat
+            value={shown ? pos : 0}
+            label="Position"
+            tint={pos <= 4 ? color.accent : pos >= 18 ? color.danger : undefined}
+            ordinalise
+          />
+        </View>
 
-      {done ? (
-        <ScrollView
-          style={styles.flex}
-          contentContainerStyle={styles.finalPad}
-          showsVerticalScrollIndicator={false}
-        >
-          <Text style={[text.label, styles.sectionLabel]}>Final table</Text>
-          <View style={styles.table}>
-            {result.table.map((r, i) => (
-              <View
-                key={r.name}
-                style={[styles.tableRow, r.isYou && styles.tableRowYou]}
-              >
-                <Text style={[styles.tPos, r.isYou && styles.tYouText]}>{i + 1}</Text>
-                <Text
-                  style={[styles.tName, r.isYou && styles.tYouText]}
-                  numberOfLines={1}
+        <View style={styles.formRow}>
+          <Text style={styles.formLabel}>Recent form</Text>
+          <View style={styles.formStrip}>
+            {form.length ? (
+              form.map((m) => (
+                <View
+                  key={m.n}
+                  style={[
+                    styles.formPip,
+                    {
+                      borderColor: OUTCOME[m.oc].tint,
+                      backgroundColor: OUTCOME[m.oc].tint + '22',
+                    },
+                  ]}
                 >
-                  {r.name}
-                </Text>
-                <Text style={[styles.tNum, r.isYou && styles.tYouText]}>{r.w}</Text>
-                <Text style={[styles.tNum, r.isYou && styles.tYouText]}>{r.d}</Text>
-                <Text style={[styles.tNum, r.isYou && styles.tYouText]}>{r.l}</Text>
-                <Text style={[styles.tNum, styles.tGd, r.isYou && styles.tYouText]}>
-                  {r.gf - r.ga > 0 ? '+' : ''}
-                  {r.gf - r.ga}
-                </Text>
-                <Text style={[styles.tPts, r.isYou && styles.tYouText]}>{r.pts}</Text>
-              </View>
-            ))}
-          </View>
-
-          <Text style={[text.label, styles.sectionLabel]}>Your XI</Text>
-          <Pitch squad={run.state.squad} formation={run.state.config.formation} />
-
-          <Text style={[text.label, styles.sectionLabel]}>Top scorers</Text>
-          <View style={styles.scorers}>
-            {Object.entries(result.playerStats)
-              .sort((a, b) => b[1].g - a[1].g || b[1].a - a[1].a)
-              .slice(0, 5)
-              .map(([name, s]) => (
-                <View key={name} style={styles.scorerRow}>
-                  <Text style={styles.scorerName} numberOfLines={1}>
-                    {name}
-                  </Text>
-                  <Text style={styles.scorerStat}>
-                    {s.g} goals · {s.a} assists
+                  <Text style={[styles.formPipText, { color: OUTCOME[m.oc].tint }]}>
+                    {OUTCOME[m.oc].letter}
                   </Text>
                 </View>
-              ))}
+              ))
+            ) : (
+              <Text style={styles.formNone}>Kick off</Text>
+            )}
           </View>
+        </View>
 
-          <View style={styles.summary}>
-            <Text style={[text.small, styles.summaryText]}>
-              Squad average {Math.round(squadAvg(run.state.squad))} ·{' '}
-              {result.cleanSheets} clean sheets · best run {result.longestStreak}{' '}
-              wins · biggest win {result.biggestWin ?? 'none'}
-            </Text>
-            <Text style={[text.small, styles.summaryText]}>
-              Expected {result.xgF} for, {result.xgA} against
-            </Text>
-          </View>
-
-          <Button
-            label="Back to home"
-            style={styles.homeBtn}
-            onPress={() => router.dismissAll()}
-          />
-        </ScrollView>
-      ) : (
         <ScrollView
-          style={styles.flex}
+          ref={feed}
+          style={styles.feed}
           contentContainerStyle={styles.feedPad}
           showsVerticalScrollIndicator={false}
+          bounces={false}
         >
           {played
             .slice()
             .reverse()
-            .map((m) => (
-              <View key={m.n} style={styles.match}>
-                <Text style={styles.matchNo}>{m.n}</Text>
-                <Text style={styles.matchOpp} numberOfLines={1}>
-                  {m.home ? 'v ' : 'at '}
-                  {m.opp}
-                </Text>
-                <View
-                  style={[
-                    styles.score,
-                    { borderColor: OUTCOME_COLOR[m.oc] + '66' },
-                  ]}
-                >
-                  <Text style={[styles.scoreText, { color: OUTCOME_COLOR[m.oc] }]}>
-                    {m.gf}-{m.ga}
-                  </Text>
-                </View>
-              </View>
+            .map((m, i) => (
+              <MatchRow key={m.n} match={m} fresh={i === 0 && !done} />
             ))}
         </ScrollView>
-      )}
-    </ModeScreen>
+
+        <Confirm
+          visible={leaving}
+          title="Leave the season?"
+          body="The season and your XI will be lost. This cannot be undone."
+          confirmLabel="Leave"
+          cancelLabel="Stay"
+          onCancel={() => setLeaving(false)}
+          onConfirm={() => {
+            setLeaving(false);
+            clearRun();
+            router.dismissAll();
+          }}
+        />
+      </ModeScreen>
+    </>
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: number; tone?: string }) {
+function Stat({
+  value,
+  label,
+  tint,
+  ordinalise,
+}: {
+  value: number;
+  label: string;
+  tint?: string;
+  ordinalise?: boolean;
+}) {
   return (
     <View style={styles.stat}>
-      <Text style={[styles.statValue, tone ? { color: tone } : null]}>{value}</Text>
+      {ordinalise ? (
+        <Text
+          style={[styles.statValue, tint ? { color: tint } : null]}
+          allowFontScaling={false}
+        >
+          {value ? ordinal(value) : '—'}
+        </Text>
+      ) : (
+        <Ticker
+          value={value}
+          duration={280}
+          style={[styles.statValue, tint ? { color: tint } : null]}
+        />
+      )}
       <Text style={styles.statLabel}>{label}</Text>
     </View>
   );
 }
 
-const GRADE_TONE: Record<Grade, string> = {
-  S: color.gold,
-  A: color.accent,
-  B: color.accent,
-  C: color.blue,
-  D: color.text2,
-  E: color.warning,
-  F: color.danger,
-};
+/** The newest result lands rather than appearing. */
+function MatchRow({ match, fresh }: { match: MatchResult; fresh: boolean }) {
+  const reduce = useReduceMotion();
+  const land = useSharedValue(fresh && !reduce ? 0 : 1);
 
-function GradeBadge({ grade }: { grade: Grade }) {
-  const tone = GRADE_TONE[grade];
+  useEffect(() => {
+    if (!fresh || reduce) return;
+    land.value = withSpring(1, { stiffness: 260, damping: 18, mass: 1 });
+  }, [fresh, land, reduce]);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: land.value,
+    transform: [{ translateY: (1 - land.value) * -10 }],
+  }));
+
+  const oc = OUTCOME[match.oc];
+
   return (
-    <View style={[styles.grade, { borderColor: tone, backgroundColor: tone + '1f' }]}>
-      <Text style={[styles.gradeText, { color: tone }]}>{grade}</Text>
-    </View>
+    <Animated.View style={[styles.match, style, { borderLeftColor: oc.tint }]}>
+      <Text style={styles.matchNo}>{match.n}</Text>
+      <View style={styles.matchBody}>
+        <Text style={styles.matchOpp} numberOfLines={1}>
+          {match.home ? 'v ' : 'at '}
+          {match.opp}
+        </Text>
+        {match.scorers.length ? (
+          <Text style={styles.matchScorers} numberOfLines={1}>
+            {match.scorers.map((s) => `${s.name} ${s.min}'`).join('  ·  ')}
+          </Text>
+        ) : null}
+      </View>
+      <View style={[styles.score, { borderColor: oc.tint + '77', backgroundColor: oc.tint + '1a' }]}>
+        <Text style={[styles.scoreText, { color: oc.tint }]} allowFontScaling={false}>
+          {match.gf}-{match.ga}
+        </Text>
+      </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   skip: {
     paddingHorizontal: space.s3 + 2,
     paddingVertical: space.s2 + 1,
@@ -291,91 +311,102 @@ const styles = StyleSheet.create({
     backgroundColor: '#101A14',
     experimental_backgroundImage: gradient.card,
   },
-  skipText: { ...text.key, color: color.text2 },
-  grade: {
-    width: 38,
-    height: 38,
-    borderRadius: radius.sm,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  gradeText: { fontFamily: font.displayBlack, fontSize: 21, lineHeight: 25 },
+  skipText: { ...text.key, fontSize: 10, color: color.text2 },
 
   bar: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: color.surface2,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
     borderColor: line.card,
     overflow: 'hidden',
   },
   barFill: {
     height: 6,
-    backgroundColor: color.accent,
-    // scaleX from a zero-width-anchored bar: transform runs on the native
-    // thread, animating width would not.
     width: '100%',
-    transform: [{ scaleX: 0 }],
+    backgroundColor: color.accent,
     alignSelf: 'flex-start',
     transformOrigin: 'left',
+    boxShadow: `0px 0px 10px ${color.accent}88`,
   },
 
-  statRow: {
-    flexDirection: 'row',
-    gap: space.s2,
-    marginTop: space.s4,
-    marginBottom: space.s3,
-  },
+  statRow: { flexDirection: 'row', gap: space.s2, marginTop: space.s4 },
   stat: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: space.s2 + 2,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: line.card,
-    backgroundColor: '#101A14',
-    experimental_backgroundImage: gradient.card,
-    boxShadow: shadow.card,
-  },
-  statValue: {
-    fontFamily: font.displayBold,
-    fontSize: 20,
-    lineHeight: 24,
-    color: color.text1,
-    fontVariant: ['tabular-nums'],
-  },
-  statLabel: { ...text.key, fontSize: 10, color: color.text3 },
-
-  feedPad: { paddingBottom: space.s7 },
-  match: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.s3,
     paddingVertical: space.s3,
-    paddingHorizontal: space.s3,
-    marginBottom: space.s2,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: line.card,
     backgroundColor: '#101A14',
     experimental_backgroundImage: gradient.card,
-    boxShadow: shadow.card,
+  },
+  statValue: {
+    fontFamily: font.displayBlack,
+    fontSize: 22,
+    lineHeight: 27,
+    color: color.text1,
+    fontVariant: ['tabular-nums'],
+  },
+  statLabel: { ...text.key, fontSize: 8.5, color: color.text3, marginTop: 2 },
+
+  formRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s3,
+    marginTop: space.s3,
+  },
+  formLabel: { ...text.key, fontSize: 9.5, color: color.text3 },
+  formStrip: { flexDirection: 'row', gap: 5, flex: 1 },
+  formPip: {
+    width: 26,
+    height: 26,
+    borderRadius: radius.xs,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  formPipText: { fontFamily: font.displayBlack, fontSize: 12, lineHeight: 15 },
+  formNone: { ...text.small, color: color.text3 },
+
+  feed: { flex: 1, marginTop: space.s4 },
+  feedPad: { paddingBottom: space.s7 },
+  match: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s3,
+    marginBottom: space.s2,
+    paddingVertical: space.s2 + 2,
+    paddingHorizontal: space.s3,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: line.card,
+    borderLeftWidth: 3,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
   },
   matchNo: {
     ...text.key,
+    fontSize: 10,
     color: color.text3,
     minWidth: 22,
     fontVariant: ['tabular-nums'],
   },
+  matchBody: { flex: 1, minWidth: 0 },
   matchOpp: {
-    flex: 1,
-    fontFamily: font.bodyMed,
+    fontFamily: font.bodySemi,
     fontSize: 15,
+    lineHeight: 20,
     color: color.text1,
   },
+  matchScorers: {
+    fontFamily: font.body,
+    fontSize: 11,
+    lineHeight: 15,
+    color: color.text3,
+  },
   score: {
-    minWidth: 58,
+    minWidth: 60,
     alignItems: 'center',
     paddingVertical: 5,
     borderRadius: radius.sm,
@@ -384,90 +415,7 @@ const styles = StyleSheet.create({
   scoreText: {
     fontFamily: font.displayBlack,
     fontSize: 17,
-    lineHeight: 20,
+    lineHeight: 21,
     fontVariant: ['tabular-nums'],
   },
-
-  finalPad: { paddingBottom: space.s8 },
-  sectionLabel: { marginTop: space.s5, marginBottom: space.s2 },
-  table: {
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: line.card,
-    backgroundColor: '#101A14',
-    experimental_backgroundImage: gradient.card,
-    boxShadow: shadow.card,
-    overflow: 'hidden',
-  },
-  tableRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: space.s2,
-    paddingHorizontal: space.s3,
-    gap: space.s2,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: color.border,
-  },
-  tableRowYou: { backgroundColor: color.accentWeak },
-  tPos: {
-    ...text.key,
-    color: color.text3,
-    minWidth: 18,
-    fontVariant: ['tabular-nums'],
-  },
-  tName: {
-    flex: 1,
-    fontFamily: font.bodyMed,
-    fontSize: 13.5,
-    color: color.text1,
-  },
-  tNum: {
-    fontFamily: font.body,
-    fontSize: 12.5,
-    color: color.text3,
-    minWidth: 18,
-    textAlign: 'right',
-    fontVariant: ['tabular-nums'],
-  },
-  tGd: { minWidth: 30 },
-  tPts: {
-    fontFamily: font.displayBold,
-    fontSize: 15,
-    lineHeight: 18,
-    color: color.text1,
-    minWidth: 26,
-    textAlign: 'right',
-    fontVariant: ['tabular-nums'],
-  },
-  tYouText: { color: color.accent },
-
-  scorers: {
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: line.card,
-    backgroundColor: '#101A14',
-    experimental_backgroundImage: gradient.card,
-    boxShadow: shadow.card,
-    paddingHorizontal: space.s3,
-  },
-  scorerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: space.s3,
-    paddingVertical: space.s3,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: color.border,
-  },
-  scorerName: {
-    flex: 1,
-    fontFamily: font.bodySemi,
-    fontSize: 14,
-    color: color.text1,
-  },
-  scorerStat: { ...text.small, color: color.text3 },
-
-  summary: { marginTop: space.s5, gap: space.s1 },
-  summaryText: { textAlign: 'center' },
-  homeBtn: { marginTop: space.s6 },
 });

@@ -309,6 +309,133 @@ function genScorers(
   return scorers;
 }
 
+export type Verdict = { headline: string; quote: string; source: string };
+
+/**
+ * The morning papers.
+ *
+ * Carried over from the web build's staticVerdict, with its em-dashes
+ * removed. A grade tells you how you did; this tells you what it felt like,
+ * and it is the difference between a results screen and a scoreboard.
+ */
+export function verdict(r: {
+  position: number;
+  pts: number;
+  wins: number;
+  draws: number;
+  losses: number;
+}): Verdict {
+  const { position: pos, pts, draws, losses } = r;
+  const ord = ordinal(pos);
+
+  if (!losses && !draws)
+    return {
+      headline: 'A Perfect Season',
+      quote:
+        'Flawless. Thirty-eight games, thirty-eight wins. Nothing more can be asked of any side.',
+      source: 'Sky Sports',
+    };
+  if (pos === 1 && !losses)
+    return {
+      headline: 'The New Invincibles',
+      quote:
+        'Unbeaten champions. A campaign that will be spoken about for decades. Truly historic.',
+      source: 'BBC Sport',
+    };
+  if (pos === 1 && pts >= 90)
+    return {
+      headline: 'Dominant from Start to Finish',
+      quote: `${pts} points. The relentlessness was extraordinary. This team never gave the rest a chance.`,
+      source: 'The Athletic',
+    };
+  if (pos === 1)
+    return {
+      headline: 'Worthy Champions',
+      quote: `A deserved title. From the opening weeks it was clear this was a side of rare quality, and ${pts} points confirms it.`,
+      source: 'The Athletic',
+    };
+  if (pos === 2)
+    return {
+      headline: 'So Close to Glory',
+      quote: `Second with ${pts} points. The quality was never in doubt but the title slipped away. A whisker from history.`,
+      source: 'Guardian Sport',
+    };
+  if (pos <= 4)
+    return {
+      headline: 'Top Four Secured',
+      quote: `Champions League football confirmed. ${pts} points and a ${ord} place finish reflects genuine quality throughout the campaign.`,
+      source: 'Telegraph',
+    };
+  if (pos <= 7)
+    return {
+      headline: 'European Nights Return',
+      quote: `${ord} place and European football. There were glimpses of real class but inconsistency cost a tilt at the top four.`,
+      source: 'Mail Sport',
+    };
+  if (pos <= 14)
+    return {
+      headline: 'Mid-Table Mediocrity',
+      quote: `A ${ord} place finish on ${pts} points. The talent was there but it never clicked. A season to forget.`,
+      source: 'BBC Sport',
+    };
+  if (pos <= 17)
+    return {
+      headline: 'Survival, but at what cost?',
+      quote: `Scraped through in ${ord}. The talent on paper made this campaign a grave disappointment. Change is needed.`,
+      source: 'Sky Sports',
+    };
+  return {
+    headline: 'Relegation. A Stunning Collapse',
+    quote: `Down in ${ord} on just ${pts} points. One of the most shocking collapses the league has ever witnessed.`,
+    source: 'Guardian Sport',
+  };
+}
+
+export type Award = { name: string; value: number } | null;
+
+/**
+ * The three end of season awards, as the web build works them out.
+ *
+ * The glove goes to a goalkeeper if there is one in the XI, because a
+ * centre back with the same clean sheets did not keep them.
+ */
+export function awards(
+  stats: Record<string, PlayerStat>,
+  squad: Slot[],
+): { boot: Award; playmaker: Award; glove: Award } {
+  const rows = Object.entries(stats).map(([name, s]) => ({ name, ...s }));
+  if (!rows.length) return { boot: null, playmaker: null, glove: null };
+
+  const boot = [...rows].sort((a, b) => b.g - a.g || b.a - a.a)[0];
+  const playmaker = [...rows].sort((a, b) => b.a - a.a || b.g - a.g)[0];
+
+  const keepers = new Set(
+    squad.filter((s) => s.player && s.pos === 'GK').map((s) => s.player!.n),
+  );
+  const gkRows = rows.filter((r) => keepers.has(r.name));
+  const glove = [...(gkRows.length ? gkRows : rows)].sort((a, b) => b.cs - a.cs)[0];
+
+  return {
+    boot: boot.g > 0 ? { name: boot.name, value: boot.g } : null,
+    playmaker: playmaker.a > 0 ? { name: playmaker.name, value: playmaker.a } : null,
+    glove: glove && glove.cs > 0 ? { name: glove.name, value: glove.cs } : null,
+  };
+}
+
+/**
+ * Where the XI would sit if the season stopped now.
+ *
+ * The other nineteen played their own full season, so their points are
+ * pro-rated to the games you have actually played. Without this the table
+ * position is meaningless until the very last match.
+ */
+export function livePosition(pts: number, played: number, table: TableRow[]): number {
+  if (played <= 0) return table.length;
+  const share = played / 38;
+  const better = table.filter((r) => !r.isYou && r.pts * share > pts).length;
+  return better + 1;
+}
+
 export function seasonGrade(pos: number, pts: number, losses: number): Grade {
   if (pos === 1 && (losses === 0 || pts >= 95)) return 'S';
   if (pos === 1) return 'A';

@@ -53,9 +53,14 @@ export {
   ordinal,
   strongerThan,
   verdictFor,
+  verdict,
+  awards,
+  livePosition,
 } from './sim';
 export type {
   Odds,
+  Verdict,
+  Award,
   Outcome,
   Scorer,
   MatchResult,
