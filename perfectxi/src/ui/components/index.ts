@@ -35,3 +35,4 @@ export { CupCard } from './CupCard';
 export { ShareCard, CARD_W, CARD_H } from './ShareCard';
 export { AchievementToast } from './AchievementToast';
 export { AchievementPanel } from './AchievementPanel';
+export { PlayerSheet } from './PlayerSheet';

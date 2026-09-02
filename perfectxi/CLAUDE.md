@@ -72,7 +72,8 @@ hub's back returns to Home.
 app/_layout.tsx      the stack, reduce motion aware
 app/index.tsx        Home, the only hub
 app/draft/           setup, board, season
-app/dynasty/         the career: hub, and the summer that ages it
+app/dynasty/         the career. start hub season summer market tactics
+                     squad academy staff club finances history
 app/hall.tsx         every season kept, ranked
 app/cabinet.tsx      silverware and the achievement catalogue
 app/soon.tsx         holding screen for a mode not built yet
@@ -122,11 +123,17 @@ is kept only as a record of where it came from.
 The draft is wired end to end: setup, spin, board, pick, 38 game season,
 final table and grade, with progress banked to the save layer.
 
-Dynasty has its first slice: an XI carried out of a finished season, the
-full ageing engine on the tuned curves, retirement, and a summer screen
-that shows what a year did. **Still to build there**: transfers, the
-academy, wages against revenue, and the board. The squad only shrinks for
-now, and the hub says so.
+Dynasty is built to the specification in `DYNASTYSPEC.md`. You take a real
+club and its real squad, and everything the spec asks for is in: the five
+jobs, the fourteen man roster, ageing on the tuned curves, retirement,
+per player match ratings, form beating the age curve, the books with PSR
+and points deductions, the board, transfers, contracts that add years,
+the academy with a scouting fog, staff, the stadium and the facilities.
+
+One deliberate departure from the site, which is documented in
+`src/engine/dynasty.ts`: transfer value uses the specification's quadratic
+rather than the sixth power the site actually runs, because the sixth
+power priced a 70 rated squad player at £22m. Both agree at the top.
 
 **Still to build elsewhere**: World Cup, Daily, Weekly, Duels, Beat the
 Machine, the player index, and a settings screen. Those rows push
@@ -160,6 +167,8 @@ npm run import-db                      # rebuild src/data from data/perfectxi-da
 npm run sounds                         # rebuild assets/sfx
 npm run cups                           # the cup win rates
 npm run dynasty                        # the ageing, valuation and wage numbers
+npm run career                         # every club can field an XI
+npm run career-run                     # a hundred seasons of Dynasty, end to end
 ```
 
 Verify with typecheck, expo-doctor and golden before committing. Port 8081 is

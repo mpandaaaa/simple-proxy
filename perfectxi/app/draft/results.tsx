@@ -55,7 +55,7 @@ import {
 } from '../../src/engine';
 import { startDynasty } from '../../src/engine';
 import { clearRun, useRun } from '../../src/game/run';
-import { dynastyStore } from '../../src/save';
+import { getCareer, setCareer } from '../../src/game/career';
 import {
   careerStore,
   progressStore,
@@ -610,7 +610,7 @@ export default function Results() {
           <Press
             onPress={() => {
               haptic('medium');
-              replacing.current = dynastyStore.read() !== null;
+              replacing.current = getCareer() !== null;
               setCarrying(true);
             }}
             feel="none"
@@ -697,9 +697,7 @@ export default function Results() {
         onCancel={() => setCarrying(false)}
         onConfirm={() => {
           setCarrying(false);
-          dynastyStore.write(
-            startDynasty(squad, config.formation, 'Your XI', run.seed),
-          );
+          setCareer(startDynasty(squad, config.formation, 'Your XI', run.seed));
           router.dismissAll();
           router.push('/dynasty');
           clearRun();

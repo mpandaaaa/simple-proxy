@@ -26,13 +26,13 @@ import { color, space, radius, gradient, shadow, line } from '../src/ui/tokens';
 import { font, text } from '../src/ui/type';
 import {
   progressStore,
-  dynastyStore,
   dynastySummary,
   historyStore,
   careerStore,
   ranked,
 } from '../src/save';
 import { ACHIEVEMENTS, type Career } from '../src/game/achievements';
+import { getCareer, reloadCareer } from '../src/game/career';
 import type { Progress, DynastySummary } from '../src/save';
 
 /**
@@ -71,7 +71,7 @@ function readRecord(): { hall: string; cabinet: string } {
 export default function Home() {
   const [progress, setProgress] = useState<Progress>(() => progressStore.read());
   const [dynasty, setDynasty] = useState<DynastySummary | null>(() =>
-    dynastySummary(dynastyStore.read()),
+    dynastySummary(getCareer()),
   );
   const [record, setRecord] = useState(() => readRecord());
   const [career, setCareer] = useState<Career>(() => careerStore.read());
@@ -81,7 +81,8 @@ export default function Home() {
   useFocusEffect(
     useCallback(() => {
       setProgress(progressStore.read());
-      setDynasty(dynastySummary(dynastyStore.read()));
+      reloadCareer();
+      setDynasty(dynastySummary(getCareer()));
       setRecord(readRecord());
       setCareer(careerStore.read());
     }, []),

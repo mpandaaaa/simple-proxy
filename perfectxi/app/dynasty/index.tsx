@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import {
   ModeScreen,
   Press,
@@ -10,136 +10,140 @@ import {
   ClubDisc,
   Confirm,
   Ticker,
+  PlayerSheet,
 } from '../../src/ui/components';
 import { color, gradient, line, positionColor, radius, space } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { GRAIN_URI } from '../../src/ui/grain';
 import { haptic } from '../../src/ui/feel';
-import { sfx } from '../../src/ui/sound';
 import {
-  advanceSeason,
-  budgetFor,
-  asSquad,
   bench,
-  chemBonus,
+  clubWageBill,
+  effectiveRating,
   everyone,
-  starters,
-  mulberry32,
+  misfits,
   ordinal,
   playerValue,
-  simulateSeason,
+  sell,
   squadRating,
   squadValue,
-  wageBill,
+  starters,
   type Dynasty,
   type DynastyPlayer,
   type Position,
 } from '../../src/engine';
-import { dynastyStore } from '../../src/save';
-import { setReport } from '../../src/game/dynastyReport';
+import { useCareer, setCareer, updateCareer } from '../../src/game/career';
 
 /**
  * The Dynasty hub.
  *
- * One XI, carried forward year on year. You play the season with the squad
- * you have, then the summer happens to it: everyone ages on their own
- * position's curve, the ones past it fall away, and some of them stop
- * playing altogether.
+ * Everything a manager checks before he does anything: what the board
+ * thinks, what he has to spend, who is fit, who is running a contract
+ * down, and how last season went. Then the doors to the rest of it.
  *
- * This is the first slice. Transfers, the academy, wages against revenue
- * and a board with an opinion all come next. What is here already is the
- * part that makes it a career rather than a run: the squad changes under
- * you and you cannot stop it.
+ * Ordered by what actually gets looked at. The club and the board first,
+ * because that is the job. The one big action next. The squad under that,
+ * because that is the work. The offices last.
  */
-export default function DynastyHub() {
-  const [career, setCareer] = useState<Dynasty | null>(() => dynastyStore.read());
-  const [busy, setBusy] = useState(false);
-  const [ending, setEnding] = useState(false);
 
-  // Re-read whenever the hub comes back to the front, so it can never sit
-  // showing an empty state next to a career that exists.
-  useFocusEffect(
-    useCallback(() => {
-      setCareer(dynastyStore.read());
-    }, []),
-  );
+type Href =
+  | '/dynasty/market'
+  | '/dynasty/tactics'
+  | '/dynasty/squad'
+  | '/dynasty/academy'
+  | '/dynasty/staff'
+  | '/dynasty/club'
+  | '/dynasty/finances'
+  | '/dynasty/history';
+
+const TILES: {
+  href: Href;
+  mark: string;
+  title: string;
+  note: (d: Dynasty) => string;
+  immersive?: boolean;
+}[] = [
+  { href: '/dynasty/market', mark: '🔁', title: 'Transfers', note: (d) => `£${d.budget}m to spend` },
+  {
+    href: '/dynasty/tactics',
+    mark: '🧭',
+    title: 'Tactics',
+    note: (d) => `${d.tactic.form} · ${d.tactic.style === 'direct' ? 'counter' : d.tactic.style}`,
+  },
+  {
+    href: '/dynasty/squad',
+    mark: '📋',
+    title: 'Contracts',
+    note: (d) => {
+      const n = everyone(d).filter((p) => p.contract.yrs <= 1).length;
+      return n ? `${n} running down` : 'all settled';
+    },
+  },
+  {
+    href: '/dynasty/academy',
+    mark: '🌱',
+    title: 'Academy',
+    note: (d) => `${d.youth.length} coming through`,
+  },
+  {
+    href: '/dynasty/staff',
+    mark: '👔',
+    title: 'Staff',
+    note: (d) =>
+      `${d.staff.coach + d.staff.medical + d.staff.youth + d.staff.setpiece + d.staff.scout} of 25 stars`,
+    immersive: true,
+  },
+  {
+    href: '/dynasty/club',
+    mark: '🏟',
+    title: 'The club',
+    note: (d) => `${d.infra.capacity.toLocaleString('en-GB')} seats`,
+    immersive: true,
+  },
+  {
+    href: '/dynasty/finances',
+    mark: '💷',
+    title: 'Finances',
+    note: (d) => (d.ledger ? `£${d.ledger.profit}m last year` : 'no accounts yet'),
+    immersive: true,
+  },
+  {
+    href: '/dynasty/history',
+    mark: '📖',
+    title: 'History',
+    note: (d) => `${d.seasons.length} season${d.seasons.length === 1 ? '' : 's'}`,
+  },
+];
+
+export default function DynastyHub() {
+  const career = useCareer();
+  const [ending, setEnding] = useState(false);
+  const [reallyEnding, setReallyEnding] = useState(false);
+  const [open, setOpen] = useState<{ p: DynastyPlayer; slot: number } | null>(null);
 
   const played = useMemo(
     () => (career ? career.seasons.some((s) => s.s === career.year) : false),
     [career],
   );
 
-  const playSeason = useCallback(() => {
-    if (!career || busy || played) return;
-    setBusy(true);
-    haptic('medium');
+  const doSell = useCallback((slot: number) => {
+    updateCareer((d) => sell(d, slot) ?? d);
+    setOpen(null);
+  }, []);
 
-    // The dynasty's own generator, mixed from the career seed and the
-    // year, so a season here never disturbs the ageing draw.
-    const rnd = mulberry32((career.seed ^ Math.imul(career.year, 0x9e3779b1)) >>> 0);
-    const squad = asSquad(starters(career));
-    const result = simulateSeason(squad, career.formation, chemBonus(squad), rnd);
-
-    // The board's verdict. Meeting a title objective is worth more than
-    // meeting a survival one, and missing narrowly costs less than missing
-    // badly. A points deduction, when that lands, will cost ten more.
-    const met = result.position <= career.objective.target;
-    const swing = met
-      ? career.objective.target === 1
-        ? 15
-        : 12
-      : Math.abs(result.position - career.objective.target) <= 3
-        ? -6
-        : -14;
-
-    const next: Dynasty = {
-      ...career,
-      mgr: Math.max(0, Math.min(99, career.mgr + Math.round(swing * career.leash))),
-      // Only 45% of what you did not spend carries over; the board takes
-      // the rest. The full rule also subtracts PSR headroom, which needs
-      // the accounts, so until finances land this is the generous half of
-      // it and a budget will tighten when they arrive.
-      budget: Math.min(
-        320,
-        Math.round(career.budget * 0.45 + budgetFor(result.position)),
-      ),
-      titles: career.titles + (result.position === 1 ? 1 : 0),
-      seasons: [
-        ...career.seasons,
-        {
-          s: career.year,
-          fin: result.position,
-          pts: result.pts,
-          w: result.wins,
-          d: result.draws,
-          l: result.losses,
-          gf: result.gf,
-          ga: result.ga,
-          met,
-          rev: 0,
-          profit: 0,
-          ded: 0,
-        },
-      ],
-    };
-    dynastyStore.write(next);
-    setCareer(next);
-    setBusy(false);
-    sfx(result.position === 1 ? 'trophy' : result.position <= 4 ? 'win' : 'ft');
-    haptic(result.position === 1 ? 'success' : 'medium');
-  }, [career, busy, played]);
-
-  const advance = useCallback(() => {
-    if (!career || busy || !played) return;
-    setBusy(true);
-    haptic('medium');
-    const { dynasty, report } = advanceSeason(career);
-    dynastyStore.write(dynasty);
-    setCareer(dynasty);
-    setBusy(false);
-    setReport(report);
-    router.push('/dynasty/summer');
-  }, [career, busy, played]);
+  const toBench = useCallback((slot: number) => {
+    updateCareer((d) => {
+      const roster = [...d.roster];
+      const p = roster[slot];
+      if (!p) return d;
+      // Into the first free bench place, or swapped with whoever is there.
+      const target = [11, 12, 13].find((i) => !roster[i]) ?? 11;
+      roster[slot] = roster[target];
+      roster[target] = p;
+      return { ...d, roster };
+    });
+    setOpen(null);
+  }, []);
 
   if (!career) {
     return (
@@ -154,10 +158,6 @@ export default function DynastyHub() {
             season by season. They age. A 22 year old grows into what he
             could have been, a 31 year old starts losing his legs, and one
             day your best player tells you he is finished.
-          </Text>
-          <Text style={styles.emptyBody}>
-            The board set you an objective and judge you on it. Miss it
-            often enough and you are gone.
           </Text>
           <Press
             onPress={() => {
@@ -176,13 +176,14 @@ export default function DynastyHub() {
   }
 
   const xi = starters(career);
-  const subs = bench(career);
   const all = everyone(career);
   const rating = squadRating(xi);
-  const worth = squadValue(all);
-  const bill = wageBill(all);
+  const effective = Math.round(effectiveRating(career) * 10) / 10;
   const last = career.seasons[career.seasons.length - 1];
   const short = xi.length < 11;
+  const outOfPosition = misfits(career);
+  const immersive = career.mode === 'immersive';
+  const tiles = TILES.filter((t) => immersive || !t.immersive);
 
   return (
     <>
@@ -191,7 +192,7 @@ export default function DynastyHub() {
         title={career.club}
         onBack={() => router.back()}
       >
-        {/* ---- the club as it stands ---- */}
+        {/* ---- the club ---- */}
         <View style={styles.hero}>
           <Shine radius={radius.xl} group="feature" bevel={false} clip={false} />
           <View style={styles.bloom} pointerEvents="none">
@@ -209,19 +210,21 @@ export default function DynastyHub() {
             <Image source={{ uri: GRAIN_URI }} resizeMode="repeat" style={styles.fill} />
           </View>
 
-          <ClubDisc club={null} code="XI" size={52} />
+          <ClubDisc club={career.club} size={54} />
           <Ticker value={rating} from={0} duration={620} style={styles.heroRating} />
-          <Text style={styles.heroKey}>Squad rating</Text>
+          <Text style={styles.heroKey}>
+            Squad rating{effective !== rating ? ` · ${effective} as picked` : ''}
+          </Text>
 
           <View style={styles.heroStats}>
             <HeroStat label="Budget" value={`£${career.budget}m`} tint={color.accent} />
-            <HeroStat label="Value" value={`£${worth}m`} />
-            <HeroStat label="Wages" value={`£${bill}m`} />
+            <HeroStat label="Value" value={`£${squadValue(all)}m`} />
+            <HeroStat label="Wages" value={`£${clubWageBill(career)}m`} />
             <HeroStat label="Titles" value={String(career.titles)} tint={color.gold} />
           </View>
         </View>
 
-        {/* ---- what the board wants, and what it thinks ---- */}
+        {/* ---- the board ---- */}
         <View style={styles.board}>
           <Shine radius={radius.lg} group="panel" />
           <View style={styles.boardHead}>
@@ -238,13 +241,9 @@ export default function DynastyHub() {
             <View
               style={[
                 styles.boardFill,
-                {
-                  width: `${Math.max(2, career.mgr)}%`,
-                  backgroundColor: mgrTint(career.mgr),
-                },
+                { width: `${Math.max(2, career.mgr)}%`, backgroundColor: mgrTint(career.mgr) },
               ]}
             />
-            {/* the line you are sacked below */}
             <View style={styles.boardMark} />
           </View>
           <Text style={styles.boardNote}>
@@ -253,58 +252,144 @@ export default function DynastyHub() {
               : career.mgr >= 70
                 ? 'They are happy with the direction.'
                 : 'They are watching.'}
+            {career.psrHit ? ` ${career.psrHit} points come off for the books.` : ''}
           </Text>
         </View>
 
-        {/* ---- last season, and what happens next ---- */}
-        {last ? (
+        {/* ---- the desk ---- */}
+        {career.inbox.length ? (
           <Rise delay={0}>
-            <View style={styles.last}>
-              <Shine radius={radius.lg} group="panel" />
-              <Text style={styles.lastKey}>Season {last.s}</Text>
-              <Text
-                style={[styles.lastPos, { color: finishTint(last.fin) }]}
-                allowFontScaling={false}
-              >
-                {ordinal(last.fin)}
-              </Text>
-              <Text style={styles.lastMeta}>
-                {last.pts} points {'·'} {last.w}W {last.d}D {last.l}L {'·'} {last.gf}
-                {'-'}
-                {last.ga}
-              </Text>
+            <View style={styles.inbox}>
+              <Text style={styles.inboxKey}>The desk</Text>
+              {career.inbox.slice(0, 3).map((m, i) => (
+                <View key={`${m.s}-${i}`} style={styles.mail}>
+                  <View style={[styles.mailBar, { backgroundColor: mailTint(m.k) }]} />
+                  <View style={styles.mailBody}>
+                    <Text style={[styles.mailTitle, { color: mailTint(m.k) }]}>{m.t}</Text>
+                    <Text style={styles.mailText}>{m.b}</Text>
+                  </View>
+                </View>
+              ))}
             </View>
           </Rise>
         ) : null}
 
+        {/* ---- last season ---- */}
+        {last ? (
+          <View style={styles.last}>
+            <Shine radius={radius.lg} group="panel" />
+            <Text style={styles.lastKey}>Season {last.s}</Text>
+            <Text
+              style={[styles.lastPos, { color: finishTint(last.fin) }]}
+              allowFontScaling={false}
+            >
+              {ordinal(last.fin)}
+            </Text>
+            <Text style={styles.lastMeta}>
+              {last.pts} points {'·'} {last.w}W {last.d}D {last.l}L {'·'} {last.gf}
+              {'-'}
+              {last.ga}
+            </Text>
+          </View>
+        ) : null}
+
+        {/* ---- the one big action ---- */}
         {short ? (
           <View style={styles.warn}>
             <Text style={styles.warnText}>
-              You have {xi.length} of eleven. Signings are not built yet, so
-              until they are this career has run its course.
+              You have {xi.length} of eleven. Sign or promote before you can play.
             </Text>
+            <Press
+              onPress={() => {
+                haptic('medium');
+                router.push('/dynasty/market');
+              }}
+              feel="none"
+              style={styles.warnCta}
+              scaleTo={0.98}
+            >
+              <Text style={styles.warnCtaText}>Go to the market</Text>
+            </Press>
           </View>
         ) : played ? (
-          <Press onPress={advance} feel="none" style={styles.advance} scaleTo={0.98}>
+          <Press
+            onPress={() => {
+              haptic('medium');
+              router.push('/dynasty/summer');
+            }}
+            feel="none"
+            style={styles.advance}
+            scaleTo={0.98}
+          >
             <Text style={styles.advanceText}>The summer</Text>
             <Text style={styles.advanceSub}>
-              Age the squad and move to season {career.year + 1}
+              Close the books and move to season {career.year + 1}
             </Text>
           </Press>
         ) : (
-          <Press onPress={playSeason} feel="none" style={styles.play} scaleTo={0.98}>
+          <Press
+            onPress={() => {
+              haptic('medium');
+              router.push('/dynasty/season');
+            }}
+            feel="none"
+            style={styles.play}
+            scaleTo={0.98}
+          >
             <Text style={styles.playText}>Play season {career.year}</Text>
           </Press>
         )}
 
-        {/* ---- the eleven, in the shape they play in ---- */}
+        {/* ---- the doors ---- */}
+        <View style={styles.tiles}>
+          {tiles.map((t) => (
+            <Press
+              key={t.href}
+              onPress={() => {
+                haptic('light');
+                router.push(t.href);
+              }}
+              feel="none"
+              style={styles.tile}
+              scaleTo={0.97}
+            >
+              <Text style={styles.tileMark} allowFontScaling={false}>
+                {t.mark}
+              </Text>
+              <Text style={styles.tileTitle}>{t.title}</Text>
+              <Text style={styles.tileNote} numberOfLines={1}>
+                {t.note(career)}
+              </Text>
+            </Press>
+          ))}
+        </View>
+
+        {/* ---- the eleven ---- */}
         <Text style={[text.label, styles.sect]}>
-          The starting eleven {'·'} {career.formation}
+          The starting eleven {'·'} {career.tactic.form}
         </Text>
+        {outOfPosition.length ? (
+          <Text style={styles.misfit}>
+            {outOfPosition.length} out of position, which costs you.{' '}
+            {outOfPosition
+              .slice(0, 2)
+              .map((m) => `${m.name} at ${m.to.toLowerCase()}`)
+              .join(', ')}
+            .
+          </Text>
+        ) : null}
         <View style={styles.list}>
           {career.roster.slice(0, 11).map((p, i) =>
             p ? (
-              <PlayerRow key={p.n} player={p} />
+              <PlayerRow
+                key={p.n}
+                player={p}
+                slot={career.slots[i]}
+                onPress={() => {
+                  haptic('light');
+                  setOpen({ p, slot: i });
+                }}
+              />
             ) : (
               <EmptySlot key={`slot${i}`} pos={career.slots[i]} />
             ),
@@ -318,50 +403,57 @@ export default function DynastyHub() {
         <View style={styles.list}>
           {career.roster.slice(11).map((p, i) =>
             p ? (
-              <PlayerRow key={p.n} player={p} />
+              <PlayerRow
+                key={p.n}
+                player={p}
+                slot={p.pos}
+                onPress={() => {
+                  haptic('light');
+                  setOpen({ p, slot: 11 + i });
+                }}
+              />
             ) : (
               <EmptySlot key={`sub${i}`} pos={career.slots[11 + i]} />
             ),
           )}
         </View>
 
-        {career.retired.length ? (
-          <>
-            <Text style={[text.label, styles.sect]}>Retired</Text>
-            <View style={styles.list}>
-              {career.retired.map((p) => (
-                <View key={p.n} style={styles.gone}>
-                  <Text style={styles.goneName} numberOfLines={1}>
-                    {p.n}
-                  </Text>
-                  <Text style={styles.goneMeta}>
-                    {p.pos} {'·'} retired at {p.age} {'·'} last rated {p.rtg}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </>
-        ) : null}
-
-        <Press
-          onPress={() => setEnding(true)}
-          feel="none"
-          style={styles.end}
-          scaleTo={0.98}
-        >
+        {/* ---- the way out ---- */}
+        <Text style={[text.label, styles.sect]}>Danger zone</Text>
+        <Press onPress={() => setEnding(true)} feel="none" style={styles.end} scaleTo={0.98}>
           <Text style={styles.endText}>End this career</Text>
         </Press>
       </ModeScreen>
 
+      <PlayerSheet
+        player={open?.p ?? null}
+        open={open !== null}
+        onClose={() => setOpen(null)}
+        onSell={open ? () => doSell(open.slot) : undefined}
+        onBench={open && open.slot < 11 ? () => toBench(open.slot) : undefined}
+        benchLabel="Move to the bench"
+      />
+
+      {/* Two steps, because there is no way back from this one. */}
       <Confirm
         visible={ending}
         title="End the career?"
-        body="Every season this XI has played, and the eleven themselves, will be gone. There is no way back to them."
-        confirmLabel="End it"
+        body="Every season, every player and every trophy in this career will be gone."
+        confirmLabel="Continue"
         onCancel={() => setEnding(false)}
         onConfirm={() => {
           setEnding(false);
-          dynastyStore.write(null);
+          setTimeout(() => setReallyEnding(true), 280);
+        }}
+      />
+      <Confirm
+        visible={reallyEnding}
+        title="Really end it?"
+        body={`${career.year - 1} season${career.year === 2 ? '' : 's'} and ${career.titles} title${career.titles === 1 ? '' : 's'}. There is no way back to any of it.`}
+        confirmLabel="End the career"
+        onCancel={() => setReallyEnding(false)}
+        onConfirm={() => {
+          setReallyEnding(false);
           setCareer(null);
         }}
       />
@@ -369,7 +461,6 @@ export default function DynastyHub() {
   );
 }
 
-/** Board confidence, coloured by how close you are to the door. */
 function mgrTint(mgr: number): string {
   if (mgr <= 20) return color.danger;
   if (mgr <= 40) return color.warning;
@@ -377,19 +468,14 @@ function mgrTint(mgr: number): string {
   return color.text1;
 }
 
-/** A place in the shape with nobody in it. */
-function EmptySlot({ pos }: { pos: Position }) {
-  const tint = positionColor[pos] ?? color.text3;
-  return (
-    <View style={styles.emptySlot}>
-      <View
-        style={[styles.badge, { backgroundColor: tint + '12', borderColor: tint + '3D' }]}
-      >
-        <Text style={[styles.badgeText, { color: tint, opacity: 0.6 }]}>{pos}</Text>
-      </View>
-      <Text style={styles.emptyText}>Nobody in this place</Text>
-    </View>
-  );
+function mailTint(k: string): string {
+  return k === 'good'
+    ? color.accent
+    : k === 'bad'
+      ? color.danger
+      : k === 'board'
+        ? color.gold
+        : color.text2;
 }
 
 function finishTint(pos: number): string {
@@ -414,26 +500,56 @@ function HeroStat({ label, value, tint }: { label: string; value: string; tint?:
   );
 }
 
+function EmptySlot({ pos }: { pos: Position }) {
+  const tint = positionColor[pos] ?? color.text3;
+  return (
+    <View style={styles.emptySlot}>
+      <View style={[styles.badge, { backgroundColor: tint + '12', borderColor: tint + '3D' }]}>
+        <Text style={[styles.badgeText, { color: tint, opacity: 0.6 }]}>{pos}</Text>
+      </View>
+      <Text style={styles.emptyText}>Nobody in this place</Text>
+    </View>
+  );
+}
+
 /**
- * One player, with everything a manager actually looks at.
+ * One squad row.
  *
- * The age is the important number, not the rating. A 90 rated 33 year old
- * and a 90 rated 24 year old are the same player today and completely
- * different assets, and the bar under the age is how close he is to the
- * end of his career.
+ * Two lines. The position chip, the name, then his age, what he is worth
+ * and whatever is wrong with him. On the right, how he played last season
+ * and what the summer did to his rating.
  */
-function PlayerRow({ player: p }: { player: DynastyPlayer }) {
+export function PlayerRow({
+  player: p,
+  slot,
+  onPress,
+}: {
+  player: DynastyPlayer;
+  slot: Position;
+  onPress: () => void;
+}) {
   const tint = positionColor[p.pos];
-  const worth = playerValue(p);
-  // Thirty eight is where almost nobody is still playing, so that is the
-  // end of the bar rather than an arbitrary round number.
+  const wrong = p.pos !== slot;
   const life = Math.max(0, Math.min(1, (38 - p.age) / 20));
 
+  const status =
+    p.daysOut >= 60
+      ? `${p.daysOut} days out`
+      : p.contract.yrs === 0
+        ? 'out of contract'
+        : p.contract.yrs === 1
+          ? 'final year'
+          : wrong
+            ? `playing at ${slot.toLowerCase()}`
+            : p.youth
+              ? 'academy'
+              : `${p.contract.yrs} yr deal`;
+
+  const flag = p.contract.yrs <= 1 || p.daysOut >= 60 || wrong;
+
   return (
-    <View style={styles.row}>
-      <View
-        style={[styles.badge, { backgroundColor: tint + '26', borderColor: tint + '66' }]}
-      >
+    <Press onPress={onPress} feel="none" scaleTo={0.99} style={styles.row}>
+      <View style={[styles.badge, { backgroundColor: tint + '26', borderColor: tint + '66' }]}>
         <Text style={[styles.badgeText, { color: tint }]}>{p.pos}</Text>
       </View>
 
@@ -441,9 +557,11 @@ function PlayerRow({ player: p }: { player: DynastyPlayer }) {
         <Text style={styles.rowName} numberOfLines={1}>
           {p.n}
         </Text>
-        <Text style={styles.rowMeta} numberOfLines={1}>
-          {p.age} years {'·'} £{worth}m {'·'} £{p.contract.wage}k a week {'·'}{' '}
-          {p.contract.yrs === 0 ? 'out of contract' : `${p.contract.yrs} yr`}
+        <Text
+          style={[styles.rowMeta, flag ? { color: color.warning } : null]}
+          numberOfLines={1}
+        >
+          {p.age} {'·'} £{playerValue(p)}m {'·'} {status}
         </Text>
         <View style={styles.lifeTrack}>
           <View
@@ -459,16 +577,26 @@ function PlayerRow({ player: p }: { player: DynastyPlayer }) {
         </View>
       </View>
 
+      <View style={styles.rowStats}>
+        {p.avgR != null ? (
+          <Text style={styles.rowForm} allowFontScaling={false}>
+            {p.avgR.toFixed(2)}
+          </Text>
+        ) : null}
+        {p.goals || p.assists ? (
+          <Text style={styles.rowGa} allowFontScaling={false}>
+            {p.goals}g {p.assists}a
+          </Text>
+        ) : null}
+      </View>
+
       <View style={styles.rowRight}>
         <Text style={styles.rowRtg} allowFontScaling={false}>
           {p.rtg}
         </Text>
         {p.delta !== 0 ? (
           <Text
-            style={[
-              styles.rowDelta,
-              { color: p.delta > 0 ? color.win : color.loss },
-            ]}
+            style={[styles.rowDelta, { color: p.delta > 0 ? color.win : color.loss }]}
             allowFontScaling={false}
           >
             {p.delta > 0 ? '+' : ''}
@@ -476,7 +604,7 @@ function PlayerRow({ player: p }: { player: DynastyPlayer }) {
           </Text>
         ) : null}
       </View>
-    </View>
+    </Press>
   );
 }
 
@@ -486,12 +614,7 @@ const styles = StyleSheet.create({
 
   empty: { alignItems: 'center', paddingTop: space.s7, gap: space.s3 },
   emptyMark: { fontSize: 44, lineHeight: 54 },
-  emptyTitle: {
-    fontFamily: font.displayBold,
-    fontSize: 26,
-    lineHeight: 32,
-    color: color.text1,
-  },
+  emptyTitle: { fontFamily: font.displayBold, fontSize: 26, lineHeight: 32, color: color.text1 },
   emptyBody: { ...text.body, textAlign: 'center', maxWidth: 320 },
   cta: {
     marginTop: space.s4,
@@ -541,6 +664,59 @@ const styles = StyleSheet.create({
   },
   heroStatLabel: { ...text.key, fontSize: 8, color: color.text3 },
 
+  board: {
+    marginTop: space.s4,
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
+    overflow: 'hidden',
+    gap: space.s2,
+  },
+  boardHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  boardKey: { ...text.key, fontSize: 9.5, color: color.text3 },
+  boardMgr: {
+    fontFamily: font.displayBlack,
+    fontSize: 22,
+    lineHeight: 27,
+    fontVariant: ['tabular-nums'],
+  },
+  boardObj: { fontFamily: font.displayBold, fontSize: 20, lineHeight: 25, color: color.text1 },
+  boardTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    overflow: 'hidden',
+  },
+  boardFill: { height: 6, borderRadius: 3 },
+  boardMark: {
+    position: 'absolute',
+    left: '20%',
+    top: -2,
+    bottom: -2,
+    width: 1.5,
+    backgroundColor: 'rgba(229,72,77,0.8)',
+  },
+  boardNote: { ...text.small, fontSize: 11.5 },
+
+  inbox: {
+    marginTop: space.s4,
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#0E1712',
+    gap: space.s3,
+  },
+  inboxKey: { ...text.key, fontSize: 9.5, color: color.text3 },
+  mail: { flexDirection: 'row', gap: space.s3 },
+  mailBar: { width: 2.5, borderRadius: 2 },
+  mailBody: { flex: 1, minWidth: 0 },
+  mailTitle: { fontFamily: font.displayBold, fontSize: 15, lineHeight: 19 },
+  mailText: { ...text.small, fontSize: 12, lineHeight: 17 },
+
   last: {
     marginTop: space.s4,
     alignItems: 'center',
@@ -553,12 +729,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   lastKey: { ...text.key, fontSize: 9, color: color.text3 },
-  lastPos: {
-    fontFamily: font.displayBlack,
-    fontSize: 34,
-    lineHeight: 42,
-    letterSpacing: 0.3,
-  },
+  lastPos: { fontFamily: font.displayBlack, fontSize: 34, lineHeight: 42, letterSpacing: 0.3 },
   lastMeta: { ...text.small, fontVariant: ['tabular-nums'] },
 
   play: {
@@ -569,8 +740,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: color.accent,
     experimental_backgroundImage: 'linear-gradient(140deg, #22D287 0%, #12A866 100%)',
-    boxShadow:
-      '0px 8px 22px rgba(31,197,126,0.32), inset 0px 1px 0px rgba(255,255,255,0.22)',
+    boxShadow: '0px 8px 22px rgba(31,197,126,0.32), inset 0px 1px 0px rgba(255,255,255,0.22)',
   },
   playText: { ...text.button, color: '#05170E' },
   advance: {
@@ -594,58 +764,51 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: line.danger,
     backgroundColor: 'rgba(229,72,77,0.10)',
+    gap: space.s3,
   },
   warnText: { ...text.body, color: color.text2 },
+  warnCta: {
+    minHeight: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: line.danger,
+  },
+  warnCtaText: { ...text.button, fontSize: 15, color: color.danger },
 
-  board: {
-    marginTop: space.s4,
-    padding: space.s4,
-    borderRadius: radius.lg,
+  tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s2, marginTop: space.s5 },
+  tile: {
+    width: '31.5%',
+    flexGrow: 1,
+    minHeight: 86,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: space.s2,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: line.card,
     backgroundColor: '#101A14',
     experimental_backgroundImage: gradient.card,
-    overflow: 'hidden',
-    gap: space.s2,
+    boxShadow:
+      'inset 0px 1px 0px rgba(255,255,255,0.06), inset 0px 0px 0px 1px rgba(255,255,255,0.035)',
+    gap: 2,
   },
-  boardHead: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-  },
-  boardKey: { ...text.key, fontSize: 9.5, color: color.text3 },
-  boardMgr: {
-    fontFamily: font.displayBlack,
-    fontSize: 22,
-    lineHeight: 27,
-    fontVariant: ['tabular-nums'],
-  },
-  boardObj: {
-    fontFamily: font.displayBold,
-    fontSize: 20,
-    lineHeight: 25,
-    color: color.text1,
-  },
-  boardTrack: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    overflow: 'hidden',
-  },
-  boardFill: { height: 6, borderRadius: 3 },
-  boardMark: {
-    position: 'absolute',
-    left: '20%',
-    top: -2,
-    bottom: -2,
-    width: 1.5,
-    backgroundColor: 'rgba(229,72,77,0.8)',
-  },
-  boardNote: { ...text.small, fontSize: 11.5 },
+  tileMark: { fontSize: 19, lineHeight: 24 },
+  tileTitle: { fontFamily: font.displayBold, fontSize: 14, lineHeight: 18, color: color.text1 },
+  tileNote: { fontFamily: font.body, fontSize: 9.5, lineHeight: 13, color: color.text3 },
 
   sect: { marginTop: space.s6, marginBottom: space.s3 },
+  misfit: {
+    ...text.small,
+    fontSize: 11.5,
+    color: color.warning,
+    marginTop: -space.s2,
+    marginBottom: space.s3,
+  },
   subsNote: { ...text.small, fontSize: 11, marginTop: -space.s2, marginBottom: space.s3 },
   list: { gap: space.s2 },
+
   emptySlot: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -681,12 +844,7 @@ const styles = StyleSheet.create({
   },
   badgeText: { ...text.key, fontSize: 9 },
   rowBody: { flex: 1, minWidth: 0, gap: 3 },
-  rowName: {
-    fontFamily: font.bodySemi,
-    fontSize: 14,
-    lineHeight: 19,
-    color: color.text1,
-  },
+  rowName: { fontFamily: font.bodySemi, fontSize: 14, lineHeight: 19, color: color.text1 },
   rowMeta: {
     fontFamily: font.body,
     fontSize: 10.5,
@@ -701,7 +859,16 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   lifeFill: { height: 3, borderRadius: 2 },
-  rowRight: { alignItems: 'flex-end', minWidth: 34 },
+  rowStats: { alignItems: 'flex-end', minWidth: 42 },
+  rowForm: {
+    fontFamily: font.displayBold,
+    fontSize: 14,
+    lineHeight: 18,
+    color: color.text2,
+    fontVariant: ['tabular-nums'],
+  },
+  rowGa: { fontFamily: font.body, fontSize: 9.5, lineHeight: 13, color: color.text3 },
+  rowRight: { alignItems: 'flex-end', minWidth: 32 },
   rowRtg: {
     fontFamily: font.displayBlack,
     fontSize: 20,
@@ -716,37 +883,21 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
 
-  gone: {
-    paddingVertical: space.s2,
-    paddingHorizontal: space.s3,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    opacity: 0.65,
-  },
-  goneName: {
-    fontFamily: font.bodySemi,
-    fontSize: 13,
-    lineHeight: 17,
-    color: color.text2,
-  },
-  goneMeta: { fontFamily: font.body, fontSize: 10.5, lineHeight: 14, color: color.text3 },
-
   end: {
-    marginTop: space.s6,
-    marginBottom: space.s6,
     minHeight: 48,
+    marginBottom: space.s6,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: line.card,
+    borderColor: line.danger,
+    backgroundColor: 'rgba(229,72,77,0.06)',
   },
   endText: {
     fontFamily: font.displayBold,
     fontSize: 14,
     lineHeight: 18,
     letterSpacing: 0.4,
-    color: color.text3,
+    color: color.danger,
   },
 });

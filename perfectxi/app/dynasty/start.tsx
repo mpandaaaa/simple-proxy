@@ -21,7 +21,7 @@ import {
   type Scenario,
   type ScenarioId,
 } from '../../src/engine';
-import { dynastyStore } from '../../src/save';
+import { setCareer } from '../../src/game/career';
 
 /**
  * Starting a career, in four steps.
@@ -273,7 +273,7 @@ function Offer({ club, sc, mode }: { club: ClubOption; sc: Scenario; mode: Mode 
         onPress={() => {
           haptic('success');
           sfx('trophy');
-          dynastyStore.write(
+          setCareer(
             startCareer({
               clubKey: club.key,
               scenario: sc.id,
