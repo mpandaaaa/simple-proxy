@@ -46,8 +46,11 @@ export {
   dcExpected,
   seasonGrade,
   simulateSeason,
+  calcOdds,
+  ordinal,
 } from './sim';
 export type {
+  Odds,
   Outcome,
   Scorer,
   MatchResult,

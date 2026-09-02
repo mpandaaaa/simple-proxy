@@ -22,12 +22,10 @@ import { haptic, useReduceMotion } from '../../src/ui/feel';
 import {
   POSITION_LABEL,
   canPlay,
-  chemBonus,
   clubSeasons,
   lastName,
   slotsForPlayer,
   squadAvg,
-  squadChem,
   visibleBoard,
   type Pick,
   type Position,
@@ -92,6 +90,20 @@ export default function DraftBoard() {
   useEffect(() => {
     if (!run) router.replace('/draft');
   }, [run]);
+
+  /**
+   * The eleventh signing ends the draft.
+   *
+   * Waits for the card to clear so the last reveal is not cut off by the
+   * push, and replaces rather than pushes: going back from squad complete
+   * should return you home, not to a board with nothing left to pick.
+   */
+  useEffect(() => {
+    if (!run || reveal || pending) return;
+    if (run.state.filled < run.state.total) return;
+    const t = setTimeout(() => router.replace('/draft/complete'), 260);
+    return () => clearTimeout(t);
+  }, [run, reveal, pending]);
 
   // The club is decided before the reel draws a frame. The spin shows the
   // result, it never chooses it, so a seeded run still replays exactly.
@@ -192,7 +204,6 @@ export default function DraftBoard() {
 
   const { club, season } = run;
   const left = state.total - state.filled;
-  const complete = state.filled === state.total;
   const avg = squadAvg(state.squad);
   const rerollsLeft = state.rerollsMax - state.rerolls;
   const hideRatings = state.config.diff === 'hard';
@@ -316,7 +327,7 @@ export default function DraftBoard() {
 
   return (
     <ModeScreen
-      overline={complete ? 'Draft complete' : `${left} left to fill`}
+      overline={`${left} left to fill`}
       title={`${state.filled} of ${state.total} picked`}
       scroll={false}
       right={
@@ -327,27 +338,11 @@ export default function DraftBoard() {
         ) : undefined
       }
     >
-      {complete ? (
-        <View style={styles.doneWrap}>
-          <Pitch squad={state.squad} formation={state.config.formation} />
-          <View style={styles.done}>
-            <Text style={styles.doneTitle}>Your XI is ready</Text>
-            <Text style={[text.small, styles.doneMeta]}>
-              Average {Math.round(avg)} · chemistry {squadChem(state.squad)}% · worth +
-              {chemBonus(state.squad).toFixed(2)}
-            </Text>
-          </View>
-          <Button
-            label="Simulate the season"
-            onPress={() => router.push('/draft/season')}
-          />
-        </View>
-      ) : (
-        // The page scrolls, and the squad list scrolls inside it. A single
-        // scroll meant a hundred and twenty players dragged the pitch and
-        // the era card off the top before you reached the bottom of a
-        // board, so the list is bounded and flicks on its own.
-        <ScrollView
+      {/* The page scrolls, and the squad list scrolls inside it. A single
+          scroll meant a hundred and twenty players dragged the pitch and the
+          era card off the top before you reached the bottom of a board, so
+          the list is bounded and flicks on its own. */}
+      <ScrollView
           style={styles.page}
           contentContainerStyle={styles.pageContent}
           showsVerticalScrollIndicator={false}
@@ -383,10 +378,9 @@ export default function DraftBoard() {
                 showsVerticalScrollIndicator
                 ListFooterComponent={<View style={styles.listFooter} />}
               />
-            </View>
-          ) : null}
-        </ScrollView>
-      )}
+          </View>
+        ) : null}
+      </ScrollView>
 
       {/* Where does he play. The player is on a card, each position is a
           lit tile in its own colour, and the whole thing can be thrown
@@ -736,16 +730,6 @@ const styles = StyleSheet.create({
   },
   dividerLine: { flex: 1, height: 1, backgroundColor: line.card },
   dividerText: { ...text.key, fontSize: 9, color: color.text3 },
-
-  doneWrap: { flex: 1, justifyContent: 'center', gap: space.s5, paddingBottom: space.s6 },
-  done: { alignItems: 'center', gap: space.s2 },
-  doneTitle: {
-    fontFamily: font.displayBlack,
-    fontSize: 30,
-    lineHeight: 36,
-    color: color.text1,
-  },
-  doneMeta: { textAlign: 'center' },
 
   backdrop: {
     position: 'absolute',

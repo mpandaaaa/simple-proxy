@@ -130,6 +130,48 @@ function poissonR(l: number, rnd: Rng): number {
   return k - 1;
 }
 
+/** 3 becomes "3rd". */
+export function ordinal(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
+}
+
+export type Odds = {
+  /** chance of winning the league, as a percentage */
+  winPct: number;
+  top4: number;
+  top6: number;
+  top10: number;
+  rel: number;
+  expPts: number;
+  projFinish: number;
+};
+
+/**
+ * What the bookies make of an XI, before a ball is kicked.
+ *
+ * Carried over from the web build exactly. These curves are tuned against
+ * the same strength scale the match engine uses, so the projection and the
+ * season it is projecting agree with each other. Do not adjust them here
+ * without re-running the golden numbers.
+ *
+ * Chemistry counts, because it counts in the simulation too.
+ */
+export function calcOdds(avg: number, chem: number): Odds {
+  const str = strFromAvg(avg + chem);
+  const r1 = (x: number) => Math.round(x * 10) / 10;
+  return {
+    winPct: r1(Math.max(0.3, Math.min(80, str * str * 92 - 3))),
+    top4: r1(Math.max(2, Math.min(99.5, str * str * 80 + str * 25 - 4))),
+    top6: r1(Math.max(6, Math.min(99.8, str * str * 60 + str * 48 - 2))),
+    top10: r1(Math.max(20, Math.min(100, str * 55 + str * 48 + 4))),
+    rel: r1(Math.max(0, Math.min(60, 55 - str * 78))),
+    expPts: Math.round(18 + str * 82),
+    projFinish: Math.max(1, Math.min(20, Math.round(20.5 - str * 19.5))),
+  };
+}
+
 export type Outcome = 'win' | 'draw' | 'loss';
 
 export type Scorer = { name: string; min: number };
