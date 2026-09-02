@@ -42,7 +42,10 @@
       "expo-audio",
       "expo-sharing",
       "expo-asset",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-web-browser",
+      "expo-mail-composer",
+      "expo-build-properties"
     ],
     "experiments": {
       "typedRoutes": true
@@ -52,6 +55,13 @@
       "eas": {
         "projectId": "ad10b44d-55a2-4708-a3d5-715849cf6baa"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/ad10b44d-55a2-4708-a3d5-715849cf6baa",
+      "fallbackToCacheTimeout": 10000
     }
   }
 }
