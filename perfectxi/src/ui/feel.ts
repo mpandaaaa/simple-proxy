@@ -37,7 +37,7 @@ export function useReduceMotion(): boolean {
   return system || settingsStore.read().reducedMotion;
 }
 
-type Feel = 'select' | 'light' | 'medium' | 'success' | 'warning' | 'error';
+type Feel = 'select' | 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error';
 
 /**
  * Haptics, gated on the setting. Fire and forget: a failed haptic must
@@ -54,6 +54,8 @@ export function haptic(kind: Feel): void {
         return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       case 'medium':
         return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      case 'heavy':
+        return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
       case 'success':
         return Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       case 'warning':

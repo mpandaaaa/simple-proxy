@@ -1,10 +1,17 @@
 /**
- * The spin reel's maths, kept apart from the component that draws it.
+ * The spin reel's maths, transcribed from the web build.
  *
- * Every number that decides how the spin feels is here, so tuning it means
- * editing this file and nothing else, and the whole schedule can be printed
- * and read in a terminal rather than guessed at by holding a phone:
- * `npm run wheel`.
+ * The site's spinTextAnim takes a `dur` and derives everything from it:
+ *
+ *   maxCount = floor(dur / 65)
+ *   delay    = count < maxCount*0.6 ? 65
+ *            : count < maxCount*0.85 ? 100
+ *            : 150
+ *
+ * So `dur` is a parameter, not the elapsed time. At the site's 900 that is
+ * thirteen steps totalling 1070ms, not 900ms. The numbers below reproduce
+ * that formula exactly rather than approximating the shape of it, so the
+ * app's spin is the site's spin.
  *
  * No React, no React Native.
  */
@@ -16,126 +23,104 @@ export const WHEEL = {
   CARD_W: 112,
   CARD_H: 132,
 
-  /** cards drawn behind the start, so the reel is never empty on the left */
+  /** cards drawn behind the start, so the window is never empty on the left */
   PAD: 3,
-  /** cards drawn past the overshoot, so it is never empty on the right */
-  TAIL: 2,
+  /** cards drawn past the winner, so it is never empty on the right */
+  TAIL: 3,
 
-  /** the reel easing back before it goes */
-  CREEP: 16,
-  CREEP_MS: 130,
-
-  /**
-   * Detent timings, one entry per card that clicks past the window.
-   *
-   * A reel is stepped, not swept. Driving it as one long eased slide makes
-   * the ticks land wherever the curve happens to put them; driving it as a
-   * run of timed steps means every tick lands exactly on a detent by
-   * construction, and no thinning is needed because the steps are already
-   * further apart than the Taptic Engine can resolve.
-   *
-   * Three phases, after the web build's 65 / 100 / 150: a fast run, a
-   * middle, then the last two dragged out so the reel is visibly giving up.
-   */
-  STEPS: [50, 50, 50, 50, 50, 50, 50, 50, 88, 88, 88, 140, 195] as const,
+  /** the site's own arguments: 900 for a squad draft, 1000 for All Time XI */
+  DUR: 900,
+  DUR_ALLTIME: 1000,
+  /** the site derives its step count from this, and so does this */
+  STEP_BASE: 65,
 
   /**
-   * The reel stops one short and holds there.
+   * The settle, which is the one thing the web reel could not do. The reel
+   * arrives at the winner still carrying the speed of its last step; the
+   * spring takes that velocity, carries it past, and brings it back.
    *
-   * The card sitting in the window during this beat is deliberately a big
-   * club. A near miss is more arousing than a clean loss (Clark et al.,
-   * Neuron 2009), and it costs nothing because the result was decided
-   * before the reel drew a frame. See the caveat in the header of
-   * NEAR_MISS_CLUBS.
+   * The overshoot is therefore physics rather than a magic number: it falls
+   * out of how fast the reel was going when it got there.
    */
-  HELD_MS: 200,
-
-  /** the last lurch, carrying a full card past the winner */
-  LURCH_MS: 170,
-  OVERSHOOT_CARDS: 1,
+  SETTLE: { stiffness: 250, damping: 18, mass: 1.2 },
 } as const;
 
-/** How many detents click past before the held beat. */
-export const STEP_COUNT = WHEEL.STEPS.length;
+export function durationFor(allTime: boolean): number {
+  return allTime ? WHEEL.DUR_ALLTIME : WHEEL.DUR;
+}
 
-/** Detent index of the card that hangs in the window during the held beat. */
-export const NEAR_MISS_AT = STEP_COUNT;
-/** Detent index of the real result. */
-export const WINNER_AT = STEP_COUNT + 1;
-/** Detent index the lurch carries to before springing back. */
-export const OVERSHOOT_AT = WINNER_AT + WHEEL.OVERSHOOT_CARDS;
+/** One delay per card that clicks past the pointer, exactly as the site. */
+export function stepDelays(allTime = false): number[] {
+  const maxCount = Math.floor(durationFor(allTime) / WHEEL.STEP_BASE);
+  const out: number[] = [];
+  for (let c = 0; c < maxCount; c++) {
+    out.push(c < maxCount * 0.6 ? 65 : c < maxCount * 0.85 ? 100 : 150);
+  }
+  return out;
+}
 
-/**
- * Spring for the settle, from the report: stiffness 250, damping 18,
- * mass 1.2. Enough overshoot to read as physical, not enough to wobble.
- */
-export const SETTLE_SPRING = { stiffness: 250, damping: 18, mass: 1.2 } as const;
+/** How many cards cross the pointer. The winner is the last of them. */
+export function stepCount(allTime = false): number {
+  return Math.floor(durationFor(allTime) / WHEEL.STEP_BASE);
+}
 
 /** Where the strip sits, in points, for a given detent. */
 export function offsetFor(detent: number): number {
   return -(WHEEL.PAD + detent) * WHEEL.CARD;
 }
 
+/**
+ * The reel's speed as it reaches the winner, in points per second, taken
+ * from the length of the final step. Handed to the settle spring as its
+ * starting velocity so the overshoot is the reel's own momentum.
+ */
+export function arrivalVelocity(allTime = false): number {
+  const delays = stepDelays(allTime);
+  return -(WHEEL.CARD / delays[delays.length - 1]) * 1000;
+}
+
 export type Tick = { at: number; detent: number; strong: boolean };
 
 /**
- * When each detent clicks into the window, measured from the press.
+ * When each card clicks past the pointer, for reading in a terminal.
  *
- * The last entry is the landing, which is the only firm one.
+ * The reel does not run off this: it fires its haptics from real position,
+ * so a tick lands when a card actually crosses. This exists so the schedule
+ * can be checked without holding a phone.
  */
-export function tickSchedule(): Tick[] {
+export function tickSchedule(allTime = false): Tick[] {
   const out: Tick[] = [];
-  let t = WHEEL.CREEP_MS;
-
-  WHEEL.STEPS.forEach((ms, i) => {
+  let t = 0;
+  stepDelays(allTime).forEach((ms, i) => {
     t += ms;
     out.push({ at: Math.round(t), detent: i + 1, strong: false });
   });
-
-  // held beat, then the lurch onto the winner
-  t += WHEEL.HELD_MS + WHEEL.LURCH_MS;
-  out.push({ at: Math.round(t), detent: WINNER_AT, strong: true });
-
+  // the 40ms thud, once the settle spring is done
+  out.push({ at: Math.round(t + SETTLE_MS), detent: stepCount(allTime), strong: true });
   return out;
 }
 
-/** Roughly how long the settle spring takes to be visually done. */
-export const SETTLE_MS = 400;
+/** Roughly how long the settle spring takes to be visually finished. */
+export const SETTLE_MS = 420;
 
 /** Press to still. */
-export function spinDuration(): number {
-  const steps = WHEEL.STEPS.reduce((n, ms) => n + ms, 0);
-  return WHEEL.CREEP_MS + steps + WHEEL.HELD_MS + WHEEL.LURCH_MS + SETTLE_MS;
+export function spinDuration(allTime = false): number {
+  return stepDelays(allTime).reduce((n, ms) => n + ms, 0) + SETTLE_MS;
 }
 
-/** Peak speed, during the fast phase, in points per second. */
+/** Peak speed, during the 65ms phase, in points per second. */
 export function peakVelocity(): number {
-  return (WHEEL.CARD / WHEEL.STEPS[0]) * 1000;
+  return (WHEEL.CARD / WHEEL.STEP_BASE) * 1000;
 }
 
 export type ReelItem = { club: string; season: string };
 
 /**
- * Clubs worth hanging a near miss on.
- *
- * Caveat, stated plainly because it matters: this is a slot machine
- * technique. It is used here only to give a spin a shape, and it changes
- * nothing about the result, which is drawn before the reel moves and is
- * unaffected by what is shown beside it. No money is involved and nothing
- * is being sold. If it ever starts feeling like a tease rather than a
- * flourish, delete this and land straight on the winner.
- */
-const NEAR_MISS_CLUBS = new Set([
-  'Man United', 'Liverpool', 'Arsenal', 'Chelsea', 'Man City',
-  'Tottenham', 'Newcastle', 'Leeds', 'Everton', 'Aston Villa',
-]);
-
-/**
  * The strip of club-seasons the reel travels through.
  *
- * Laid out so the window always has cards on both sides: PAD behind the
- * start, then one per detent, the near miss, the winner, the overshoot,
- * and TAIL past that.
+ * Padded at both ends so the window always has cards either side of the
+ * pointer. Without the padding the reel runs out of strip on the left and
+ * reads as a list that has ended rather than as a drum.
  *
  * The decoys come from Math.random on purpose. They are scenery, and
  * drawing them from the run's own generator would change the season a seed
@@ -144,20 +129,12 @@ const NEAR_MISS_CLUBS = new Set([
 export function buildReel(
   winner: ReelItem,
   pool: readonly ReelItem[],
+  allTime = false,
 ): ReelItem[] {
   const pick = () => pool[Math.floor(Math.random() * pool.length)];
-
-  const marquee = pool.filter((p) => NEAR_MISS_CLUBS.has(p.club));
-  const nearMiss =
-    marquee.length && marquee[0].club !== winner.club
-      ? marquee[Math.floor(Math.random() * marquee.length)]
-      : pick();
-
   const strip: ReelItem[] = [];
-  // PAD + the detents that click past
-  for (let i = 0; i < WHEEL.PAD + STEP_COUNT; i++) strip.push(pick());
-  strip.push(nearMiss);  // NEAR_MISS_AT
-  strip.push(winner);    // WINNER_AT
-  for (let i = 0; i < WHEEL.OVERSHOOT_CARDS + WHEEL.TAIL; i++) strip.push(pick());
+  for (let i = 0; i < WHEEL.PAD + stepCount(allTime); i++) strip.push(pick());
+  strip[WHEEL.PAD + stepCount(allTime)] = winner;
+  for (let i = 0; i < WHEEL.TAIL; i++) strip.push(pick());
   return strip;
 }

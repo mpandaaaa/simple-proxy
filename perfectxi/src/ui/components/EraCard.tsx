@@ -31,6 +31,7 @@ export function EraCard({
   club,
   season,
   strength,
+  cycling,
 }: {
   pick: number;
   total: number;
@@ -39,6 +40,8 @@ export function EraCard({
   season: string | null;
   /** the squad's average rating, or 0 while spinning */
   strength: number;
+  /** the club currently under the pointer, while the reel runs */
+  cycling?: string | null;
 }) {
   const reduce = useReduceMotion();
   const fill = useSharedValue(0);
@@ -100,6 +103,8 @@ export function EraCard({
           <Animated.View style={bodyStyle}>
             <ClubDisc club={club} size={54} square />
           </Animated.View>
+        ) : cycling ? (
+          <ClubDisc club={cycling} size={54} square />
         ) : (
           <View style={styles.discSkeleton} />
         )}
@@ -121,6 +126,15 @@ export function EraCard({
                 {era ? `  ·  ${era.label}` : ''}
               </Text>
             </Animated.View>
+          ) : cycling ? (
+            // The site swaps the club name here as it spins. Same idea, but
+            // the name comes from the card actually under the pointer.
+            <>
+              <Text style={[styles.club, styles.clubSpinning]} numberOfLines={1}>
+                {cycling}
+              </Text>
+              <Text style={styles.season}>. . .</Text>
+            </>
           ) : (
             <>
               <View style={[styles.skeleton, styles.skeletonTitle]} />
@@ -237,6 +251,7 @@ const styles = StyleSheet.create({
     color: color.text2,
     marginTop: 1,
   },
+  clubSpinning: { color: color.text2 },
 
   discSkeleton: {
     width: 54,

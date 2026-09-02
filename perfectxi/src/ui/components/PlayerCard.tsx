@@ -16,7 +16,7 @@ import {
 } from '../../engine';
 
 /** How long the card holds before it gets out of the way on its own. */
-const HOLD = 3200;
+const HOLD = 1500;
 
 const TIERS = {
   bronze: { m1: '#5E3A1C', m2: '#C88A4A', ink: '#2B1A08', edge: '#E0A868' },

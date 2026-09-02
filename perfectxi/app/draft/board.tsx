@@ -44,6 +44,8 @@ export default function DraftBoard() {
   const [pending, setPending] = useState<SpinResult | null>(null);
   const [chooser, setChooser] = useState<{ player: Pick; slots: number[] } | null>(null);
   const [reveal, setReveal] = useState<{ player: Pick; pos: Position } | null>(null);
+  /** the club under the pointer while the reel runs, for the era card */
+  const [cycling, setCycling] = useState<string | null>(null);
 
   // Scenery for the reel: every club-season in the era being drafted, so
   // the cards flying past are real sides rather than invented ones.
@@ -62,11 +64,28 @@ export default function DraftBoard() {
   const onSpin = useCallback(() => {
     const result = doSpin();
     if (!result) return;
-    haptic('medium');
+    setCycling(null);
     setPending(result);
   }, []);
 
+  /**
+   * Auto spin after a pick, so the draft is one continuous loop rather than
+   * eleven presses of the same button. The site waits 420ms from the pick;
+   * here the wait starts when the signing card clears, because spinning
+   * behind it would hide the spin.
+   *
+   * The first board is still a deliberate press. Nothing should start
+   * moving before the player has asked it to.
+   */
+  useEffect(() => {
+    if (!run || run.board || pending || reveal) return;
+    if (run.state.filled === 0 || run.state.filled >= run.state.total) return;
+    const t = setTimeout(onSpin, 420);
+    return () => clearTimeout(t);
+  }, [run, pending, reveal, onSpin]);
+
   const onSettled = useCallback(() => {
+    setCycling(null);
     setPending((p) => {
       if (p) settleSpin(p);
       return null;
@@ -168,6 +187,8 @@ export default function DraftBoard() {
           <SpinReel
             target={pending ? { club: pending.club, season: pending.season } : null}
             pool={pool}
+            allTime={state.config.mode === 'alltime'}
+            onDetent={(item) => setCycling(item.club)}
             onSettled={onSettled}
           />
         </View>
@@ -180,6 +201,7 @@ export default function DraftBoard() {
           club={board ? club : null}
           season={board ? season : null}
           strength={boardAvg}
+          cycling={cycling}
         />
       </View>
 

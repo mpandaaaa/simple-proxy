@@ -1,9 +1,6 @@
 /**
  * Print the spin reel's timing and haptic schedule.
  *
- * Tuning a spin by holding a phone and saying "about right" does not
- * converge. This prints the numbers instead.
- *
  *   npm run wheel
  */
 import { createRequire } from 'node:module';
@@ -14,35 +11,28 @@ const require = createRequire(import.meta.url);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const w = require(resolve(root, '.headless/game/wheel.js'));
 const {
-  WHEEL, STEP_COUNT, NEAR_MISS_AT, WINNER_AT, OVERSHOOT_AT,
-  SETTLE_SPRING, SETTLE_MS, tickSchedule, spinDuration, peakVelocity,
+  WHEEL, stepDelays, stepCount, tickSchedule, spinDuration,
+  peakVelocity, arrivalVelocity, durationFor, SETTLE_MS,
 } = w;
 
-const ticks = tickSchedule();
-const steps = WHEEL.STEPS.reduce((n, ms) => n + ms, 0);
+for (const allTime of [false, true]) {
+  const delays = stepDelays(allTime);
+  const run = delays.reduce((n, ms) => n + ms, 0);
+  const ticks = tickSchedule(allTime);
+  const phases = { 65: 0, 100: 0, 150: 0 };
+  for (const d of delays) phases[d]++;
 
-console.log('SPIN');
-console.log(`  card              ${WHEEL.CARD_W}x${WHEEL.CARD_H}pt, pitch ${WHEEL.CARD}pt`);
-console.log(`  detents           ${STEP_COUNT} before the held beat`);
-console.log(`  peak speed        ${Math.round(peakVelocity())}pt/s`);
-console.log('');
-console.log(`  creep back        ${WHEEL.CREEP}pt over ${WHEEL.CREEP_MS}ms`);
-console.log(`  stepped run       ${steps}ms   ${WHEEL.STEPS.join(' / ')}`);
-console.log(`  held beat         ${WHEEL.HELD_MS}ms on the near miss`);
-console.log(`  lurch             ${WHEEL.LURCH_MS}ms, ${WHEEL.OVERSHOOT_CARDS} card past the winner`);
-console.log(`  settle            spring stiffness ${SETTLE_SPRING.stiffness}, damping ${SETTLE_SPRING.damping}, mass ${SETTLE_SPRING.mass}  (~${SETTLE_MS}ms)`);
-console.log(`  total             ${spinDuration()}ms`);
-console.log('');
-console.log(`  detent indexes    near miss ${NEAR_MISS_AT}, winner ${WINNER_AT}, overshoot ${OVERSHOOT_AT}`);
-
-console.log(`\nHAPTICS  ${ticks.length} events, the last one firm`);
-let last = 0;
-console.log('   #   at ms   gap  detent');
-ticks.forEach((t, i) => {
-  console.log(
-    '  ' + String(i + 1).padStart(2) + String(t.at).padStart(8) +
-    String(t.at - last).padStart(6) + String(t.detent).padStart(8) +
-    (t.strong ? '   <- lands' : ''),
-  );
-  last = t.at;
-});
+  console.log(allTime ? '\nALL TIME XI' : 'SQUAD DRAFT');
+  console.log(`  site dur argument   ${durationFor(allTime)}ms`);
+  console.log(`  steps               ${stepCount(allTime)}   (floor(dur / 65))`);
+  console.log(`  phases              ${phases[65]} x 65ms, ${phases[100]} x 100ms, ${phases[150]} x 150ms`);
+  console.log(`  stepped run         ${run}ms`);
+  console.log(`  settle              spring stiffness ${WHEEL.SETTLE.stiffness}, damping ${WHEEL.SETTLE.damping}, mass ${WHEEL.SETTLE.mass}`);
+  console.log(`  arrival velocity    ${Math.round(arrivalVelocity(allTime))}pt/s into the spring`);
+  console.log(`  total               ${spinDuration(allTime)}ms  (run + ~${SETTLE_MS}ms settle)`);
+  console.log(`  peak speed          ${Math.round(peakVelocity())}pt/s`);
+  console.log(`  haptics             ${ticks.length}  (${ticks.length - 1} ticks, then the thud)`);
+  console.log('   at ms  ' + ticks.map((t) => String(t.at).padStart(5)).join(''));
+  let last = 0;
+  console.log('   gap    ' + ticks.map((t) => { const g = t.at - last; last = t.at; return String(g).padStart(5); }).join(''));
+}

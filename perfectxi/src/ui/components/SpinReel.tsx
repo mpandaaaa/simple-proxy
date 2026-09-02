@@ -8,7 +8,6 @@ import Animated, {
   useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
-  withDelay,
   withSequence,
   withSpring,
   withTiming,
@@ -21,47 +20,47 @@ import { haptic, useReduceMotion } from '../feel';
 import { GRAIN_URI } from '../grain';
 import { eraOf } from '../../engine';
 import {
-  NEAR_MISS_AT,
-  OVERSHOOT_AT,
-  SETTLE_SPRING,
   WHEEL,
-  WINNER_AT,
+  arrivalVelocity,
   buildReel,
   offsetFor,
+  stepCount,
+  stepDelays,
   type ReelItem,
 } from '../../game/wheel';
 import { ClubDisc } from './ClubDisc';
 
-/** how long the landed card is held lit before the era card takes over */
-const HOLD_MS = 520;
-
 /**
  * The spin.
  *
- * A reel is stepped, not swept. It clicks through thirteen detents on a
- * three phase schedule, drags the last two out, then stops one short and
- * holds there before lurching the final card, carrying one past the winner
- * and springing back onto it.
+ * The site's reel exists in its DOM but ships disabled, so what a player
+ * actually sees there is the club name swapping as text on a timer. This is
+ * that same spin with the reel switched on: identical step schedule,
+ * identical three phase deceleration, identical haptic per step, but the
+ * strip physically travels and the ticks come off real position rather than
+ * off the timer that is also driving the text.
  *
- * The card hanging in the window during that held beat is deliberately a
- * big club. It changes nothing: the result was drawn before the reel moved
- * a pixel. It is there because a spin that visibly nearly lands somewhere
- * else has a shape, and one that simply stops does not.
+ * The only motion the web could not do is the ending. The reel arrives at
+ * the winner still carrying the speed of its last step, and the settle
+ * spring takes that velocity, carries it past, and brings it back. The
+ * overshoot is the reel's own momentum rather than a number someone chose.
  *
  * Every transform is a worklet reading one shared value, so the reel runs
- * on the UI thread and a slow JavaScript frame cannot stutter it. The ticks
- * come off real position: a reaction watches the scroll cross detents. No
- * thinning is needed any more, because the step schedule already spaces
- * them further apart than the Taptic Engine can resolve.
+ * on the UI thread and a slow JavaScript frame cannot stutter it.
  */
 export function SpinReel({
   target,
   pool,
+  allTime,
+  onDetent,
   onSettled,
 }: {
   /** set this to a club-season and the reel runs to it */
   target: ReelItem | null;
   pool: readonly ReelItem[];
+  allTime?: boolean;
+  /** every card that clicks past the pointer, so the era card can cycle */
+  onDetent?: (item: ReelItem) => void;
   onSettled: () => void;
 }) {
   const reduce = useReduceMotion();
@@ -82,7 +81,7 @@ export function SpinReel({
 
   const [width, setWidth] = useState(0);
   const [strip, setStrip] = useState<ReelItem[]>(() =>
-    pool.length ? buildReel(pool[0], pool) : [],
+    pool.length ? buildReel(pool[0], pool, allTime) : [],
   );
   const [landed, setLanded] = useState<ReelItem | null>(null);
 
@@ -90,30 +89,40 @@ export function SpinReel({
     setWidth(e.nativeEvent.layout.width);
   }, []);
 
-  /** A detent clicking into the window. Selection is Apple's own reel tick. */
-  const tick = useCallback(() => haptic('select'), []);
+  /**
+   * A card clicking past the pointer. The site fires a 6ms buzz here;
+   * selection is the iOS equivalent, and is Apple's own picker detent.
+   */
+  const tick = useCallback(
+    (index: number) => {
+      haptic('select');
+      const item = strip[WHEEL.PAD + index];
+      if (item && onDetent) onDetent(item);
+    },
+    [strip, onDetent],
+  );
 
   const land = useCallback(
     (item: ReelItem) => {
-      // The report's landing stack: a soft body, then a sharp beat on top.
-      haptic('medium');
-      setTimeout(() => haptic('success'), 80);
+      // the site's 40ms landing buzz
+      haptic('heavy');
       setLanded(item);
       flash.value = withSequence(
-        withTiming(1, { duration: 320, easing: Easing.out(Easing.quad) }),
+        withTiming(1, { duration: 300, easing: Easing.out(Easing.quad) }),
         withTiming(0, { duration: 0 }),
       );
       pop.value = withSequence(
         withSpring(1, { stiffness: 320, damping: 9, mass: 1 }),
         withSpring(0, { stiffness: 180, damping: 15, mass: 1 }),
       );
-      setTimeout(onSettled, HOLD_MS);
+      onSettled();
     },
     [flash, pop, onSettled],
   );
 
-  // Position driven ticks. Each step ends exactly on a detent, so crossing
-  // one is the same event as a card clicking into the window.
+  // Ticks come from real position: a reaction on the UI thread watching the
+  // strip cross a card boundary. They slow with the reel because the reel
+  // slows, not because a timer says so.
   useAnimatedReaction(
     () => x.value,
     (cur) => {
@@ -123,16 +132,14 @@ export function SpinReel({
       const d = Math.floor(progress + 0.0001);
       if (d <= detent.value) return;
       detent.value = d;
-      // Only the detents before the held beat tick. The landing gets its
-      // own, heavier stack when the settle spring finishes.
-      if (d >= 1 && d <= NEAR_MISS_AT) runOnJS(tick)();
+      if (d >= 1) runOnJS(tick)(d);
     },
   );
 
   useEffect(() => {
     // No spin in flight: sit on a fresh strip with cards either side.
     if (!target) {
-      if (pool.length) setStrip(buildReel(pool[0], pool));
+      if (pool.length) setStrip(buildReel(pool[0], pool, allTime));
       setLanded(null);
       x.value = offsetFor(0);
       speed.value = 0;
@@ -143,72 +150,56 @@ export function SpinReel({
     }
     if (!pool.length) return;
 
+    const delays = stepDelays(allTime);
+    const last = stepCount(allTime);
+
     setLanded(null);
-    setStrip(buildReel(target, pool));
+    setStrip(buildReel(target, pool, allTime));
     x.value = offsetFor(0);
     flash.value = 0;
     pop.value = 0;
     detent.value = 0;
 
     if (reduce) {
-      x.value = offsetFor(WINNER_AT);
+      x.value = offsetFor(last);
       speed.value = 0;
       bloom.value = 1;
-      haptic('medium');
+      haptic('heavy');
       setLanded(target);
-      const t = setTimeout(onSettled, 200);
-      return () => clearTimeout(t);
+      onSettled();
+      return;
     }
 
     ticking.value = true;
 
-    // creep back, then one timed step per detent, then the held beat, the
-    // lurch past the winner, and the spring back onto it
-    const steps = WHEEL.STEPS.map((ms, i) =>
+    // One timed step per card, on the site's own three phase schedule,
+    // then the settle spring carrying the reel's arrival speed.
+    const steps = delays.map((ms, i) =>
       withTiming(offsetFor(i + 1), { duration: ms, easing: Easing.linear }),
     );
 
     x.value = withSequence(
-      withTiming(offsetFor(0) + WHEEL.CREEP, {
-        duration: WHEEL.CREEP_MS,
-        easing: Easing.inOut(Easing.quad),
-      }),
       ...steps,
-      withDelay(
-        WHEEL.HELD_MS,
-        withTiming(offsetFor(OVERSHOOT_AT), {
-          duration: WHEEL.LURCH_MS,
-          easing: Easing.out(Easing.quad),
-        }),
-      ),
-      withSpring(offsetFor(WINNER_AT), SETTLE_SPRING, (finished) => {
-        'worklet';
-        ticking.value = false;
-        if (finished) runOnJS(land)(target);
-      }),
-    );
-
-    const runMs = WHEEL.STEPS.reduce((n, ms) => n + ms, 0);
-
-    // Smear tracks the schedule rather than the position: it is at its
-    // strongest through the fast phase and gone by the held beat.
-    speed.value = withDelay(
-      WHEEL.CREEP_MS,
-      withSequence(
-        withTiming(1, { duration: 0 }),
-        withTiming(0, { duration: runMs, easing: Easing.in(Easing.quad) }),
+      withSpring(
+        offsetFor(last),
+        { ...WHEEL.SETTLE, velocity: arrivalVelocity(allTime) },
+        (finished) => {
+          'worklet';
+          ticking.value = false;
+          if (finished) runOnJS(land)(target);
+        },
       ),
     );
 
-    // The window dims for the held beat, then comes up hard on the landing.
-    bloom.value = withDelay(
-      WHEEL.CREEP_MS,
-      withSequence(
-        withTiming(0.5, { duration: runMs, easing: Easing.linear }),
-        withTiming(0.18, { duration: WHEEL.HELD_MS, easing: Easing.out(Easing.quad) }),
-        withTiming(1, { duration: WHEEL.LURCH_MS + 120, easing: Easing.out(Easing.quad) }),
-      ),
+    const runMs = delays.reduce((n, ms) => n + ms, 0);
+
+    speed.value = withSequence(
+      withTiming(1, { duration: 0 }),
+      withTiming(0, { duration: runMs, easing: Easing.linear }),
     );
+
+    // The window brightens as the reel gives up its speed.
+    bloom.value = withTiming(1, { duration: runMs, easing: Easing.in(Easing.quad) });
     // A new target is a new spin. Nothing else may restart one in flight.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target]);
@@ -218,32 +209,28 @@ export function SpinReel({
   const lead = width > 0 ? width / 2 - WHEEL.CARD / 2 : 0;
 
   const windowStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: interpolate(pop.value, [0, 1], [1, 1.04]) }],
+    transform: [{ scale: interpolate(pop.value, [0, 1], [1, 1.035]) }],
   }));
   const stripStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: x.value }],
   }));
   const bloomStyle = useAnimatedStyle(() => ({ opacity: bloom.value }));
   const flashStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(flash.value, [0, 0.25, 1], [0, 0.85, 0]),
-    transform: [
-      { translateX: interpolate(flash.value, [0, 1], [-140, width + 140]) },
-    ],
+    opacity: interpolate(flash.value, [0, 0.25, 1], [0, 0.8, 0]),
+    transform: [{ translateX: interpolate(flash.value, [0, 1], [-140, width + 140]) }],
   }));
 
   return (
     <View style={styles.housing} onLayout={onLayout}>
-      {/* ambient orbs: low frequency light under everything, so the panel
-          is lit rather than filled */}
       <View style={styles.orbs} pointerEvents="none">
         <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
           <Defs>
             <RadialGradient id="orbA" cx="50%" cy="50%" r="50%">
-              <Stop offset="0" stopColor={color.accent} stopOpacity={0.16} />
+              <Stop offset="0" stopColor={color.accent} stopOpacity={0.15} />
               <Stop offset="1" stopColor={color.accent} stopOpacity={0} />
             </RadialGradient>
             <RadialGradient id="orbB" cx="50%" cy="50%" r="50%">
-              <Stop offset="0" stopColor={color.gold} stopOpacity={0.08} />
+              <Stop offset="0" stopColor={color.gold} stopOpacity={0.07} />
               <Stop offset="1" stopColor={color.gold} stopOpacity={0} />
             </RadialGradient>
           </Defs>
@@ -259,7 +246,7 @@ export function SpinReel({
           <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
             <Defs>
               <RadialGradient id="reelBloom" cx="50%" cy="50%" r="50%">
-                <Stop offset="0" stopColor={glow} stopOpacity={0.62} />
+                <Stop offset="0" stopColor={glow} stopOpacity={0.6} />
                 <Stop offset="0.5" stopColor={glow} stopOpacity={0.18} />
                 <Stop offset="1" stopColor={glow} stopOpacity={0} />
               </RadialGradient>
@@ -300,14 +287,8 @@ export function SpinReel({
 
         <Animated.View pointerEvents="none" style={[styles.flash, flashStyle]} />
 
-        {/* Image has no pointerEvents prop, so it is wrapped rather than
-            left able to swallow a touch. */}
         <View style={styles.grain} pointerEvents="none">
-          <Image
-            source={{ uri: GRAIN_URI }}
-            resizeMode="repeat"
-            style={styles.grainImage}
-          />
+          <Image source={{ uri: GRAIN_URI }} resizeMode="repeat" style={styles.grainImage} />
         </View>
         <View style={styles.inset} pointerEvents="none" />
       </Animated.View>
@@ -333,7 +314,7 @@ const ReelCard = memo(function ReelCard({
   dim: boolean;
 }) {
   const style = useAnimatedStyle(() => {
-    // where this card sits relative to the centre line, in cards
+    // where this card sits relative to the pointer, in cards
     const d = (index * WHEEL.CARD + x.value) / WHEEL.CARD;
     const ad = Math.abs(d);
     const c = Extrapolation.CLAMP;
@@ -347,7 +328,7 @@ const ReelCard = memo(function ReelCard({
         interpolate(speed.value, [0, 1], [1, 0.72]),
       transform: [
         { perspective: 760 },
-        // cards bunch toward the centre, the way a drum foreshortens
+        // cards bunch toward the pointer, the way a drum foreshortens
         { translateX: interpolate(d, [-2, -1, 0, 1, 2], [18, 6, 0, -6, -18], c) },
         { rotateY: `${interpolate(d, [-2, -1, 0, 1, 2], [-40, -21, 0, 21, 40], c)}deg` },
         { scaleX: scale * smear },
@@ -382,13 +363,11 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     borderWidth: 1,
     borderColor: line.card,
-    // Elevation on dark comes from the surface getting lighter, not from a
-    // shadow nobody can see.
     backgroundColor: '#0D1611',
     experimental_backgroundImage:
       'linear-gradient(180deg, #16231B 0%, #0C120E 55%, #080C09 100%)',
     boxShadow:
-      '0px 20px 40px rgba(0,0,0,0.55), inset 0px 1px 0px rgba(255,255,255,0.08)',
+      '0px 18px 36px rgba(0,0,0,0.5), inset 0px 1px 0px rgba(255,255,255,0.08)',
     padding: space.s3,
     overflow: 'hidden',
   },
@@ -409,14 +388,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  grain: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    opacity: 0.04,
-  },
+  grain: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.04 },
   grainImage: { width: '100%', height: '100%' },
   inset: {
     position: 'absolute',
@@ -427,7 +399,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.07)',
-    // doubles as the vignette: the reel darkens into its own housing
     boxShadow: 'inset 0px 0px 30px rgba(0,0,0,0.9)',
   },
 
