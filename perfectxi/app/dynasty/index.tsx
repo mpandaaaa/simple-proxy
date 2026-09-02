@@ -65,7 +65,7 @@ export default function DynastyHub() {
   );
 
   const played = useMemo(
-    () => (career ? career.seasons.some((s) => s.year === career.year) : false),
+    () => (career ? career.seasons.some((s) => s.s === career.year) : false),
     [career],
   );
 
@@ -107,14 +107,18 @@ export default function DynastyHub() {
       seasons: [
         ...career.seasons,
         {
-          year: career.year,
-          position: result.position,
+          s: career.year,
+          fin: result.position,
           pts: result.pts,
           w: result.wins,
           d: result.draws,
           l: result.losses,
           gf: result.gf,
           ga: result.ga,
+          met,
+          rev: 0,
+          profit: 0,
+          ded: 0,
         },
       ],
     };
@@ -257,12 +261,12 @@ export default function DynastyHub() {
           <Rise delay={0}>
             <View style={styles.last}>
               <Shine radius={radius.lg} group="panel" />
-              <Text style={styles.lastKey}>Season {last.year}</Text>
+              <Text style={styles.lastKey}>Season {last.s}</Text>
               <Text
-                style={[styles.lastPos, { color: finishTint(last.position) }]}
+                style={[styles.lastPos, { color: finishTint(last.fin) }]}
                 allowFontScaling={false}
               >
-                {ordinal(last.position)}
+                {ordinal(last.fin)}
               </Text>
               <Text style={styles.lastMeta}>
                 {last.pts} points {'·'} {last.w}W {last.d}D {last.l}L {'·'} {last.gf}

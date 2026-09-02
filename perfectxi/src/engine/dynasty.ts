@@ -51,11 +51,113 @@ export type DynastyPlayer = {
   contract: Contract;
   apps: number;
   goals: number;
+  assists: number;
+  /** his average match rating last season, or null if he did not play */
+  avgR: number | null;
+  /** days lost to injury last season */
+  daysOut: number;
+  /** the worst injury he picked up, for the squad list */
+  lastInj: string | null;
   /** seasons lost to injury, which leaves a permanent mark */
   injHist: number;
   /** the change in rating from the last ageing, for the report */
   delta: number;
+  /** why the rating moved, in the player's own terms */
+  why: string | null;
   retired: boolean;
+  /** what is left of his transfer fee on the books, and the yearly charge */
+  book: number;
+  amort: number;
+  amortLeft: number;
+  /** came through the academy, so he has no book value and counts as homegrown */
+  youth: boolean;
+  /** how many times he has been scouted, which narrows his reported ceiling */
+  scout: number;
+  /** one row a season, so a career can be read back */
+  hist: {
+    s: number;
+    club: string;
+    apps: number;
+    g: number;
+    a: number;
+    r: number | null;
+    rtg: number;
+    fin: number;
+  }[];
+};
+
+export type Tactic = {
+  form: string;
+  /** -2 defensive to +2 attacking */
+  mentality: number;
+  style: 'possession' | 'balanced' | 'direct';
+  press: number;
+  line: number;
+  tempo: number;
+  width: number;
+  /** how well the squad knows the shape, 0.86 to 1 */
+  fam: number;
+};
+
+export type Staff = {
+  coach: number;
+  medical: number;
+  youth: number;
+  setpiece: number;
+  scout: number;
+};
+
+export type Infra = {
+  stadium: number;
+  training: number;
+  academy: number;
+  capacity: number;
+};
+
+export type Ledger = {
+  rev: number;
+  wages: number;
+  amort: number;
+  running: number;
+  profit: number;
+  rolling: number;
+  breach: boolean;
+  deduction: number;
+};
+
+export type SeasonRow = {
+  s: number;
+  fin: number;
+  pts: number;
+  w: number;
+  d: number;
+  l: number;
+  gf: number;
+  ga: number;
+  met: boolean;
+  rev: number;
+  profit: number;
+  ded: number;
+};
+
+export type AllTime = {
+  n: string;
+  pos: Position;
+  apps: number;
+  g: number;
+  a: number;
+  seasons: number;
+  best: number;
+  rSum: number;
+  rN: number;
+};
+
+export type InboxItem = {
+  t: string;
+  b: string;
+  /** news, board, good or bad, which decides its colour */
+  k: 'news' | 'board' | 'good' | 'bad';
+  s: number;
 };
 
 function clamp(v: number, a: number, b: number): number {
@@ -117,18 +219,38 @@ export function seasonYear(season: string): number {
  * tracks are then nudged until they blend back to the rating he arrived
  * with, because the draft already decided how good he is.
  */
-export function seedTracks(
-  base: Omit<
-    DynastyPlayer,
-    'phys' | 'tech' | 'ment' | 'pot' | 'peakOff' | 'declMul' | 'prone' | 'delta' | 'retired'
-  > & { pot?: number },
-  rnd: Rng,
-): DynastyPlayer {
+export type PlayerSeed = {
+  n: string;
+  nat: string;
+  pos: Position;
+  club: string;
+  season: string;
+  rtg: number;
+  age: number;
+  contract: Contract;
+  pot?: number;
+  youth?: boolean;
+};
+
+export function seedTracks(base: PlayerSeed, rnd: Rng): DynastyPlayer {
   const c = curve(base.pos);
   const youth = clamp((c.phys + 2 - base.age) / 8, -1, 1);
 
   const p: DynastyPlayer = {
     ...base,
+    apps: 0,
+    goals: 0,
+    assists: 0,
+    avgR: null,
+    daysOut: 0,
+    lastInj: null,
+    injHist: 0,
+    book: 0,
+    amort: 0,
+    amortLeft: 0,
+    youth: base.youth ?? false,
+    scout: 0,
+    hist: [],
     phys: clamp(Math.round(base.rtg + youth * 4 + gauss(rnd) * 2), 40, 99),
     tech: clamp(Math.round(base.rtg - youth * 3 + gauss(rnd) * 2), 40, 99),
     ment: clamp(Math.round(base.rtg - youth * 4 + gauss(rnd) * 2), 40, 99),
@@ -137,6 +259,7 @@ export function seedTracks(
     prone: clamp(1 + gauss(rnd) * 0.22, 0.7, 1.5),
     pot: base.pot ?? 0,
     delta: 0,
+    why: null,
     retired: false,
   };
 
@@ -173,12 +296,13 @@ function trackStep(
   kind: 'phys' | 'tech' | 'ment',
   declMul: number,
   rnd: Rng,
+  growMul = 1,
 ): number {
   let d: number;
   if (age < peak) {
     // Growth towards potential, fastest when furthest away.
     const gap = Math.max(0, pot - cur);
-    d = gap * 0.3 * (kind === 'phys' ? 1.1 : kind === 'tech' ? 1.0 : 0.85);
+    d = gap * 0.3 * (kind === 'phys' ? 1.1 : kind === 'tech' ? 1.0 : 0.85) * growMul;
     d = Math.min(d, 4.5);
   } else {
     const past = age - peak;
@@ -199,18 +323,25 @@ function trackStep(
  * The rating cannot move more than six either way in one year, which is
  * what stops a career turning over in a single summer.
  */
-export function ageOne(p: DynastyPlayer, rnd: Rng): DynastyPlayer {
+export function ageOne(p: DynastyPlayer, rnd: Rng, mod = 1): DynastyPlayer {
   const c = curve(p.pos);
   const off = p.peakOff;
   const m = p.declMul;
   const before = p.rtg;
 
+  // Form and minutes speed growth while a player is still climbing, and
+  // steepen the fall a little once he is past it. They never replace the
+  // curve, only bend it.
+  const growing = p.age < c.phys + off;
+  const gm = growing ? mod : 1;
+  const dm = growing ? 1 : 2 - clamp(mod, 0.7, 1.3);
+
   const next: DynastyPlayer = {
     ...p,
     age: p.age + 1,
-    phys: trackStep(p.phys, p.pot, p.age, c.phys + off, 'phys', m * c.dec, rnd),
-    tech: trackStep(p.tech, p.pot, p.age, c.tech + off, 'tech', m, rnd),
-    ment: trackStep(p.ment, p.pot, p.age, c.ment + off, 'ment', m, rnd),
+    phys: trackStep(p.phys, p.pot, p.age, c.phys + off, 'phys', m * c.dec * dm, rnd, gm),
+    tech: trackStep(p.tech, p.pot, p.age, c.tech + off, 'tech', m * dm, rnd, gm),
+    ment: trackStep(p.ment, p.pot, p.age, c.ment + off, 'ment', m * dm, rnd, gm),
   };
 
   // Injury history leaves a permanent mark on the physical track.
@@ -339,20 +470,53 @@ export type Dynasty = {
   objective: { label: string; target: number };
   capacity: number;
   rival: string | null;
+  tactic: Tactic;
+  staff: Staff;
+  infra: Infra;
+  /** the academy, not yet in the roster */
+  youth: DynastyPlayer[];
   /** everyone who has retired out of this career, newest first */
   retired: DynastyPlayer[];
   /** one entry per season played */
-  seasons: {
-    year: number;
-    position: number;
-    pts: number;
-    w: number;
-    d: number;
-    l: number;
-    gf: number;
-    ga: number;
-  }[];
+  seasons: SeasonRow[];
   titles: number;
+  /** career totals for everyone who has played for you */
+  allTime: Record<string, AllTime>;
+  records: { bestPts: number; bestFin: number; unbeaten: number };
+  inbox: InboxItem[];
+  /** the last three seasons of profit, which is what PSR is judged on */
+  psr: number[];
+  /** profit banked from sales this season, before the books are closed */
+  saleProfit: number;
+  /** points deducted this season, if the books did not add up */
+  psrHit: number;
+  ledger: Ledger | null;
+  /** who left, and how, this summer */
+  expired: string[];
+  renewed: string[];
+  sold: string[];
+  /** who is injured right now, by name */
+  injuries: string[];
+  sacked: boolean;
+};
+
+export const EMPTY_TACTIC: Tactic = {
+  form: '4-3-3',
+  mentality: 0,
+  style: 'balanced',
+  press: 0,
+  line: 0,
+  tempo: 0,
+  width: 0,
+  fam: 0.9,
+};
+
+export const EMPTY_STAFF: Staff = {
+  coach: 2,
+  medical: 2,
+  youth: 2,
+  setpiece: 1,
+  scout: 2,
 };
 
 /** A seed of the career's own, so ageing never disturbs a season's draw. */
@@ -397,9 +561,6 @@ export function startDynasty(
           rtg: p.rtg,
           age,
           contract: { yrs: rint(2, 4, rnd), wage: wage(p.rtg, age) },
-          apps: 0,
-          goals: 0,
-          injHist: 0,
         },
         rnd,
       ),
@@ -440,6 +601,22 @@ export function startDynasty(
     retired: [],
     seasons: [],
     titles: 0,
+    tactic: { ...EMPTY_TACTIC, form: formation },
+    staff: { ...EMPTY_STAFF },
+    infra: { stadium: 0, training: 2, academy: 2, capacity: 40000 },
+    youth: [],
+    allTime: {},
+    records: { bestPts: 0, bestFin: 20, unbeaten: 0 },
+    inbox: [],
+    psr: [],
+    saleProfit: 0,
+    psrHit: 0,
+    ledger: null,
+    expired: [],
+    renewed: [],
+    sold: [],
+    injuries: [],
+    sacked: false,
   };
 }
 

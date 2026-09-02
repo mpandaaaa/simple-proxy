@@ -111,3 +111,26 @@ export {
   startCareer,
 } from './career';
 export type { Scenario, ScenarioId, ClubOption, Mode } from './career';
+export { matchRating, expectedRating, perfBeta, development, seasonRatings } from './dynastyRatings';
+export type { MatchContext, Development } from './dynastyRatings';
+export {
+  STYLES, MENTALITIES, FIT, tacticDeltas, posFit, benchCover,
+  effectiveRating, misfits, setPieceShare, learnTactic, changeShape,
+} from './dynastyTactics';
+export type { StyleId, TacticDeltas } from './dynastyTactics';
+export {
+  STAFF, STAR_NAMES, staffCost, staffUpgradeCost, staffWages, devMultiplier,
+  injuryMultiplier, trainingMultiplier, SEAT_COST, STADIUM_STEP, ticketYield,
+  matchdayRevenue, stadiumCost, stadiumPayback, wageBill as clubWageBill,
+  amortTotal, revenue, closeBooks, nextBudget, baseBudget,
+} from './dynastyClub';
+export type { StaffRole } from './dynastyClub';
+export {
+  seasonInjuries, makeYouth, intakeSize, scoutRange, renewalTerms,
+  expiring, autoRenews, market, sign, sell, promote, releaseYouth, emptySlots,
+} from './dynastySquad';
+export type { Listing, RenewalTerms } from './dynastySquad';
+export { processSeasonEnd } from './dynastySeason';
+export type { SummerReport } from './dynastySeason';
+export type { Tactic, Staff, Infra, Ledger, SeasonRow, AllTime, InboxItem } from './dynasty';
+export { EMPTY_TACTIC, EMPTY_STAFF } from './dynasty';
