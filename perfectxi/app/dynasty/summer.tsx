@@ -12,6 +12,7 @@ import {
   Trophy,
   SeasonCurve,
   ClubDisc,
+  Collapse,
 } from '../../src/ui/components';
 import { color, gradient, line, positionColor, radius, space, hue, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
@@ -22,6 +23,8 @@ import {
   asSquad,
   awards,
   COMPS,
+  objectiveClause,
+  type CupRun,
   chemBonus,
   expectedRating,
   finishFor,
@@ -273,7 +276,7 @@ export default function Summer() {
             </Text>
           </View>
           <Text style={styles.pvSub}>
-            They wanted {before.objective.label.toLowerCase()}
+            They wanted you to {objectiveClause(before.objective.target)}
           </Text>
         </View>
 
@@ -301,35 +304,7 @@ export default function Summer() {
               {report.cups.runs
                 .filter((r) => r.entered)
                 .map((r) => (
-                  <View
-                    key={r.id}
-                    style={[
-                      styles.cup,
-                      r.won
-                        ? { borderColor: alpha(hue.gold, 0.5), backgroundColor: alpha(hue.gold, 0.12) }
-                        : null,
-                    ]}
-                  >
-                    <Text style={styles.cupMark} allowFontScaling={false}>
-                      {COMPS[r.id].mark}
-                    </Text>
-                    <View style={styles.cupBody}>
-                      <Text style={styles.cupName} numberOfLines={1}>
-                        {r.name}
-                      </Text>
-                      <Text
-                        style={[styles.cupFate, r.won ? { color: hue.gold } : null]}
-                        numberOfLines={1}
-                      >
-                        {r.won ? 'Winners' : `Out in the ${r.elim}`}
-                      </Text>
-                    </View>
-                    {r.money > 0 ? (
-                      <Text style={styles.cupMoney} allowFontScaling={false}>
-                        £{Math.round(r.money)}m
-                      </Text>
-                    ) : null}
-                  </View>
+                  <CupPath key={r.id} run={r} />
                 ))}
             </View>
           </>
@@ -527,6 +502,41 @@ export default function Summer() {
             );
           })}
         </View>
+
+        {/* ================= every result ================= */}
+        <Text style={[text.label, styles.sect]}>Every result</Text>
+        <Collapse label="The thirty eight" count={result.matches.length}>
+          <View style={styles.games}>
+            {result.matches.map((m) => (
+              <View key={m.n} style={styles.game}>
+                <Text style={styles.gameMd} allowFontScaling={false}>
+                  {m.n}
+                </Text>
+                <ClubDisc club={m.opp} size={24} />
+                <View style={styles.gameBody}>
+                  <Text style={styles.gameOpp} numberOfLines={1}>
+                    {m.opp}
+                  </Text>
+                  <Text style={styles.gameWhere}>{m.home ? 'Home' : 'Away'}</Text>
+                </View>
+                <Text
+                  style={[
+                    styles.gameScore,
+                    {
+                      color:
+                        m.oc === 'win' ? hue.emerald : m.oc === 'draw' ? hue.amber : hue.crimson,
+                    },
+                  ]}
+                  allowFontScaling={false}
+                >
+                  {m.gf}
+                  {'–'}
+                  {m.ga}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </Collapse>
 
         {/* ================= the table ================= */}
         <Text style={[text.label, styles.sect]}>Final standings</Text>
@@ -751,6 +761,99 @@ export default function Summer() {
 
       <Confetti fire={result.position === 1 && !report.sacked} />
     </>
+  );
+}
+
+/**
+ * One cup run, folded down to a line until you want the path.
+ *
+ * The line is the fate and the cheque. Opening it is every tie, who it
+ * was against, where it was played and what it finished.
+ */
+function CupPath({ run }: { run: CupRun }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <View>
+      <Press
+        onPress={() => {
+          haptic('light');
+          setOpen((o) => !o);
+        }}
+        feel="none"
+        scaleTo={0.99}
+        style={[
+          styles.cup,
+          run.won
+            ? { borderColor: alpha(hue.gold, 0.5), backgroundColor: alpha(hue.gold, 0.12) }
+            : null,
+          open ? styles.cupOpen : null,
+        ]}
+      >
+        <Text style={styles.cupMark} allowFontScaling={false}>
+          {COMPS[run.id].mark}
+        </Text>
+        <View style={styles.cupBody}>
+          <Text style={styles.cupName} numberOfLines={1}>
+            {run.name}
+          </Text>
+          <Text
+            style={[styles.cupFate, run.won ? { color: hue.gold } : null]}
+            numberOfLines={1}
+          >
+            {run.won ? 'Winners' : `Out in the ${run.elim}`}
+          </Text>
+        </View>
+        {run.money > 0 ? (
+          <Text style={styles.cupMoney} allowFontScaling={false}>
+            £{Math.round(run.money)}m
+          </Text>
+        ) : null}
+        <Text style={styles.cupChevron} allowFontScaling={false}>
+          {open ? '⌃' : '⌄'}
+        </Text>
+      </Press>
+
+      {open ? (
+        <View style={styles.path}>
+          {run.ties.map((t, i) => (
+            <View key={`${t.round}-${i}`} style={styles.tie}>
+              {t.opp ? <ClubDisc club={t.opp} size={24} /> : <View style={styles.tieGap} />}
+              <View style={styles.tieBody}>
+                <Text style={styles.tieRound}>
+                  {t.round}
+                  {t.neutral
+                    ? ' · Wembley'
+                    : t.legs
+                      ? ' · two legs'
+                      : t.opp
+                        ? t.home
+                          ? ' · home'
+                          : ' · away'
+                        : ''}
+                </Text>
+                <Text style={styles.tieOpp} numberOfLines={1}>
+                  {t.opp ?? 'The league phase'}
+                </Text>
+                {t.detail ? <Text style={styles.tieDetail}>{t.detail}</Text> : null}
+                {t.pens ? (
+                  <Text style={[styles.tieDetail, { color: hue.amber }]}>{t.pens}</Text>
+                ) : null}
+              </View>
+              {t.opp ? (
+                <Text
+                  style={[styles.tieScore, { color: t.won ? hue.emerald : hue.crimson }]}
+                  allowFontScaling={false}
+                >
+                  {t.gf}
+                  {'–'}
+                  {t.ga}
+                </Text>
+              ) : null}
+            </View>
+          ))}
+        </View>
+      ) : null}
+    </View>
   );
 }
 
@@ -1079,6 +1182,67 @@ const styles = StyleSheet.create({
   cupBody: { flex: 1, minWidth: 0 },
   cupName: { fontFamily: font.bodySemi, fontSize: 14.5, lineHeight: 19, color: color.text1 },
   cupFate: { ...text.key, fontSize: 8, color: color.text3 },
+  cupOpen: { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
+  cupChevron: { fontSize: 15, lineHeight: 19, color: color.text3, width: 14, textAlign: 'center' },
+  path: {
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderColor: line.card,
+    borderBottomLeftRadius: radius.md,
+    borderBottomRightRadius: radius.md,
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    paddingHorizontal: space.s3,
+    paddingBottom: space.s2,
+    gap: space.s2,
+  },
+  tie: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s3,
+    paddingTop: space.s2,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.06)',
+  },
+  tieGap: { width: 24 },
+  tieBody: { flex: 1, minWidth: 0 },
+  tieRound: { ...text.key, fontSize: 7.5, color: color.text3 },
+  tieOpp: { fontFamily: font.bodySemi, fontSize: 13.5, lineHeight: 18, color: color.text1 },
+  tieDetail: { fontFamily: font.body, fontSize: 10, lineHeight: 14, color: color.text3 },
+  tieScore: {
+    fontFamily: font.displayBlack,
+    fontSize: 16,
+    lineHeight: 21,
+    fontVariant: ['tabular-nums'],
+  },
+
+  games: { gap: 5, paddingTop: space.s2 },
+  game: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s3,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+  },
+  gameMd: {
+    fontFamily: font.body,
+    fontSize: 11,
+    lineHeight: 15,
+    color: color.text3,
+    width: 18,
+    textAlign: 'right',
+    fontVariant: ['tabular-nums'],
+  },
+  gameBody: { flex: 1, minWidth: 0 },
+  gameOpp: { fontFamily: font.bodySemi, fontSize: 13.5, lineHeight: 18, color: color.text1 },
+  gameWhere: { ...text.key, fontSize: 7.5, color: color.text3 },
+  gameScore: {
+    fontFamily: font.displayBlack,
+    fontSize: 16,
+    lineHeight: 21,
+    fontVariant: ['tabular-nums'],
+  },
+
   cupMoney: {
     fontFamily: font.displayBold,
     fontSize: 15,

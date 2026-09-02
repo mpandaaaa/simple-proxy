@@ -33,7 +33,7 @@ import {
   renewalTerms,
   seasonInjuries,
 } from './dynastySquad';
-import { objectiveFor, objectiveLabel, scenarioById, type ScenarioId } from './career';
+import { objectiveClause, objectiveFor, objectiveLabel, scenarioById, type ScenarioId } from './career';
 
 /**
  * The end of a season, in the one order that works.
@@ -160,9 +160,9 @@ export function processSeasonEnd(
   next.sacked = sacked;
   say(
     met ? 'The board are pleased' : 'The board are not pleased',
-    met
-      ? `You were asked to ${d.objective.label.toLowerCase()} and you finished ${result.position}. Confidence is ${next.mgr}.`
-      : `You were asked to ${d.objective.label.toLowerCase()} and you finished ${result.position}. Confidence is ${next.mgr}.`,
+    `You were asked to ${objectiveClause(d.objective.target)} and you finished ${ordinalOf(
+      result.position,
+    )}. Confidence is ${next.mgr}.`,
     met ? 'good' : 'bad',
   );
 

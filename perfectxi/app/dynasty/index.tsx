@@ -29,6 +29,7 @@ import {
   squadRating,
   squadValue,
   slotAccepts,
+  placeName,
   clubColour,
   starters,
   type Dynasty,
@@ -529,7 +530,7 @@ export default function DynastyHub() {
             {outOfPosition.length} out of position, which costs you.{' '}
             {outOfPosition
               .slice(0, 2)
-              .map((m) => `${m.name} at ${m.to.toLowerCase()}`)
+              .map((m) => `${m.name} ${placeName(m.to)}`)
               .join(', ')}
             .
           </Text>
@@ -818,7 +819,7 @@ export function PlayerRow({
         : p.contract.yrs === 1
           ? 'final year'
           : wrong
-            ? `playing at ${slot.toLowerCase()}`
+            ? `playing ${placeName(slot)}`
             : p.youth
               ? 'academy'
               : `${p.contract.yrs} yr deal`;

@@ -4,7 +4,7 @@ import { Sheet } from './Sheet';
 import { Press } from './Press';
 import { color, hue, line, positionColor, radius, space, alpha } from '../tokens';
 import { font, text } from '../type';
-import { canFill, posFit, type Position } from '../../engine';
+import { canFill, placeName, posFit, type Position } from '../../engine';
 
 /**
  * Which place he fills.
@@ -76,7 +76,7 @@ export function SlotSheet({
                     </View>
                     <View style={styles.slotBody}>
                       <Text style={styles.slotWhere}>
-                        {h.index < 11 ? 'In the eleven' : 'On the bench'}
+                        {h.index < 11 ? `In the eleven, ${placeName(h.pos)}` : 'On the bench'}
                       </Text>
                       <Text
                         style={[

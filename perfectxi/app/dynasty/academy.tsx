@@ -35,15 +35,48 @@ const SCOUT_FEE = 1;
  * Four in a hundred of them are generational. Fifty five never make it.
  * The fog is the game.
  */
+type Sort = 'rating' | 'ceiling' | 'age' | 'position';
+
+const SORTS: { id: Sort; label: string }[] = [
+  { id: 'rating', label: 'Rating' },
+  { id: 'ceiling', label: 'Ceiling' },
+  { id: 'age', label: 'Age' },
+  { id: 'position', label: 'Position' },
+];
+
+const POS_ORDER: Record<string, number> = { GK: 0, DEF: 1, MID: 2, ATT: 3 };
+
 export default function Academy() {
   const career = useCareer();
   const [open, setOpen] = useState<number | null>(null);
+  const [sort, setSort] = useState<Sort>('rating');
   /* Promoting happens here. It used to hand you over to the transfer
      screen, which threw away the screen you were looking at to do a job
      this screen already has everything for. */
   const [promoting, setPromoting] = useState<number | null>(null);
 
   const holes = useMemo(() => (career ? emptySlots(career) : []), [career]);
+
+  /* Sorted for looking at, but every index stays the one the career knows,
+     because promoting and releasing both work off it. */
+  const order = useMemo(() => {
+    if (!career) return [] as number[];
+    const chief = career.staff.scout;
+    const idx = career.youth.map((_, i) => i);
+    const p = (i: number) => career.youth[i];
+    return idx.sort((a, b) => {
+      if (sort === 'age') return p(a).age - p(b).age || p(b).rtg - p(a).rtg;
+      if (sort === 'position') {
+        return (
+          (POS_ORDER[p(a).pos] ?? 9) - (POS_ORDER[p(b).pos] ?? 9) || p(b).rtg - p(a).rtg
+        );
+      }
+      if (sort === 'ceiling') {
+        return scoutRange(p(b), chief).high - scoutRange(p(a), chief).high || p(b).rtg - p(a).rtg;
+      }
+      return p(b).rtg - p(a).rtg;
+    });
+  }, [career, sort]);
 
   const scout = useCallback((index: number) => {
     updateCareer((d) => {
@@ -100,9 +133,42 @@ export default function Academy() {
           </Text>
         </View>
 
-        <View style={styles.list}>
-          {career.youth.map((p, i) => (
-            <Rise key={p.n} delay={Math.min(i, 5)}>
+        {career.youth.length > 1 ? (
+          <View style={styles.sorts}>
+            {SORTS.map((o) => (
+              <Press
+                key={o.id}
+                onPress={() => {
+                  haptic('select');
+                  setSort(o.id);
+                }}
+                feel="none"
+                scaleTo={0.95}
+                style={[
+                  styles.sort,
+                  sort === o.id
+                    ? {
+                        borderColor: alpha(hue.lime, 0.45),
+                        backgroundColor: alpha(hue.lime, 0.13),
+                      }
+                    : null,
+                ]}
+              >
+                <Text
+                  style={[styles.sortText, sort === o.id ? { color: hue.lime } : null]}
+                >
+                  {o.label}
+                </Text>
+              </Press>
+            ))}
+          </View>
+        ) : null}
+
+        <View style={[styles.list, career.youth.length > 1 ? null : styles.listTop]}>
+          {order.map((i, n) => {
+            const p = career.youth[i];
+            return (
+            <Rise key={p.n} delay={Math.min(n, 5)}>
               <Prospect
                 player={p}
                 chief={career.staff.scout}
@@ -121,7 +187,8 @@ export default function Academy() {
                 }
               />
             </Rise>
-          ))}
+            );
+          })}
         </View>
 
         {career.youth.length ? (
@@ -266,7 +333,8 @@ const styles = StyleSheet.create({
   leadBody: { ...text.small, fontSize: 12.5, lineHeight: 18 },
   leadNote: { ...text.small, fontSize: 11, lineHeight: 16, color: color.text3 },
 
-  list: { gap: space.s3, marginTop: space.s5 },
+  list: { gap: space.s3 },
+  listTop: { marginTop: space.s5 },
   card: {
     borderRadius: radius.md,
     borderWidth: 1,
@@ -332,6 +400,23 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     letterSpacing: 0.3,
     color: hue.lime,
+  },
+
+  sorts: { flexDirection: 'row', gap: 5, marginTop: space.s5, marginBottom: space.s3 },
+  sort: {
+    flex: 1,
+    minHeight: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
+  sortText: {
+    ...text.key,
+    fontSize: 8.5,
+    color: color.text3,
   },
 
   acts: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.07)' },

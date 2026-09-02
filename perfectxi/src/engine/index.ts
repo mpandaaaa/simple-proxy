@@ -125,6 +125,7 @@ export {
   clubsForScenario,
   objectiveFor,
   objectiveLabel,
+  objectiveClause,
   budgetFor,
   primeAge,
   startCareer,
@@ -133,7 +134,7 @@ export type { Scenario, ScenarioId, ClubOption, Mode } from './career';
 export { matchRating, expectedRating, perfBeta, development, seasonRatings } from './dynastyRatings';
 export type { MatchContext, Development } from './dynastyRatings';
 export {
-  STYLES, MENTALITIES, FIT, tacticDeltas, posFit, canFill, slotAccepts, benchCover,
+  STYLES, MENTALITIES, FIT, tacticDeltas, posFit, canFill, slotAccepts, placeName, benchCover,
   effectiveRating, misfits, setPieceShare, learnTactic, changeShape,
 } from './dynastyTactics';
 export type { StyleId, TacticDeltas } from './dynastyTactics';

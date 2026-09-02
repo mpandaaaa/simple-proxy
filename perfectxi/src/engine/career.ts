@@ -175,6 +175,23 @@ export function objectiveLabel(target: number): string {
   return 'Avoid the relegation fight';
 }
 
+/**
+ * The same objective, as a clause that reads inside a sentence.
+ *
+ * "You were asked to win the Premier League", not "to win the premier
+ * league". Lower casing the label whole was doing that to every proper
+ * noun in it, so the clause is written out rather than mangled.
+ */
+export function objectiveClause(target: number): string {
+  if (target <= 1) return 'win the Premier League';
+  if (target <= 2) return 'finish in the top two';
+  if (target <= 4) return 'finish in the Champions League places';
+  if (target <= 7) return 'finish in the European places';
+  if (target <= 10) return 'finish in the top half';
+  if (target <= 14) return 'finish comfortably in mid-table';
+  return 'stay out of the relegation fight';
+}
+
 /** What a finish is worth in transfer money next summer, in £m. */
 export function budgetFor(finish: number): number {
   return finish === 1

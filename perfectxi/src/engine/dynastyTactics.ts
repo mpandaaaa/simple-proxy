@@ -91,6 +91,22 @@ export function tacticDeltas(t: Tactic, strength: number): TacticDeltas {
   return { att, def: def - Math.log(shape.def || 1) * 0.6, oppAtt, varr, fam };
 }
 
+/**
+ * What a place on the pitch is called.
+ *
+ * "Playing at mid" is a slot name leaking onto the screen. He is playing
+ * in midfield.
+ */
+export function placeName(pos: Position): string {
+  return pos === 'GK'
+    ? 'in goal'
+    : pos === 'DEF'
+      ? 'in defence'
+      : pos === 'MID'
+        ? 'in midfield'
+        : 'in attack';
+}
+
 /** How well a player suits the place he is being asked to fill. */
 export const FIT = { exact: 1.0, near: 0.94, far: 0.82, keeper: 0.5 } as const;
 

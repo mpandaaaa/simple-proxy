@@ -24,10 +24,9 @@ import {
   mulberry32,
   posFit,
   canFill,
+  placeName,
   playerValue,
-  promote,
   revenue,
-  scoutRange,
   sell,
   sign,
   squadRating,
@@ -61,7 +60,6 @@ export default function Market() {
   const career = useCareer();
   const [filter, setFilter] = useState<Filter>('all');
   const [target, setTarget] = useState<Listing | null>(null);
-  const [youthTarget, setYouthTarget] = useState<number | null>(null);
   const [selling, setSelling] = useState<{ p: DynastyPlayer; slot: number } | null>(null);
 
   // Drawn from the career seed, the year and how many looks have been used,
@@ -92,13 +90,6 @@ export default function Market() {
     haptic('success');
     sfx('pick');
     setTarget(null);
-  }, []);
-
-  const doPromote = useCallback((youthIndex: number, slot: number) => {
-    updateCareer((d) => promote(d, youthIndex, slot) ?? d);
-    haptic('success');
-    sfx('pick');
-    setYouthTarget(null);
   }, []);
 
   const doSell = useCallback((slot: number) => {
@@ -159,51 +150,6 @@ export default function Market() {
             the new man takes an empty bench place.
           </Text>
         )}
-
-        {/* ---- the academy ---- */}
-        {career.youth.length ? (
-          <>
-            <Text style={[text.label, styles.sect]}>From your own academy</Text>
-            <Text style={styles.sectNote}>Free, and they count as homegrown.</Text>
-            <View style={styles.list}>
-              {career.youth.map((p, i) => {
-                const range = scoutRange(p);
-                return (
-                  <Rise key={p.n} delay={Math.min(i, 4)}>
-                    <Press
-                      onPress={() => {
-                        if (!holes.length) return;
-                        haptic('light');
-                        setYouthTarget(i);
-                      }}
-                      feel="none"
-                      scaleTo={0.99}
-                      style={[styles.card, !holes.length ? styles.cardOff : null]}
-                    >
-                      <Shine radius={radius.md} group="card" rating={p.rtg} bevel={false} clip={false} />
-                      <Badge pos={p.pos} />
-                      <View style={styles.cardBody}>
-                        <Text style={styles.cardName} numberOfLines={1}>
-                          {p.n}
-                        </Text>
-                        <Text style={styles.cardMeta} numberOfLines={1}>
-                          {p.age} {'·'} could reach{' '}
-                          {range.exact ? range.high : `${range.low} to ${range.high}`}
-                        </Text>
-                      </View>
-                      <View style={styles.cardRight}>
-                        <Text style={styles.cardRtg} allowFontScaling={false}>
-                          {p.rtg}
-                        </Text>
-                        <Text style={[styles.cardPrice, { color: color.gold }]}>free</Text>
-                      </View>
-                    </Press>
-                  </Rise>
-                );
-              })}
-            </View>
-          </>
-        ) : null}
 
         {/* ---- the market ---- */}
         <View style={styles.marketHead}>
@@ -304,11 +250,11 @@ export default function Market() {
                       <Text style={styles.cardFit} numberOfLines={1}>
                         {l.pos === 'GK'
                           ? 'no place in goal open'
-                          : `no place open for a ${l.pos.toLowerCase()}`}
+                          : `nowhere open ${placeName(l.pos)}`}
                       </Text>
                     ) : best && fit < 1 ? (
                       <Text style={styles.cardFit} numberOfLines={1}>
-                        would play at {best.pos.toLowerCase()}, {Math.round((1 - fit) * 100)}% off
+                        would play {placeName(best.pos)}, {Math.round((1 - fit) * 100)}% off
                         his best
                       </Text>
                     ) : null}
@@ -411,19 +357,6 @@ export default function Market() {
         playerPos={target?.pos ?? 'MID'}
         onClose={() => setTarget(null)}
         onPick={(slot) => target && doSign(target, slot)}
-      />
-      <SlotSheet
-        open={youthTarget !== null}
-        title={youthTarget !== null ? `Promote ${career.youth[youthTarget]?.n}` : ''}
-        subtitle={
-          youthTarget !== null
-            ? `${career.youth[youthTarget]?.rtg} rated, ${career.youth[youthTarget]?.age}, free`
-            : ''
-        }
-        holes={holes}
-        playerPos={youthTarget !== null ? (career.youth[youthTarget]?.pos ?? 'MID') : 'MID'}
-        onClose={() => setYouthTarget(null)}
-        onPick={(slot) => youthTarget !== null && doPromote(youthTarget, slot)}
       />
 
       <PlayerSheet

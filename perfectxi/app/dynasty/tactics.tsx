@@ -10,6 +10,7 @@ import {
   MENTALITIES,
   STYLES,
   changeShape,
+  placeName,
   effectiveRating,
   misfits,
   setPieceShare,
@@ -104,7 +105,7 @@ export default function Tactics() {
         <View style={styles.warn}>
           <Text style={styles.warnText}>
             {wrong.length} player{wrong.length === 1 ? '' : 's'} out of position in
-            this shape: {wrong.map((m) => `${m.name} at ${m.to.toLowerCase()}`).join(', ')}.
+            this shape: {wrong.map((m) => `${m.name} ${placeName(m.to)}`).join(', ')}.
             Each of them plays below himself.
           </Text>
         </View>
