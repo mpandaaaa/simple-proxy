@@ -37,5 +37,3 @@ export { AchievementToast } from './AchievementToast';
 export { AchievementPanel } from './AchievementPanel';
 export { PlayerSheet } from './PlayerSheet';
 export { SlotSheet } from './SlotSheet';
-export { SwapSheet } from './SwapSheet';
-export type { SwapOption } from './SwapSheet';

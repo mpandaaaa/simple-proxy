@@ -11,13 +11,12 @@ import {
   Confirm,
   Ticker,
   PlayerSheet,
-  SwapSheet,
-  type SwapOption,
 } from '../../src/ui/components';
 import { color, gradient, line, positionColor, radius, space, hue, alpha, wear, vivid, type Hue } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { GRAIN_URI } from '../../src/ui/grain';
 import { haptic } from '../../src/ui/feel';
+import { sfx } from '../../src/ui/sound';
 import {
   bench,
   clubWageBill,
@@ -142,9 +141,10 @@ export default function DynastyHub() {
   const [ending, setEnding] = useState(false);
   const [reallyEnding, setReallyEnding] = useState(false);
   const [open, setOpen] = useState<{ p: DynastyPlayer; slot: number } | null>(null);
-  /* Which player is being moved, and who he might change places with. A
-     substitution is two decisions and this screen used to make one of
-     them for you. */
+  /* Who is being moved.
+     Two taps and no menus: the arrows on a row pick a player up, every
+     place he can go lights up, and tapping one of them puts him there.
+     Tapping his own arrows again puts him back down. */
   const [swapping, setSwapping] = useState<number | null>(null);
 
   const played = useMemo(
@@ -181,19 +181,20 @@ export default function DynastyHub() {
   // The club's own colours.
   const kit = wear(clubColour(career?.club ?? ''));
 
-  const swapOptions: SwapOption[] = useMemo(() => {
-    if (!career || swapping === null) return [];
+  /* Every place the man in hand is allowed to go. An empty shirt counts:
+     both of them being empty is the only thing that does not. */
+  const canTake = useMemo(() => {
+    const set = new Set<number>();
+    if (!career || swapping === null) return set;
     const me = career.roster[swapping];
-    if (!me) return [];
-    const out: SwapOption[] = [];
+    if (!me) return set;
     career.roster.forEach((q, i) => {
-      if (!q || i === swapping) return;
-      // both have to be able to stand where the other one is standing
+      if (i === swapping) return;
       if (!slotAccepts(career, i, me.pos)) return;
-      if (!slotAccepts(career, swapping, q.pos)) return;
-      out.push({ index: i, player: q, slot: career.slots[i] ?? q.pos });
+      if (q && !slotAccepts(career, swapping, q.pos)) return;
+      set.add(i);
     });
-    return out;
+    return set;
   }, [career, swapping]);
 
   const doSwap = useCallback((a: number, b: number) => {
@@ -201,15 +202,16 @@ export default function DynastyHub() {
       const roster = [...d.roster];
       const x = roster[a];
       const y = roster[b];
-      if (!x || !y) return d;
-      if (!slotAccepts(d, b, x.pos) || !slotAccepts(d, a, y.pos)) return d;
-      roster[a] = y;
+      if (!x) return d;
+      if (!slotAccepts(d, b, x.pos)) return d;
+      if (y && !slotAccepts(d, a, y.pos)) return d;
+      roster[a] = y ?? null;
       roster[b] = x;
       return { ...d, roster };
     });
     haptic('success');
+    sfx('pick');
     setSwapping(null);
-    setOpen(null);
   }, []);
 
   if (!career) {
@@ -512,6 +514,12 @@ export default function DynastyHub() {
             .
           </Text>
         ) : null}
+        {swapping !== null ? (
+          <Text style={styles.swapHint}>
+            {career.roster[swapping]?.n} is in your hand. Tap who he changes
+            places with, or the arrows again to put him back.
+          </Text>
+        ) : null}
         <View style={styles.list}>
           {career.roster.slice(0, 11).map((p, i) =>
             p ? (
@@ -519,13 +527,34 @@ export default function DynastyHub() {
                 key={p.n}
                 player={p}
                 slot={career.slots[i]}
+                armed={swapping === i}
+                target={swapping !== null && canTake.has(i)}
+                dim={swapping !== null && swapping !== i && !canTake.has(i)}
+                onSwap={() => {
+                  haptic('light');
+                  setSwapping((cur) => (cur === i ? null : i));
+                }}
                 onPress={() => {
+                  if (swapping !== null) {
+                    if (canTake.has(i)) doSwap(swapping, i);
+                    else if (swapping === i) setSwapping(null);
+                    return;
+                  }
                   haptic('light');
                   setOpen({ p, slot: i });
                 }}
               />
             ) : (
-              <EmptySlot key={`slot${i}`} pos={career.slots[i]} />
+              <EmptySlot
+                key={`slot${i}`}
+                pos={career.slots[i]}
+                target={swapping !== null && canTake.has(i)}
+                onPress={
+                  swapping !== null && canTake.has(i)
+                    ? () => doSwap(swapping, i)
+                    : undefined
+                }
+              />
             ),
           )}
         </View>
@@ -541,13 +570,34 @@ export default function DynastyHub() {
                 key={p.n}
                 player={p}
                 slot={p.pos}
+                armed={swapping === 11 + i}
+                target={swapping !== null && canTake.has(11 + i)}
+                dim={swapping !== null && swapping !== 11 + i && !canTake.has(11 + i)}
+                onSwap={() => {
+                  haptic('light');
+                  setSwapping((cur) => (cur === 11 + i ? null : 11 + i));
+                }}
                 onPress={() => {
+                  if (swapping !== null) {
+                    if (canTake.has(11 + i)) doSwap(swapping, 11 + i);
+                    else if (swapping === 11 + i) setSwapping(null);
+                    return;
+                  }
                   haptic('light');
                   setOpen({ p, slot: 11 + i });
                 }}
               />
             ) : (
-              <EmptySlot key={`sub${i}`} pos={career.slots[11 + i]} />
+              <EmptySlot
+                key={`sub${i}`}
+                pos={career.slots[11 + i]}
+                target={swapping !== null && canTake.has(11 + i)}
+                onPress={
+                  swapping !== null && canTake.has(11 + i)
+                    ? () => doSwap(swapping, 11 + i)
+                    : undefined
+                }
+              />
             ),
           )}
         </View>
@@ -575,24 +625,7 @@ export default function DynastyHub() {
               }
             : undefined
         }
-        swapLabel={open && open.slot >= 11 ? 'Bring him into the eleven' : 'Swap him with somebody'}
-      />
-
-      <SwapSheet
-        open={swapping !== null}
-        title={swapping !== null ? (career.roster[swapping]?.n ?? '') : ''}
-        subtitle={
-          swapping !== null && swapping >= 11
-            ? 'He comes into the eleven and the man you pick drops to the bench.'
-            : 'They change places. The number is what the eleven gains.'
-        }
-        incoming={swapping !== null ? career.roster[swapping] : null}
-        incomingSlot={
-          swapping !== null ? (career.roster[swapping]?.pos ?? 'MID') : 'MID'
-        }
-        options={swapOptions}
-        onClose={() => setSwapping(null)}
-        onPick={(i) => swapping !== null && doSwap(swapping, i)}
+        swapLabel="Move him"
       />
 
       {/* Two steps, because there is no way back from this one. */}
@@ -661,15 +694,32 @@ function HeroStat({ label, value, tint }: { label: string; value: string; tint?:
   );
 }
 
-function EmptySlot({ pos }: { pos: Position }) {
+function EmptySlot({
+  pos,
+  target,
+  onPress,
+}: {
+  pos: Position;
+  target?: boolean;
+  onPress?: () => void;
+}) {
   const tint = positionColor[pos] ?? color.text3;
-  return (
-    <View style={styles.emptySlot}>
+  const body = (
+    <>
       <View style={[styles.badge, { backgroundColor: tint + '12', borderColor: tint + '3D' }]}>
         <Text style={[styles.badgeText, { color: tint, opacity: 0.6 }]}>{pos}</Text>
       </View>
-      <Text style={styles.emptyText}>Nobody in this place</Text>
-    </View>
+      <Text style={[styles.emptyText, target ? { color: hue.sky } : null]}>
+        {target ? 'Put him here' : 'Nobody in this place'}
+      </Text>
+    </>
+  );
+  const style = [styles.emptySlot, target ? styles.rowTarget : null];
+  if (!onPress) return <View style={style}>{body}</View>;
+  return (
+    <Press onPress={onPress} feel="medium" scaleTo={0.99} style={style}>
+      {body}
+    </Press>
   );
 }
 
@@ -684,10 +734,22 @@ export function PlayerRow({
   player: p,
   slot,
   onPress,
+  onSwap,
+  armed,
+  target,
+  dim,
 }: {
   player: DynastyPlayer;
   slot: Position;
   onPress: () => void;
+  /** tap the arrows to pick him up, tap them again to put him back */
+  onSwap?: () => void;
+  /** he is the one being moved */
+  armed?: boolean;
+  /** somebody is being moved and this row can take him */
+  target?: boolean;
+  /** somebody is being moved and this row cannot */
+  dim?: boolean;
 }) {
   const tint = positionColor[p.pos];
   const wrong = p.pos !== slot;
@@ -708,7 +770,17 @@ export function PlayerRow({
   const flag = p.contract.yrs <= 1 || p.daysOut >= 60 || wrong;
 
   return (
-    <Press onPress={onPress} feel="none" scaleTo={0.99} style={styles.row}>
+    <Press
+      onPress={onPress}
+      feel="none"
+      scaleTo={0.99}
+      style={[
+        styles.row,
+        armed ? styles.rowArmed : null,
+        target ? styles.rowTarget : null,
+        dim ? styles.rowDim : null,
+      ]}
+    >
       <View style={[styles.badge, { backgroundColor: tint + '26', borderColor: tint + '66' }]}>
         <Text style={[styles.badgeText, { color: tint }]}>{p.pos}</Text>
       </View>
@@ -752,6 +824,22 @@ export function PlayerRow({
           </Text>
         ) : null}
       </View>
+
+      {onSwap ? (
+        <Press
+          onPress={onSwap}
+          feel="light"
+          scaleTo={0.9}
+          style={[styles.swap, armed ? styles.swapOn : null]}
+        >
+          <Text
+            style={[styles.swapMark, armed ? { color: '#05170E' } : null]}
+            allowFontScaling={false}
+          >
+            {'⇅'}
+          </Text>
+        </Press>
+      ) : null}
     </Press>
   );
 }
@@ -1029,6 +1117,34 @@ const styles = StyleSheet.create({
     boxShadow:
       'inset 0px 1px 0px rgba(255,255,255,0.06), inset 0px 0px 0px 1px rgba(255,255,255,0.035)',
   },
+  swapHint: {
+    ...text.small,
+    fontSize: 12,
+    lineHeight: 17,
+    color: hue.emerald,
+    marginBottom: space.s3,
+  },
+  rowArmed: {
+    borderColor: alpha(hue.emerald, 0.6),
+    backgroundColor: alpha(hue.emerald, 0.1),
+    boxShadow: `0px 0px 18px ${alpha(hue.emerald, 0.22)}`,
+  },
+  rowTarget: { borderColor: alpha(hue.sky, 0.45), backgroundColor: alpha(hue.sky, 0.07) },
+  rowDim: { opacity: 0.32 },
+  swap: {
+    width: 34,
+    height: 34,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: -space.s1,
+  },
+  swapOn: { borderColor: hue.emerald, backgroundColor: hue.emerald },
+  swapMark: { fontSize: 15, lineHeight: 19, color: color.text2 },
+
   badge: {
     width: 38,
     height: 26,
