@@ -1,22 +1,67 @@
-import { ReactNode, useRef } from 'react';
+import { ReactNode, useMemo } from 'react';
 import {
-  Animated,
   Pressable,
-  StyleProp,
-  ViewStyle,
-  GestureResponderEvent,
+  StyleSheet,
+  type GestureResponderEvent,
+  type StyleProp,
+  type ViewStyle,
 } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { haptic, useReduceMotion } from '../feel';
+
+/**
+ * Layout belongs to the outer view, appearance to the inner one.
+ *
+ * A press wraps its content in two views: a Pressable that takes the touch
+ * and an animated view that does the scaling. Putting the caller's whole
+ * style on the inner view leaves the Pressable sized to its content, so a
+ * `flex: 1` press does not fill its row and a `width: '100%'` one does not
+ * stretch. That is why the position tiles came out a third of the width
+ * each instead of half.
+ *
+ * These are the properties that decide how big a thing is and where it
+ * sits, so they go on the Pressable. Everything else, the padding, the
+ * fill, the border, the shadow, stays on the view that scales.
+ */
+const LAYOUT_KEYS = [
+  'flex',
+  'flexGrow',
+  'flexShrink',
+  'flexBasis',
+  'alignSelf',
+  'width',
+  'minWidth',
+  'maxWidth',
+  'height',
+  'minHeight',
+  'maxHeight',
+  'margin',
+  'marginTop',
+  'marginBottom',
+  'marginLeft',
+  'marginRight',
+  'marginHorizontal',
+  'marginVertical',
+  'position',
+  'top',
+  'left',
+  'right',
+  'bottom',
+  'zIndex',
+] as const;
 
 /**
  * Everything tappable that is bigger than a button goes through here.
  *
- * The scale runs on the native thread through useNativeDriver, so it never
- * touches React state and never drops a frame while a list is scrolling.
- * A spring, not a timing curve: the press should feel sprung under the
- * thumb rather than animated at it.
- *
- * With Reduce Motion on there is no scale at all, only a dip in opacity.
+ * The scale is a worklet on the UI thread, so it never touches React state
+ * and never drops a frame while a list is scrolling. A spring, not a timing
+ * curve: a press should feel sprung under the thumb rather than animated
+ * at it. With Reduce Motion there is no scale, only a dip in opacity.
  */
 export function Press({
   children,
@@ -36,50 +81,57 @@ export function Press({
   accessibilityLabel?: string;
 }) {
   const reduce = useReduceMotion();
-  const scale = useRef(new Animated.Value(1)).current;
-  const dim = useRef(new Animated.Value(1)).current;
+  const held = useSharedValue(0);
 
-  const springTo = (to: number) => {
-    if (reduce) return;
-    Animated.spring(scale, {
-      toValue: to,
-      useNativeDriver: true,
-      speed: 40,
-      bounciness: 5,
-    }).start();
-  };
+  const [outer, inner] = useMemo(() => {
+    const flat = StyleSheet.flatten(style) ?? {};
+    const out: Record<string, unknown> = {};
+    const rest: Record<string, unknown> = { ...flat };
+    for (const k of LAYOUT_KEYS) {
+      if (k in rest) {
+        out[k] = rest[k];
+        delete rest[k];
+      }
+    }
+    return [out as ViewStyle, rest as ViewStyle];
+  }, [style]);
 
-  const fadeTo = (to: number) => {
-    Animated.timing(dim, {
-      toValue: to,
-      duration: 90,
-      useNativeDriver: true,
-    }).start();
-  };
+  const animated = useAnimatedStyle(() => ({
+    opacity: 1 - held.value * 0.1,
+    transform: [{ scale: reduce ? 1 : 1 - held.value * (1 - scaleTo) }],
+  }));
 
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       disabled={disabled}
+      style={outer}
       onPressIn={() => {
-        springTo(scaleTo);
-        fadeTo(0.9);
+        held.value = reduce
+          ? withTiming(1, { duration: 90 })
+          : withSpring(1, { stiffness: 420, damping: 30, mass: 1 });
       }}
       onPressOut={() => {
-        springTo(1);
-        fadeTo(1);
+        held.value = reduce
+          ? withTiming(0, { duration: 90 })
+          : withSpring(0, { stiffness: 320, damping: 26, mass: 1 });
       }}
       onPress={(e) => {
         if (feel !== 'none') haptic(feel);
         onPress?.(e);
       }}
     >
-      <Animated.View
-        style={[style, { opacity: dim, transform: [{ scale }] }]}
-      >
+      <Animated.View style={[styles.fill, inner, animated]}>
         {children}
       </Animated.View>
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  // The inner view has to fill whatever the Pressable was given, or a
+  // press that was told to stretch would stretch its touch target and not
+  // its face.
+  fill: { flexGrow: 1 },
+});

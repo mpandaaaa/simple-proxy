@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, Modal, ScrollView, StyleSheet } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
+import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
 import { router } from 'expo-router';
 import {
   ModeScreen,
@@ -10,6 +11,7 @@ import {
   PlayerCard,
   EraCard,
   OverallStrip,
+  ClubDisc,
 } from '../../src/ui/components';
 import { color, space, radius, positionColor, gradient, line } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
@@ -344,8 +346,9 @@ export default function DraftBoard() {
         </ScrollView>
       )}
 
-      {/* Where does he play. Not a list of rows: the player is on the
-          card, and each position is a tile in its own colour. */}
+      {/* Where does he play. The player is on a card, each position is a
+          lit tile in its own colour, and the sheet is the app's own black
+          rather than a grey panel. */}
       <Modal
         visible={!!chooser}
         transparent
@@ -357,10 +360,31 @@ export default function DraftBoard() {
         </Press>
 
         <View style={styles.sheet}>
+          <View style={styles.sheetOrbs} pointerEvents="none">
+            <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <Defs>
+                <RadialGradient id="sheetOrb" cx="50%" cy="50%" r="50%">
+                  <Stop offset="0" stopColor={color.accent} stopOpacity={0.16} />
+                  <Stop offset="1" stopColor={color.accent} stopOpacity={0} />
+                </RadialGradient>
+              </Defs>
+              <Ellipse cx="22" cy="6" rx="58" ry="42" fill="url(#sheetOrb)" />
+            </Svg>
+          </View>
+          <View style={styles.sheetEdge} pointerEvents="none" />
           <View style={styles.sheetGrab} />
 
           {chooser ? (
             <View style={styles.sheetPlayer}>
+              <ClubDisc club={chooser.player.club} size={46} square />
+              <View style={styles.sheetPlayerBody}>
+                <Text style={styles.sheetName} numberOfLines={1}>
+                  {chooser.player.n}
+                </Text>
+                <Text style={styles.sheetMeta} numberOfLines={1}>
+                  {chooser.player.nat} · {chooser.player.club} {chooser.player.season}
+                </Text>
+              </View>
               <View
                 style={[
                   styles.sheetRating,
@@ -369,14 +393,6 @@ export default function DraftBoard() {
               >
                 <Text style={styles.sheetRatingText} allowFontScaling={false}>
                   {chooser.player.rtg}
-                </Text>
-              </View>
-              <View style={styles.sheetPlayerBody}>
-                <Text style={styles.sheetName} numberOfLines={1}>
-                  {chooser.player.n}
-                </Text>
-                <Text style={styles.sheetMeta} numberOfLines={1}>
-                  {chooser.player.nat} · {chooser.player.club} {chooser.player.season}
                 </Text>
               </View>
             </View>
@@ -397,13 +413,14 @@ export default function DraftBoard() {
                     sign(c.player, si);
                   }}
                   feel="none"
-                  scaleTo={0.96}
+                  scaleTo={0.955}
                   style={[
                     styles.sheetTile,
                     {
                       borderColor: tint,
-                      backgroundColor: tint + '1f',
-                      boxShadow: `0px 0px 18px ${tint}55, inset 0px 1px 0px rgba(255,255,255,0.08)`,
+                      backgroundColor: tint + '1a',
+                      experimental_backgroundImage: `linear-gradient(180deg, ${tint}33 0%, ${tint}0d 100%)`,
+                      boxShadow: `0px 0px 26px ${tint}4d, inset 0px 1px 0px rgba(255,255,255,0.12)`,
                     },
                   ]}
                 >
@@ -664,32 +681,42 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(3,6,4,0.76)',
   },
   sheet: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: color.surfaceModal,
+    backgroundColor: '#0B120E',
     experimental_backgroundImage:
-      'linear-gradient(180deg, #26352B 0%, #1A241E 100%)',
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    borderTopWidth: 1,
+      'linear-gradient(180deg, #16231B 0%, #0B120E 52%, #070B08 100%)',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.10)',
+    boxShadow: '0px -20px 50px rgba(0,0,0,0.6)',
     paddingHorizontal: space.s5,
     paddingTop: space.s3,
     paddingBottom: space.s8,
-    gap: space.s3,
+    gap: space.s4,
+    overflow: 'hidden',
+  },
+  sheetOrbs: { position: 'absolute', top: -30, left: -30, right: -30, height: 220 },
+  sheetEdge: {
+    position: 'absolute',
+    top: 0,
+    left: '18%',
+    right: '18%',
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.22)',
   },
   sheetGrab: {
     alignSelf: 'center',
-    width: 38,
+    width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    marginBottom: space.s2,
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   sheetPlayer: {
     flexDirection: 'row',
@@ -699,10 +726,11 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: line.card,
-    backgroundColor: 'rgba(0,0,0,0.28)',
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
   },
   sheetRating: {
-    minWidth: 48,
+    minWidth: 50,
     height: 40,
     borderRadius: radius.sm,
     alignItems: 'center',
@@ -724,9 +752,10 @@ const styles = StyleSheet.create({
   },
   sheetMeta: { fontFamily: font.body, fontSize: 12.5, color: color.text3 },
   sheetTitle: {
-    fontFamily: font.displayBold,
-    fontSize: 22,
-    lineHeight: 27,
+    fontFamily: font.displayBlack,
+    fontSize: 25,
+    lineHeight: 30,
+    letterSpacing: 0.2,
     color: color.text1,
   },
   sheetTiles: { flexDirection: 'row', gap: space.s3 },
@@ -734,20 +763,20 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
-    paddingVertical: space.s4,
+    gap: 3,
+    paddingVertical: space.s5,
     borderRadius: radius.lg,
     borderWidth: 1.5,
   },
   sheetTilePos: {
     fontFamily: font.displayBlack,
-    fontSize: 28,
-    lineHeight: 34,
-    letterSpacing: 1,
+    fontSize: 34,
+    lineHeight: 41,
+    letterSpacing: 1.4,
   },
   sheetTileLabel: {
     fontFamily: font.bodyMed,
-    fontSize: 12,
+    fontSize: 12.5,
     color: color.text2,
   },
   sheetCancel: { marginTop: space.s1 },

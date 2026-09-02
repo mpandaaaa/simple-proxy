@@ -314,11 +314,14 @@ const ReelRow = memo(function ReelRow({
     const smear = interpolate(speed.value, [0, 1], [1, 1.35]);
 
     return {
-      opacity: interpolate(ad, [0, 0.5, 1], [1, 0.45, 0.1], c),
+      // Gone by 0.62 of a row, while the window still has 0.775 either
+      // side, so nothing is ever cut off mid glyph.
+      opacity: interpolate(ad, [0, 0.28, 0.62], [1, 0.34, 0], c),
       transform: [
         { perspective: 620 },
-        { rotateX: `${interpolate(d, [-1, 0, 1], [26, 0, -26], c)}deg` },
-        { scaleY: interpolate(ad, [0, 1], [1, 0.86], c) * smear },
+        { rotateX: `${interpolate(d, [-1, 0, 1], [30, 0, -30], c)}deg` },
+        { scale: interpolate(ad, [0, 0.7], [1, 0.9], c) },
+        { scaleY: smear },
       ],
     };
   });
@@ -400,10 +403,22 @@ const styles = StyleSheet.create({
   },
   yourSquad: { ...text.key, fontSize: 10, color: color.text3 },
 
-  // Exactly one row tall, so the reel shows one club at a time and the
-  // card never changes height.
-  window: { height: WHEEL.ROW, overflow: 'hidden' },
-  strip: {},
+  /**
+   * Taller than a row on purpose.
+   *
+   * At exactly one row the club sliding in was cut in half by the edge of
+   * the card, which reads as an invisible barrier rather than as a reel.
+   * The window is a row and a half, and a row fades to nothing well before
+   * it reaches either edge, so clubs arrive and leave rather than being
+   * chopped.
+   */
+  window: {
+    height: WHEEL.ROW * 1.55,
+    marginVertical: -WHEEL.ROW * 0.275,
+    overflow: 'hidden',
+    justifyContent: 'center',
+  },
+  strip: { position: 'absolute', left: 0, right: 0, top: WHEEL.ROW * 0.275 },
   row: {
     height: WHEEL.ROW,
     flexDirection: 'row',
