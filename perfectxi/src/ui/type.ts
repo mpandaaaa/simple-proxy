@@ -29,7 +29,7 @@ export const text = {
   hero: {
     fontFamily: font.hero,
     fontSize: 44,
-    lineHeight: 46,
+    lineHeight: 57,
     color: color.text1,
     ...tabular,
   } as TextStyle,
@@ -38,7 +38,7 @@ export const text = {
   title: {
     fontFamily: font.displayBold,
     fontSize: 30,
-    lineHeight: 32,
+    lineHeight: 36,
     letterSpacing: 0.2,
     color: color.text1,
   } as TextStyle,
@@ -47,7 +47,7 @@ export const text = {
   heading: {
     fontFamily: font.displayBold,
     fontSize: 21,
-    lineHeight: 24,
+    lineHeight: 25,
     letterSpacing: 0.2,
     color: color.text1,
   } as TextStyle,
@@ -75,7 +75,7 @@ export const text = {
   stat: {
     fontFamily: font.displayBold,
     fontSize: 24,
-    lineHeight: 27,
+    lineHeight: 29,
     color: color.text1,
     ...tabular,
   } as TextStyle,
@@ -104,6 +104,7 @@ export const text = {
   button: {
     fontFamily: font.displayBold,
     fontSize: 17,
+    lineHeight: 20,
     letterSpacing: 0.6,
     textTransform: 'uppercase',
   } as TextStyle,

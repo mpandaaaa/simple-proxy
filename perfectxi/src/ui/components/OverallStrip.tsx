@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   overall: {
     fontFamily: font.hero,
     fontSize: 34,
-    lineHeight: 36,
+    lineHeight: 44,
     color: color.text1,
     fontVariant: ['tabular-nums'],
   },
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
   value: {
     fontFamily: font.displayBold,
     fontSize: 19,
-    lineHeight: 21,
+    lineHeight: 23,
     color: color.text3,
     fontVariant: ['tabular-nums'],
   },

@@ -175,14 +175,14 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: font.displayBlack,
     fontSize: 23,
-    lineHeight: 26,
+    lineHeight: 28,
     letterSpacing: 0.3,
     marginTop: 3,
   },
   titleBig: {
     fontFamily: font.displayBlack,
     fontSize: 34,
-    lineHeight: 34,
+    lineHeight: 41,
     letterSpacing: 0.4,
     marginTop: 4,
   },

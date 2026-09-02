@@ -137,6 +137,7 @@ const styles = StyleSheet.create({
   chipLabel: {
     fontFamily: font.displayBold,
     fontSize: 16,
+    lineHeight: 19,
     letterSpacing: 0.4,
     color: color.text2,
   },
@@ -154,6 +155,7 @@ const styles = StyleSheet.create({
   cardLabel: {
     fontFamily: font.displayBold,
     fontSize: 19,
+    lineHeight: 23,
     letterSpacing: 0.3,
     color: color.text1,
   },

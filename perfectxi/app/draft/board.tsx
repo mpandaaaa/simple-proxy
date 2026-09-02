@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, Modal, StyleSheet } from 'react-native';
+import { View, Text, Modal, ScrollView, StyleSheet } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
 import {
@@ -105,12 +105,19 @@ export default function DraftBoard() {
         haptic('warning');
         return;
       }
-      if (slots.length === 1) {
+      // One slot per distinct position. Three open ATT slots are one
+      // choice, not three, and the site only asks across position groups.
+      const byPos = new Map<Position, number>();
+      for (const i of slots) {
+        const pos = run.state.squad[i].pos;
+        if (!byPos.has(pos)) byPos.set(pos, i);
+      }
+      if (byPos.size === 1) {
         sign(player, slots[0]);
         return;
       }
       haptic('light');
-      setChooser({ player, slots });
+      setChooser({ player, slots: [...byPos.values()] });
     },
     [run, sign],
   );
@@ -292,36 +299,53 @@ export default function DraftBoard() {
           />
         </View>
       ) : (
-        // One list for the whole page, exactly as the site scrolls. Anything
-        // above the players rides in the header rather than in its own
-        // scroll view, so there is never a scroll inside a scroll.
-        <FlashList
-          data={rows}
-          keyExtractor={(row, i) =>
-            row.kind === 'divider' ? 'divider' : row.player.n + row.player.club + i
-          }
-          renderItem={({ item }) =>
-            item.kind === 'divider' ? (
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>Cannot fill your open positions</Text>
-                <View style={styles.dividerLine} />
-              </View>
-            ) : (
-              <PlayerRow
-                player={item.player}
-                playable={item.playable}
-                hideRatings={hideRatings}
-                onPress={onPick}
-              />
-            )
-          }
-          ListHeaderComponent={header}
-          ListFooterComponent={<View style={styles.footer} />}
+        // The page scrolls, and the squad list scrolls inside it. A single
+        // scroll meant a hundred and twenty players dragged the pitch and
+        // the era card off the top before you reached the bottom of a
+        // board, so the list is bounded and flicks on its own.
+        <ScrollView
+          style={styles.page}
+          contentContainerStyle={styles.pageContent}
           showsVerticalScrollIndicator={false}
-        />
+          bounces={false}
+        >
+          {header}
+
+          {board ? (
+            <View style={styles.listBox}>
+              <FlashList
+                data={rows}
+                keyExtractor={(row, i) =>
+                  row.kind === 'divider' ? 'divider' : row.player.n + row.player.club + i
+                }
+                renderItem={({ item }) =>
+                  item.kind === 'divider' ? (
+                    <View style={styles.divider}>
+                      <View style={styles.dividerLine} />
+                      <Text style={styles.dividerText}>
+                        Cannot fill your open positions
+                      </Text>
+                      <View style={styles.dividerLine} />
+                    </View>
+                  ) : (
+                    <PlayerRow
+                      player={item.player}
+                      playable={item.playable}
+                      hideRatings={hideRatings}
+                      onPress={onPick}
+                    />
+                  )
+                }
+                showsVerticalScrollIndicator
+                ListFooterComponent={<View style={styles.listFooter} />}
+              />
+            </View>
+          ) : null}
+        </ScrollView>
       )}
 
+      {/* Where does he play. Not a list of rows: the player is on the
+          card, and each position is a tile in its own colour. */}
       <Modal
         visible={!!chooser}
         transparent
@@ -331,33 +355,67 @@ export default function DraftBoard() {
         <Press onPress={() => setChooser(null)} feel="none" scaleTo={1} style={styles.backdrop}>
           <View />
         </Press>
+
         <View style={styles.sheet}>
-          <Text style={styles.sheetTitle}>
-            Where does {chooser ? lastName(chooser.player.n) : ''} play?
-          </Text>
-          {chooser?.slots.map((si) => {
-            const pos = state.squad[si].pos;
-            const tint = positionColor[pos];
-            return (
-              <Press
-                key={si}
-                onPress={() => {
-                  const c = chooser;
-                  setChooser(null);
-                  sign(c.player, si);
-                }}
-                feel="none"
-                style={[styles.sheetRow, { borderColor: tint + '66' }]}
+          <View style={styles.sheetGrab} />
+
+          {chooser ? (
+            <View style={styles.sheetPlayer}>
+              <View
+                style={[
+                  styles.sheetRating,
+                  { backgroundColor: ratingFill(chooser.player.rtg) },
+                ]}
               >
-                <View
-                  style={[styles.posBadge, { backgroundColor: tint + '24', borderColor: tint + '77' }]}
+                <Text style={styles.sheetRatingText} allowFontScaling={false}>
+                  {chooser.player.rtg}
+                </Text>
+              </View>
+              <View style={styles.sheetPlayerBody}>
+                <Text style={styles.sheetName} numberOfLines={1}>
+                  {chooser.player.n}
+                </Text>
+                <Text style={styles.sheetMeta} numberOfLines={1}>
+                  {chooser.player.nat} · {chooser.player.club} {chooser.player.season}
+                </Text>
+              </View>
+            </View>
+          ) : null}
+
+          <Text style={styles.sheetTitle}>Where does he play?</Text>
+
+          <View style={styles.sheetTiles}>
+            {chooser?.slots.map((si) => {
+              const pos = state.squad[si].pos;
+              const tint = positionColor[pos];
+              return (
+                <Press
+                  key={si}
+                  onPress={() => {
+                    const c = chooser;
+                    setChooser(null);
+                    sign(c.player, si);
+                  }}
+                  feel="none"
+                  scaleTo={0.96}
+                  style={[
+                    styles.sheetTile,
+                    {
+                      borderColor: tint,
+                      backgroundColor: tint + '1f',
+                      boxShadow: `0px 0px 18px ${tint}55, inset 0px 1px 0px rgba(255,255,255,0.08)`,
+                    },
+                  ]}
                 >
-                  <Text style={[styles.posText, { color: tint }]}>{pos}</Text>
-                </View>
-                <Text style={styles.sheetRowText}>{POSITION_LABEL[pos]}</Text>
-              </Press>
-            );
-          })}
+                  <Text style={[styles.sheetTilePos, { color: tint }]} allowFontScaling={false}>
+                    {pos}
+                  </Text>
+                  <Text style={styles.sheetTileLabel}>{POSITION_LABEL[pos]}</Text>
+                </Press>
+              );
+            })}
+          </View>
+
           <Button
             label="Cancel"
             variant="ghost"
@@ -445,9 +503,16 @@ function ratingFill(rtg: number): string {
 }
 
 const styles = StyleSheet.create({
+  page: { flex: 1 },
+  pageContent: { paddingBottom: space.s6 },
   header: { gap: space.s3, paddingBottom: space.s2 },
   block: {},
-  footer: { height: space.s8 },
+  /**
+   * Five rows and a bit, so it is obviously a list you scroll rather than
+   * a list that happens to be cut off.
+   */
+  listBox: { height: 344 },
+  listFooter: { height: space.s4 },
 
   avgChip: {
     minWidth: 42,
@@ -462,6 +527,7 @@ const styles = StyleSheet.create({
   avgValue: {
     fontFamily: font.displayBold,
     fontSize: 16,
+    lineHeight: 19,
     color: color.accent,
     fontVariant: ['tabular-nums'],
   },
@@ -496,6 +562,7 @@ const styles = StyleSheet.create({
   needText: {
     fontFamily: font.displayBold,
     fontSize: 11,
+    lineHeight: 13,
     letterSpacing: 0.6,
     fontVariant: ['tabular-nums'],
   },
@@ -536,6 +603,7 @@ const styles = StyleSheet.create({
   posText: {
     fontFamily: font.displayBold,
     fontSize: 11.5,
+    lineHeight: 14,
     letterSpacing: 0.8,
   },
   playerBody: { flex: 1, minWidth: 0 },
@@ -566,6 +634,7 @@ const styles = StyleSheet.create({
   ratingText: {
     fontFamily: font.displayBlack,
     fontSize: 19,
+    lineHeight: 23,
     color: '#08160D',
     fontVariant: ['tabular-nums'],
   },
@@ -584,7 +653,7 @@ const styles = StyleSheet.create({
   doneTitle: {
     fontFamily: font.displayBlack,
     fontSize: 30,
-    lineHeight: 34,
+    lineHeight: 36,
     color: color.text1,
   },
   doneMeta: { textAlign: 'center' },
@@ -603,28 +672,83 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: color.surfaceModal,
+    experimental_backgroundImage:
+      'linear-gradient(180deg, #26352B 0%, #1A241E 100%)',
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
-    padding: space.s5,
+    borderTopWidth: 1,
+    borderColor: 'rgba(255,255,255,0.10)',
+    paddingHorizontal: space.s5,
+    paddingTop: space.s3,
     paddingBottom: space.s8,
-    gap: space.s2,
+    gap: space.s3,
   },
-  sheetTitle: {
-    fontFamily: font.displayBold,
-    fontSize: 21,
-    lineHeight: 24,
-    color: color.text1,
+  sheetGrab: {
+    alignSelf: 'center',
+    width: 38,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     marginBottom: space.s2,
   },
-  sheetRow: {
+  sheetPlayer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.s3,
     padding: space.s3,
     borderRadius: radius.md,
     borderWidth: 1,
-    backgroundColor: color.surface2,
+    borderColor: line.card,
+    backgroundColor: 'rgba(0,0,0,0.28)',
   },
-  sheetRowText: { fontFamily: font.bodySemi, fontSize: 15, color: color.text1 },
-  sheetCancel: { marginTop: space.s3 },
+  sheetRating: {
+    minWidth: 48,
+    height: 40,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetRatingText: {
+    fontFamily: font.displayBlack,
+    fontSize: 22,
+    lineHeight: 27,
+    color: '#08160D',
+    fontVariant: ['tabular-nums'],
+  },
+  sheetPlayerBody: { flex: 1, minWidth: 0 },
+  sheetName: {
+    fontFamily: font.bodyBold,
+    fontSize: 17,
+    lineHeight: 22,
+    color: color.text1,
+  },
+  sheetMeta: { fontFamily: font.body, fontSize: 12.5, color: color.text3 },
+  sheetTitle: {
+    fontFamily: font.displayBold,
+    fontSize: 22,
+    lineHeight: 27,
+    color: color.text1,
+  },
+  sheetTiles: { flexDirection: 'row', gap: space.s3 },
+  sheetTile: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+    paddingVertical: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+  },
+  sheetTilePos: {
+    fontFamily: font.displayBlack,
+    fontSize: 28,
+    lineHeight: 34,
+    letterSpacing: 1,
+  },
+  sheetTileLabel: {
+    fontFamily: font.bodyMed,
+    fontSize: 12,
+    color: color.text2,
+  },
+  sheetCancel: { marginTop: space.s1 },
 });

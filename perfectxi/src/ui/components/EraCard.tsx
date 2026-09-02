@@ -253,7 +253,9 @@ export function EraCard({
                   </Text>
                   <Text style={styles.season}>
                     {season}
-                    {era ? `  ·  ${era.label}` : ''}
+                    {/* All Time XI already reads "All Eras"; do not then
+                        append "All eras" after it. */}
+                    {era && season !== 'All Eras' ? `  ·  ${era.label}` : ''}
                   </Text>
                 </>
               ) : (
@@ -413,7 +415,7 @@ const styles = StyleSheet.create({
   club: {
     fontFamily: font.displayBlack,
     fontSize: 31,
-    lineHeight: 34,
+    lineHeight: 37,
     letterSpacing: 0.2,
     color: color.text1,
   },
@@ -441,7 +443,7 @@ const styles = StyleSheet.create({
   strengthValue: {
     fontFamily: font.hero,
     fontSize: 30,
-    lineHeight: 32,
+    lineHeight: 39,
     color: color.text1,
     fontVariant: ['tabular-nums'],
   },

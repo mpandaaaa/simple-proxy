@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     top: 40,
     fontFamily: font.hero,
     fontSize: 118,
-    lineHeight: 100,
+    lineHeight: 153,
     opacity: 0.09,
   },
   top: {
@@ -218,12 +218,13 @@ const styles = StyleSheet.create({
   ovr: {
     fontFamily: font.hero,
     fontSize: 48,
-    lineHeight: 50,
+    lineHeight: 62,
     fontVariant: ['tabular-nums'],
   },
   pos: {
     fontFamily: font.displayBold,
     fontSize: 13,
+    lineHeight: 16,
     letterSpacing: 2,
     marginTop: 2,
     opacity: 0.85,
@@ -233,6 +234,7 @@ const styles = StyleSheet.create({
     marginLeft: 'auto',
     fontFamily: font.displayBold,
     fontSize: 10,
+    lineHeight: 12,
     letterSpacing: 2.6,
     opacity: 0.7,
     paddingTop: 6,
@@ -241,7 +243,7 @@ const styles = StyleSheet.create({
   name: {
     fontFamily: font.hero,
     fontSize: 32,
-    lineHeight: 34,
+    lineHeight: 42,
     letterSpacing: 0.4,
   },
   full: {
@@ -264,6 +266,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontFamily: font.displayBlack,
     fontSize: 16,
+    lineHeight: 19,
     minWidth: 26,
     fontVariant: ['tabular-nums'],
   },
@@ -292,15 +295,17 @@ const styles = StyleSheet.create({
   discText: {
     fontFamily: font.displayBold,
     fontSize: 11,
+    lineHeight: 13,
     letterSpacing: 0.4,
     color: '#FFFFFF',
   },
   footBody: { flex: 1, minWidth: 0 },
-  club: { fontFamily: font.displayBold, fontSize: 15, letterSpacing: 0.3 },
+  club: { fontFamily: font.displayBold, fontSize: 15, lineHeight: 18, letterSpacing: 0.3 },
   season: { fontFamily: font.bodySemi, fontSize: 11, opacity: 0.68, marginTop: 1 },
   signed: {
     fontFamily: font.displayBold,
     fontSize: 10,
+    lineHeight: 12,
     letterSpacing: 2.2,
     opacity: 0.8,
   },

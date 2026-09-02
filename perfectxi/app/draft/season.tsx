@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  gradeText: { fontFamily: font.displayBlack, fontSize: 21, lineHeight: 24 },
+  gradeText: { fontFamily: font.displayBlack, fontSize: 21, lineHeight: 25 },
 
   bar: {
     height: 6,
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontFamily: font.displayBold,
     fontSize: 20,
-    lineHeight: 23,
+    lineHeight: 24,
     color: color.text1,
     fontVariant: ['tabular-nums'],
   },
@@ -384,6 +384,7 @@ const styles = StyleSheet.create({
   scoreText: {
     fontFamily: font.displayBlack,
     fontSize: 17,
+    lineHeight: 20,
     fontVariant: ['tabular-nums'],
   },
 
@@ -432,6 +433,7 @@ const styles = StyleSheet.create({
   tPts: {
     fontFamily: font.displayBold,
     fontSize: 15,
+    lineHeight: 18,
     color: color.text1,
     minWidth: 26,
     textAlign: 'right',
