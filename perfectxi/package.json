@@ -50,7 +50,8 @@
     "golden": "tsc -p tsconfig.headless.json && node scripts/golden.mjs",
     "wheel": "tsc -p tsconfig.headless.json && node scripts/wheel-ticks.mjs",
     "commentary": "tsc -p tsconfig.headless.json && node scripts/check-commentary.mjs",
-    "cups": "tsc -p tsconfig.headless.json && node scripts/check-cups.mjs"
+    "cups": "tsc -p tsconfig.headless.json && node scripts/check-cups.mjs",
+    "dynasty": "tsc -p tsconfig.headless.json && node scripts/check-dynasty.mjs"
   },
   "private": true
 }

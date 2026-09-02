@@ -27,6 +27,7 @@ import { font, text } from '../src/ui/type';
 import {
   progressStore,
   dynastyStore,
+  dynastySummary,
   historyStore,
   careerStore,
   ranked,
@@ -70,7 +71,7 @@ function readRecord(): { hall: string; cabinet: string } {
 export default function Home() {
   const [progress, setProgress] = useState<Progress>(() => progressStore.read());
   const [dynasty, setDynasty] = useState<DynastySummary | null>(() =>
-    dynastyStore.read(),
+    dynastySummary(dynastyStore.read()),
   );
   const [record, setRecord] = useState(() => readRecord());
   const [career, setCareer] = useState<Career>(() => careerStore.read());
@@ -80,7 +81,7 @@ export default function Home() {
   useFocusEffect(
     useCallback(() => {
       setProgress(progressStore.read());
-      setDynasty(dynastyStore.read());
+      setDynasty(dynastySummary(dynastyStore.read()));
       setRecord(readRecord());
       setCareer(careerStore.read());
     }, []),
@@ -140,13 +141,7 @@ export default function Home() {
           subtitle="A career across seasons · ages, transfers, the board"
           status={dynastyStatus(dynasty)}
           icon={IconBank}
-          onPress={() =>
-            soon(
-              'Career',
-              'Dynasty',
-              'Carry one XI across seasons. Players age, develop, decline and retire, your league finish earns a transfer budget, and a board sets the objectives your job depends on.',
-            )
-          }
+          onPress={() => router.push('/dynasty')}
         />
       </Rise>
 
@@ -370,8 +365,8 @@ function soon(overline: string, title: string, blurb: string) {
 /** No career yet is a real state, so the card keeps its description. */
 function dynastyStatus(d: DynastySummary | null): string | null {
   if (!d) return null;
-  if (d.sacked) return 'Sacked · start again';
-  return `${d.club} · season ${d.season} · £${d.budget}m · ${d.trophies} titles`;
+  const titles = d.titles === 1 ? '1 title' : `${d.titles} titles`;
+  return `${d.club} · season ${d.season} · rated ${d.rating} · ${titles}`;
 }
 
 const styles = StyleSheet.create({

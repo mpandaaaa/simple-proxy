@@ -72,6 +72,9 @@ hub's back returns to Home.
 app/_layout.tsx      the stack, reduce motion aware
 app/index.tsx        Home, the only hub
 app/draft/           setup, board, season
+app/dynasty/         the career: hub, and the summer that ages it
+app/hall.tsx         every season kept, ranked
+app/cabinet.tsx      silverware and the achievement catalogue
 app/soon.tsx         holding screen for a mode not built yet
 src/engine/          the game, free of React. sim, draft, formations, rng
 src/data/squads.ts   GENERATED. 712 club-seasons, do not hand edit
@@ -119,9 +122,15 @@ is kept only as a record of where it came from.
 The draft is wired end to end: setup, spin, board, pick, 38 game season,
 final table and grade, with progress banked to the save layer.
 
-**Still to build**: everything else on the home screen. Those rows push
-`app/soon.tsx`, which carries the mode's real description from the site. The
-next real piece is Dynasty.
+Dynasty has its first slice: an XI carried out of a finished season, the
+full ageing engine on the tuned curves, retirement, and a summer screen
+that shows what a year did. **Still to build there**: transfers, the
+academy, wages against revenue, and the board. The squad only shrinks for
+now, and the hub says so.
+
+**Still to build elsewhere**: World Cup, Daily, Weekly, Duels, Beat the
+Machine, the player index, and a settings screen. Those rows push
+`app/soon.tsx`, which carries the mode's real description from the site.
 
 ### The native libraries are in
 
@@ -149,6 +158,8 @@ npm run sim                            # draft an XI and play a season, headless
 npm run golden                         # the numbers that say the maths is intact
 npm run import-db                      # rebuild src/data from data/perfectxi-database.json
 npm run sounds                         # rebuild assets/sfx
+npm run cups                           # the cup win rates
+npm run dynasty                        # the ageing, valuation and wage numbers
 ```
 
 Verify with typecheck, expo-doctor and golden before committing. Port 8081 is

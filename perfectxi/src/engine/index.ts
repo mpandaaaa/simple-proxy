@@ -80,3 +80,21 @@ export type {
 
 export { simulateCups, NATIONAL_CLUBS, CONTINENTAL_CLUBS } from './cups';
 export type { Cups, CupRun, CupTie, CupClub } from './cups';
+export {
+  overall,
+  ageIn,
+  seasonYear,
+  seedTracks,
+  ageOne,
+  retireOdds,
+  value,
+  playerValue,
+  wage,
+  startDynasty,
+  advanceSeason,
+  squadRating,
+  squadValue,
+  wageBill,
+  asSquad,
+} from './dynasty';
+export type { Dynasty, DynastyPlayer, Contract, AgeingReport } from './dynasty';

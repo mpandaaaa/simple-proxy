@@ -53,7 +53,9 @@ import {
   type Slot,
   type TableRow,
 } from '../../src/engine';
+import { startDynasty } from '../../src/engine';
 import { clearRun, useRun } from '../../src/game/run';
+import { dynastyStore } from '../../src/save';
 import {
   careerStore,
   progressStore,
@@ -258,6 +260,7 @@ export default function Results() {
 
   const card = useRef<View>(null);
   const [sharing, setSharing] = useState(false);
+  const [carrying, setCarrying] = useState(false);
 
   /**
    * The picture comes off a real view rendered off screen at a fixed size,
@@ -602,6 +605,20 @@ export default function Results() {
 
         <View style={styles.cta}>
           <Press
+            onPress={() => {
+              haptic('medium');
+              setCarrying(true);
+            }}
+            feel="none"
+            style={[styles.dynasty, { borderColor: line.purple }]}
+            scaleTo={0.98}
+          >
+            <Text style={styles.dynastyText}>Take this XI into a Dynasty</Text>
+            <Text style={styles.dynastySub}>
+              Carry the eleven forward. They age from here.
+            </Text>
+          </Press>
+          <Press
             onPress={share}
             feel="none"
             style={[styles.share, { borderColor: tone.edge }]}
@@ -662,6 +679,29 @@ export default function Results() {
         live={false}
         visible={watching !== null}
         onDone={() => setWatching(null)}
+      />
+
+      <Confirm
+        visible={carrying}
+        title={
+          dynastyStore.read() ? 'Replace your career?' : 'Start a Dynasty?'
+        }
+        body={
+          dynastyStore.read()
+            ? 'You already have a career running. Starting a new one with this XI ends that one, and there is no way back to it.'
+            : 'These eleven become a club. They age every season, they decline, and one day they retire. Signings are not built yet, so this is the squad you keep.'
+        }
+        confirmLabel={dynastyStore.read() ? 'Replace it' : 'Start it'}
+        onCancel={() => setCarrying(false)}
+        onConfirm={() => {
+          setCarrying(false);
+          dynastyStore.write(
+            startDynasty(squad, config.formation, 'Your XI', run.seed),
+          );
+          clearRun();
+          router.dismissAll();
+          router.push('/dynasty');
+        }}
       />
 
       <Confirm
@@ -1642,6 +1682,17 @@ const styles = StyleSheet.create({
   /* ---- actions ---- */
   offscreen: { position: 'absolute', left: -CARD_W * 4, top: 0, opacity: 0 },
   cta: { marginTop: space.s6, gap: space.s3, paddingBottom: space.s5 },
+  dynasty: {
+    minHeight: 62,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    backgroundColor: 'rgba(185,140,242,0.10)',
+    gap: 2,
+  },
+  dynastyText: { ...text.button, color: color.purple },
+  dynastySub: { ...text.small, fontSize: 11 },
   share: {
     minHeight: 54,
     alignItems: 'center',
