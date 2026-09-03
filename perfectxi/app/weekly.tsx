@@ -13,6 +13,7 @@ import {
   untilNextWeek,
   bestThisWeek,
   weeklyStreak,
+  twistName,
   ordinal,
   type WeeklyBest,
   type WeeklyRecord,
@@ -166,7 +167,7 @@ function PastWeek({ best }: { best: WeeklyBest }) {
         wk {best.n}
       </Text>
       <Text style={styles.pastTwist} numberOfLines={1}>
-        {best.twistId}
+        {twistName(best.twistId)}
       </Text>
       <Text style={styles.pastPts} allowFontScaling={false}>
         {best.pts} pts

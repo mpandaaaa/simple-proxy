@@ -239,13 +239,14 @@ export {
   weeklyFor,
   thisWeek,
   nextTwist,
+  twistName,
   WEEKLY_KEEP,
   EMPTY_WEEKLY,
   bankWeekly,
   bestThisWeek,
   weeklyStreak,
 } from './weekly';
-export { EMPTY_DUELS, bankDuel } from './weekly';
+export { EMPTY_DUELS, bankDuel, sendDuel } from './weekly';
 export type {
   Twist,
   Weekly,

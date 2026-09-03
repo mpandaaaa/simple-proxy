@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Image, Text, View, StyleSheet } from 'react-native';
+import { Image, Share, Text, View, StyleSheet } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -8,6 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Defs, Ellipse, Path, RadialGradient, Stop } from 'react-native-svg';
 import { router, Stack } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import {
@@ -44,6 +45,7 @@ import {
   bankDaily,
   bankWeekly,
   bankDuel,
+  sendDuel,
   weeklyFor,
   decodeDuel,
   duelOutcome,
@@ -162,6 +164,11 @@ export default function Results() {
   const [watching, setWatching] = useState<number | null>(null);
 
   const [unlocked, setUnlocked] = useState<string[]>([]);
+  /* The code this run turned into, when it was played to set somebody a
+     challenge. Held in state because it is made once, in the same pass
+     that banks the season, and then drawn. */
+  const [challenge, setChallenge] = useState<string | null>(null);
+  const [codeCopied, setCodeCopied] = useState(false);
 
   // The season goes on the record here rather than while it was playing, so
   // a season abandoned halfway never counts.
@@ -254,6 +261,21 @@ export default function Results() {
       );
     }
 
+    /* A challenge set becomes a code: the seed, the rules and the score
+       to beat, packed into fourteen characters. Nothing is uploaded, so
+       the code is the whole duel and it works with no signal, in any
+       messaging app, with anybody, forever. */
+    if (run.sending) {
+      const made = encodeDuel({
+        seed: run.seed,
+        pts: r.pts,
+        rating: Math.round(rating),
+        config,
+      });
+      setChallenge(made);
+      duelStore.update((rec) => sendDuel(rec, made));
+    }
+
     /* A duel answered is a duel decided, one way or the other. */
     if (run.duel) {
       const sent = decodeDuel(run.duel);
@@ -312,6 +334,54 @@ export default function Results() {
 
   const result = run?.result ?? null;
   const isDaily = run?.daily != null;
+  const isWeekly = run?.weekly != null;
+  const isDuel = run?.duel != null || run?.sending === true;
+
+  /* Where "another go" goes. Back to the thing you were playing, never to
+     a plain draft, because a plain draft is not what you opened. */
+  const againTo = isDaily ? '/daily' : isWeekly ? '/weekly' : isDuel ? '/duel' : '/draft';
+  const againText = isDaily
+    ? 'Back to today'
+    : isWeekly
+      ? 'Have another go this week'
+      : isDuel
+        ? 'Back to duels'
+        : 'Draft another XI';
+
+  /* The duel you answered, decided. Worked out here rather than in the
+     banking pass, because the banking pass runs once and this has to be
+     on the page every time it draws. */
+  const duelWas = useMemo(() => {
+    if (!run?.duel || !result) return null;
+    const theirs = decodeDuel(run.duel);
+    if (!theirs) return null;
+    return {
+      theirs,
+      mine: result.pts,
+      outcome: duelOutcome(result.pts, theirs.pts),
+    };
+  }, [run?.duel, result]);
+
+  const shareChallenge = useCallback(async () => {
+    if (!challenge) return;
+    haptic('medium');
+    await Share.share({
+      message:
+        `I have set you a Perfect XI duel.
+
+${challenge}
+
+` +
+        `Same spins, same rules. Beat my points.`,
+    });
+  }, [challenge]);
+
+  const copyChallenge = useCallback(async () => {
+    if (!challenge) return;
+    haptic('light');
+    await Clipboard.setStringAsync(challenge);
+    setCodeCopied(true);
+  }, [challenge]);
 
   const trophies = useMemo(
     () => (run && result ? awards(result.playerStats, run.state.squad) : null),
@@ -443,6 +513,81 @@ export default function Results() {
             result.position,
           )}`}
         />
+
+        {/* ================= the duel you answered ================= */}
+        {duelWas ? (
+          <Rise delay={0}>
+            <View
+              style={[
+                styles.duelCard,
+                {
+                  borderColor:
+                    duelWas.outcome === 'won'
+                      ? 'rgba(31,197,126,0.46)'
+                      : duelWas.outcome === 'drew'
+                        ? 'rgba(245,165,36,0.42)'
+                        : 'rgba(229,72,77,0.42)',
+                },
+              ]}
+            >
+              <Shine radius={radius.lg} group="feature" bevel={false} clip={false} />
+              <Text
+                style={[
+                  styles.duelKey,
+                  {
+                    color:
+                      duelWas.outcome === 'won'
+                        ? color.accent
+                        : duelWas.outcome === 'drew'
+                          ? color.warning
+                          : color.danger,
+                  },
+                ]}
+              >
+                {duelWas.outcome === 'won'
+                  ? 'You won the duel'
+                  : duelWas.outcome === 'drew'
+                    ? 'The duel is a draw'
+                    : 'You lost the duel'}
+              </Text>
+              <Text style={styles.duelScore} allowFontScaling={false}>
+                {duelWas.mine} {'–'} {duelWas.theirs.pts}
+              </Text>
+              <Text style={styles.duelNote}>
+                Their XI was rated {duelWas.theirs.rating} and yours{' '}
+                {Math.round(avg)}. Same spins, same shape, same era.
+              </Text>
+            </View>
+          </Rise>
+        ) : null}
+
+        {/* ================= the code, when you set a challenge =================
+            First, above everything, because it is the only thing on this
+            page that has to leave the phone. A code the player has to go
+            looking for is a code that never gets sent. */}
+        {challenge ? (
+          <Rise delay={0}>
+            <View style={styles.duelCard}>
+              <Shine radius={radius.lg} group="feature" bevel={false} clip={false} />
+              <Text style={styles.duelKey}>Your challenge is ready</Text>
+              <Text style={styles.duelCode} allowFontScaling={false} selectable>
+                {challenge}
+              </Text>
+              <Text style={styles.duelNote}>
+                Send this and they draft your exact spins, in your shape and
+                your era, chasing your {result.pts} points.
+              </Text>
+              <View style={styles.duelRow}>
+                <Press onPress={shareChallenge} feel="none" scaleTo={0.97} style={styles.duelSend}>
+                  <Text style={styles.duelSendText}>Send it</Text>
+                </Press>
+                <Press onPress={copyChallenge} feel="none" scaleTo={0.97} style={styles.duelCopy}>
+                  <Text style={styles.duelCopyText}>{codeCopied ? 'Copied' : 'Copy'}</Text>
+                </Press>
+              </View>
+            </View>
+          </Rise>
+        ) : null}
 
         {/* ================= the six numbers ================= */}
         <View style={styles.tiles}>
@@ -699,21 +844,19 @@ export default function Results() {
           </Press>
           {/* A Daily is one attempt, so it does not offer another go at
               the same puzzle. It goes back to the card that says when the
-              next one opens. */}
+              next one opens, and the week and the duels go back to theirs. */}
           <Press
             onPress={() => {
               haptic('medium');
               router.dismissAll();
-              router.push(isDaily ? '/daily' : '/draft');
+              router.push(againTo);
               clearRun();
             }}
             feel="none"
             style={[styles.again, { borderColor: tone.edge }]}
             scaleTo={0.98}
           >
-            <Text style={[styles.againText, { color: tone.tint }]}>
-              {isDaily ? 'Back to today' : 'Draft another XI'}
-            </Text>
+            <Text style={[styles.againText, { color: tone.tint }]}>{againText}</Text>
           </Press>
           <Press
             onPress={() => {
@@ -1235,6 +1378,57 @@ function Key({ tint, label }: { tint: string; label: string }) {
 }
 
 const styles = StyleSheet.create({
+  duelCard: {
+    marginBottom: space.s4,
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(76,160,255,0.42)',
+    backgroundColor: '#0B131F',
+    experimental_backgroundImage:
+      'linear-gradient(180deg, #14233A 0%, #0C1524 62%, #070B12 100%)',
+    overflow: 'hidden',
+    gap: space.s2,
+  },
+  duelKey: { ...text.key, fontSize: 9.5, color: color.blue },
+  duelCode: {
+    fontFamily: font.displayBlack,
+    fontSize: 28,
+    lineHeight: 35,
+    color: color.text1,
+    letterSpacing: 2,
+  },
+  duelNote: { ...text.small, fontSize: 12.5, lineHeight: 18 },
+  duelScore: {
+    fontFamily: font.hero,
+    fontSize: 44,
+    lineHeight: 54,
+    color: color.text1,
+    fontVariant: ['tabular-nums'],
+    letterSpacing: 1,
+  },
+  duelRow: { flexDirection: 'row', gap: space.s2, marginTop: space.s2 },
+  duelSend: {
+    flex: 2,
+    minHeight: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    backgroundColor: color.blue,
+    boxShadow: '0px 8px 22px rgba(76,160,255,0.28), inset 0px 1px 0px rgba(255,255,255,0.24)',
+  },
+  duelSendText: { ...text.button, fontSize: 15, color: '#05101E' },
+  duelCopy: {
+    flex: 1,
+    minHeight: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  duelCopyText: { ...text.key, fontSize: 9.5, color: color.text2 },
   fill: { width: '100%', height: '100%' },
   grain: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.05 },
 

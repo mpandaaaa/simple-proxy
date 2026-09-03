@@ -22,7 +22,10 @@ import {
   bankWeekly,
   bestThisWeek,
   weeklyStreak,
+  bankDuel,
+  sendDuel,
   EMPTY_WEEKLY,
+  EMPTY_DUELS,
 } from '../.headless/engine/weekly.js';
 import {
   encodeDuel,
@@ -32,6 +35,7 @@ import {
   DUEL_SHAPES,
 } from '../.headless/engine/duel.js';
 import { DAILY_EPOCH } from '../.headless/engine/daily.js';
+import { defaultConfig } from '../.headless/engine/types.js';
 import { newDraft, spin, place, slotsForPlayer, canPlay } from '../.headless/engine/draft.js';
 import { mulberry32 } from '../.headless/engine/rng.js';
 
@@ -240,6 +244,97 @@ must(
 /* O for nought and I for one are the mistakes people actually make, and
    the alphabet leaves those characters out so they can be corrected. */
 must('O is read as nought', decodeDuel(plain.replace(/0/g, 'O')) !== null, '');
+
+/* ---- the whole point: both of you play the identical puzzle ----
+
+   A code that decodes cleanly is worth nothing if the boards it deals are
+   not the boards the sender saw. This drafts a full eleven as the sender,
+   packs the code, reads it back, drafts a full eleven again as the person
+   who answered it, and compares every board of every spin name by name.
+   If a single one differs, the loser lost a game they never played. */
+{
+  let mismatched = 0;
+  let boardsCompared = 0;
+  let sequences = 0;
+
+  const deal = (config, seed) => {
+    const rnd = mulberry32(seed >>> 0);
+    let state = newDraft(config);
+    const boards = [];
+    let guard = 0;
+    while (state.filled < state.total && guard++ < 300) {
+      const s = spin(state, rnd);
+      if (!s) break;
+      boards.push(s.board.map((p) => `${p.n}|${p.club}|${p.season}|${p.rtg}`).join('/'));
+      const board = config.blitz ? s.board.slice(0, 3) : s.board;
+      const pick = board.find((p) => canPlay(state, p));
+      if (!pick) continue;
+      const slots = slotsForPlayer(state, pick);
+      if (!slots.length) continue;
+      state = place(state, pick, slots[0]);
+    }
+    return { boards, filled: state.filled, total: state.total };
+  };
+
+  for (let i = 0; i < 200; i++) {
+    /* Exactly what the app sends: the standard rules and a fresh seed. */
+    const config = { ...defaultConfig, diff: 'normal' };
+    const seed = (i * 2654435761 + 17) >>> 0;
+    const sender = deal(config, seed);
+    if (sender.filled < sender.total) {
+      bad(`a challenge could not be drafted at all: seed ${seed}`);
+      continue;
+    }
+
+    const code = encodeDuel({ seed, pts: 74, rating: 86, config });
+    const read = decodeDuel(code);
+    if (!read) {
+      bad(`a code the app just made would not read back: ${code}`);
+      continue;
+    }
+    const answer = deal(read.config, read.seed);
+    sequences++;
+
+    if (answer.boards.length !== sender.boards.length) {
+      mismatched++;
+      bad(`the answer saw ${answer.boards.length} spins and the sender saw ${sender.boards.length}`);
+      continue;
+    }
+    for (let b = 0; b < sender.boards.length; b++) {
+      boardsCompared++;
+      if (sender.boards[b] !== answer.boards[b]) {
+        mismatched++;
+        bad(`spin ${b + 1} of a duel dealt different players`);
+        break;
+      }
+    }
+  }
+  band('duels drafted from both ends', sequences, 200, 200, 'the sender and the person answering');
+  band('boards compared name by name', boardsCompared, 1000, 100000, '');
+  must('every board was the same board', mismatched === 0, `${mismatched} were not`);
+}
+
+/* ---- the record of them ---- */
+{
+  let rec = EMPTY_DUELS;
+  rec = sendDuel(rec, 'ABCDE-FGHJK-MNPQ');
+  must('setting a challenge keeps the code', rec.outstanding === 'ABCDE-FGHJK-MNPQ', '');
+  must('and does not count as a duel played', rec.played === 0 && rec.won === 0 && rec.lost === 0,
+    'nothing offline can tell you what they did with it');
+
+  rec = bankDuel(rec, { code: 'X', mine: 90, theirs: 80, outcome: 'won', sent: false, at: 1 });
+  rec = bankDuel(rec, { code: 'Y', mine: 70, theirs: 80, outcome: 'lost', sent: false, at: 2 });
+  rec = bankDuel(rec, { code: 'Z', mine: 80, theirs: 80, outcome: 'drew', sent: false, at: 3 });
+  must('answering three duels counts three', rec.played === 3, String(rec.played));
+  must('and one of each', rec.won === 1 && rec.lost === 1 && rec.drew === 1, '');
+  must('the challenge you set is still there', rec.outstanding === 'ABCDE-FGHJK-MNPQ', '');
+  must('newest first', rec.results[0].code === 'Z', rec.results[0].code);
+  for (let i = 0; i < 40; i++) {
+    rec = bankDuel(rec, { code: 'n' + i, mine: 1, theirs: 1, outcome: 'drew', sent: false, at: i });
+  }
+  band('duels kept on the list', rec.results.length, 12, 12, 'the most recent dozen');
+  band('duels counted', rec.played, 43, 43, 'all of them, whatever is shown');
+}
 
 must('winning is winning', duelOutcome(90, 80) === 'won', '');
 must('a draw is a draw', duelOutcome(80, 80) === 'drew', '');

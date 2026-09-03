@@ -120,6 +120,17 @@ export function thisWeek(now: number = Date.now()): Weekly {
   return weeklyFor(weekNumber(now));
 }
 
+/**
+ * What a twist is called, from the id a record kept.
+ *
+ * A week filed away holds the id rather than the name, because the name
+ * is wording and wording changes. The list of weeks you have played still
+ * has to read as English.
+ */
+export function twistName(id: string): string {
+  return TWISTS.find((t) => t.id === id)?.name ?? id;
+}
+
 /** What next week will be, because knowing is half of coming back. */
 export function nextTwist(now: number = Date.now()): Twist {
   return weeklyFor(weekNumber(now) + 1).twist;
@@ -228,6 +239,19 @@ export const EMPTY_DUELS: DuelRecord = {
   results: [],
   outstanding: null,
 };
+
+/**
+ * A challenge you have just set.
+ *
+ * Only the code is kept. It is not a played duel and it never becomes
+ * one, because a code sent offline cannot tell you what the other person
+ * did with it: the won, drawn and lost column counts duels that were
+ * actually decided, and a challenge sitting in somebody's messages is
+ * not one of those.
+ */
+export function sendDuel(record: DuelRecord, code: string): DuelRecord {
+  return { ...record, outstanding: code };
+}
 
 export function bankDuel(record: DuelRecord, result: DuelResult): DuelRecord {
   return {

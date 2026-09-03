@@ -83,6 +83,11 @@ export default function Duel() {
     setCopied(true);
   }, [record.outstanding]);
 
+  const clear = useCallback(() => {
+    haptic('light');
+    setCode('');
+  }, []);
+
   const paste = useCallback(async () => {
     haptic('light');
     const text = await Clipboard.getStringAsync();
@@ -119,11 +124,18 @@ export default function Duel() {
             placeholderTextColor={color.text3}
             autoCapitalize="characters"
             autoCorrect={false}
+            autoFocus={wantsEnter}
+            returnKeyType="done"
             style={styles.input}
             maxLength={20}
           />
-          <Press onPress={paste} feel="light" scaleTo={0.95} style={styles.paste}>
-            <Text style={styles.pasteText}>Paste</Text>
+          <Press
+            onPress={code ? clear : paste}
+            feel="light"
+            scaleTo={0.95}
+            style={styles.paste}
+          >
+            <Text style={styles.pasteText}>{code ? 'Clear' : 'Paste'}</Text>
           </Press>
         </View>
 
@@ -262,7 +274,13 @@ const styles = StyleSheet.create({
     gap: space.s2,
     marginBottom: space.s4,
   },
-  cardFirst: {},
+  /* Arriving from "Enter a code" on the front door means the code is the
+     reason you are here, so the card that takes one is lit rather than
+     just first. */
+  cardFirst: {
+    borderColor: alpha(hue.emerald, 0.44),
+    boxShadow: '0px 10px 30px rgba(31,197,126,0.14)',
+  },
   cardKey: { ...text.key, fontSize: 9.5, color: hue.crimson },
   cardNote: { ...text.small, fontSize: 12.5, lineHeight: 18 },
 

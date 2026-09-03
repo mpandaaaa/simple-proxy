@@ -31,13 +31,18 @@ import {
   careerStore,
   ranked,
   dailyStore,
+  weeklyStore,
+  duelStore,
 } from '../src/save';
 import {
+  bestThisWeek,
   dailyNumber,
   liveStreak,
   ordinal,
   playedToday,
   resultFor,
+  thisWeek,
+  weekNumber,
   today as todaysPuzzle,
 } from '../src/engine';
 import { haptic } from '../src/ui/feel';
@@ -94,6 +99,12 @@ function readDaily() {
   };
 }
 
+/** What the Weekly and the duel rows have to say. */
+function readWeek() {
+  const n = weekNumber();
+  return { week: thisWeek(), best: bestThisWeek(weeklyStore.read(), n) };
+}
+
 export default function Home() {
   const [progress, setProgress] = useState<Progress>(() => progressStore.read());
   const [dynasty, setDynasty] = useState<DynastySummary | null>(() =>
@@ -104,6 +115,10 @@ export default function Home() {
   /* Today's puzzle, so the row on the front door says what today is and
      whether it has been played rather than the same sentence forever. */
   const [daily, setDaily] = useState(() => readDaily());
+  /* This week's rule and how you have done at it, and the duel record, so
+     the two rows underneath the Daily say something true as well. */
+  const [weekly, setWeekly] = useState(() => readWeek());
+  const [duels, setDuels] = useState(() => duelStore.read());
 
   // Saves change while you are inside a mode, so the status lines are read
   // again every time Home comes back to the front rather than once on mount.
@@ -115,6 +130,8 @@ export default function Home() {
       setRecord(readRecord());
       setCareer(careerStore.read());
       setDaily(readDaily());
+      setWeekly(readWeek());
+      setDuels(duelStore.read());
     }, []),
   );
 
@@ -203,29 +220,31 @@ export default function Home() {
             icon={IconSpark}
             tone="gold"
             tag="Event"
-            title="Weekly Event"
-            subtitle="A new twist every week"
-            onPress={() =>
-              soon(
-                'Play today',
-                'Weekly Event',
-                'A rotating rule twist each week: Nineties Week, Y2K Week, Moneyball, Modern Era and Homegrown.',
-              )
+            title={weekly.week.twist.name}
+            subtitle={
+              weekly.best
+                ? `Your best ${weekly.best.pts} points · ${weekly.best.attempts} ${weekly.best.attempts === 1 ? 'go' : 'goes'}`
+                : `${weekly.week.twist.rule} · as many goes as you like`
             }
+            onPress={() => {
+              haptic('light');
+              router.push('/weekly');
+            }}
           />
           <Row
             icon={IconSwords}
             tone="danger"
             tag="Duel"
             title="Start a duel"
-            subtitle="Seeded run · share the code"
-            onPress={() =>
-              soon(
-                'Play today',
-                'Start a duel',
-                'Send a code and your friend drafts from your exact spin sequence, then the game declares a winner.',
-              )
+            subtitle={
+              duels.played
+                ? `${duels.won} won · ${duels.drew} drawn · ${duels.lost} lost`
+                : 'Seeded run · share the code'
             }
+            onPress={() => {
+              haptic('light');
+              router.push('/duel');
+            }}
           />
           <Row
             icon={IconKeypad}
@@ -233,13 +252,10 @@ export default function Home() {
             tag="Code"
             title="Enter a code"
             subtitle="Same spins · beat their points"
-            onPress={() =>
-              soon(
-                'Play today',
-                'Enter a code',
-                'Take a code from a friend and draft from the same spins, then see who scored more points.',
-              )
-            }
+            onPress={() => {
+              haptic('light');
+              router.push('/duel?mode=enter');
+            }}
           />
         </Collapse>
 
