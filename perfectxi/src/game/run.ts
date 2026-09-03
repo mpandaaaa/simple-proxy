@@ -1,5 +1,6 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { router } from 'expo-router';
+import { openMatch, pushProgress, type Match } from '../net/lobby';
 import {
   ENGINE_VERSION,
   canPlay,
@@ -31,7 +32,21 @@ import {
  */
 
 export type LiveDuel = {
+  /**
+   * The stand in, drafted from the same seed.
+   *
+   * Always worked out, because it costs a millisecond, and used only when
+   * `match` is null or when the person on the other end never turns up.
+   */
   opponent: Opponent;
+  /**
+   * The real one, when somebody was found.
+   *
+   * When this is set the strip reads their progress off the server rather
+   * than off the stand in, and the result at the end is their result
+   * rather than a season the phone played for them.
+   */
+  match: Match | null;
   /**
    * When your draft opened, on the wall clock, or 0 before it has.
    *
@@ -117,8 +132,8 @@ export function startRun(
     weekly?: number | null;
     duel?: string | null;
     sending?: boolean;
-    /** draft an opponent from the same seed and play them live */
-    live?: boolean;
+    /** the duel found in the lobby, real or otherwise */
+    live?: Match;
   } = {},
 ): void {
   rnd = mulberry32(seed);
@@ -131,7 +146,13 @@ export function startRun(
     sending: kind.sending ?? false,
     live: kind.live
       ? {
-          opponent: draftOpponent({ config, seed }),
+          opponent: draftOpponent({
+            config,
+            seed,
+            name: kind.live.name,
+            bot: kind.live.bot,
+          }),
+          match: kind.live.bot ? null : kind.live,
           startedAt: 0,
           theirPts: null,
           minePts: null,
@@ -160,8 +181,13 @@ export function getRun(): Run | null {
  */
 export function beginLive(): void {
   if (!run?.live || run.live.startedAt) return;
+  const match = run.live.match;
   run = { ...run, live: { ...run.live, startedAt: Date.now() } };
   emit();
+  /* Open the row both of you write to. Whoever gets there first makes it
+     and the other one's attempt is ignored, so neither has to wait on
+     the other to have started. */
+  if (match) void openMatch(match);
 }
 
 /** How far into the duel you are, in milliseconds. */
@@ -216,6 +242,10 @@ export function pickPlayer(player: Pick, slotIndex: number): void {
   if (next === run.state) return;
   run = { ...run, state: next, board: null, club: null, season: null };
   emit();
+  /* Tell the other one where you are up to. Fire and forget on purpose:
+     a signing must land the instant it is tapped whatever the network is
+     doing, and a lost update is one tick of a counter. */
+  if (run.live?.match) pushProgress(run.live.match, next.filled, player.n);
 }
 
 /** Rerolls do not refund a pick, they only replace the board in front of you. */

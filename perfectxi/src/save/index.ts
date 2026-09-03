@@ -12,3 +12,4 @@ export { dailyStore } from './daily';
 export { weeklyStore, duelStore } from './playtoday';
 export { careerStore } from './career';
 export type { Career } from './career';
+export { me, rename, type Me } from './me';

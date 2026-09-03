@@ -87,6 +87,22 @@ module.exports = () => ({
     eas: {
       projectId: 'ad10b44d-55a2-4708-a3d5-715849cf6baa',
     },
+    /*
+     * The online layer.
+     *
+     * The publishable key is meant to be in the app. It is the key the
+     * browser would carry on a website: every table it can reach is
+     * behind row level security, and the only rows it can touch are a
+     * queue of random seeds and the score at the end of a duel. Nothing
+     * here is a secret and nothing here identifies anybody.
+     *
+     * The service key and the database password are not in this repo and
+     * never will be.
+     */
+    supabase: {
+      url: 'https://fmupfnknfyiiddwgjlvk.supabase.co',
+      key: 'sb_publishable_PlbOP9B2umhLCiH8hRO-Ag_vldKYAcb',
+    },
   },
   // Only a real build ships updates. The dev server never resolves one.
   ...(process.env.EAS_BUILD ? OTA : {}),

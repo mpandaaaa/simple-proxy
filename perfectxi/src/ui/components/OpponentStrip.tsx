@@ -4,6 +4,7 @@ import { color, hue, radius, space, alpha, positionColor } from '../tokens';
 import { font, text } from '../type';
 import { haptic } from '../feel';
 import { landedBy, opponentDone, type Opponent } from '../../engine';
+import { pullProgress, type Match } from '../../net/lobby';
 
 /**
  * The other one, along the top of the board.
@@ -21,11 +22,14 @@ import { landedBy, opponentDone, type Opponent } from '../../engine';
  */
 export function OpponentStrip({
   opponent,
+  match,
   startedAt,
   total,
   mine,
 }: {
   opponent: Opponent;
+  /** the real duel, when there is a person on the other end */
+  match?: Match | null;
   /** the wall clock moment the draft opened, or 0 before it has */
   startedAt: number;
   /** how many places there are to fill */
@@ -35,6 +39,13 @@ export function OpponentStrip({
 }) {
   const [elapsed, setElapsed] = useState(0);
   const knocked = useRef(0);
+  /* What the server says they have done, when the other chair holds a
+     person. Null until the first answer comes back, and it stays on the
+     last thing it knew if an answer goes missing: a counter that drops
+     to nothing because one poll timed out reads as them giving up. */
+  const [live, setLive] = useState<{ filled: number; last: string | null } | null>(null);
+
+  const real = Boolean(match && !match.bot);
 
   useEffect(() => {
     if (!startedAt) return;
@@ -43,9 +54,33 @@ export function OpponentStrip({
     return () => clearInterval(t);
   }, [startedAt]);
 
-  const done = startedAt ? landedBy(opponent, elapsed) : [];
-  const last = done[done.length - 1] ?? null;
-  const finished = startedAt ? opponentDone(opponent, elapsed) : false;
+  /* A person is asked about rather than worked out. Every second and a
+     half, which is often enough that their XI visibly fills up and rare
+     enough that a draft is not a stream of requests. */
+  useEffect(() => {
+    if (!real || !match || !startedAt) return;
+    let stopped = false;
+    const ask = async () => {
+      const got = await pullProgress(match);
+      if (!stopped && got) setLive({ filled: got.filled, last: got.last });
+    };
+    void ask();
+    const t = setInterval(ask, 1500);
+    return () => {
+      stopped = true;
+      clearInterval(t);
+    };
+  }, [real, match, startedAt]);
+
+  const botDone = startedAt ? landedBy(opponent, elapsed) : [];
+  const count = real ? (live?.filled ?? 0) : botDone.length;
+  const lastName = real
+    ? live?.last ?? null
+    : botDone[botDone.length - 1]?.player.n ?? null;
+  const lastPos = real ? null : botDone[botDone.length - 1]?.player ?? null;
+  const finished = real ? count >= total : startedAt ? opponentDone(opponent, elapsed) : false;
+  const done = { length: count };
+  const last = lastPos;
 
   /* One knock per pick they make, so a signing you did not see still
      registers. Guarded on a count rather than on the pick itself, because
@@ -67,7 +102,7 @@ export function OpponentStrip({
           <Text style={styles.name} numberOfLines={1}>
             {opponent.name}
           </Text>
-          {opponent.bot ? <Text style={styles.bot}>THE MACHINE</Text> : null}
+          {real ? null : <Text style={styles.bot}>THE MACHINE</Text>}
           <Text style={styles.live}>{finished ? 'DONE' : 'DRAFTING'}</Text>
         </View>
         <Text style={styles.count} allowFontScaling={false}>
@@ -94,12 +129,12 @@ export function OpponentStrip({
       <Text style={styles.line} numberOfLines={1}>
         {last ? (
           <>
-            <Text style={{ color: positionColor[posOf(last.player.pos)] }}>
-              {posOf(last.player.pos)}
-            </Text>
-            <Text>{`  ${last.player.n}`}</Text>
-            <Text style={styles.club}>{`  ${last.player.club}`}</Text>
+            <Text style={{ color: positionColor[posOf(last.pos)] }}>{posOf(last.pos)}</Text>
+            <Text>{`  ${last.n}`}</Text>
+            <Text style={styles.club}>{`  ${last.club}`}</Text>
           </>
+        ) : lastName ? (
+          lastName
         ) : startedAt ? (
           'Looking at the first board.'
         ) : (

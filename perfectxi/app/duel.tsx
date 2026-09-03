@@ -16,7 +16,8 @@ import {
   type DuelRecord,
   type DuelResult,
 } from '../src/engine';
-import { duelStore } from '../src/save';
+import { duelStore, me } from '../src/save';
+import { findMatch, type Match } from '../src/net/lobby';
 import { startRun } from '../src/game/run';
 
 /**
@@ -54,44 +55,48 @@ export default function Duel() {
      is a moment where a person could answer, and when nobody does the
      game fills the chair rather than telling you to come back later. */
   const [finding, setFinding] = useState<'idle' | 'searching' | 'found'>('idle');
-  const [found, setFound] = useState<{ seed: number; name: string } | null>(null);
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const [status, setStatus] = useState('Looking for somebody');
+  const [found, setFound] = useState<Match | null>(null);
+  const gone = useRef(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(
     () => () => {
-      for (const t of timers.current) clearTimeout(t);
+      gone.current = true;
+      if (timer.current) clearTimeout(timer.current);
     },
     [],
   );
 
-  const findOpponent = useCallback(() => {
+  const findOpponent = useCallback(async () => {
     if (finding !== 'idle') return;
     haptic('medium');
     sfx('tick');
+    setStatus('Looking for somebody');
     setFinding('searching');
 
-    const seed = Math.floor(Math.random() * 0x100000000) >>> 0;
-    /* Two and a half to four and a half seconds. Long enough that it is
-       plainly looking for somebody, short enough that nobody puts the
-       phone down. */
-    const wait = 2500 + Math.random() * 2000;
+    /* This really does go and look. Somebody already waiting is taken
+       straight away; otherwise you sit in the queue for five seconds and
+       the Machine fills the chair if nobody comes. Either way it cannot
+       hang: every call out has a clock on it and the fallback is a game
+       that needs no network at all. */
+    const match = await findMatch((what) => {
+      if (!gone.current) setStatus(what);
+    });
+    if (gone.current) return;
 
-    timers.current.push(
-      setTimeout(() => {
-        setFound({ seed, name: handleFor(seed) });
-        setFinding('found');
-        haptic('success');
-        sfx('pick');
-      }, wait),
-    );
-    timers.current.push(
-      setTimeout(() => {
-        startRun({ ...defaultConfig, diff: 'normal' }, seed, { live: true });
-        router.push('/draft/board');
-        setFinding('idle');
-        setFound(null);
-      }, wait + 1100),
-    );
+    setFound(match);
+    setFinding('found');
+    haptic('success');
+    sfx('pick');
+
+    timer.current = setTimeout(() => {
+      if (gone.current) return;
+      startRun({ ...defaultConfig, diff: 'normal' }, match.seed, { live: match });
+      router.push('/draft/board');
+      setFinding('idle');
+      setFound(null);
+    }, 1200);
   }, [finding]);
 
   const send = useCallback(() => {
@@ -172,19 +177,25 @@ export default function Duel() {
         ) : (
           <View style={styles.searching}>
             <Text style={styles.searchKey}>
-              {finding === 'found' ? 'Opponent found' : 'Looking for somebody'}
+              {finding === 'found' ? 'Opponent found' : status}
             </Text>
             <Text style={styles.searchName} numberOfLines={1}>
               {found ? found.name : <Dots />}
             </Text>
             <Text style={styles.searchNote}>
-              {finding === 'found'
-                ? 'Nobody else is online, so the Machine is taking the other chair. Same spins, same rules.'
-                : 'Checking who is drafting right now.'}
+              {finding !== 'found'
+                ? 'Checking who is drafting right now.'
+                : found?.bot
+                  ? 'Nobody else is online, so the Machine is taking the other chair. Same spins, same rules.'
+                  : 'A real person, drafting the same boards as you, right now.'}
             </Text>
           </View>
         )}
       </View>
+
+      <Text style={styles.handle}>
+        You appear to other players as {me().name}.
+      </Text>
 
       {/* ---- answering one ---- */}
       <View style={[styles.card, wantsEnter ? styles.cardFirst : null]}>
@@ -364,6 +375,15 @@ const styles = StyleSheet.create({
     marginBottom: space.s4,
   },
   liveKey: { ...text.key, fontSize: 9.5, color: hue.sky },
+  handle: {
+    ...text.small,
+    fontSize: 11.5,
+    lineHeight: 16,
+    color: color.text3,
+    textAlign: 'center',
+    marginTop: -space.s2,
+    marginBottom: space.s4,
+  },
   liveNote: { ...text.small, fontSize: 12.5, lineHeight: 18 },
   find: {
     marginTop: space.s3,

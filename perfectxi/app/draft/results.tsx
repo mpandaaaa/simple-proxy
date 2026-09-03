@@ -66,6 +66,7 @@ import {
 } from '../../src/engine';
 import { startDynasty } from '../../src/engine';
 import { clearRun, setDuelScores, useRun } from '../../src/game/run';
+import { pullProgress, pushResult } from '../../src/net/lobby';
 import { getCareer, setCareer } from '../../src/game/career';
 import {
   careerStore,
@@ -171,6 +172,11 @@ export default function Results() {
      that banks the season, and then drawn. */
   const [challenge, setChallenge] = useState<string | null>(null);
   const [codeCopied, setCodeCopied] = useState(false);
+  /* Who you are still waiting on, when the other chair holds a person who
+     has not finished their season yet. */
+  const [waitingOn, setWaitingOn] = useState<string | null>(null);
+  const waiting = useRef<(() => void) | null>(null);
+  useEffect(() => () => waiting.current?.(), []);
 
   // The season goes on the record here rather than while it was playing, so
   // a season abandoned halfway never counts.
@@ -284,26 +290,60 @@ export default function Results() {
        is the same one however many times it is worked out. */
     if (run.live) {
       const them = run.live.opponent;
-      const theirs = simulateSeason(
-        them.squad,
-        config.formation,
-        chemBonus(them.squad),
-        mulberry32((run.seed ^ 0x5bf03635) >>> 0),
-      );
-      setDuelScores(r.pts, theirs.pts);
-      duelStore.update((rec) =>
-        bankDuel(rec, {
-          code: `live:${them.name}`,
-          who: them.name,
-          live: true,
-          bot: them.bot,
-          mine: r.pts,
-          theirs: theirs.pts,
-          outcome: duelOutcome(r.pts, theirs.pts),
-          sent: false,
-          at: Date.now(),
-        }),
-      );
+      const match = run.live.match;
+      const bank = (theirPts: number, who: string, bot: boolean) => {
+        setDuelScores(r.pts, theirPts);
+        duelStore.update((rec) =>
+          bankDuel(rec, {
+            code: `live:${who}`,
+            who,
+            live: true,
+            bot,
+            mine: r.pts,
+            theirs: theirPts,
+            outcome: duelOutcome(r.pts, theirPts),
+            sent: false,
+            at: Date.now(),
+          }),
+        );
+      };
+
+      if (match) {
+        /* A person. Your score goes up first so they are never the one
+           left waiting, then theirs is waited for. */
+        pushResult(match, r.pts, Math.round(rating));
+        setWaitingOn(match.name);
+        let stopped = false;
+        const until = Date.now() + 45000;
+        const ask = async () => {
+          while (!stopped && Date.now() < until) {
+            const got = await pullProgress(match);
+            if (got?.pts != null) {
+              if (!stopped) {
+                setWaitingOn(null);
+                bank(got.pts, match.name, false);
+              }
+              return;
+            }
+            await new Promise((res) => setTimeout(res, 2000));
+          }
+          if (!stopped) setWaitingOn(null);
+        };
+        void ask();
+        waiting.current = () => {
+          stopped = true;
+        };
+      } else {
+        /* The Machine. Its XI plays a season from the run seed, so the
+           result is the same one however many times it is worked out. */
+        const theirs = simulateSeason(
+          them.squad,
+          config.formation,
+          chemBonus(them.squad),
+          mulberry32((run.seed ^ 0x5bf03635) >>> 0),
+        );
+        bank(theirs.pts, them.name, true);
+      }
     }
 
     /* A duel answered is a duel decided, one way or the other. */
@@ -559,6 +599,19 @@ ${challenge}
             result.position,
           )}`}
         />
+
+        {/* ================= still waiting on them ================= */}
+        {waitingOn && !duelWas ? (
+          <View style={[styles.duelCard, { borderColor: 'rgba(245,165,36,0.4)' }]}>
+            <Text style={[styles.duelKey, { color: color.warning }]}>
+              Waiting for {waitingOn}
+            </Text>
+            <Text style={styles.duelNote}>
+              You are done. They are still playing their season. The result
+              lands here the moment they finish.
+            </Text>
+          </View>
+        ) : null}
 
         {/* ================= the duel you answered ================= */}
         {duelWas ? (

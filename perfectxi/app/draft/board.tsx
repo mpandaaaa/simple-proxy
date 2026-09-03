@@ -247,6 +247,7 @@ export default function DraftBoard() {
       {run?.live ? (
         <OpponentStrip
           opponent={run.live.opponent}
+          match={run.live.match}
           startedAt={run.live.startedAt}
           total={state.total}
           mine={state.filled}
