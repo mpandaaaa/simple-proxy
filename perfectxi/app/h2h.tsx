@@ -87,13 +87,27 @@ export default function HeadToHead() {
       if (!m || !myTurn || !playable) return;
       const slots = h2hSlotsFor(m.state, m.me, player);
       if (!slots.length) return;
-      haptic('light');
-      if (slots.length === 1) {
+
+      /* One place per position, not one per empty shirt. Three open
+         midfield places are the same decision three times over, because
+         which of them he stands in changes nothing: the shape is the
+         same, the season is the same, and being asked reads as the game
+         not knowing what it wants. Only a player who could genuinely go
+         in two different positions gets a question. */
+      const squad = squadOf(m.state, m.me).squad;
+      const byPos = new Map<Position, number>();
+      for (const i of slots) {
+        const pos = squad[i].pos;
+        if (!byPos.has(pos)) byPos.set(pos, i);
+      }
+      if (byPos.size === 1) {
+        haptic('light');
         sfx('pick');
         take(player.n, slots[0]);
         return;
       }
-      setChooser({ player, slots });
+      haptic('light');
+      setChooser({ player, slots: [...byPos.values()] });
     },
     [m, myTurn],
   );
@@ -246,11 +260,19 @@ export default function HeadToHead() {
       </ModeScreen>
 
       {/* Where he goes, when there is more than one place he could. */}
-      <Sheet bare visible={chooser !== null} onClose={() => setChooser(null)}>
+      {/* Not bare: a bare sheet draws no surface of its own and the board
+          behind shows straight through the words. */}
+      <Sheet visible={chooser !== null} onClose={() => setChooser(null)}>
         <View style={styles.slots}>
           <Text style={styles.slotsTitle}>
             {chooser ? `Where does ${chooser.player.n} play?` : ''}
           </Text>
+          {chooser ? (
+            <Text style={styles.slotsNote}>
+              {chooser.player.club} {'·'} {chooser.player.season} {'·'} rated{' '}
+              {chooser.player.rtg}
+            </Text>
+          ) : null}
           {(chooser?.slots ?? []).map((slot) => (
             <Press
               key={slot}
@@ -262,7 +284,13 @@ export default function HeadToHead() {
               }}
               feel="medium"
               scaleTo={0.97}
-              style={styles.slot}
+              style={[
+                styles.slot,
+                {
+                  borderColor: positionColor[mine.squad[slot].pos],
+                  backgroundColor: alpha(positionColor[mine.squad[slot].pos], 0.12),
+                },
+              ]}
             >
               <Text style={[styles.slotPos, { color: positionColor[mine.squad[slot].pos] }]}>
                 {mine.squad[slot].pos}
@@ -506,9 +534,15 @@ const styles = StyleSheet.create({
   slots: { gap: space.s2, paddingBottom: space.s6, paddingHorizontal: space.s4, paddingTop: space.s4 },
   slotsTitle: {
     fontFamily: font.displayBlack,
-    fontSize: 20,
-    lineHeight: 26,
+    fontSize: 22,
+    lineHeight: 29,
     color: color.text1,
+  },
+  slotsNote: {
+    ...text.small,
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: color.text3,
     marginBottom: space.s2,
   },
   slot: {
