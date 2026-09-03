@@ -58,10 +58,17 @@ import {
 /**
  * The clubs a career can be started at.
  *
- * Built once, because it is the same list every time and the database it
- * comes from does not change while the app is running.
+ * Worked out on first use rather than when this module is loaded. It
+ * walks the whole database, seven hundred and twelve club-seasons of it,
+ * and doing that while modules are still being evaluated makes the app
+ * slower to open for no reason and puts a database read inside an import
+ * cycle, which is a hard way to find out you have one.
  */
-const MANAGEABLE: ReadonlySet<string> = new Set(clubOptions(2026).map((o) => o.club));
+let manageable: ReadonlySet<string> | null = null;
+function manageableClubs(): ReadonlySet<string> {
+  if (!manageable) manageable = new Set(clubOptions(2026).map((o) => o.club));
+  return manageable;
+}
 
 /**
  * The end of a season, in the one order that works.
@@ -658,7 +665,7 @@ export function processSeasonEnd(
      always needs one, and it is always a rung down. */
   next.jobs = pyramid.youWentDown
     ? []
-    : jobOffers(next, next.league, rnd, sacked, MANAGEABLE);
+    : jobOffers(next, next.league, rnd, sacked, manageableClubs());
   for (const j of next.jobs) {
     say(
       `${j.club} want to speak to you`,
