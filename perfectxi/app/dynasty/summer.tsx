@@ -13,6 +13,7 @@ import {
   SeasonCurve,
   ClubDisc,
   Collapse,
+  MatchLive,
 } from '../../src/ui/components';
 import { color, gradient, line, positionColor, radius, space, hue, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
@@ -112,6 +113,9 @@ const TONE: Record<FinishTone, { tint: string; edge: string; wash: string }> = {
  */
 export default function Summer() {
   const done = useRef(false);
+  /* Any of the thirty eight can be watched back, the same as it can from
+     the season screen. */
+  const [watching, setWatching] = useState<number | null>(null);
   const [state, setState] = useState<{
     report: SummerReport;
     result: SeasonResult;
@@ -289,37 +293,6 @@ export default function Summer() {
           <Tile value={result.ga} label="Goals against" tint={hue.sky} />
           <Tile value={result.pts} label="Points" tint={tone.tint} />
         </View>
-
-        {/* ================= back from loan ================= */}
-        {report.loans.length ? (
-          <>
-            <Text style={[text.label, styles.sect]}>Back from loan</Text>
-            <View style={styles.backFrom}>
-              {report.loans.map((l) => (
-                <View key={l.name} style={styles.backRow}>
-                  <View style={styles.backBody}>
-                    <Text style={styles.backName} numberOfLines={1}>
-                      {l.name}
-                    </Text>
-                    <Text style={styles.backNote} numberOfLines={1}>
-                      {l.apps} games at {l.club}
-                    </Text>
-                  </View>
-                  <Text
-                    style={[
-                      styles.backGain,
-                      { color: l.gained > 0 ? hue.emerald : color.text3 },
-                    ]}
-                    allowFontScaling={false}
-                  >
-                    {l.gained > 0 ? '+' : ''}
-                    {l.gained}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </>
-        ) : null}
 
         {/* ================= the cups ================= */}
         {report.cups.runs.some((r) => r.entered) ? (
@@ -538,8 +511,17 @@ export default function Summer() {
         <Text style={[text.label, styles.sect]}>Every result</Text>
         <Collapse label="The thirty eight" count={result.matches.length}>
           <View style={styles.games}>
-            {result.matches.map((m) => (
-              <View key={m.n} style={styles.game}>
+            {result.matches.map((m, i) => (
+              <Press
+                key={m.n}
+                onPress={() => {
+                  haptic('light');
+                  setWatching(i);
+                }}
+                feel="none"
+                scaleTo={0.995}
+                style={styles.game}
+              >
                 <Text style={styles.gameMd} allowFontScaling={false}>
                   {m.n}
                 </Text>
@@ -548,7 +530,9 @@ export default function Summer() {
                   <Text style={styles.gameOpp} numberOfLines={1}>
                     {m.opp}
                   </Text>
-                  <Text style={styles.gameWhere}>{m.home ? 'Home' : 'Away'}</Text>
+                  <Text style={styles.gameWhere}>
+                    {m.home ? 'Home' : 'Away'} {'·'} watch it back
+                  </Text>
                 </View>
                 <Text
                   style={[
@@ -564,7 +548,7 @@ export default function Summer() {
                   {'–'}
                   {m.ga}
                 </Text>
-              </View>
+              </Press>
             ))}
           </View>
         </Collapse>
@@ -767,6 +751,36 @@ export default function Summer() {
           </Group>
         ) : null}
 
+        {/* back from loan, with the academy where it belongs */}
+        {report.loans.length ? (
+          <Group title={`${report.loans.length} back from loan`} tone={hue.mint}>
+            <View style={styles.backFrom}>
+              {report.loans.map((l) => (
+                <View key={l.name} style={styles.backRow}>
+                  <View style={styles.backBody}>
+                    <Text style={styles.backName} numberOfLines={1}>
+                      {l.name}
+                    </Text>
+                    <Text style={styles.backNote} numberOfLines={1}>
+                      {l.apps} games at {l.club}
+                    </Text>
+                  </View>
+                  <Text
+                    style={[
+                      styles.backGain,
+                      { color: l.gained > 0 ? hue.emerald : color.text3 },
+                    ]}
+                    allowFontScaling={false}
+                  >
+                    {l.gained > 0 ? '+' : ''}
+                    {l.gained}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </Group>
+        ) : null}
+
         {report.intake.length ? (
           <Group title={`${report.intake.length} through the academy`} tone={color.accent}>
             {report.intake.map((p) => (
@@ -789,6 +803,14 @@ export default function Summer() {
           </Press>
         ) : null}
       </ModeScreen>
+
+      <MatchLive
+        match={watching !== null ? result.matches[watching] : null}
+        seed={before.seed ^ before.year}
+        live={false}
+        visible={watching !== null}
+        onDone={() => setWatching(null)}
+      />
 
       <Confetti fire={result.position === 1 && !report.sacked} />
     </>
