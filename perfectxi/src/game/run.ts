@@ -31,6 +31,14 @@ import {
 export type Run = {
   seed: number;
   engineVersion: number;
+  /**
+   * The Daily puzzle number, when this run is one.
+   *
+   * The Daily is the same game with a fixed seed, so it plays through the
+   * same three screens rather than copies of them. This is how the last
+   * of those screens knows to bank the result and count the streak.
+   */
+  daily: number | null;
   state: DraftState;
   /** the board on the table right now, unfiltered by blitz */
   board: Pick[] | null;
@@ -60,11 +68,16 @@ function freshSeed(): number {
   return Math.floor(Math.random() * 0x7fffffff);
 }
 
-export function startRun(config: DraftConfig, seed = freshSeed()): void {
+export function startRun(
+  config: DraftConfig,
+  seed = freshSeed(),
+  daily: number | null = null,
+): void {
   rnd = mulberry32(seed);
   run = {
     seed,
     engineVersion: ENGINE_VERSION,
+    daily,
     state: newDraft(config),
     board: null,
     club: null,

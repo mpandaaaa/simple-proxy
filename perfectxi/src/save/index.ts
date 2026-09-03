@@ -8,5 +8,6 @@ export { dynastyStore, dynastySummary } from './dynasty';
 export type { DynastySummary, Dynasty } from './dynasty';
 export { historyStore, remember, ranked, HISTORY_CAP } from './history';
 export type { History, SeasonRecord, HistoryPlayer } from './history';
+export { dailyStore } from './daily';
 export { careerStore } from './career';
 export type { Career } from './career';

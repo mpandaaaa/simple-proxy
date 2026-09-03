@@ -30,7 +30,17 @@ import {
   historyStore,
   careerStore,
   ranked,
+  dailyStore,
 } from '../src/save';
+import {
+  dailyNumber,
+  liveStreak,
+  ordinal,
+  playedToday,
+  resultFor,
+  today as todaysPuzzle,
+} from '../src/engine';
+import { haptic } from '../src/ui/feel';
 import { ACHIEVEMENTS, type Career } from '../src/game/achievements';
 import { getCareer, reloadCareer } from '../src/game/career';
 import type { Progress, DynastySummary } from '../src/save';
@@ -68,6 +78,22 @@ function readRecord(): { hall: string; cabinet: string } {
   return { hall, cabinet };
 }
 
+/** What the Daily row on the front door has to say. */
+function readDaily() {
+  const n = dailyNumber();
+  const puzzle = todaysPuzzle();
+  const rec = dailyStore.read();
+  const mine = resultFor(rec, n);
+  return {
+    n,
+    twist: puzzle.twist,
+    done: playedToday(rec, n),
+    position: mine?.position ?? 0,
+    pts: mine?.pts ?? 0,
+    streak: liveStreak(rec, n),
+  };
+}
+
 export default function Home() {
   const [progress, setProgress] = useState<Progress>(() => progressStore.read());
   const [dynasty, setDynasty] = useState<DynastySummary | null>(() =>
@@ -75,6 +101,9 @@ export default function Home() {
   );
   const [record, setRecord] = useState(() => readRecord());
   const [career, setCareer] = useState<Career>(() => careerStore.read());
+  /* Today's puzzle, so the row on the front door says what today is and
+     whether it has been played rather than the same sentence forever. */
+  const [daily, setDaily] = useState(() => readDaily());
 
   // Saves change while you are inside a mode, so the status lines are read
   // again every time Home comes back to the front rather than once on mount.
@@ -85,6 +114,7 @@ export default function Home() {
       setDynasty(dynastySummary(getCareer()));
       setRecord(readRecord());
       setCareer(careerStore.read());
+      setDaily(readDaily());
     }, []),
   );
 
@@ -158,15 +188,16 @@ export default function Home() {
             icon={IconCalendar}
             tone="blue"
             tag="Daily"
-            title="Daily Challenge"
-            subtitle="Same spins for everyone · one attempt"
-            onPress={() =>
-              soon(
-                'Play today',
-                'Daily Challenge',
-                'Everyone in the world gets the same seeded spins once a day, with one attempt and a shareable scorecard showing all 38 results.',
-              )
+            title={`Daily #${daily.n}`}
+            subtitle={
+              daily.done
+                ? `Played · ${ordinal(daily.position)} on ${daily.pts} points`
+                : `${daily.twist} · one attempt`
             }
+            onPress={() => {
+              haptic('light');
+              router.push('/daily');
+            }}
           />
           <Row
             icon={IconSpark}

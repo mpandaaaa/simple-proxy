@@ -41,6 +41,7 @@ import {
   finishFor,
   highlights,
   livePosition,
+  bankDaily,
   ordinal,
   simulateCups,
   squadAvg,
@@ -59,6 +60,7 @@ import { getCareer, setCareer } from '../../src/game/career';
 import {
   careerStore,
   progressStore,
+  dailyStore,
   remember,
   type SeasonRecord,
 } from '../../src/save';
@@ -228,6 +230,28 @@ export default function Results() {
         })),
     };
     remember(record);
+
+    /* A Daily is banked as well as remembered, because it is the one run
+       that can only be played once and the streak depends on it. */
+    if (run.daily) {
+      const form = r.matches
+        .map((m) => (m.oc === 'win' ? 'w' : m.oc === 'draw' ? 'd' : 'l'))
+        .join('');
+      dailyStore.update((rec) =>
+        bankDaily(rec, {
+          n: run.daily as number,
+          pts: r.pts,
+          position: r.position,
+          grade: r.grade,
+          rating: Math.round(rating),
+          gf: r.gf,
+          ga: r.ga,
+          form,
+          at: Date.now(),
+        }),
+      );
+    }
+
     progressStore.update((p) => ({
       ...p,
       seasons: p.seasons + 1,
@@ -247,6 +271,7 @@ export default function Results() {
   }, [run]);
 
   const result = run?.result ?? null;
+  const isDaily = run?.daily != null;
 
   const trophies = useMemo(
     () => (run && result ? awards(result.playerStats, run.state.squad) : null),
@@ -632,18 +657,23 @@ export default function Results() {
               {sharing ? 'Making the picture' : 'Share this XI'}
             </Text>
           </Press>
+          {/* A Daily is one attempt, so it does not offer another go at
+              the same puzzle. It goes back to the card that says when the
+              next one opens. */}
           <Press
             onPress={() => {
               haptic('medium');
               router.dismissAll();
-              router.push('/draft');
+              router.push(isDaily ? '/daily' : '/draft');
               clearRun();
             }}
             feel="none"
             style={[styles.again, { borderColor: tone.edge }]}
             scaleTo={0.98}
           >
-            <Text style={[styles.againText, { color: tone.tint }]}>Draft another XI</Text>
+            <Text style={[styles.againText, { color: tone.tint }]}>
+              {isDaily ? 'Back to today' : 'Draft another XI'}
+            </Text>
           </Press>
           <Press
             onPress={() => {

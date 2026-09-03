@@ -200,3 +200,24 @@ export {
 export type { Club, Division } from './pyramid';
 
 export { PREMIER_LEAGUE, CHAMPIONSHIP } from './sim';
+
+export {
+  DAILY_EPOCH,
+  DAILY_ERAS,
+  dailyNumber,
+  nextDailyAt,
+  untilNextDaily,
+  dailyDate,
+  dailySeed,
+  dailyFor,
+  today,
+  scorecard,
+  dailyTitle,
+  DAILY_KEEP,
+  EMPTY_DAILY,
+  bankDaily,
+  liveStreak,
+  playedToday,
+  resultFor,
+} from './daily';
+export type { Daily, DailyEra, DailyResult, DailyRecord } from './daily';

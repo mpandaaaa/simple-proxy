@@ -80,9 +80,10 @@
     "pyramid": "tsc -p tsconfig.headless.json && node scripts/check-pyramid.mjs",
     "people": "tsc -p tsconfig.headless.json && node scripts/check-people.mjs",
     "screens": "tsc -p tsconfig.headless.json && node scripts/check-screens.mjs",
+    "daily": "tsc -p tsconfig.headless.json && node scripts/check-daily.mjs && node scripts/check-daily-record.mjs",
     "scout": "tsc -p tsconfig.headless.json && node scripts/check-scout.mjs",
     "source": "node scripts/check-source.mjs",
-    "verify": "npm run typecheck && npm run source && npm run golden && npm run dynasty && npm run realism && npm run scout && npm run pyramid && npm run cups && npm run people && npm run screens && npm run career && npm run save"
+    "verify": "npm run typecheck && npm run source && npm run golden && npm run dynasty && npm run realism && npm run scout && npm run pyramid && npm run cups && npm run people && npm run screens && npm run daily && npm run career && npm run save"
   },
   "private": true
 }
