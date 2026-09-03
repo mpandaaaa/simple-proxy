@@ -1,48 +1,44 @@
 /**
  * The app's configuration.
  *
- * This is a JavaScript config rather than the app.json it replaces for
- * one reason. The development server asks the expo-updates command line
- * tool to resolve a runtime version on every manifest request, and on
- * Windows that spawn fails outright when the machine is short of memory,
- * with
+ * This is a JavaScript config rather than the app.json it replaces
+ * because it has to be able to say different things in development and
+ * in a build, and because of one Windows failure that took three goes to
+ * kill properly:
  *
  *   cli.js runtimeversion:resolve --platform ios
  *   exited with non-zero code: 3221225794
  *
- * which is STATUS_DLL_INIT_FAILED: Windows could not start the process at
- * all. The app then will not load and nothing about the app is wrong.
+ * which is STATUS_DLL_INIT_FAILED: Windows could not start the process
+ * at all. The phone then says it cannot connect to a server that is
+ * plainly running, because the manifest fails while the bundle carries
+ * on working.
  *
- * A development build talks to the server directly and never fetches an
- * update, so it needs none of it. EAS builds do, and they set EAS_BUILD,
- * so a real build keeps the runtime version and the update URL exactly as
- * they were.
+ * The development server asks the expo-updates command line tool to
+ * resolve a runtime version on every single manifest request, and it
+ * does that whatever the config says. Dropping the runtime version did
+ * not help, because with none set it resolves the default. Pinning a
+ * literal one did not help either. The one thing the middleware treats
+ * as a reason not to spawn is the package not being there at all, so it
+ * is not there: expo-updates is uninstalled and the runtime version is
+ * worked out in process from the string below.
+ *
+ * Nothing is lost today. Over the air updates were configured and never
+ * used, and version 1.0 has not shipped. Putting them back is
+ * `npx expo install expo-updates`, restoring the `updates` block with
+ * the project's own URL, and one build.
  *
  * Everything else here is what app.json held, moved rather than changed.
  * There is no app.json any more because having both is what expo-doctor
  * warns about, and it has to stay at 21 of 21.
  */
 
-const OTA = {
-  updates: {
-    url: 'https://u.expo.dev/ad10b44d-55a2-4708-a3d5-715849cf6baa',
-    fallbackToCacheTimeout: 10000,
-  },
-};
-
 /**
- * And the second half of the same problem.
+ * The runtime version, as a plain string.
  *
- * Dropping the runtime version was not enough, because with none set the
- * development server resolves the default one, and resolving it is what
- * spawns the tool that cannot start. It came back after an hour of the
- * server being fine, which is what an intermittent spawn failure looks
- * like: the manifest breaks, the bundle keeps working, and the phone says
- * it cannot connect to a server that is plainly running.
- *
- * A literal string needs no resolving. It is the same string the update
- * channel uses, so a real build is unaffected, and it is spelled out here
- * rather than derived so that nothing has to shell out to work it out.
+ * Spelled out rather than derived, so that nothing has to be run to work
+ * it out. It is the value the update channel used, so it is the value to
+ * keep if updates ever come back.
  */
 const RUNTIME = '1.0.0';
 
@@ -120,7 +116,6 @@ module.exports = () => ({
     },
   },
   runtimeVersion: RUNTIME,
-  // Only a real build ships updates. The dev server never fetches one, and
-  // saying so plainly is what stops it going looking.
-  ...(process.env.EAS_BUILD ? OTA : { updates: { enabled: false } }),
+  // Nothing to fetch, and nothing installed that could fetch it.
+  updates: { enabled: false },
 });
