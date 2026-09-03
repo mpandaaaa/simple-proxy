@@ -25,12 +25,12 @@ import {
   awards,
   COMPS,
   objectiveClause,
+  takeJob,
   type CupRun,
   chemBonus,
   expectedRating,
   finishFor,
   highlights,
-  lastName,
   livePosition,
   mulberry32,
   ordinal,
@@ -191,6 +191,9 @@ export default function Summer() {
 
   if (!state) return null;
   const { report, result, before, after } = state;
+  /* Who will have you now. Generated when the season closed, so it is
+     the same list whichever way you come back to this screen. */
+  const jobs = after.jobs ?? [];
   const fin = finishFor(result);
   const tone = TONE[fin.tone];
   const paper = verdict(result);
@@ -445,7 +448,7 @@ export default function Summer() {
         {/* ================= what every player did ================= */}
         <Text style={[text.label, styles.sect]}>Player statistics</Text>
         <View style={styles.players}>
-          {squad.map((p) => {
+          {squad.map((p, si) => {
             const st = result.playerStats[p.n] ?? { g: 0, a: 0, cs: 0 };
             const keeps = p.pos === 'GK' || p.pos === 'DEF';
             const expected = expectedRating(p.rtg);
@@ -455,7 +458,7 @@ export default function Summer() {
             const apps = did?.apps ?? 0;
             const out = did?.daysOut ?? 0;
             return (
-              <View key={p.n} style={styles.pl}>
+              <View key={`${p.n}-${si}`} style={styles.pl}>
                 <View
                   style={[
                     styles.plPos,
@@ -611,8 +614,46 @@ export default function Summer() {
         {report.sacked ? (
           <View style={styles.sacked}>
             <Text style={styles.sackedText}>
-              The board have run out of patience. The career ends here.
+              The board have run out of patience. You are out of a job at{' '}
+              {before.club}.
             </Text>
+            {jobs.length ? (
+              <>
+                <Text style={styles.sackedNote}>
+                  Somebody always needs a manager, and it is always a rung
+                  down. Everything you have won comes with you.
+                </Text>
+                {jobs.map((j) => (
+                  <Press
+                    key={j.club}
+                    onPress={() => {
+                      haptic('medium');
+                      const next = takeJob(after, j);
+                      if (!next) return;
+                      setCareer(next);
+                      sfx('pick');
+                      router.replace('/dynasty');
+                    }}
+                    feel="none"
+                    style={styles.sackedJob}
+                    scaleTo={0.98}
+                  >
+                    <ClubDisc club={j.club} size={30} />
+                    <View style={styles.sackedJobBody}>
+                      <Text style={styles.sackedJobClub} numberOfLines={1}>
+                        {j.club}
+                      </Text>
+                      <Text style={styles.sackedJobNote} numberOfLines={1}>
+                        {j.note} {'·'} rated {j.rating} {'·'} £{j.budget}m
+                      </Text>
+                    </View>
+                    <Text style={styles.sackedJobGo} allowFontScaling={false}>
+                      {'›'}
+                    </Text>
+                  </Press>
+                ))}
+              </>
+            ) : null}
             <Press
               onPress={() => {
                 haptic('medium');
@@ -624,7 +665,9 @@ export default function Summer() {
               style={styles.sackedCta}
               scaleTo={0.98}
             >
-              <Text style={styles.sackedCtaText}>Find another job</Text>
+              <Text style={styles.sackedCtaText}>
+                {jobs.length ? 'Walk away and start again' : 'Find another job'}
+              </Text>
             </Press>
           </View>
         ) : null}
@@ -729,24 +772,24 @@ export default function Summer() {
 
         {report.improved.length ? (
           <Group title="Better than last year" tone={color.win}>
-            {report.improved.map((p) => (
-              <Change key={p.n} player={p} />
+            {report.improved.map((p, i) => (
+              <Change key={`${p.n}-${i}`} player={p} />
             ))}
           </Group>
         ) : null}
 
         {report.declined.length ? (
           <Group title="Slipping" tone={color.loss}>
-            {report.declined.map((p) => (
-              <Change key={p.n} player={p} />
+            {report.declined.map((p, i) => (
+              <Change key={`${p.n}-${i}`} player={p} />
             ))}
           </Group>
         ) : null}
 
         {report.injured.length ? (
           <Group title="On the treatment table" tone={color.warning}>
-            {report.injured.map((i) => (
-              <Line key={i.name} name={i.name} note={`${i.days} days, ${i.injury.toLowerCase()}`} />
+            {report.injured.map((i, n) => (
+              <Line key={`${i.name}-${n}`} name={i.name} note={`${i.days} days, ${i.injury.toLowerCase()}`} />
             ))}
           </Group>
         ) : null}
@@ -755,8 +798,8 @@ export default function Summer() {
         {report.loans.length ? (
           <Group title={`${report.loans.length} back from loan`} tone={hue.mint}>
             <View style={styles.backFrom}>
-              {report.loans.map((l) => (
-                <View key={l.name} style={styles.backRow}>
+              {report.loans.map((l, n) => (
+                <View key={`${l.name}-${n}`} style={styles.backRow}>
                   <View style={styles.backBody}>
                     <Text style={styles.backName} numberOfLines={1}>
                       {l.name}
@@ -1600,6 +1643,27 @@ const styles = StyleSheet.create({
     gap: space.s3,
   },
   sackedText: { ...text.body, color: color.text2 },
+  sackedNote: { ...text.small, fontSize: 12, lineHeight: 17, marginTop: -space.s1 },
+  sackedJob: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s3,
+    padding: space.s3,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: alpha(hue.sky, 0.34),
+    backgroundColor: alpha(hue.sky, 0.09),
+  },
+  sackedJobBody: { flex: 1, minWidth: 0 },
+  sackedJobClub: {
+    fontFamily: font.displayBold,
+    fontSize: 17,
+    lineHeight: 22,
+    color: color.text1,
+  },
+  sackedJobNote: { ...text.small, fontSize: 11, lineHeight: 15, color: color.text3 },
+  sackedJobGo: { fontSize: 18, color: hue.sky },
+
   sackedCta: {
     minHeight: 50,
     alignItems: 'center',

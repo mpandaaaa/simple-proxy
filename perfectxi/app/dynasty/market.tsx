@@ -7,7 +7,6 @@ import {
   Rise,
   Shine,
   ClubDisc,
-  Sheet,
   SlotSheet,
   PlayerSheet,
 } from '../../src/ui/components';
@@ -17,9 +16,7 @@ import { haptic } from '../../src/ui/feel';
 import { sfx } from '../../src/ui/sound';
 import {
   clubWageBill,
-  effectiveRating,
   emptySlots,
-  everyone,
   market,
   mulberry32,
   posFit,

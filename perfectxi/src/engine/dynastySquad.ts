@@ -10,7 +10,7 @@ import {
   type Dynasty,
   type DynastyPlayer,
 } from './dynasty';
-import { FAN_CEIL, injuryMultiplier } from './dynastyClub';
+import { FAN_CEIL } from './dynastyClub';
 import { canFill, slotAccepts } from './dynastyTactics';
 import { primeAge } from './career';
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { color, gradient, line, positionColor, radius, space, hue, alpha } from '../tokens';
+import { color, gradient, line, positionColor, radius, space, hue } from '../tokens';
 import { font, text } from '../type';
 import { haptic } from '../feel';
 import { Sheet } from './Sheet';

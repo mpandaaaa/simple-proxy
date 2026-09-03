@@ -26,7 +26,7 @@ import {
 } from './dynastyClub';
 import { learnTactic } from './dynastyTactics';
 import { COMPS, simulateSeasonCups, type CupSeason, type ShieldTie } from './cups';
-import { endOfSeason, startingChampionship, startingLeague } from './pyramid';
+import { clubRating, endOfSeason, startingChampionship, startingLeague } from './pyramid';
 import {
   MORALE_UNHAPPY,
   autoLoanPicks,
@@ -46,7 +46,22 @@ import {
   renewalTerms,
   seasonInjuries,
 } from './dynastySquad';
-import { objectiveClause, objectiveFor, objectiveLabel, scenarioById, type ScenarioId } from './career';
+import {
+  clubOptions,
+  objectiveClause,
+  objectiveFor,
+  objectiveLabel,
+  scenarioById,
+  type ScenarioId,
+} from './career';
+
+/**
+ * The clubs a career can be started at.
+ *
+ * Built once, because it is the same list every time and the database it
+ * comes from does not change while the app is running.
+ */
+const MANAGEABLE: ReadonlySet<string> = new Set(clubOptions(2026).map((o) => o.club));
 
 /**
  * The end of a season, in the one order that works.
@@ -637,10 +652,13 @@ export function processSeasonEnd(
   if (next.division === 2 && !pyramid.youWentDown) {
     next.parachute = Math.max(0, (d.parachute ?? 0) - 1);
   }
-  /* And who wants you. Nobody approaches a manager in the summer he has
-     just been relegated or sacked. */
-  next.jobs =
-    sacked || pyramid.youWentDown ? [] : jobOffers(next, next.league, rnd);
+  /* And who wants you.
+     A manager who has just been relegated is approached by nobody. One
+     who has been sacked is approached by somebody, because somebody
+     always needs one, and it is always a rung down. */
+  next.jobs = pyramid.youWentDown
+    ? []
+    : jobOffers(next, next.league, rnd, sacked, MANAGEABLE);
   for (const j of next.jobs) {
     say(
       `${j.club} want to speak to you`,
@@ -782,7 +800,7 @@ function nextShield(
 
   const ratingOf = (name: string): number => {
     const club = d.league.find((c) => c.name === name);
-    return club ? Math.round(club.str * 100 + 8) : 80;
+    return club ? clubRating(club.str) : 80;
   };
 
   // The double: you play whoever finished second.

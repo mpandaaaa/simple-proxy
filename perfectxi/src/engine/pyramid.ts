@@ -179,6 +179,17 @@ export function divisionFor(division: Division, club: string): Club[] {
   return division === 1 ? startingLeague(club) : startingChampionship(club);
 }
 
+/**
+ * A club's strength as a rating on the same 30 to 99 scale as a player.
+ *
+ * Strength runs to 0.95 and drift can push it there, which came out as a
+ * club "rated 103". Everything that shows a club's quality to a person
+ * goes through here so it cannot happen again.
+ */
+export function clubRating(str: number): number {
+  return Math.max(30, Math.min(99, Math.round(str * 100 + 8)));
+}
+
 /** What the division is called, for anything that has to say it. */
 export function divisionName(division: Division): string {
   return division === 1 ? 'Premier League' : 'Championship';

@@ -213,7 +213,7 @@ function SeasonCard({
             </Text>
           ) : null}
           {record.xi.map((p) => (
-            <View key={p.n} style={styles.player}>
+            <View key={`${p.n}-${p.pos}`} style={styles.player}>
               <View
                 style={[
                   styles.badge,

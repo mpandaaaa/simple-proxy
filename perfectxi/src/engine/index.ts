@@ -195,6 +195,7 @@ export {
   startingChampionship,
   divisionFor,
   divisionName,
+  clubRating,
 } from './pyramid';
 export type { Club, Division } from './pyramid';
 

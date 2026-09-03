@@ -14,7 +14,6 @@ import {
   ClubDisc,
   Sheet,
   Confirm,
-  Shine,
 } from '../../src/ui/components';
 import type { Anchor } from '../../src/ui/components/PlayerCard';
 import type { SlotRect } from '../../src/ui/components/Pitch';
@@ -25,7 +24,6 @@ import {
   POSITION_LABEL,
   canPlay,
   clubSeasons,
-  lastName,
   slotsForPlayer,
   squadAvg,
   ratingsHidden,

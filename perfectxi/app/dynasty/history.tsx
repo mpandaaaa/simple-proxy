@@ -367,7 +367,7 @@ export default function History() {
                     ? r.a
                     : Math.round((r.rSum / Math.max(1, r.rN)) * 100) / 100;
             return (
-              <View key={r.n} style={styles.leader}>
+              <View key={`${r.n}-${i}`} style={styles.leader}>
                 <Text style={styles.leaderRank} allowFontScaling={false}>
                   {i + 1}
                 </Text>

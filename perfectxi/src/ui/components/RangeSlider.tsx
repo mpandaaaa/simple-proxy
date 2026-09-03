@@ -8,7 +8,7 @@ import Animated, {
   useDerivedValue,
   useSharedValue,
 } from 'react-native-reanimated';
-import { color, radius, line } from '../tokens';
+import { color, line } from '../tokens';
 import { haptic } from '../feel';
 
 const THUMB = 26;

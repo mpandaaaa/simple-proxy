@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { ModeScreen, Shine } from '../../src/ui/components';
-import { color, gradient, line, radius, space, hue, alpha } from '../../src/ui/tokens';
+import { color, gradient, line, radius, space, hue } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import {
   amortTotal,

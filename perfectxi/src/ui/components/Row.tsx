@@ -4,7 +4,6 @@ import { color, radius, space, hit, gradient, shadow, line } from '../tokens';
 import { text } from '../type';
 import { IconChevron } from '../icons';
 import { Press } from './Press';
-import { Shine } from './Shine';
 
 export type RowTone = 'accent' | 'gold' | 'blue' | 'danger' | 'purple' | 'neutral';
 
@@ -104,7 +103,7 @@ const styles = StyleSheet.create({
   },
   body: { flex: 1, minWidth: 0 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: space.s2 },
-  title: { flexShrink: 1, fontSize: 18, lineHeight: 21 },
+  title: { flexShrink: 1, fontSize: 18, lineHeight: 23 },
   tag: {
     paddingHorizontal: space.s2,
     paddingVertical: 2,

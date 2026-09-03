@@ -571,7 +571,7 @@ const styles = StyleSheet.create({
     color: color.text1,
     fontVariant: ['tabular-nums'],
   },
-  statValueBig: { fontSize: 23, lineHeight: 27 },
+  statValueBig: { fontSize: 23, lineHeight: 29 },
   statLabel: { ...text.key, fontSize: 8.5, color: color.text3 },
 
   form: {
@@ -670,7 +670,7 @@ const styles = StyleSheet.create({
   fxLater: { opacity: 0.52 },
   fxInfo: { flex: 1, gap: 2 },
   fxKey: { ...text.key, fontSize: 8.5, color: color.text3 },
-  fxName: { fontFamily: font.displayBold, fontSize: 17, lineHeight: 20, color: color.text1 },
+  fxName: { fontFamily: font.displayBold, fontSize: 17, lineHeight: 21, color: color.text1 },
   fxHint: { ...text.small, fontSize: 11, color: color.text3 },
   fxRes: { alignItems: 'flex-end' },
   fxScore: {

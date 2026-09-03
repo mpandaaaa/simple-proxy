@@ -1,5 +1,6 @@
 import type { Rng } from './rng';
 import type { Position } from './types';
+import { clubRating } from './pyramid';
 import {
   everyone,
   playerValue,
@@ -149,7 +150,7 @@ export function offersFor(
     if (rnd() > want * 0.55) return;
 
     // Somebody who could actually afford him.
-    const able = league.filter((c) => c.str * 100 + 8 >= p.rtg - 6);
+    const able = league.filter((c) => clubRating(c.str) >= p.rtg - 6);
     const pool = able.length ? able : league;
     const club = pool[Math.floor(rnd() * pool.length)];
     if (!club || club.name === d.club) return;
@@ -157,16 +158,16 @@ export function offersFor(
     const worth = playerValue(p);
     const keen = 1.1 + rnd() * 0.5;
     const fee = Math.max(1, Math.round(worth * keen));
-    const clubRating = Math.round(club.str * 100 + 8);
+    const rating = clubRating(club.str);
 
     out.push({
       slot,
       name: p.n,
       club: club.name,
-      clubRating,
+      clubRating: rating,
       fee,
       worth,
-      stepUp: clubRating > mine + 2,
+      stepUp: rating > mine + 2,
     });
   });
 
@@ -400,22 +401,61 @@ export function jobOffers(
   d: Dynasty,
   league: readonly { name: string; str: number }[],
   rnd: Rng,
+  /**
+   * True if you have just been sacked.
+   *
+   * A sacked manager still works again, and almost always a rung down.
+   * Somebody always comes for him, because somebody always needs one, so
+   * the offers are certain rather than likely and the clubs are smaller.
+   */
+  sacked = false,
+  /**
+   * The clubs a career can actually be started at.
+   *
+   * Not every name in a division is one the database has a squad for, and
+   * offering a job at a club that cannot be built is a button that does
+   * nothing. Anything not in here is never offered.
+   */
+  canManage?: ReadonlySet<string>,
 ): JobOffer[] {
   const rep = reputation(d);
-  if (rep < 34) return [];
+  if (!sacked && rep < 34) return [];
   // Between none and two a summer, more often the better you have done.
-  const many = rnd() < (rep - 30) / 180 ? 2 : rnd() < (rep - 24) / 90 ? 1 : 0;
+  const many = sacked
+    ? 2
+    : rnd() < (rep - 30) / 180
+      ? 2
+      : rnd() < (rep - 24) / 90
+        ? 1
+        : 0;
   if (!many) return [];
 
   const mine = squadRating(starters(d));
-  const pool = league.filter((c) => {
-    const r = c.str * 100 + 8;
+  const real = canManage ? league.filter((c) => canManage.has(c.name)) : league;
+  const pool = real.filter((c) => {
+    const r = clubRating(c.str);
     // A club will not sack its manager for somebody it does not rate.
-    if (r > rep + 16) return false;
-    if (r < mine - 22) return false;
+    if (r > rep + (sacked ? 2 : 16)) return false;
+    // Nor is a sacked manager choosy about how far down he starts again.
+    if (!sacked && r < mine - 22) return false;
     return c.name !== d.club;
   });
-  if (!pool.length) return [];
+  if (!pool.length) {
+    /* Somewhere always needs a manager. If nothing in this division will
+       have him, the weakest club in it will. */
+    if (!sacked) return [];
+    const last = [...real].sort((a, b) => a.str - b.str)[0];
+    if (!last) return [];
+    return [
+      {
+        club: last.name,
+        rating: clubRating(last.str),
+        objective: 'Avoid the relegation fight',
+        budget: Math.round(Math.max(15, (clubRating(last.str) - 62) * 9)),
+        note: 'A long way down from where you were',
+      },
+    ];
+  }
 
   const out: JobOffer[] = [];
   const used = new Set<string>();
@@ -423,7 +463,7 @@ export function jobOffers(
     const club = pool[Math.floor(rnd() * pool.length)];
     if (!club || used.has(club.name)) continue;
     used.add(club.name);
-    const rating = Math.round(club.str * 100 + 8);
+    const rating = clubRating(club.str);
     const better = rating > mine + 3;
     out.push({
       club: club.name,
