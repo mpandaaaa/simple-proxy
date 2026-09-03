@@ -87,6 +87,8 @@ function isDynasty(v: unknown): v is Dynasty | null {
     typeof d.fans === 'number' &&
     obj(d.honours) &&
     Array.isArray(d.league) &&
+    Array.isArray(d.offers) &&
+    Array.isArray(d.jobs) &&
     obj(d.tactic) &&
     typeof (d.tactic as Record<string, unknown>).form === 'string' &&
     obj(d.staff) &&
@@ -156,6 +158,11 @@ function repairPlayer(v: unknown): DynastyPlayer | null {
     amortLeft: typeof p.amortLeft === 'number' ? p.amortLeft : 0,
     youth: p.youth === true,
     scout: typeof p.scout === 'number' ? p.scout : 0,
+    morale: typeof p.morale === 'number' ? p.morale : 70,
+    cards: typeof p.cards === 'number' ? p.cards : 0,
+    reds: typeof p.reds === 'number' ? p.reds : 0,
+    banned: typeof p.banned === 'number' ? p.banned : 0,
+    loan: typeof p.loan === 'string' ? p.loan : null,
     hist: Array.isArray(p.hist) ? (p.hist as DynastyPlayer['hist']) : [],
   };
 }
@@ -210,6 +217,14 @@ function migrateToFour(v: unknown): Dynasty | null {
       ? (d.below as Dynasty['below'])
       : CHAMPIONSHIP.map((c) => ({ ...c })),
     parachute: typeof d.parachute === 'number' ? d.parachute : 0,
+    offers: Array.isArray(d.offers) ? (d.offers as Dynasty['offers']) : [],
+    jobs: Array.isArray(d.jobs) ? (d.jobs as Dynasty['jobs']) : [],
+    autoLoan: d.autoLoan === true,
+    derby:
+      typeof d.derby === 'object' && d.derby !== null
+        ? (d.derby as Dynasty['derby'])
+        : { w: 0, d: 0, l: 0 },
+    spells: Array.isArray(d.spells) ? (d.spells as Dynasty['spells']) : [],
     rival: typeof d.rival === 'string' ? d.rival : null,
     tactic: { ...EMPTY_TACTIC, form: formation },
     staff: { ...EMPTY_STAFF },
@@ -242,7 +257,7 @@ function migrateToFour(v: unknown): Dynasty | null {
 
 export const dynastyStore = defineStore<Dynasty | null>({
   key: 'dynasty',
-  version: 9,
+  version: 10,
   fallback: null,
   validate: isDynasty,
   migrations: {
@@ -260,6 +275,34 @@ export const dynastyStore = defineStore<Dynasty | null>({
     6: (v) => (v ? tidySquad(v as Dynasty) : null),
     // Seven is the following and the club shop. A career from before them
     // starts with the crowd its ground would hold and a shop at level one.
+    /* Ten is the people: how they feel, who wants them, who gets booked,
+       who goes out on loan, and who wants you. */
+    10: (v) => {
+      if (!v) return null;
+      const d = v as Dynasty;
+      const fix = (p: DynastyPlayer | null) =>
+        p
+          ? {
+              ...p,
+              morale: typeof p.morale === 'number' ? p.morale : 70,
+              cards: p.cards ?? 0,
+              reds: p.reds ?? 0,
+              banned: p.banned ?? 0,
+              loan: p.loan ?? null,
+            }
+          : null;
+      return {
+        ...d,
+        roster: d.roster.map(fix),
+        youth: d.youth.map((p) => fix(p) as DynastyPlayer),
+        retired: d.retired.map((p) => fix(p) as DynastyPlayer),
+        offers: d.offers ?? [],
+        jobs: d.jobs ?? [],
+        autoLoan: d.autoLoan ?? false,
+        derby: d.derby ?? { w: 0, d: 0, l: 0 },
+        spells: d.spells ?? [],
+      };
+    },
     /* Nine is promotion and relegation. A career from before it keeps the
        division it was in, which was always the top one, and starts with
        the real 2026/27 clubs. */

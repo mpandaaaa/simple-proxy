@@ -2,6 +2,8 @@ import { FORMATIONS } from './formations';
 import type { Position } from './types';
 import type { Dynasty, Tactic } from './dynasty';
 import { bench, starters } from './dynasty';
+import { styleFit } from './dynastyStyles';
+import { moraleFit } from './dynastyPeople';
 
 /**
  * Tactics.
@@ -177,12 +179,16 @@ export function effectiveRating(d: Dynasty): number {
   const slots: Position[] = [];
   for (const row of shape.rows) for (const p of row) slots.push(p);
 
+  const style = (d.tactic.style as StyleId) ?? 'balanced';
   let total = 0;
   let n = 0;
   for (let i = 0; i < Math.min(d.roster.length, 11); i++) {
     const p = d.roster[i];
     if (!p) continue;
-    total += p.rtg * posFit(p.pos, slots[i] ?? d.slots[i] ?? p.pos);
+    /* Three things at once: how well he suits the place, how well the
+       kind of player he is suits the way you have asked them to play, and
+       whether he wants to be there at all. */
+    total += p.rtg * posFit(p.pos, slots[i] ?? d.slots[i] ?? p.pos) * styleFit(p, style) * moraleFit(p);
     n++;
   }
   return (n ? total / n : 0) + benchCover(d);

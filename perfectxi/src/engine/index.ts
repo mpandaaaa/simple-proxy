@@ -126,6 +126,7 @@ export {
   objectiveFor,
   objectiveLabel,
   objectiveClause,
+  takeJob,
   budgetFor,
   primeAge,
   startCareer,

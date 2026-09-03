@@ -28,6 +28,18 @@ import { learnTactic } from './dynastyTactics';
 import { COMPS, simulateSeasonCups, type CupSeason } from './cups';
 import { endOfSeason, startingChampionship, startingLeague } from './pyramid';
 import {
+  MORALE_UNHAPPY,
+  autoLoanPicks,
+  averageWage,
+  loanClubFor,
+  loanSeason,
+  jobOffers,
+  moraleAfterSeason,
+  offersFor,
+  seasonCards,
+  type LoanSpell,
+} from './dynastyPeople';
+import {
   autoRenews,
   intakeSize,
   makeYouth,
@@ -73,6 +85,12 @@ export type SummerReport = {
   fansSwing: number;
   /** every cup the club played, with its money and its trophies */
   cups: CupSeason;
+  /** who was suspended, and for how long */
+  suspended: { name: string; yellows: number; reds: number; games: number }[];
+  /** who came back from a loan, and what it did for them */
+  loans: LoanSpell[];
+  /** who is unhappy enough to ask for a move */
+  unsettled: string[];
   /** what May did to the division */
   relegated: string[];
   promoted: string[];
@@ -152,6 +170,30 @@ export function processSeasonEnd(
     );
   }
 
+  /* 1b. the derby.
+     It was a word in the fixture list. Beating them is worth more to the
+     board and to the crowd than beating anybody else, and losing to them
+     costs more, because that is what a derby is. */
+  const derbies = d.rival ? result.matches.filter((m) => m.opp === d.rival) : [];
+  const derbyW = derbies.filter((m) => m.oc === 'win').length;
+  const derbyD = derbies.filter((m) => m.oc === 'draw').length;
+  const derbyL = derbies.filter((m) => m.oc === 'loss').length;
+  next.derby = {
+    w: d.derby.w + derbyW,
+    d: d.derby.d + derbyD,
+    l: d.derby.l + derbyL,
+  };
+  const derbySwing = derbyW * 4 - derbyL * 5;
+  if (derbies.length && (derbyW === 2 || derbyL === 2)) {
+    say(
+      derbyW === 2 ? `The double over ${d.rival}` : `${d.rival} did the double`,
+      derbyW === 2
+        ? `Both of them, and the city knows about it.`
+        : `Beaten home and away by ${d.rival}. Nobody forgets that one.`,
+      derbyW === 2 ? 'good' : 'bad',
+    );
+  }
+
   /* 2. the board */
   const met = result.position <= d.objective.target;
   const raw = met
@@ -161,7 +203,8 @@ export function processSeasonEnd(
     : Math.abs(result.position - d.objective.target) <= 3
       ? -6
       : -14;
-  const swing = Math.round((raw - (ledger.deduction ? 10 : 0)) * (met ? d.leash : 1 / d.leash));
+  const swing =
+    Math.round((raw - (ledger.deduction ? 10 : 0)) * (met ? d.leash : 1 / d.leash)) + derbySwing;
   next.mgr = clamp(d.mgr + swing, 0, 99);
   const sacked = next.mgr <= 20;
   next.sacked = sacked;
@@ -211,6 +254,10 @@ export function processSeasonEnd(
   next.budget = nextBudget(d, result.position, ledger);
   const fansBefore = d.fans;
   next.fans = nextFans(d, result.position, squadRating(starters(d)));
+  // A derby is worth a few thousand on the gate either way.
+  if (derbies.length) {
+    next.fans = Math.round(Math.max(0.4, next.fans + derbyW * 0.05 - derbyL * 0.05) * 100) / 100;
+  }
 
   /* 5. match ratings, which development is about to read */
   const stats: Record<string, { g: number; a: number }> = {};
@@ -271,6 +318,32 @@ export function processSeasonEnd(
     say(
       'An injury crisis',
       `${injured.length} of the squad missed a month or more. ${injured[0].name} was out for ${injured[0].days} days with a ${injured[0].injury.toLowerCase()}.`,
+      'bad',
+    );
+  }
+
+  /* 7b. bookings, and the games they cost.
+     Five yellows inside the first nineteen and he misses one, whoever he
+     is and whatever the fixture is. It comes off his appearances, which
+     is what development reads. */
+  const suspended: { name: string; yellows: number; reds: number; games: number }[] = [];
+  for (const p of everyone(next)) {
+    const disc = seasonCards(p, p.apps ?? 0, rnd);
+    p.cards = disc.yellows;
+    p.reds = disc.reds;
+    p.banned = disc.banned;
+    if (disc.banned > 0) {
+      p.apps = Math.max(0, (p.apps ?? 0) - disc.banned);
+      suspended.push({ name: p.n, yellows: disc.yellows, reds: disc.reds, games: disc.banned });
+    }
+  }
+  const worstBan = [...suspended].sort((a, b) => b.games - a.games)[0];
+  if (worstBan && worstBan.games >= 3) {
+    say(
+      `${worstBan.name} suspended`,
+      worstBan.reds
+        ? `A red card and ${worstBan.games} games out of the side.`
+        : `${worstBan.yellows} bookings across the season and ${worstBan.games} games missed for them.`,
       'bad',
     );
   }
@@ -400,6 +473,63 @@ export function processSeasonEnd(
   /* the tactic is a season better understood */
   next.tactic = learnTactic(next.tactic);
 
+  /* 10b. loans, academy only.
+     A season of thirty five games in the Championship is worth two or
+     three rating points that a year in the under twenty ones is not. */
+  const loansBack: LoanSpell[] = [];
+  for (const y of next.youth) {
+    if (!y.loan) continue;
+    const spell = loanSeason(y, { n: y.loan, level: y.rtg >= 62 ? 2 : 3 }, rnd);
+    y.rtg = Math.min(y.pot, Math.round(y.rtg + spell.gained));
+    y.apps = spell.apps;
+    y.loan = null;
+    loansBack.push(spell);
+  }
+  if (loansBack.length) {
+    const best = [...loansBack].sort((a, b) => b.gained - a.gained)[0];
+    say(
+      `${loansBack.length} back from loan`,
+      `${best.name} played ${best.apps} games at ${best.club} and came back ${best.gained} better.`,
+      'good',
+    );
+  }
+  if (next.autoLoan) {
+    for (const i of autoLoanPicks(next)) {
+      const y = next.youth[i];
+      if (y) y.loan = loanClubFor(y.rtg, rnd).n;
+    }
+  }
+
+  /* 10c. how everybody feels about it, and who has been asked about. */
+  const squadWage = averageWage(next);
+  const trophyCount = cups.trophies.length + (result.position === 1 ? 1 : 0);
+  for (const p of everyone(next)) {
+    p.morale = moraleAfterSeason(next, p, {
+      finish: result.position,
+      trophies: trophyCount,
+      squadWage,
+    }, rnd);
+  }
+  next.offers = offersFor(next, next.league, rnd);
+  const unsettled = everyone(next).filter((p) => p.morale < MORALE_UNHAPPY);
+  if (unsettled.length) {
+    say(
+      unsettled.length === 1 ? `${unsettled[0].n} wants to leave` : `${unsettled.length} want to leave`,
+      unsettled.length === 1
+        ? `${unsettled[0].n} is unhappy enough to ask for a move.`
+        : `${unsettled.map((p) => p.n).slice(0, 3).join(', ')} are unhappy enough to ask for a move.`,
+      'bad',
+    );
+  }
+  if (next.offers.length) {
+    const top = next.offers[0];
+    say(
+      `${top.club} want ${top.name}`,
+      `£${top.fee}m on the table for a player worth £${top.worth}m. It is in the transfer screen until you answer it.`,
+      'news',
+    );
+  }
+
   /* 11b. promotion and relegation, which is what makes a twentieth
      season a different league from a fifth. */
   const pyramid = endOfSeason({
@@ -474,6 +604,18 @@ export function processSeasonEnd(
   if (next.division === 2 && !pyramid.youWentDown) {
     next.parachute = Math.max(0, (d.parachute ?? 0) - 1);
   }
+  /* And who wants you. Nobody approaches a manager in the summer he has
+     just been relegated or sacked. */
+  next.jobs =
+    sacked || pyramid.youWentDown ? [] : jobOffers(next, next.league, rnd);
+  for (const j of next.jobs) {
+    say(
+      `${j.club} want to speak to you`,
+      `${j.note}. They would want you to ${j.objective.toLowerCase()}, with £${j.budget}m to spend. The offer is on the club screen until you answer it.`,
+      'news',
+    );
+  }
+
   next.inbox = [...news, ...d.inbox].slice(0, 40);
 
   return {
@@ -499,6 +641,9 @@ export function processSeasonEnd(
       fansBefore,
       fansSwing: Math.round((next.fans - fansBefore) * 100) / 100,
       cups,
+      suspended,
+      loans: loansBack,
+      unsettled: unsettled.map((p) => p.n),
       relegated: pyramid.relegated.filter((n) => n !== d.club),
       promoted: pyramid.promoted,
       youWentDown: pyramid.youWentDown,

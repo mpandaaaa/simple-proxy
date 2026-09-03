@@ -51,6 +51,20 @@ export type DynastyPlayer = {
   season: string;
   rtg: number;
   age: number;
+  /**
+   * How he feels about being here, 0 to 100.
+   *
+   * Seventy is content. Playing time, what he earns beside the men next
+   * to him, where the club is going, and whether you turned down a move
+   * he wanted. Under thirty five he asks to leave.
+   */
+  morale: number;
+  /** bookings and matches missed last season */
+  cards: number;
+  reds: number;
+  banned: number;
+  /** the club he is out on loan at, academy players only */
+  loan: string | null;
   /** the three tracks the rating is blended from */
   phys: number;
   tech: number;
@@ -258,6 +272,11 @@ export function seedTracks(base: PlayerSeed, rnd: Rng): DynastyPlayer {
     goals: 0,
     assists: 0,
     avgR: null,
+    morale: 70,
+    cards: 0,
+    reds: 0,
+    banned: 0,
+    loan: null,
     daysOut: 0,
     lastInj: null,
     injHist: 0,
@@ -535,6 +554,44 @@ export type Dynasty = {
   below: { name: string; str: number; var: number }[];
   /** seasons of parachute payment left after a relegation */
   parachute: number;
+  /** bids other clubs have made for your players this summer */
+  offers: {
+    slot: number;
+    name: string;
+    club: string;
+    clubRating: number;
+    fee: number;
+    worth: number;
+    stepUp: boolean;
+  }[];
+  /** clubs that want you to manage them */
+  jobs: {
+    club: string;
+    rating: number;
+    objective: string;
+    budget: number;
+    /** what they are, in one line */
+    note: string;
+  }[];
+  /** send academy players out on loan without being asked */
+  autoLoan: boolean;
+  /** how the derby has gone under you */
+  derby: { w: number; d: number; l: number };
+  /**
+   * Every club you have managed, in order.
+   *
+   * A career belongs to the manager, not to the club. Taking the Newcastle
+   * job does not delete what you did at Sunderland.
+   */
+  spells: {
+    club: string;
+    from: number;
+    to: number;
+    seasons: number;
+    titles: number;
+    cups: number;
+    best: number;
+  }[];
   /** last season's cup runs, kept so the cabinet can show them */
   lastCups: unknown | null;
   /**
@@ -688,6 +745,11 @@ export function startDynasty(
     league: [],
     below: [],
     parachute: 0,
+    offers: [],
+    jobs: [],
+    autoLoan: false,
+    derby: { w: 0, d: 0, l: 0 },
+    spells: [],
     lastCups: null,
     fans: 2.9,
     rival: null,

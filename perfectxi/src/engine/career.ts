@@ -333,6 +333,11 @@ export function startCareer(args: {
     league: startingLeague(club),
     below: CHAMPIONSHIP.map((c) => ({ ...c })),
     parachute: 0,
+    offers: [],
+    jobs: [],
+    autoLoan: false,
+    derby: { w: 0, d: 0, l: 0 },
+    spells: [],
     lastCups: null,
     rival: RIVALS[club] ?? null,
     tactic: { ...EMPTY_TACTIC, form: formation },
@@ -358,5 +363,62 @@ export function startCareer(args: {
     sold: [],
     injuries: [],
     sacked: false,
+  };
+}
+
+/**
+ * Take the job.
+ *
+ * A career belongs to the manager, so what you won stays with you: the
+ * trophies, the seasons you have been at it, the clubs you have been at.
+ * Everything that belongs to the club is left behind, because it does:
+ * their squad, their money, their stadium, their following, their books.
+ *
+ * The seed moves with you so the new club is not a replay of somebody
+ * else's season, and the objective is the one they set out in the offer.
+ */
+function clamp(v: number, a: number, b: number): number {
+  return Math.max(a, Math.min(b, v));
+}
+
+export function takeJob(
+  d: Dynasty,
+  offer: { club: string; objective: string; budget: number },
+): Dynasty | null {
+  const option = clubOptions(2026).find((o) => o.club === offer.club);
+  if (!option) return null;
+
+  const fresh = startCareer({
+    clubKey: option.key,
+    scenario: d.scenario as ScenarioId,
+    mode: d.mode,
+    formation: d.tactic.form,
+    seed: (d.seed ^ Math.imul(d.year + 1, 0x27d4eb2d)) >>> 0,
+  });
+
+  // What this manager did at the club he is leaving.
+  const spell = {
+    club: d.club,
+    from: d.spells.reduce((a, s) => a + s.seasons, 1),
+    to: d.spells.reduce((a, s) => a + s.seasons, 0) + d.seasons.length,
+    seasons: d.seasons.length,
+    titles: d.titles,
+    cups: Object.values(d.honours ?? {}).reduce((a, n) => a + (n as number), 0),
+    best: d.seasons.length ? Math.min(...d.seasons.map((s) => s.fin)) : 20,
+  };
+
+  const target = clamp(objectiveFor(option.avg).target, 1, 20);
+
+  return {
+    ...fresh,
+    /* The manager's record, which is his and not the club's. */
+    spells: [...d.spells, spell],
+    honours: { ...(d.honours ?? {}) },
+    titles: d.titles,
+    year: d.year,
+    /* A new board that has just hired you starts you well thought of. */
+    mgr: 62,
+    objective: { label: objectiveLabel(target), target },
+    budget: offer.budget,
   };
 }

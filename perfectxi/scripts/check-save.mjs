@@ -30,12 +30,12 @@ function fail(msg) {
 const ADDED_LATER = [
   'tactic', 'staff', 'infra', 'youth', 'allTime', 'records', 'inbox',
   'psr', 'saleProfit', 'psrHit', 'ledger', 'expired', 'renewed', 'sold',
-  'injuries', 'sacked', 'marketRolls', 'fans', 'europe', 'honours', 'lastCups', 'division', 'league', 'below',
+  'injuries', 'sacked', 'marketRolls', 'fans', 'europe', 'honours', 'lastCups', 'division', 'league', 'below', 'parachute', 'offers', 'jobs', 'autoLoan', 'derby', 'spells',
 ];
 
 const PLAYER_ADDED_LATER = [
   'assists', 'avgR', 'daysOut', 'lastInj', 'why', 'book', 'amort',
-  'amortLeft', 'youth', 'scout', 'hist',
+  'amortLeft', 'youth', 'scout', 'hist', 'morale', 'cards', 'reds', 'banned', 'loan',
 ];
 
 // An old save: the career as it was before any of that existed.

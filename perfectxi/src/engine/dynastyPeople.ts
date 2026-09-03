@@ -1,0 +1,429 @@
+import type { Rng } from './rng';
+import type { Position } from './types';
+import {
+  everyone,
+  playerValue,
+  starters,
+  squadRating,
+  type Dynasty,
+  type DynastyPlayer,
+} from './dynasty';
+
+/**
+ * The people, rather than the numbers.
+ *
+ * Four things live here, and they are the same thing from four sides: a
+ * squad is fourteen men with opinions about how they are being treated.
+ *
+ *   Morale     what he thinks of playing here, and what that costs you
+ *   Offers     somebody else wants him, and refusing has a price
+ *   Cards      he gets booked, and eventually he misses a game for it
+ *   Loans      the academy player goes out and comes back better
+ *
+ * Everything is a pure function of the career and a passed generator, so
+ * a season still replays from its seed alone.
+ */
+
+/* ---------- morale ---------- */
+
+/** Content. Everybody starts here and drifts from it. */
+export const MORALE_BASE = 70;
+/** Under this he asks to leave. */
+export const MORALE_UNHAPPY = 35;
+
+/**
+ * What being unhappy costs on the pitch.
+ *
+ * Three percent at the bottom, nothing at all once he is content. It is
+ * the same size as a tactical misfit on purpose: enough to matter over a
+ * season, never enough to be the only thing that decides one.
+ */
+export function moraleFit(p: DynastyPlayer): number {
+  const m = typeof p.morale === 'number' ? p.morale : MORALE_BASE;
+  if (m >= 60) return 1;
+  return 1 - ((60 - m) / 60) * 0.03;
+}
+
+export function moraleWord(m: number): string {
+  if (m >= 85) return 'Loves it here';
+  if (m >= 70) return 'Happy';
+  if (m >= 55) return 'Settled';
+  if (m >= MORALE_UNHAPPY) return 'Restless';
+  if (m >= 20) return 'Wants to leave';
+  return 'Refusing to play';
+}
+
+/**
+ * What a season did to how he feels.
+ *
+ * Playing time first, because it is what a footballer cares about most.
+ * Then what he earns beside the men next to him, then whether the club is
+ * going anywhere, then whether anything was won.
+ */
+export function moraleAfterSeason(
+  d: Dynasty,
+  p: DynastyPlayer,
+  args: { finish: number; trophies: number; squadWage: number },
+  rnd: Rng,
+): number {
+  const now = typeof p.morale === 'number' ? p.morale : MORALE_BASE;
+  let move = 0;
+
+  /* Playing time. A first team player expects thirty games; anybody good
+     enough for the eleven and getting under fifteen is unhappy about it. */
+  const apps = p.apps ?? 0;
+  if (apps >= 28) move += 6;
+  else if (apps >= 18) move += 1;
+  else if (apps >= 10) move -= 5;
+  else move -= 12;
+
+  // What he earns against what the squad earns.
+  const fair = args.squadWage;
+  if (fair > 0) {
+    const ratio = p.contract.wage / fair;
+    if (ratio > 1.35) move += 3;
+    else if (ratio < 0.65) move -= 4;
+  }
+
+  // Ambition. A very good player at a club going nowhere gets restless.
+  const gap = p.rtg - squadRating(starters(d));
+  if (gap > 4 && args.finish > 8) move -= 6;
+  if (args.finish <= 4) move += 4;
+  if (args.finish >= 18) move -= 6;
+
+  move += args.trophies * 5;
+
+  // And a little of his own weather.
+  move += Math.round((rnd() - 0.5) * 6);
+
+  // Everybody drifts back toward content when nothing much happens.
+  const pull = (MORALE_BASE - now) * 0.15;
+  return Math.max(0, Math.min(100, Math.round(now + move + pull)));
+}
+
+/* ---------- offers for your players ---------- */
+
+export type Offer = {
+  /** the roster index he is standing in */
+  slot: number;
+  name: string;
+  /** who wants him */
+  club: string;
+  /** how good they are, so the size of the move is readable */
+  clubRating: number;
+  /** in £m */
+  fee: number;
+  /** what he is actually worth, for the comparison */
+  worth: number;
+  /** true if the club is a step up from yours */
+  stepUp: boolean;
+};
+
+/**
+ * Who is being asked about this summer.
+ *
+ * Real clubs bid over the odds, because a player who is not for sale
+ * costs more than one who is. The bid is between ten and sixty percent
+ * above what he is worth and it scales with how badly they want him.
+ *
+ * Only clubs who could plausibly afford him make an approach, which is
+ * why a nineteenth placed side is not offered £120m for anybody.
+ */
+export function offersFor(
+  d: Dynasty,
+  league: readonly { name: string; str: number }[],
+  rnd: Rng,
+): Offer[] {
+  const out: Offer[] = [];
+  const mine = squadRating(starters(d));
+
+  d.roster.forEach((p, slot) => {
+    if (!p) return;
+    // Nobody bids for a squad player or for a man about to retire.
+    if (p.rtg < 74 || p.age >= 33) return;
+
+    /* How likely somebody is to come for him. A ninety rated twenty five
+       year old is asked about most summers; a seventy five rated one
+       almost never. */
+    const want = Math.max(0, (p.rtg - 72) / 26) * (p.age <= 27 ? 1.15 : 0.75);
+    if (rnd() > want * 0.55) return;
+
+    // Somebody who could actually afford him.
+    const able = league.filter((c) => c.str * 100 + 8 >= p.rtg - 6);
+    const pool = able.length ? able : league;
+    const club = pool[Math.floor(rnd() * pool.length)];
+    if (!club || club.name === d.club) return;
+
+    const worth = playerValue(p);
+    const keen = 1.1 + rnd() * 0.5;
+    const fee = Math.max(1, Math.round(worth * keen));
+    const clubRating = Math.round(club.str * 100 + 8);
+
+    out.push({
+      slot,
+      name: p.n,
+      club: club.name,
+      clubRating,
+      fee,
+      worth,
+      stepUp: clubRating > mine + 2,
+    });
+  });
+
+  return out.sort((a, b) => b.fee - a.fee).slice(0, 4);
+}
+
+/** Take the money. He goes, the fee is yours, and the books know. */
+export function acceptOffer(d: Dynasty, offer: Offer): Dynasty | null {
+  const p = d.roster[offer.slot];
+  if (!p || p.n !== offer.name) return null;
+  const roster = [...d.roster];
+  roster[offer.slot] = null;
+  return {
+    ...d,
+    roster,
+    budget: d.budget + offer.fee,
+    saleProfit: d.saleProfit + (offer.fee - p.book),
+    sold: [...d.sold, `${p.n} to ${offer.club} for £${offer.fee}m`],
+    offers: d.offers.filter((o) => o.slot !== offer.slot),
+  };
+}
+
+/**
+ * Turn it down.
+ *
+ * He knows. If it was a bigger club than yours he takes it badly, and if
+ * it was not he shrugs. That is the whole decision: the fee against a man
+ * who will be worse next season for having been kept.
+ */
+export function rejectOffer(d: Dynasty, offer: Offer): Dynasty {
+  const roster = d.roster.map((p, i) => {
+    if (i !== offer.slot || !p || p.n !== offer.name) return p;
+    const hit = offer.stepUp ? 26 : 8;
+    return {
+      ...p,
+      morale: Math.max(0, (typeof p.morale === 'number' ? p.morale : MORALE_BASE) - hit),
+    };
+  });
+  return { ...d, roster, offers: d.offers.filter((o) => o.slot !== offer.slot) };
+}
+
+/* ---------- cards ---------- */
+
+/**
+ * How often a position gets booked.
+ *
+ * A defensive midfielder is booked three times as often as a striker,
+ * which is why the men who miss games for it are almost always the ones
+ * who do the running.
+ */
+const CARD_RATE: Record<Position, number> = { GK: 0.9, DEF: 5.4, MID: 6.2, ATT: 3.4 };
+
+export type Discipline = { yellows: number; reds: number; banned: number };
+
+/**
+ * A season of bookings, and what they cost.
+ *
+ * Five yellows inside the first nineteen games is a one match ban. Ten by
+ * the thirty second is two more. A red is one to three depending on what
+ * it was for. It is the cheapest way to make the bench you built matter
+ * more than twice a year.
+ */
+export function seasonCards(p: DynastyPlayer, apps: number, rnd: Rng): Discipline {
+  if (apps <= 0) return { yellows: 0, reds: 0, banned: 0 };
+  const rate = (CARD_RATE[p.pos] ?? 4) * (apps / 38);
+  // Poisson, so a booking is a booking and not a fraction of one.
+  let yellows = 0;
+  const L = Math.exp(-rate);
+  let prod = 1;
+  do {
+    yellows++;
+    prod *= rnd();
+  } while (prod > L);
+  yellows--;
+
+  const reds = rnd() < 0.055 * (apps / 38) ? 1 : 0;
+
+  let banned = 0;
+  if (yellows >= 5) banned += 1;
+  if (yellows >= 10) banned += 2;
+  if (yellows >= 15) banned += 2;
+  if (reds) banned += 1 + Math.floor(rnd() * 3);
+
+  return { yellows, reds, banned: Math.min(12, banned) };
+}
+
+/* ---------- loans ---------- */
+
+export type LoanSpell = {
+  name: string;
+  club: string;
+  /** how many league games he played out there */
+  apps: number;
+  /** what the year did to his rating */
+  gained: number;
+};
+
+/**
+ * Where an academy player can go.
+ *
+ * Only academy players. A first team footballer on loan is a different
+ * feature and a worse one on a phone; a seventeen year old going to
+ * Preston for a season is the reason to have an academy at all.
+ */
+export const LOAN_CLUBS: readonly { n: string; level: number }[] = [
+  { n: 'Preston', level: 2 }, { n: 'Millwall', level: 2 }, { n: 'Swansea', level: 2 },
+  { n: 'Bristol City', level: 2 }, { n: 'Blackburn', level: 2 }, { n: 'QPR', level: 2 },
+  { n: 'Stoke', level: 2 }, { n: 'Cardiff', level: 2 }, { n: 'Derby', level: 2 },
+  { n: 'Wrexham', level: 3 }, { n: 'Charlton', level: 3 }, { n: 'Peterborough', level: 3 },
+  { n: 'Barnsley', level: 3 }, { n: 'Wycombe', level: 3 }, { n: 'Reading', level: 3 },
+  { n: 'Exeter', level: 3 }, { n: 'Lincoln', level: 3 }, { n: 'Mansfield', level: 3 },
+];
+
+/** The six senior loans a club is allowed does not bind an academy. */
+export const LOAN_LIMIT = 6;
+
+/** Where a player of this quality would actually get a game. */
+export function loanClubFor(rtg: number, rnd: Rng): { n: string; level: number } {
+  const want = rtg >= 62 ? 2 : 3;
+  const pool = LOAN_CLUBS.filter((c) => c.level === want);
+  const from = pool.length ? pool : LOAN_CLUBS;
+  return from[Math.floor(rnd() * from.length)];
+}
+
+/**
+ * A season out on loan.
+ *
+ * Games are the whole point. A year of thirty five in the Championship is
+ * worth two or three rating points more than a year of nothing in your
+ * under twenty ones, and it is the only way a fifty one rated seventeen
+ * year old ever becomes anything.
+ */
+export function loanSeason(
+  p: DynastyPlayer,
+  club: { n: string; level: number },
+  rnd: Rng,
+): LoanSpell {
+  /* A better player than the division plays every week. A worse one
+     watches, which is why sending a fifty rated boy to the Championship
+     does him no good at all. */
+  const bar = club.level === 2 ? 60 : 52;
+  const share = Math.max(0.15, Math.min(0.95, 0.5 + (p.rtg - bar) * 0.055));
+  const apps = Math.round(38 * share * (0.75 + rnd() * 0.4));
+  const gained = Math.round(((apps / 38) * 4 + rnd() * 1.4) * 10) / 10;
+  return { name: p.n, club: club.n, apps: Math.min(46, apps), gained };
+}
+
+/** Who is worth sending out, when the club does it for you. */
+export function autoLoanPicks(d: Dynasty): number[] {
+  const out: number[] = [];
+  d.youth.forEach((p, i) => {
+    if (p.loan) return;
+    // Sixteen year olds stay at home. Anybody older with a real ceiling goes.
+    if (p.age < 17) return;
+    if (p.rtg >= 70) return;
+    out.push(i);
+  });
+  return out.slice(0, LOAN_LIMIT);
+}
+
+/* ---------- what the squad earns, for the morale comparison ---------- */
+
+export function averageWage(d: Dynasty): number {
+  const all = everyone(d);
+  if (!all.length) return 0;
+  return all.reduce((a, p) => a + p.contract.wage, 0) / all.length;
+}
+
+/* ---------- other clubs want you ---------- */
+
+export type JobOffer = {
+  club: string;
+  rating: number;
+  objective: string;
+  budget: number;
+  note: string;
+};
+
+/**
+ * Your reputation, on the same scale as everything else.
+ *
+ * What you have won, where you have finished, and what the board thinks.
+ * It is the number that decides whether anybody comes for you, and it is
+ * why a manager who takes Sunderland to seventh gets a phone call.
+ */
+export function reputation(d: Dynasty): number {
+  const trophies =
+    d.titles * 14 +
+    Object.entries(d.honours ?? {}).reduce(
+      (a, [k, n]) => a + (k === 'ucl' ? 16 : k === 'fa' ? 8 : k === 'shield' ? 2 : 6) * (n as number),
+      0,
+    );
+  const finishes = d.seasons.reduce((a, s) => a + Math.max(0, 21 - s.fin) * 0.9, 0);
+  const board = (d.mgr - 50) * 0.35;
+  return Math.round(Math.max(0, Math.min(100, 28 + trophies + finishes * 0.5 + board)));
+}
+
+/**
+ * Who comes calling in May.
+ *
+ * A club only approaches somebody it can believe in, so the better your
+ * reputation the bigger the club. Nobody approaches a manager the season
+ * he has been relegated, and the club you already manage never does.
+ *
+ * This is the thing that turns twenty seasons into a story rather than
+ * one club forever: you can take the job, or you can turn it down and
+ * stay, which is its own kind of answer.
+ */
+export function jobOffers(
+  d: Dynasty,
+  league: readonly { name: string; str: number }[],
+  rnd: Rng,
+): JobOffer[] {
+  const rep = reputation(d);
+  if (rep < 34) return [];
+  // Between none and two a summer, more often the better you have done.
+  const many = rnd() < (rep - 30) / 180 ? 2 : rnd() < (rep - 24) / 90 ? 1 : 0;
+  if (!many) return [];
+
+  const mine = squadRating(starters(d));
+  const pool = league.filter((c) => {
+    const r = c.str * 100 + 8;
+    // A club will not sack its manager for somebody it does not rate.
+    if (r > rep + 16) return false;
+    if (r < mine - 22) return false;
+    return c.name !== d.club;
+  });
+  if (!pool.length) return [];
+
+  const out: JobOffer[] = [];
+  const used = new Set<string>();
+  for (let i = 0; i < many && pool.length; i++) {
+    const club = pool[Math.floor(rnd() * pool.length)];
+    if (!club || used.has(club.name)) continue;
+    used.add(club.name);
+    const rating = Math.round(club.str * 100 + 8);
+    const better = rating > mine + 3;
+    out.push({
+      club: club.name,
+      rating,
+      objective:
+        rating >= 88
+          ? 'Win the Premier League'
+          : rating >= 82
+            ? 'Champions League, top four'
+            : rating >= 76
+              ? 'European places, top seven'
+              : rating >= 70
+                ? 'Top half finish'
+                : 'Avoid the relegation fight',
+      budget: Math.round(Math.max(15, (rating - 62) * 9)),
+      note: better
+        ? 'A bigger job than the one you have'
+        : rating < mine - 8
+          ? 'A rebuild, and they know it'
+          : 'A club about the size of yours',
+    });
+  }
+  return out;
+}
