@@ -427,3 +427,78 @@ export function takeJob(
     budget: offer.budget,
   };
 }
+
+/**
+ * How big a club is, on a scale of nought to a hundred.
+ *
+ * Not how good this year's team is. How big the club is: how many people
+ * follow it, what it has won under you, how many it holds, and the best
+ * it has managed lately. Those are the things a boardroom actually
+ * measures itself by, and they are why Arsenal and Luton are not asked
+ * the same question even in a season where their squads are level.
+ *
+ * It moves. A club that wins things gains supporters, and a club that
+ * keeps finishing fourth is expected to finish fourth, so a side climbing
+ * out of nothing is asked for more every year without anybody rewriting
+ * the rule.
+ */
+export function stature(d: Dynasty): number {
+  // The following is the loudest signal, because it is the one that grows.
+  const support = Math.min(46, ((d.fans ?? 2.5) / 12) * 46);
+  // What has been won here.
+  const cups = Object.values(d.honours ?? {}).reduce((a, n) => a + (n as number), 0);
+  const silverware = Math.min(24, d.titles * 6 + cups * 2);
+  // The size of the place.
+  const ground = Math.min(14, ((d.infra?.capacity ?? 30000) / 62000) * 14);
+  // And what the club has actually been doing.
+  const recent = d.seasons.slice(-5);
+  const form = recent.length
+    ? Math.min(16, (recent.reduce((a, s) => a + Math.max(0, 21 - s.fin), 0) / recent.length) * 0.9)
+    : 6;
+  return Math.round(Math.max(0, Math.min(100, support + silverware + ground + form)));
+}
+
+/**
+ * The worst finish a club of this size will accept.
+ *
+ * A hard floor rather than an average, because that is what it is. Arsenal
+ * do not ask their manager to avoid relegation whatever the squad looks
+ * like, and no amount of a bad season makes them.
+ */
+export function statureFloor(s: number): number {
+  if (s >= 90) return 4;
+  if (s >= 80) return 6;
+  if (s >= 70) return 9;
+  if (s >= 58) return 12;
+  if (s >= 46) return 15;
+  return 18;
+}
+
+/**
+ * What the board will ask for next season.
+ *
+ * Three things, in the order a boardroom weighs them. What you have been
+ * delivering, because last season is the number everybody in the building
+ * remembers. What the squad is actually worth, because they are not
+ * completely unreasonable. And the size of the club, which sets a floor
+ * neither of the other two can push through.
+ *
+ * The floor is what was missing. The target used to come from the squad
+ * rating alone, so Arsenal with seven titles, twelve million supporters
+ * and a squad that had been allowed to slide were asked to avoid
+ * relegation, and were then pleased with ninth.
+ */
+export function boardTarget(d: Dynasty, avg: number, expect: number): number {
+  const fromSquad = objectiveFor(avg).target + expect;
+
+  /* What you have been doing lately, and they always want a little more
+     of it. Three seasons, because one is luck and five is history. */
+  const recent = d.seasons.slice(-3);
+  const fromForm = recent.length
+    ? Math.round(recent.reduce((a, s) => a + s.fin, 0) / recent.length) - 1
+    : fromSquad;
+
+  const blended = Math.round(fromSquad * 0.45 + fromForm * 0.55);
+  const floor = statureFloor(stature(d));
+  return Math.max(1, Math.min(20, Math.min(blended, floor)));
+}

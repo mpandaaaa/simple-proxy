@@ -176,6 +176,7 @@ export function spin(state: DraftState, rnd: Rng): SpinResult | null {
       const year = Number(k.slice(bar + 1));
       for (const p of SQUADS[k]) {
         if (placed.has(p.n)) continue;
+        if (state.config.nation && p.nat !== state.config.nation) continue;
         const rtg = ratingOf(p, state.config.rtype);
         if (!best[p.n] || rtg > best[p.n].rtg) {
           best[p.n] = {
@@ -203,8 +204,12 @@ export function spin(state: DraftState, rnd: Rng): SpinResult | null {
   const key = keys[Math.floor(rnd() * keys.length)];
   const year = Number(key.slice(key.indexOf('|') + 1));
 
+  /* A nationality rule, when there is one, is applied to the board rather
+     than to the draw, so you still spin the same clubs in the same order
+     and simply see fewer names on some of them. */
   const board = SQUADS[key]
     .filter((p) => !placed.has(p.n))
+    .filter((p) => !state.config.nation || p.nat === state.config.nation)
     .map((p) => ({
       n: p.n,
       nat: p.nat,

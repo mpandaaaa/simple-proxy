@@ -44,6 +44,13 @@ export type DraftConfig = {
    * everywhere else.
    */
   showRatings: boolean;
+  /**
+   * Only players of this nationality appear on a board.
+   *
+   * Used by the Weekly Event's Homegrown week and nothing else. Left out
+   * everywhere else, which is every other mode.
+   */
+  nation?: string;
 };
 
 /** Ratings are hidden on Hard regardless of the toggle. */

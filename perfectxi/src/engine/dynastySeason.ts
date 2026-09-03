@@ -47,6 +47,7 @@ import {
   seasonInjuries,
 } from './dynastySquad';
 import {
+  boardTarget,
   clubOptions,
   objectiveClause,
   objectiveFor,
@@ -531,7 +532,11 @@ export function processSeasonEnd(
     if (!y.loan) continue;
     const spell = loanSeason(y, { n: y.loan, level: y.rtg >= 62 ? 2 : 3 }, rnd);
     const was = y.rtg;
-    y.rtg = Math.min(y.pot, Math.round(y.rtg + spell.gained));
+    /* The ceiling can move first, because a season of men's football is
+       allowed to prove a scout wrong, and a loan can never make a player
+       worse than the day he left. */
+    y.pot = Math.min(97, y.pot + spell.lift);
+    y.rtg = Math.max(y.rtg, Math.min(y.pot, Math.round(y.rtg + spell.gained)));
     y.apps = spell.apps;
     y.loans = [
       ...(y.loans ?? []),
@@ -652,7 +657,7 @@ export function processSeasonEnd(
   if (next.division === 2) {
     next.objective = { label: 'Win promotion', target: 2 };
   } else {
-    const target = clamp(objectiveFor(avg).target + sc.expect, 1, 20);
+    const target = boardTarget(next, avg, sc.expect);
     next.objective = { label: objectiveLabel(target), target };
   }
   // A year of the parachute is a year gone.

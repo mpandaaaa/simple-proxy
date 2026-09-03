@@ -263,6 +263,8 @@ export type LoanSpell = {
   apps: number;
   /** what the year did to his rating */
   gained: number;
+  /** and what it did to what he might yet become */
+  lift: number;
 };
 
 /**
@@ -329,11 +331,23 @@ export function loanSeason(
   const age = p.age ?? 19;
   const young = age <= 18 ? 1.3 : age <= 20 ? 1.15 : age <= 22 ? 1 : 0.85;
 
-  const raw = games * 7.4 * division * young + rnd() * 1.9;
-  const headroom = Math.max(0, (p.pot ?? p.rtg) - p.rtg);
-  const gained = Math.round(Math.min(raw, headroom * 0.5) * 10) / 10;
+  /* A season of men's football can make a player more than anybody thought
+     he would be. Scouting a ceiling is a scout's opinion, and a boy who
+     plays thirty five games in the Championship is allowed to prove it
+     wrong, which is also the only way somebody already at his ceiling has
+     anything left to gain from going.
 
-  return { name: p.n, club: club.n, apps: Math.min(46, apps), gained };
+     Without this a loan reported nought for most of a squad and, worse,
+     could report a decline: a player whose ceiling had fallen below his
+     rating was pulled down to it by the very act of sending him out. */
+  const lift = games >= 0.5 ? Math.round(games * 3.4 * young) : 0;
+  const ceiling = Math.min(97, (p.pot ?? p.rtg) + lift);
+
+  const raw = games * 8.2 * division * young + rnd() * 1.9;
+  const headroom = Math.max(0, ceiling - p.rtg);
+  const gained = Math.round(Math.min(raw, headroom * 0.6) * 10) / 10;
+
+  return { name: p.n, club: club.n, apps: Math.min(46, apps), gained, lift };
 }
 
 /** Who is worth sending out, when the club does it for you. */

@@ -6,7 +6,13 @@
  * move in the right direction, that they cannot run away, and that they
  * never produce a number the screen would have to apologise for.
  */
-import { startCareer, clubOptions } from '../.headless/engine/career.js';
+import {
+  startCareer,
+  clubOptions,
+  boardTarget,
+  stature,
+  statureFloor,
+} from '../.headless/engine/career.js';
 import {
   seasonCards,
   moraleAfterSeason,
@@ -134,17 +140,54 @@ for (let i = 0; i < 2000; i++) {
   gained += spell.gained;
   apps += spell.apps;
 }
-band('a season on loan is worth', round(gained / 2000), 3, 9, 'a full season of games makes a footballer');
-/* And it is capped by how far he had left to go, which is what stops a
-   loan being a way round the ceiling you paid to scout. */
+band('a season on loan is worth', round(gained / 2000), 3, 10, 'a full season of games makes a footballer');
+/* A loan can never make a player worse. It used to: a player whose
+   ceiling had fallen below his rating was pulled down to it by the very
+   act of sending him out, and the summer reported it as minus one. */
+{
+  let worst = 99;
+  let zeros = 0;
+  const cases = [
+    { rtg: 78, pot: 76, pos: 'MID', n: 'Past His Ceiling', age: 21 },
+    { rtg: 66, pot: 66, pos: 'DEF', n: 'At His Ceiling', age: 19 },
+    { rtg: 52, pot: 90, pos: 'ATT', n: 'A Long Way To Go', age: 17 },
+  ];
+  for (const kid of cases) {
+    for (let i = 0; i < 400; i++) {
+      const spell = loanSeason(kid, loanClubFor(kid.rtg, mulberry32(i + 9)), mulberry32(i + 70));
+      worst = Math.min(worst, spell.gained);
+      const ceiling = Math.min(97, kid.pot + spell.lift);
+      const after = Math.max(kid.rtg, Math.min(ceiling, Math.round(kid.rtg + spell.gained)));
+      if (after < kid.rtg) {
+        failures++;
+        rows.push({ ok: false, label: 'a loan made ' + kid.n + ' worse', got: after, lo: kid.rtg, hi: 99, real: '' });
+      }
+      if (spell.apps >= 30 && spell.gained === 0) zeros++;
+    }
+  }
+  must('a loan never costs a player anything', worst >= 0, 'not even one at his ceiling');
+  band('full seasons that taught him nothing', zeros, 0, 60, 'a season of games is worth something');
+}
+/* A loan used to be capped at half the distance to the ceiling, so a
+   player already near it gained nothing and the summer reported nought
+   for most of a squad. A season of men's football is now allowed to prove
+   a scout's ceiling wrong, so there is always something in it. What is
+   still true is that a boy with a long way to go gains far more than one
+   who has nearly arrived. */
 {
   const nearly = { rtg: 78, pot: 80, pos: 'MID', n: 'Nearly There', age: 20 };
+  const early = { rtg: 54, pot: 88, pos: 'MID', n: 'A Long Way To Go', age: 18 };
   let tight = 0;
+  let loose = 0;
   for (let i = 0; i < 500; i++) {
     tight += loanSeason(nearly, loanClubFor(nearly.rtg, mulberry32(i + 1)), mulberry32(i + 40)).gained;
+    loose += loanSeason(early, loanClubFor(early.rtg, mulberry32(i + 1)), mulberry32(i + 40)).gained;
   }
-  band('a player near his ceiling gains', round(tight / 500), 0, 1.2, 'never more than half of what is left');
+  band('a player near his ceiling gains', round(tight / 500), 1, 5, 'something, but not a lot');
+  band('a boy with a long way to go gains', round(loose / 500), 4, 11, 'this is what a loan is for');
+  must('the further he has to go the more he gains', loose > tight, '');
 }
+
 band('games out on loan', round(apps / 2000), 12, 40, 'he goes where he will play');
 must(
   'a good young player gets a better loan than a poor one',
@@ -161,6 +204,57 @@ const styles = ['possession', 'balanced', 'direct'];
 const fits = styles.map((s) => styleFit(poacher, s));
 band('a style is worth at most', round((Math.max(...fits) - 1) * 100), 0, 2.6, 'two and a half percent, never more');
 band('and costs at most', round((1 - Math.min(...fits)) * 100), 0, 2.6, 'the same the other way');
+
+/* ---------- what the board asks for ---------- */
+/* The objective used to come from the squad rating alone, so Arsenal with
+   seven titles, twelve million supporters and a squad that had slid were
+   asked to avoid relegation and were then pleased with ninth. A club's
+   size now sets a floor its own bad season cannot push through, and that
+   floor rises on its own as a small club grows. */
+{
+  const club = (o) => ({
+    fans: 2.5,
+    titles: 0,
+    honours: {},
+    infra: { capacity: 30000 },
+    seasons: [],
+    ...o,
+  });
+
+  const arsenal = club({
+    fans: 12,
+    titles: 7,
+    honours: { fa: 2 },
+    infra: { capacity: 62000 },
+    seasons: [{ fin: 9 }, { fin: 8 }, { fin: 9 }],
+  });
+  const minnow = club({ fans: 1.6, infra: { capacity: 22000 } });
+  const risen = club({
+    fans: 4.2,
+    honours: { efl: 1 },
+    infra: { capacity: 32000 },
+    seasons: [{ fin: 12 }, { fin: 10 }, { fin: 8 }, { fin: 7 }, { fin: 6 }],
+  });
+
+  band('a giant is rated', stature(arsenal), 85, 100, 'stature, not this season');
+  band('a minnow is rated', stature(minnow), 0, 30, '');
+  must(
+    'a giant is never asked merely to survive',
+    boardTarget(arsenal, 75, 0) <= 7,
+    'even with a squad that has slid to 75',
+  );
+  must('a minnow is asked to survive', boardTarget(minnow, 72, 0) >= 15, '');
+  must(
+    'and is asked for more once it has grown',
+    boardTarget(risen, 79, 0) < boardTarget(minnow, 72, 0),
+    'the standard rises with the club',
+  );
+  must(
+    'winning raises what is expected of you',
+    statureFloor(stature(risen)) <= statureFloor(stature(minnow)),
+    '',
+  );
+}
 
 /* ---------- who wants you ---------- */
 const nobody = reputation({ ...base, seasons: [], honours: {}, titles: 0, mgr: 40 });
