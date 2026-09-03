@@ -17,8 +17,9 @@ import type { Pick } from './types';
  *   Play. Every XI you finish a season with is yours to keep, for good.
  *   That makes the collection a record of who you have actually used
  *   rather than a second game played against a shop.
- *   Buy. Coins earned from seasons open packs, or buy one named card you
- *   are missing when a set is one man short.
+ *   Open a pack. Coins earned from seasons, and nothing else: there is
+ *   no way to pay for a footballer by name, because paying to put an
+ *   exact card into the album turns collecting into shopping.
  *
  * Nothing in here can be spent to win anything. A card is a card.
  */
@@ -273,27 +274,6 @@ export function openPack(pack: Pack, have: ReadonlySet<CardId>, rnd: Rng): Card[
   return out;
 }
 
-/**
- * What one named card costs.
- *
- * Steep, and meant to be. It exists so a set that is one man short can be
- * finished rather than left, not as a way around playing: an Icon costs
- * more than an Icon pack, so buying blind is always the better value and
- * buying exactly is always the certain one.
- */
-export function priceOf(card: Card): number {
-  switch (card.rarity) {
-    case 'icon':
-      return 2400 + (card.rtg - 90) * 400;
-    case 'gold':
-      return 700 + (card.rtg - 85) * 90;
-    case 'silver':
-      return 220 + (card.rtg - 78) * 30;
-    default:
-      return 80;
-  }
-}
-
 /* ---------- sets ---------- */
 
 export type CardSet = {
@@ -422,4 +402,86 @@ export function collectionCounts(have: ReadonlySet<CardId>): Record<Rarity, numb
     out.all++;
   }
   return out;
+}
+
+/* ---------- the album ---------- */
+
+export type ClubRow = {
+  club: string;
+  owned: number;
+  total: number;
+  /** the best card you hold from that club, for the row to show something */
+  best: Card | null;
+  /** how many seasons of them there are */
+  seasons: number;
+};
+
+/**
+ * The clubs, as pages of a book.
+ *
+ * Fifty one of them, each with up to thirty five seasons behind it. The
+ * row is deliberately more than a count: a club you have one card from
+ * should say which one, because that is the thing that makes somebody
+ * open it.
+ */
+export function clubRows(have: ReadonlySet<CardId>): ClubRow[] {
+  const by = new Map<string, ClubRow & { years: Set<number> }>();
+  for (const c of allCards()) {
+    let row = by.get(c.club);
+    if (!row) {
+      row = { club: c.club, owned: 0, total: 0, best: null, seasons: 0, years: new Set() };
+      by.set(c.club, row);
+    }
+    row.total++;
+    row.years.add(c.year);
+    if (have.has(c.id)) {
+      row.owned++;
+      if (!row.best || c.rtg > row.best.rtg) row.best = c;
+    }
+  }
+  return [...by.values()]
+    .map((r) => ({ club: r.club, owned: r.owned, total: r.total, best: r.best, seasons: r.years.size }))
+    .sort((a, b) => b.owned - a.owned || a.club.localeCompare(b.club));
+}
+
+export type AlbumSeason = {
+  year: number;
+  season: string;
+  cards: Card[];
+  owned: number;
+};
+
+/**
+ * One club's page, season by season, newest first.
+ *
+ * Every card is here whether it is owned or not, because a page with the
+ * gaps taken out of it is a list rather than an album, and the gaps are
+ * the whole reason anybody keeps going.
+ */
+export function albumFor(club: string, have: ReadonlySet<CardId>): AlbumSeason[] {
+  const by = new Map<number, AlbumSeason>();
+  for (const c of allCards()) {
+    if (c.club !== club) continue;
+    let row = by.get(c.year);
+    if (!row) {
+      row = { year: c.year, season: c.season, cards: [], owned: 0 };
+      by.set(c.year, row);
+    }
+    row.cards.push(c);
+    if (have.has(c.id)) row.owned++;
+  }
+  const out = [...by.values()];
+  for (const row of out) row.cards.sort((a, b) => b.rtg - a.rtg || a.n.localeCompare(b.n));
+  return out.sort((a, b) => b.year - a.year);
+}
+
+/** Your best cards, for the shelf at the top of the album. */
+export function bestOwned(have: ReadonlySet<CardId>, n: number): Card[] {
+  const out: Card[] = [];
+  for (const id of have) {
+    const c = cardById(id);
+    if (c) out.push(c);
+  }
+  out.sort((a, b) => b.rtg - a.rtg || a.n.localeCompare(b.n));
+  return out.slice(0, n);
 }

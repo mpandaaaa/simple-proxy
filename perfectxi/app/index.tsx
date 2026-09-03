@@ -270,20 +270,7 @@ export default function Home() {
           />
         </Collapse>
 
-        <Collapse label="Your game" count={4}>
-          <Row
-            icon={IconCpu}
-            tone="blue"
-            title="Beat the Machine"
-            subtitle="It re-drafts your exact boards · outscore it"
-            onPress={() =>
-              soon(
-                'Your game',
-                'Beat the Machine',
-                'Finish a season and the Machine re-drafts your exact boards with best-on-paper picks. Outscore it if you can.',
-              )
-            }
-          />
+        <Collapse label="Your game" count={3}>
           <Row
             icon={IconStar}
             tone="purple"
@@ -301,7 +288,7 @@ export default function Home() {
           <Row
             icon={IconTrophy}
             tone="purple"
-            title="Collection"
+            title="The album"
             subtitle={
               cards
                 ? `${cards} of ${everyCard} footballers kept`

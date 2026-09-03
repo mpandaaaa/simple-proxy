@@ -322,15 +322,28 @@ export {
   PACKS,
   packById,
   openPack,
-  priceOf,
   SETS,
   setState,
   allSets,
   MILESTONES,
   milestoneState,
   collectionCounts,
+  clubRows,
+  albumFor,
+  bestOwned,
 } from './collection';
-export type { Card, CardId, Rarity, Pack, PackId, CardSet, SetState, Milestone } from './collection';
+export type {
+  Card,
+  CardId,
+  Rarity,
+  Pack,
+  PackId,
+  CardSet,
+  SetState,
+  Milestone,
+  ClubRow,
+  AlbumSeason,
+} from './collection';
 
 export {
   COSMETICS,

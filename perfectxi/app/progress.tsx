@@ -1,10 +1,18 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { router, useFocusEffect } from 'expo-router';
 import { ModeScreen, Press, Rise, Shine, Collapse } from '../src/ui/components';
 import { color, space, radius, line, hue, alpha } from '../src/ui/tokens';
 import { font, text } from '../src/ui/type';
-import { haptic } from '../src/ui/feel';
+import { haptic, useReduceMotion } from '../src/ui/feel';
 import { sfx } from '../src/ui/sound';
 import {
   MAX_LEVEL,
@@ -46,6 +54,35 @@ export default function ProgressScreen() {
   );
 
   const lvl = levelProgress(p.xp);
+  const reduce = useReduceMotion();
+
+  /* The bar fills and the level lands, once, when the page opens.
+     A progress bar that is simply already full has told you nothing;
+     watching it arrive is most of why anybody looks at this page. */
+  const fill = useSharedValue(reduce ? lvl.frac : 0);
+  const pop = useSharedValue(reduce ? 1 : 0.82);
+  const coinPop = useSharedValue(reduce ? 1 : 0.86);
+
+  useEffect(() => {
+    if (reduce) {
+      fill.value = lvl.frac;
+      pop.value = 1;
+      coinPop.value = 1;
+      return;
+    }
+    fill.value = withDelay(160, withTiming(lvl.frac, { duration: 780 }));
+    pop.value = withSequence(
+      withSpring(1.08, { stiffness: 300, damping: 12 }),
+      withSpring(1, { stiffness: 240, damping: 18 }),
+    );
+    coinPop.value = withDelay(90, withSpring(1, { stiffness: 260, damping: 16 }));
+  }, [lvl.frac, reduce, fill, pop, coinPop]);
+
+  const barStyle = useAnimatedStyle(() => ({
+    width: `${Math.max(0, Math.min(100, fill.value * 100))}%`,
+  }));
+  const levelStyle = useAnimatedStyle(() => ({ transform: [{ scale: pop.value }] }));
+  const coinStyle = useAnimatedStyle(() => ({ transform: [{ scale: coinPop.value }] }));
   const next = nextKeepsake(lvl.level);
   const have = owned(coll);
   const counts = collectionCounts(have);
@@ -77,20 +114,20 @@ export default function ProgressScreen() {
           <View style={styles.heroTop}>
             <View style={styles.heroLeft}>
               <Text style={styles.heroKey}>Level</Text>
-              <Text style={styles.heroLevel} allowFontScaling={false}>
+              <Animated.Text style={[styles.heroLevel, levelStyle]} allowFontScaling={false}>
                 {lvl.level}
-              </Text>
+              </Animated.Text>
             </View>
             <View style={styles.heroRight}>
               <Text style={styles.heroKey}>Coins</Text>
-              <Text style={styles.heroCoins} allowFontScaling={false}>
+              <Animated.Text style={[styles.heroCoins, coinStyle]} allowFontScaling={false}>
                 {p.coins}
-              </Text>
+              </Animated.Text>
             </View>
           </View>
 
           <View style={styles.bar}>
-            <View style={[styles.barFill, { width: `${Math.round(lvl.frac * 100)}%` }]} />
+            <Animated.View style={[styles.barFill, barStyle]} />
           </View>
           <Text style={styles.heroNote}>
             {lvl.maxed
@@ -156,7 +193,7 @@ export default function ProgressScreen() {
           style={styles.coll}
         >
           <View style={styles.collTop}>
-            <Text style={styles.collKey}>Collection</Text>
+            <Text style={styles.collKey}>The album</Text>
             <Text style={styles.collCount} allowFontScaling={false}>
               {counts.all}
               <Text style={styles.collOf}> / {all.all}</Text>

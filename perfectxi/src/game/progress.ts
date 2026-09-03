@@ -5,7 +5,6 @@ import {
   levelFor,
   openPack,
   packById,
-  priceOf,
   rewardsBetween,
   seasonCoins,
   seasonXp,
@@ -156,18 +155,6 @@ export function buyPack(packId: string, free = false): Bought {
   const { next } = addCards(c, cards.map((x) => x.id));
   collectionStore.write(next);
   return { ok: true, cards };
-}
-
-/** Buy one named footballer, for the set that is one man short. */
-export function buyCard(id: string): Bought {
-  const card = cardById(id);
-  if (!card) return { ok: false, why: 'unknown' };
-  const c = collectionStore.read();
-  if (c.cards.includes(id)) return { ok: false, why: 'owned' };
-  if (!spend(priceOf(card))) return { ok: false, why: 'coins' };
-  const { next } = addCards(collectionStore.read(), [id]);
-  collectionStore.write(next);
-  return { ok: true, cards: [card] };
 }
 
 /** Buy a frame, a pitch or a title. */

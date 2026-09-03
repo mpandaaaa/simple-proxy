@@ -35,7 +35,6 @@ import {
   PACKS,
   packById,
   openPack,
-  priceOf,
   SETS,
   setState,
   MILESTONES,
@@ -346,23 +345,6 @@ const cards = allCards();
   }
   band('cards in a pack that are new, %', Math.round((fresh / drawn) * 100), 45, 100,
     'it goes looking for something you have not got');
-}
-
-/* ================= buying one by name ================= */
-
-{
-  const icon = cards.find((c) => c.rarity === 'icon');
-  const gold = cards.find((c) => c.rarity === 'gold');
-  const silver = cards.find((c) => c.rarity === 'silver');
-  const bronze = cards.find((c) => c.rarity === 'bronze');
-  must('a named Icon costs more than an Icon pack', priceOf(icon) > PACKS[3].price,
-    `${priceOf(icon)} against ${PACKS[3].price}`);
-  must('and the order of them is the order of them',
-    priceOf(icon) > priceOf(gold) && priceOf(gold) > priceOf(silver) && priceOf(silver) > priceOf(bronze), '');
-  band('a bronze by name', priceOf(bronze), 40, 200, 'affordable, so a set can be finished');
-  let negative = 0;
-  for (const c of cards) if (priceOf(c) <= 0) negative++;
-  must('nothing is free or worse', negative === 0, `${negative} were`);
 }
 
 /* ================= the sets ================= */

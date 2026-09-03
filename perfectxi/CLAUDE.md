@@ -141,8 +141,8 @@ Play today is built: the Daily in `app/daily.tsx`, the Weekly Event in
 headlessly. A duel is a fourteen character code carrying the seed, the
 rules and the score to beat. Nothing is uploaded.
 
-**Still to build elsewhere**: World Cup, Beat the Machine, the player
-index, and a settings screen. Those rows push `app/soon.tsx`, which
+**Still to build elsewhere**: World Cup, the player index, and a
+settings screen. Those rows push `app/soon.tsx`, which
 carries the mode's real description from the site.
 
 ### The native libraries are in
