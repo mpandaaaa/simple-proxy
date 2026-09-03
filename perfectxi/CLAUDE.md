@@ -135,9 +135,15 @@ One deliberate departure from the site, which is documented in
 rather than the sixth power the site actually runs, because the sixth
 power priced a 70 rated squad player at £22m. Both agree at the top.
 
-**Still to build elsewhere**: World Cup, Daily, Weekly, Duels, Beat the
-Machine, the player index, and a settings screen. Those rows push
-`app/soon.tsx`, which carries the mode's real description from the site.
+Play today is built: the Daily in `app/daily.tsx`, the Weekly Event in
+`app/weekly.tsx` and Duels in `app/duel.tsx`, with their rules in
+`src/engine/daily.ts`, `weekly.ts` and `duel.ts` so they can be checked
+headlessly. A duel is a fourteen character code carrying the seed, the
+rules and the score to beat. Nothing is uploaded.
+
+**Still to build elsewhere**: World Cup, Beat the Machine, the player
+index, and a settings screen. Those rows push `app/soon.tsx`, which
+carries the mode's real description from the site.
 
 ### The native libraries are in
 
@@ -170,6 +176,7 @@ npm run dynasty                        # the ageing, valuation and wage numbers
 npm run career                         # every club can field an XI
 npm run career-run                     # a hundred seasons of Dynasty, end to end
 npm run save                           # old careers still load
+npm run playtoday                      # the week, and every duel code
 npm run source                         # the mistakes that reached a phone once
 npm run verify                         # all of the above
 ```
