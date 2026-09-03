@@ -294,3 +294,51 @@ export {
 } from './duelScore';
 export type { DuelScore, DuelHonours, Compare } from './duelScore';
 export { handleFor } from './handles';
+
+export {
+  MAX_LEVEL,
+  xpToReach,
+  levelFor,
+  levelProgress,
+  coinsForLevel,
+  rewardsFor,
+  rewardsBetween,
+  nextKeepsake,
+  allKeepsakes,
+  seasonXp,
+  seasonCoins,
+} from './levels';
+export type { LevelProgress, LevelReward, RewardKind } from './levels';
+
+export {
+  rarityOf,
+  RARITY_ORDER,
+  cardId,
+  readCardId,
+  allCards,
+  cardById,
+  totals,
+  cardForPick,
+  PACKS,
+  packById,
+  openPack,
+  priceOf,
+  SETS,
+  setState,
+  allSets,
+  MILESTONES,
+  milestoneState,
+  collectionCounts,
+} from './collection';
+export type { Card, CardId, Rarity, Pack, PackId, CardSet, SetState, Milestone } from './collection';
+
+export {
+  COSMETICS,
+  DEFAULTS,
+  cosmeticById,
+  cosmeticsOfKind,
+  forSale,
+  unlockedByLevel,
+  danglingRewards,
+} from './cosmetics';
+export type { Cosmetic, CosmeticKind } from './cosmetics';

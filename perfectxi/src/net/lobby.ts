@@ -1,5 +1,5 @@
 import { net } from './client';
-import { me } from '../save/me';
+import { displayName, me } from '../save/me';
 import { handleFor } from '../engine';
 
 /**
@@ -136,7 +136,7 @@ export async function findMatch(onStatus?: (what: string) => void): Promise<Matc
       (db) =>
         db
           .from('duel_queue')
-          .update({ matched_with: self.id, matched_name: self.name })
+          .update({ matched_with: self.id, matched_name: displayName() })
           .eq('id', row.id)
           .is('matched_with', null)
           .select('id, player, name, seed, matched_with, matched_name'),
@@ -160,7 +160,7 @@ export async function findMatch(onStatus?: (what: string) => void): Promise<Matc
     (db) =>
       db
         .from('duel_queue')
-        .insert({ player: self.id, name: self.name, seed: mySeed })
+        .insert({ player: self.id, name: displayName(), seed: mySeed })
         .select('id'),
     5000,
   );

@@ -66,6 +66,7 @@ import {
 } from '../../src/engine';
 import { startDynasty } from '../../src/engine';
 import { clearRun, useRun } from '../../src/game/run';
+import { awardSeason, type SeasonAward } from '../../src/game/progress';
 import { getCareer, setCareer } from '../../src/game/career';
 import {
   careerStore,
@@ -166,6 +167,9 @@ export default function Results() {
   const [watching, setWatching] = useState<number | null>(null);
 
   const [unlocked, setUnlocked] = useState<string[]>([]);
+  /* What the season was worth: experience, coins, any level crossed, and
+     which of the eleven were new to the collection. */
+  const [award, setAward] = useState<SeasonAward | null>(null);
   /* The code this run turned into, when it was played to set somebody a
      challenge. Held in state because it is made once, in the same pass
      that banks the season, and then drawn. */
@@ -316,22 +320,11 @@ export default function Results() {
       );
     }
 
-    progressStore.update((p) => ({
-      ...p,
-      seasons: p.seasons + 1,
-      titles: p.titles + (r.position === 1 ? 1 : 0),
-      best: Math.max(p.best, r.pts),
-      coins:
-        p.coins +
-        30 +
-        Math.round(r.pts / 2) +
-        (r.position === 1 ? 120 : r.position <= 4 ? 45 : 0),
-      xp:
-        p.xp +
-        140 +
-        r.pts * 3 +
-        (r.position === 1 ? 400 : r.position <= 4 ? 180 : r.position <= 10 ? 60 : 0),
-    }));
+    /* Experience, coins, the level it crosses and the eleven footballers
+       you keep, all in one place. None of the arithmetic is here: a
+       currency with two places that can add to it has a bug in it
+       already. */
+    setAward(awardSeason({ pts: r.pts, position: r.position, squad }));
   }, [run]);
 
   const result = run?.result ?? null;
@@ -604,6 +597,58 @@ ${challenge}
           <Tile value={result.ga} label="Goals against" />
           <Tile value={result.pts} label="Points" tint={tone.tint} />
         </View>
+
+        {/* ================= what the season was worth ================= */}
+        {award ? (
+          <Rise delay={0}>
+            <View style={styles.award}>
+              <View style={styles.awardTop}>
+                <View style={styles.awardCell}>
+                  <Text style={styles.awardValue} allowFontScaling={false}>
+                    +{award.xp}
+                  </Text>
+                  <Text style={styles.awardLabel}>experience</Text>
+                </View>
+                <View style={styles.awardCell}>
+                  <Text
+                    style={[styles.awardValue, { color: color.gold }]}
+                    allowFontScaling={false}
+                  >
+                    +{award.coins}
+                  </Text>
+                  <Text style={styles.awardLabel}>coins</Text>
+                </View>
+                <View style={styles.awardCell}>
+                  <Text
+                    style={[styles.awardValue, { color: color.accent }]}
+                    allowFontScaling={false}
+                  >
+                    {award.newCards.length}
+                  </Text>
+                  <Text style={styles.awardLabel}>new cards</Text>
+                </View>
+              </View>
+
+              {award.levelAfter > award.levelBefore ? (
+                <Text style={styles.awardLevel}>
+                  Level {award.levelAfter}
+                  {award.rewards.filter((x) => x.kind !== 'coins').length
+                    ? `. ${award.rewards
+                        .filter((x) => x.kind !== 'coins')
+                        .map((x) => x.name)
+                        .join(', ')}`
+                    : ''}
+                </Text>
+              ) : null}
+
+              <Text style={styles.awardKept} numberOfLines={3}>
+                {award.newCards.length
+                  ? `Kept: ${award.newCards.map((c) => c.n).join(', ')}`
+                  : 'Every one of this XI was already in your collection.'}
+              </Text>
+            </View>
+          </Rise>
+        ) : null}
 
         {/* ================= the morning papers ================= */}
         <Rise delay={0}>
@@ -1384,6 +1429,33 @@ function Key({ tint, label }: { tint: string; label: string }) {
 }
 
 const styles = StyleSheet.create({
+  award: {
+    marginBottom: space.s4,
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: 'rgba(255,255,255,0.035)',
+    gap: space.s2,
+  },
+  awardTop: { flexDirection: 'row' },
+  awardCell: { flex: 1, alignItems: 'center', gap: 1 },
+  awardValue: {
+    fontFamily: font.displayBlack,
+    fontSize: 24,
+    lineHeight: 31,
+    color: color.text1,
+    fontVariant: ['tabular-nums'],
+  },
+  awardLabel: { ...text.key, fontSize: 7.5, color: color.text3 },
+  awardLevel: { ...text.button, fontSize: 13.5, color: color.accent, textAlign: 'center' },
+  awardKept: {
+    ...text.small,
+    fontSize: 11.5,
+    lineHeight: 16,
+    color: color.text3,
+    textAlign: 'center',
+  },
   duelCard: {
     marginBottom: space.s4,
     padding: space.s4,

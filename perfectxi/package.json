@@ -83,9 +83,10 @@
     "scout": "tsc -p tsconfig.headless.json && node scripts/check-scout.mjs",
     "playtoday": "tsc -p tsconfig.headless.json && node scripts/check-play-today.mjs",
     "h2h": "tsc -p tsconfig.headless.json && node scripts/check-h2h.mjs",
+    "progress": "tsc -p tsconfig.headless.json && node scripts/check-progress.mjs",
     "online": "node scripts/check-online.mjs",
     "source": "node scripts/check-source.mjs",
-    "verify": "npm run typecheck && npm run source && npm run golden && npm run dynasty && npm run realism && npm run scout && npm run pyramid && npm run cups && npm run people && npm run screens && npm run daily && npm run playtoday && npm run h2h && npm run career && npm run save"
+    "verify": "npm run typecheck && npm run source && npm run golden && npm run dynasty && npm run realism && npm run scout && npm run pyramid && npm run cups && npm run people && npm run screens && npm run daily && npm run playtoday && npm run h2h && npm run progress && npm run career && npm run save"
   },
   "private": true
 }

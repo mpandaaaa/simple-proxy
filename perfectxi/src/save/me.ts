@@ -1,5 +1,6 @@
 import { defineStore } from './storage';
-import { handleFor } from '../engine';
+import { looksStore } from './looks';
+import { cosmeticById, DEFAULTS, handleFor } from '../engine';
 
 /**
  * Who this phone is.
@@ -70,6 +71,21 @@ export function me(): Me {
   meStore.write(made);
   cached = made;
   return made;
+}
+
+/**
+ * Your name with your title on it, which is what another player sees.
+ *
+ * The title is the one cosmetic that leaves the phone, and it is worked
+ * out here rather than stored on the record, so putting a different one
+ * on changes what the next person sees without anything having to be
+ * written anywhere.
+ */
+export function displayName(): string {
+  const self = me();
+  const t = cosmeticById(looksStore.read().title);
+  if (!t || t.id === DEFAULTS.title) return self.name;
+  return `${self.name} · ${t.name}`;
 }
 
 /** Change what other people see. Trimmed, and never empty. */

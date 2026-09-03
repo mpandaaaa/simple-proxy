@@ -33,9 +33,12 @@ import {
   dailyStore,
   weeklyStore,
   duelStore,
+  collectionStore,
 } from '../src/save';
 import {
   bestThisWeek,
+  levelProgress,
+  totals,
   dailyNumber,
   liveStreak,
   ordinal,
@@ -119,6 +122,10 @@ export default function Home() {
      the two rows underneath the Daily say something true as well. */
   const [weekly, setWeekly] = useState(() => readWeek());
   const [duels, setDuels] = useState(() => duelStore.read());
+  /* The level, and how much of the collection is in. Read here rather
+     than worked out in the row, so the front door says something true
+     about both without either of them owning the sums. */
+  const [cards, setCards] = useState(() => collectionStore.read().cards.length);
 
   // Saves change while you are inside a mode, so the status lines are read
   // again every time Home comes back to the front rather than once on mount.
@@ -132,8 +139,12 @@ export default function Home() {
       setDaily(readDaily());
       setWeekly(readWeek());
       setDuels(duelStore.read());
+      setCards(collectionStore.read().cards.length);
     }, []),
   );
+
+  const lvl = levelProgress(progress.xp);
+  const everyCard = totals().all;
 
   return (
     <Screen>
@@ -259,7 +270,7 @@ export default function Home() {
           />
         </Collapse>
 
-        <Collapse label="Your game" count={3}>
+        <Collapse label="Your game" count={4}>
           <Row
             icon={IconCpu}
             tone="blue"
@@ -276,15 +287,30 @@ export default function Home() {
           <Row
             icon={IconStar}
             tone="purple"
-            title={`Progress · Level ${progress.lvl}`}
-            subtitle={`${progress.coins} coins · ${progress.streak}-day streak`}
-            onPress={() =>
-              soon(
-                'Your game',
-                'Progress',
-                'Level, missions, collection and unlocks, all earned from seasons you have actually played.',
-              )
+            title={`Progress · Level ${lvl.level}`}
+            subtitle={
+              lvl.maxed
+                ? `${progress.coins} coins · level fifty`
+                : `${progress.coins} coins · ${lvl.toNext} to level ${lvl.level + 1}`
             }
+            onPress={() => {
+              haptic('light');
+              router.push('/progress');
+            }}
+          />
+          <Row
+            icon={IconTrophy}
+            tone="purple"
+            title="Collection"
+            subtitle={
+              cards
+                ? `${cards} of ${everyCard} footballers kept`
+                : 'Finish a season and the eleven are yours'
+            }
+            onPress={() => {
+              haptic('light');
+              router.push('/collection');
+            }}
           />
           <Row
             icon={IconMedal}

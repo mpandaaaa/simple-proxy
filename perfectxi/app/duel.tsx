@@ -16,7 +16,7 @@ import {
   type DuelRecord,
   type DuelResult,
 } from '../src/engine';
-import { duelStore, me } from '../src/save';
+import { duelStore, displayName } from '../src/save';
 import { findMatch, type Match } from '../src/net/lobby';
 import { startH2H } from '../src/game/h2h';
 import { startRun } from '../src/game/run';
@@ -203,7 +203,7 @@ export default function Duel() {
       </View>
 
       <Text style={styles.handle}>
-        You appear to other players as {me().name}.
+        You appear to other players as {displayName()}.
       </Text>
 
       {/* ---- answering one ---- */}

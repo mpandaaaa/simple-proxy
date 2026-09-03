@@ -14,7 +14,8 @@ import Svg, { Rect, Line as SvgLine, Circle, Defs, LinearGradient, Stop } from '
 import { color, radius, space, positionColor } from '../tokens';
 import { font, text } from '../type';
 import { useReduceMotion } from '../feel';
-import { FORMATIONS, clubColour, lastName } from '../../engine';
+import { FORMATIONS, clubColour, cosmeticById, lastName, DEFAULTS } from '../../engine';
+import { looksStore } from '../../save';
 import type { Position, Slot } from '../../engine';
 
 export { lastName as surname } from '../../engine';
@@ -60,6 +61,13 @@ export function Pitch({
   measureTick?: number;
 }) {
   const fm = FORMATIONS[formation];
+
+  /* Whichever pitch has been put on. Read here rather than passed down
+     through four screens, because it is a setting and not an argument:
+     nothing that draws a pitch should have to know that pitches can be
+     changed at all. */
+  const turf = usePitch();
+
   if (!fm) return null;
 
   const rows: number[][] = [];
@@ -71,12 +79,12 @@ export function Pitch({
   }
 
   return (
-    <View style={[styles.pitch, preview && styles.pitchPreview]}>
+    <View style={[styles.pitch, { backgroundColor: turf.foot }, preview && styles.pitchPreview]}>
       <Svg style={StyleSheet.absoluteFill} viewBox="0 0 100 76" preserveAspectRatio="none">
         <Defs>
           <LinearGradient id="turf" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor="#31824A" />
-            <Stop offset="1" stopColor="#194F2C" />
+            <Stop offset="0" stopColor={turf.top} />
+            <Stop offset="1" stopColor={turf.foot} />
           </LinearGradient>
           <LinearGradient id="turfShade" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor="#000000" stopOpacity={0} />
@@ -87,7 +95,15 @@ export function Pitch({
 
         {/* mowing bands: the thing that stops flat green reading as felt */}
         {[0, 2, 4, 6].map((n) => (
-          <Rect key={n} x="0" y={n * 9.5} width="100" height="9.5" fill="#FFFFFF" opacity={0.032} />
+          <Rect
+            key={n}
+            x="0"
+            y={n * 9.5}
+            width="100"
+            height="9.5"
+            fill={turf.band}
+            opacity={turf.bandAlpha}
+          />
         ))}
 
         <Rect x="1.5" y="1.5" width="97" height="73" stroke="#FFFFFF" strokeOpacity={0.22} strokeWidth={0.5} fill="none" />
@@ -285,6 +301,50 @@ function PitchSlot({
       )}
     </Animated.View>
   );
+}
+
+/**
+ * The turf, as two colours and a mowing band.
+ *
+ * A pitch is stored as one colour and a band. The top of the gradient is
+ * that colour lifted towards white and the foot of it is the colour
+ * itself, which is what gives a pitch a horizon rather than a flat wash,
+ * and it means adding a pitch is one hex code rather than four.
+ */
+function usePitch() {
+  const item = cosmeticById(looksStore.read().pitch) ?? cosmeticById(DEFAULTS.pitch);
+  const base = item?.a ?? '#1F5A32';
+  const band = item?.b ?? 'rgba(255,255,255,0.035)';
+
+  /* The band is stored the way every other colour in the app is, and SVG
+     wants the colour and the opacity apart. Anything that will not parse
+     falls back to the plain white wash rather than drawing nothing. */
+  let bandColour = '#FFFFFF';
+  let bandAlpha = 0.032;
+  const m = /^rgba?\(([^)]+)\)$/.exec(band.trim());
+  if (m) {
+    const parts = m[1].split(',').map((x) => x.trim());
+    if (parts.length >= 3) {
+      bandColour = 'rgb(' + parts[0] + ',' + parts[1] + ',' + parts[2] + ')';
+      bandAlpha = parts.length > 3 ? Number(parts[3]) || 0.032 : 1;
+    }
+  } else if (band.startsWith('#')) {
+    bandColour = band;
+  }
+
+  return { top: lift(base, 0.24), foot: base, band: bandColour, bandAlpha };
+}
+
+/** A colour, a little further towards white. */
+function lift(hex: string, by: number): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  const mix = (c: number) => Math.round(c + (255 - c) * by);
+  const r = mix((n >> 16) & 255);
+  const g = mix((n >> 8) & 255);
+  const b = mix(n & 255);
+  return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
 }
 
 const styles = StyleSheet.create({
