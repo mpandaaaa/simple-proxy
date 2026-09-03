@@ -107,6 +107,16 @@ export type DynastyPlayer = {
   amortLeft: number;
   /** came through the academy, so he has no book value and counts as homegrown */
   youth: boolean;
+  /**
+   * The season he arrived, or 0 for a man who was already here.
+   *
+   * One rule hangs off it: you cannot sell a footballer in the same
+   * summer you signed him, and nobody bids for him either. Without it a
+   * free agent signed for nothing and sold the same afternoon for forty
+   * million is a money printer, and every other number in the mode stops
+   * meaning anything.
+   */
+  joined: number;
   /** how many times he has been scouted, which narrows his reported ceiling */
   scout: number;
   /** one row a season, so a career can be read back */
@@ -301,6 +311,7 @@ export function seedTracks(base: PlayerSeed, rnd: Rng): DynastyPlayer {
     amort: 0,
     amortLeft: 0,
     youth: base.youth ?? false,
+    joined: 0,
     scout: 0,
     hist: [],
     phys: clamp(Math.round(base.rtg + youth * 4 + gauss(rnd) * 2), 40, 99),
@@ -337,6 +348,31 @@ export function seedTracks(base: PlayerSeed, rnd: Rng): DynastyPlayer {
   }
   p.rtg = overall(p);
   return p;
+}
+
+/**
+ * Did he sign this summer?
+ *
+ * Anybody who was here before this rule existed reads as zero, which is
+ * no season at all, so an old career loses nothing by it.
+ */
+export function signedThisSeason(d: Dynasty, p: DynastyPlayer): boolean {
+  const joined = typeof p.joined === 'number' ? p.joined : 0;
+  return joined > 0 && joined === d.year;
+}
+
+/**
+ * Whether he can be sold at all, and what to say when he cannot.
+ *
+ * One place, so the button, the offer and the engine all agree. A screen
+ * that offers a sale the engine then refuses reads as the game being
+ * broken, because from where the player is sitting it is.
+ */
+export function saleBlock(d: Dynasty, p: DynastyPlayer | null): string | null {
+  if (!p) return null;
+  if (signedThisSeason(d, p)) return 'Signed this summer. He can go next year.';
+  if (p.loan) return 'Out on loan. He cannot be sold from here.';
+  return null;
 }
 
 /** One season of ageing for one track. */
@@ -580,6 +616,7 @@ export type Dynasty = {
     fee: number;
     worth: number;
     stepUp: boolean;
+    abroad: boolean;
   }[];
   /** clubs that want you to manage them */
   jobs: {
@@ -589,6 +626,14 @@ export type Dynasty = {
     budget: number;
     /** what they are, in one line */
     note: string;
+    /**
+     * Which division the club is in.
+     *
+     * Optional only so a career saved before it existed still reads. Any
+     * offer without one is treated as the top flight, which is what the
+     * code used to assume for every offer whether it was true or not.
+     */
+    division?: 1 | 2;
   }[];
   /** send academy players out on loan without being asked */
   autoLoan: boolean;

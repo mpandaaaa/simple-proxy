@@ -114,7 +114,13 @@ export function endOfSeason(args: {
 
   /* Three come up. The ones who went down most recently are strongest and
      sit at the top of the pool, so they are the likeliest to return. */
-  const pool = below.length ? below : CHAMPIONSHIP.map((c) => ({ ...c }));
+  /* Never the club you manage. The division below carries across a change
+     of job, so a club you once relegated can still be sitting in it when
+     you take over at that very club, and it would then be promoted into
+     your own league and you would play yourself. */
+  const pool = (below.length ? below : CHAMPIONSHIP.map((c) => ({ ...c }))).filter(
+    (c) => c.name !== club,
+  );
   const ranked = [...pool].sort((a, b) => b.str - a.str);
   const coming: Club[] = [];
   for (let i = 0; i < 3 && ranked.length; i++) {
@@ -144,20 +150,35 @@ export function endOfSeason(args: {
     });
   }
 
-  let next = [...staying, ...coming];
+  /* Nineteen opponents, always, and never two of anybody nor yourself.
 
-  /* Nineteen opponents, always. If your own relegation or promotion has
-     changed who you are playing, the shortfall is made up from whichever
-     division you are now in. */
+     The order matters and it used to be wrong. Trimming and topping up
+     first and only then removing duplicates left eighteen clubs in the
+     division, because a club promoted out of the tier below could already
+     be in it: relegation hands you a whole new division while the tier
+     below still lists the clubs now in it. Deduplicating first and topping
+     up afterwards cannot produce that, and the top up keeps going until it
+     has nineteen. */
   const want = 19;
+  const uniq = (all: Club[]) =>
+    all
+      .filter((c) => c.name !== club)
+      .filter((c, i, list) => list.findIndex((x) => x.name === c.name) === i);
+
+  let next = uniq([...staying, ...coming]);
   if (next.length > want) {
     next = next.sort((a, b) => b.str - a.str).slice(0, want);
   }
-  while (next.length < want) {
-    const extra = nextBelow.shift();
-    if (!extra) break;
-    next.push(extra);
-  }
+  const add = (c: Club) => {
+    if (next.length >= want) return;
+    if (c.name === club || next.some((x) => x.name === c.name)) return;
+    next.push({ ...c });
+  };
+  while (next.length < want && nextBelow.length) add(nextBelow.shift() as Club);
+  /* And if the tier below has run dry as well, from the division itself,
+     because a league with eighteen clubs in it is not a league. */
+  for (const c of divisionFor(division, club)) add(c);
+  for (const c of CHAMPIONSHIP) add({ ...c });
 
   return {
     league: next.sort((a, b) => b.str - a.str),
@@ -188,6 +209,11 @@ export function divisionFor(division: Division, club: string): Club[] {
  */
 export function clubRating(str: number): number {
   return Math.max(30, Math.min(99, Math.round(str * 100 + 8)));
+}
+
+/** The other way round, for putting a club into a league at a known level. */
+export function ratingStrength(rating: number): number {
+  return Math.round(Math.max(FLOOR, Math.min(CEIL, (rating - 8) / 100)) * 1000) / 1000;
 }
 
 /** What the division is called, for anything that has to say it. */

@@ -65,9 +65,11 @@ import {
  * slower to open for no reason and puts a database read inside an import
  * cycle, which is a hard way to find out you have one.
  */
-let manageable: ReadonlySet<string> | null = null;
-function manageableClubs(): ReadonlySet<string> {
-  if (!manageable) manageable = new Set(clubOptions(2026).map((o) => o.club));
+let manageable: ReadonlyMap<string, number> | null = null;
+function manageableClubs(): ReadonlyMap<string, number> {
+  if (!manageable) {
+    manageable = new Map(clubOptions(2026).map((o) => [o.club, o.avg]));
+  }
   return manageable;
 }
 
@@ -447,11 +449,15 @@ export function processSeasonEnd(
       continue;
     }
     kept.push(aged);
-    if (aged.why.startsWith('A career') || aged.why.startsWith('Played too well')) {
-      held.push(aged);
-    }
+    /* One group each. A player who played too well to decline and also
+       gained a point belongs in the group that says he improved, not in
+       both, and seeing the same name twice on one page reads as a bug
+       because it is one. */
     if (aged.delta > 0) improved.push(aged);
     else if (aged.delta < 0) declined.push(aged);
+    else if (aged.why.startsWith('A career') || aged.why.startsWith('Played too well')) {
+      held.push(aged);
+    }
   }
 
   next.roster = kept;
@@ -670,7 +676,7 @@ export function processSeasonEnd(
      always needs one, and it is always a rung down. */
   next.jobs = pyramid.youWentDown
     ? []
-    : jobOffers(next, next.league, rnd, sacked, manageableClubs());
+    : jobOffers(next, next.league, rnd, sacked, manageableClubs(), next.division);
   for (const j of next.jobs) {
     say(
       `${j.club} want to speak to you`,

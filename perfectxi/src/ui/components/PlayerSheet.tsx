@@ -29,6 +29,7 @@ export function PlayerSheet({
   open,
   onClose,
   onSell,
+  sellBlock,
   onBench,
   benchLabel,
   onSwap,
@@ -43,6 +44,14 @@ export function PlayerSheet({
   open: boolean;
   onClose: () => void;
   onSell?: () => void;
+  /**
+   * Why he cannot be sold, if he cannot.
+   *
+   * Given a reason the sheet says it instead of offering a button that
+   * would do nothing. A control that looks live and is not is worse than
+   * no control at all.
+   */
+  sellBlock?: string | null;
   onBench?: () => void;
   benchLabel?: string;
   onSwap?: () => void;
@@ -308,7 +317,7 @@ export function PlayerSheet({
             <Text style={styles.actionText}>{benchLabel ?? 'Move to the bench'}</Text>
           </Press>
         ) : null}
-        {onSell ? (
+        {onSell && !sellBlock ? (
           <Press
             onPress={() => {
               haptic('warning');
@@ -322,6 +331,11 @@ export function PlayerSheet({
               Sell for £{worth}m
             </Text>
           </Press>
+        ) : null}
+        {onSell && sellBlock ? (
+          <View style={[styles.action, styles.locked]}>
+            <Text style={styles.lockedText}>{sellBlock}</Text>
+          </View>
         ) : null}
         {onPromote ? (
           <Press
@@ -389,6 +403,17 @@ function Tile({ label, value, tint }: { label: string; value: string; tint?: str
 }
 
 const styles = StyleSheet.create({
+  locked: {
+    borderStyle: 'dashed',
+    opacity: 0.85,
+  },
+  lockedText: {
+    ...text.small,
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: color.text3,
+    textAlign: 'center',
+  },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.s3 },
   headBody: { flex: 1, minWidth: 0 },
   chips: { flexDirection: 'row', alignItems: 'center', gap: space.s2 },

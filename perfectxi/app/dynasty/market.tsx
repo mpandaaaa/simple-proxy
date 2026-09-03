@@ -33,6 +33,7 @@ import {
   type DynastyPlayer,
   type Listing,
   type Position,
+  saleBlock,
 } from '../../src/engine';
 import { useCareer, updateCareer } from '../../src/game/career';
 
@@ -60,14 +61,24 @@ export default function Market() {
   const [target, setTarget] = useState<Listing | null>(null);
   const [selling, setSelling] = useState<{ p: DynastyPlayer; slot: number } | null>(null);
 
-  // Drawn from the career seed, the year and how many looks have been used,
-  // so the same list comes back until you spend a look on a new one.
+  /* Drawn from the career seed, the year and how many looks have been
+     used, so the same list comes back until you spend a look on a new
+     one. Signing somebody takes him off it and selling somebody does not
+     touch it: every name keeps its place in the queue whatever else
+     happens to the squad. */
   const listings = useMemo(() => {
     if (!career) return [];
     const seed =
       (career.seed ^ Math.imul(career.year * 41 + career.marketRolls, 0x85ebca6b)) >>> 0;
     return market(career, mulberry32(seed));
-  }, [career?.seed, career?.year, career?.marketRolls, career?.roster]);
+  }, [
+    career?.seed,
+    career?.year,
+    career?.marketRolls,
+    career?.roster,
+    career?.sold?.length,
+    career?.staff?.scout,
+  ]);
 
   const holes = career ? emptySlots(career) : [];
   const rollsLeft = career ? MAX_ROLLS - career.marketRolls : 0;
@@ -303,8 +314,13 @@ export default function Market() {
           player is almost pure profit, because he never cost anything.
         </Text>
         <View style={styles.list}>
-          {career.roster.map((p, slot) =>
-            p ? (
+          {career.roster.map((p, slot) => {
+            if (!p) return null;
+            /* A man who signed this summer is on the list, greyed, with the
+               reason on the row. Hiding him would read as him having
+               vanished from the squad. */
+            const block = saleBlock(career, p);
+            return (
               <Press
                 key={p.n}
                 onPress={() => {
@@ -313,7 +329,7 @@ export default function Market() {
                 }}
                 feel="none"
                 scaleTo={0.99}
-                style={styles.card}
+                style={[styles.card, block ? styles.cardLocked : null]}
               >
                 <Badge pos={p.pos} />
                 <View style={styles.cardBody}>
@@ -330,13 +346,19 @@ export default function Market() {
                   <Text style={styles.cardRtg} allowFontScaling={false}>
                     {p.rtg}
                   </Text>
-                  <Text style={[styles.cardPrice, { color: color.accent }]}>
-                    £{playerValue(p)}m
-                  </Text>
+                  {block ? (
+                    <Text style={styles.cardHeld} numberOfLines={1}>
+                      just signed
+                    </Text>
+                  ) : (
+                    <Text style={[styles.cardPrice, { color: color.accent }]}>
+                      £{playerValue(p)}m
+                    </Text>
+                  )}
                 </View>
               </Press>
-            ) : null,
-          )}
+            );
+          })}
         </View>
 
         <View style={{ height: space.s6 }} />
@@ -362,6 +384,7 @@ export default function Market() {
         open={selling !== null}
         onClose={() => setSelling(null)}
         onSell={selling ? () => doSell(selling.slot) : undefined}
+        sellBlock={selling ? saleBlock(career, selling.p) : null}
       />
     </>
   );
@@ -393,6 +416,13 @@ function filterHue(f: Filter): string {
 }
 
 const styles = StyleSheet.create({
+  cardLocked: { opacity: 0.5 },
+  cardHeld: {
+    ...text.small,
+    fontSize: 11,
+    lineHeight: 15,
+    color: color.text3,
+  },
   money: {
     padding: space.s4,
     borderRadius: radius.lg,

@@ -70,7 +70,7 @@ export default function Daily() {
   const play = useCallback(() => {
     haptic('medium');
     sfx('pick');
-    startRun(puzzle.config, puzzle.seed, puzzle.n);
+    startRun(puzzle.config, puzzle.seed, { daily: puzzle.n });
     router.push('/draft/board');
   }, [puzzle]);
 

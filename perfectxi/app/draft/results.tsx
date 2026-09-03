@@ -42,6 +42,12 @@ import {
   highlights,
   livePosition,
   bankDaily,
+  bankWeekly,
+  bankDuel,
+  weeklyFor,
+  decodeDuel,
+  duelOutcome,
+  encodeDuel,
   ordinal,
   simulateCups,
   squadAvg,
@@ -61,6 +67,8 @@ import {
   careerStore,
   progressStore,
   dailyStore,
+  weeklyStore,
+  duelStore,
   remember,
   type SeasonRecord,
 } from '../../src/save';
@@ -230,6 +238,38 @@ export default function Results() {
         })),
     };
     remember(record);
+
+    /* The weekly keeps your best of the week rather than your last. */
+    if (run.weekly) {
+      weeklyStore.update((rec) =>
+        bankWeekly(rec, {
+          n: run.weekly as number,
+          twistId: weeklyFor(run.weekly as number).twist.id,
+          pts: r.pts,
+          position: r.position,
+          rating: Math.round(rating),
+          attempts: 1,
+          at: Date.now(),
+        }),
+      );
+    }
+
+    /* A duel answered is a duel decided, one way or the other. */
+    if (run.duel) {
+      const sent = decodeDuel(run.duel);
+      if (sent) {
+        duelStore.update((rec) =>
+          bankDuel(rec, {
+            code: run.duel as string,
+            mine: r.pts,
+            theirs: sent.pts,
+            outcome: duelOutcome(r.pts, sent.pts),
+            sent: false,
+            at: Date.now(),
+          }),
+        );
+      }
+    }
 
     /* A Daily is banked as well as remembered, because it is the one run
        that can only be played once and the streak depends on it. */

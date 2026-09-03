@@ -39,6 +39,19 @@ export type Run = {
    * of those screens knows to bank the result and count the streak.
    */
   daily: number | null;
+  /** the Weekly Event number, when this run is one */
+  weekly: number | null;
+  /**
+   * The duel code this run is answering.
+   *
+   * Set when a code has been entered, so the results screen knows there
+   * is somebody to be measured against. Null when the run is a duel you
+   * are creating rather than answering: that one becomes a code at the
+   * end rather than starting from one.
+   */
+  duel: string | null;
+  /** true when this run is being played to make a code to send */
+  sending: boolean;
   state: DraftState;
   /** the board on the table right now, unfiltered by blitz */
   board: Pick[] | null;
@@ -71,13 +84,21 @@ function freshSeed(): number {
 export function startRun(
   config: DraftConfig,
   seed = freshSeed(),
-  daily: number | null = null,
+  kind: {
+    daily?: number | null;
+    weekly?: number | null;
+    duel?: string | null;
+    sending?: boolean;
+  } = {},
 ): void {
   rnd = mulberry32(seed);
   run = {
     seed,
     engineVersion: ENGINE_VERSION,
-    daily,
+    daily: kind.daily ?? null,
+    weekly: kind.weekly ?? null,
+    duel: kind.duel ?? null,
+    sending: kind.sending ?? false,
     state: newDraft(config),
     board: null,
     club: null,

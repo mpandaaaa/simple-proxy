@@ -47,6 +47,7 @@ import { scoutRange, emptySlots, market, sign, promote } from '../.headless/engi
 import { playerStyle, squadStyleFit, styleMisfits } from '../.headless/engine/dynastyStyles.js';
 import { moraleWord, reputation } from '../.headless/engine/dynastyPeople.js';
 import { COMPS } from '../.headless/engine/cups.js';
+import { clubRating } from '../.headless/engine/pyramid.js';
 import { mulberry32 } from '../.headless/engine/rng.js';
 
 let failures = 0;
@@ -282,7 +283,42 @@ for (const { club: clubName, managed } of CLUBS) {
       words(j.objective, `${at}: an approach with no objective`);
       words(j.note, `${at}: an approach with nothing said about it`);
       num(j.budget, `${at}: the budget at ${j.club}`, { min: 0 });
+      num(j.rating, `${at}: what ${j.club} are rated`, { min: 30, max: 99 });
       if (j.club === d.club) bad(`${at}: your own club offered you your own job`);
+      /* The rating in the offer has to be the rating you would get. It used
+         to quote the club's form in your league, which drifts upwards across
+         a long career while its squad in the database does not, so an offer
+         said Newcastle were 98 and then handed over an 84. */
+      const would = takeJob(d, j);
+      if (!would) bad(`${at}: the offer from ${j.club} cannot be taken`);
+      else {
+        const got = squadRating(starters(would));
+        if (Math.abs(got - j.rating) > 4) {
+          bad(`${at}: offered ${j.club} at ${j.rating} and the squad is rated ${got}`);
+        }
+        /* The division comes with you. It used to be rebuilt from the 2026
+           defaults, so a club you had left rated eighty was back at ninety
+           five the next season because that is what the book says. */
+        if (would.league.length !== 19) {
+          bad(`${at}: moving to ${j.club} left ${would.league.length} opponents`);
+        }
+        if (would.league.some((c) => c.name === j.club)) {
+          bad(`${at}: moving to ${j.club} left them in your own league`);
+        }
+        const left = would.league.find((c) => c.name === d.club);
+        if (!left) {
+          bad(`${at}: the club you left is not in the new league`);
+        } else {
+          const was = squadRating(starters(d));
+          if (Math.abs(clubRating(left.str) - was) > 6) {
+            bad(`${at}: left ${d.club} rated ${was} and they are now ${clubRating(left.str)}`);
+          }
+        }
+        /* And a club that has climbed has built. */
+        if (j.rating >= 90 && would.infra.training < 4) {
+          bad(`${at}: ${j.club} are rated ${j.rating} with a training ground of ${would.infra.training}`);
+        }
+      }
     }
 
     /* ---- the Shield tie ---- */
@@ -489,6 +525,14 @@ for (const { club: clubName, managed } of CLUBS) {
         const moved = takeJob(d, j);
         if (!moved) bad(`${at}: could not take the job at ${j.club}`);
         else {
+          /* The rating in the offer has to be the rating you get. It quoted
+             the club's form in your league, which drifts up across a long
+             career while the squad in the database does not, so an offer
+             said Newcastle were 98 and then handed over an 84. */
+          const got = squadRating(starters(moved));
+          if (Math.abs(got - j.rating) > 4) {
+            bad(`${at}: offered ${j.club} at ${j.rating} and got a squad rated ${got}`);
+          }
           if (moved.titles !== d.titles) bad(`${at}: titles lost on the way to ${j.club}`);
           if (moved.spells.length <= d.spells.length) {
             bad(`${at}: moving to ${j.club} forgot where you had been`);

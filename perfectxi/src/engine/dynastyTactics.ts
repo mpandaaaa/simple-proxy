@@ -191,7 +191,9 @@ export function effectiveRating(d: Dynasty): number {
     total += p.rtg * posFit(p.pos, slots[i] ?? d.slots[i] ?? p.pos) * styleFit(p, style) * moraleFit(p);
     n++;
   }
-  return (n ? total / n : 0) + benchCover(d);
+  /* Ninety nine is the top of the scale everything else is drawn on, and
+     a great squad with a great bench could add its way past it. */
+  return Math.min(99, (n ? total / n : 0) + benchCover(d));
 }
 
 /** How many players are out of position, for the tactics screen to say so. */

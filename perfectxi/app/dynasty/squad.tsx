@@ -6,6 +6,7 @@ import { color, gradient, line, positionColor, radius, space } from '../../src/u
 import { font, text } from '../../src/ui/type';
 import { haptic } from '../../src/ui/feel';
 import {
+  saleBlock,
   clubWageBill,
   everyone,
   renewalTerms,
@@ -199,6 +200,7 @@ export default function Squad() {
         open={open !== null}
         onClose={() => setOpen(null)}
         onSell={open ? () => doSell(open.slot) : undefined}
+        sellBlock={open ? saleBlock(career, open.p) : null}
       />
     </>
   );

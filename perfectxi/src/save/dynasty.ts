@@ -157,6 +157,7 @@ function repairPlayer(v: unknown): DynastyPlayer | null {
     amort: typeof p.amort === 'number' ? p.amort : 0,
     amortLeft: typeof p.amortLeft === 'number' ? p.amortLeft : 0,
     youth: p.youth === true,
+    joined: typeof p.joined === 'number' ? p.joined : 0,
     scout: typeof p.scout === 'number' ? p.scout : 0,
     morale: typeof p.morale === 'number' ? p.morale : 70,
     cards: typeof p.cards === 'number' ? p.cards : 0,
@@ -260,7 +261,7 @@ function migrateToFour(v: unknown): Dynasty | null {
 
 export const dynastyStore = defineStore<Dynasty | null>({
   key: 'dynasty',
-  version: 12,
+  version: 13,
   fallback: null,
   validate: isDynasty,
   migrations: {
@@ -278,6 +279,37 @@ export const dynastyStore = defineStore<Dynasty | null>({
     6: (v) => (v ? tidySquad(v as Dynasty) : null),
     // Seven is the following and the club shop. A career from before them
     // starts with the crowd its ground would hold and a shop at level one.
+    /* Thirteen is the summer a player arrived, and who is allowed to bid.
+       Every player already in a career reads as having always been there,
+       so nobody is frozen out of a sale by it. The bids on the table are
+       thrown away rather than kept, because they were made under the old
+       rule that let a club rated 30 offer £170m. */
+    13: (v) => {
+      if (!v) return null;
+      const d = v as Dynasty;
+      /* And it repairs the league a change of job could break. Taking a
+         job used to say you were in the Premier League whatever division
+         the offer came from, so a manager hired after a relegation played
+         nineteen second tier clubs in a season the game called the top
+         flight. A top flight with nobody in it above 78 is that career,
+         and it is given a real Premier League back. */
+      const best = d.league?.length ? Math.max(...d.league.map((c) => c.str)) : 0;
+      const brokenTopFlight = d.division !== 2 && best < 0.7;
+
+      return {
+        ...d,
+        offers: [],
+        jobs: [],
+        league: brokenTopFlight ? startingLeague(d.club) : d.league,
+        roster: d.roster.map((p) =>
+          p ? { ...p, joined: typeof p.joined === 'number' ? p.joined : 0 } : p,
+        ),
+        youth: (d.youth ?? []).map((p) => ({
+          ...p,
+          joined: typeof p.joined === 'number' ? p.joined : 0,
+        })),
+      };
+    },
     /* Twelve is the Community Shield played by its real rules. A career
        from before it works its next tie out at the end of this season. */
     12: (v) => (v ? { ...(v as Dynasty), shield: (v as Dynasty).shield ?? null } : null),

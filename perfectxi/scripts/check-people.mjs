@@ -12,6 +12,7 @@ import {
   boardTarget,
   stature,
   statureFloor,
+  takeJob,
 } from '../.headless/engine/career.js';
 import {
   seasonCards,
@@ -25,10 +26,13 @@ import {
   autoLoanPicks,
   reputation,
   jobOffers,
+  spendCap,
   MORALE_BASE,
 } from '../.headless/engine/dynastyPeople.js';
+import { market, sell, sign, promote } from '../.headless/engine/dynastySquad.js';
+import { saleBlock, signedThisSeason, playerValue } from '../.headless/engine/dynasty.js';
 import { styleOf, styleFit } from '../.headless/engine/dynastyStyles.js';
-import { startingLeague } from '../.headless/engine/pyramid.js';
+import { startingLeague, startingChampionship } from '../.headless/engine/pyramid.js';
 import { mulberry32 } from '../.headless/engine/rng.js';
 
 let failures = 0;
@@ -100,22 +104,61 @@ for (let i = 0; i < 8; i++) {
 }
 band('an unhappy player who plays comes back round', m, 55, 100, 'nothing is permanent');
 
-/* ---------- offers ---------- */
+/* ---------- offers ----------
+
+   The bug this guards: a club rated 30 offering £170m for a player rated
+   90. Two things have to hold for every single bid ever made, in every
+   division, at every squad rating, or it happens again. */
 let made = 0;
 let over = 0;
 let count = 0;
-for (let i = 0; i < 600; i++) {
-  const offers = offersFor(base, league, mulberry32(500 + i));
-  made += offers.length;
-  for (const o of offers) {
-    count++;
-    over += o.fee / o.worth;
-    if (o.club === base.club) {
-      failures++;
-      rows.push({ ok: false, label: 'your own club bid for your player', got: 'yes', lo: 'no', hi: 'no', real: '' });
+let tooSmall = 0;
+let tooPoor = 0;
+let ownClub = 0;
+let justSigned = 0;
+let worstGap = 99;
+let dearest = 0;
+
+const OFFER_WORLDS = [
+  { name: 'Arsenal in the top flight', d: base, lg: league },
+  { name: 'Arsenal in the second tier', d: base, lg: startingChampionship('Arsenal') },
+];
+for (const world of OFFER_WORLDS) {
+  for (let i = 0; i < 600; i++) {
+    const offers = offersFor(world.d, world.lg, mulberry32(500 + i));
+    if (world.name === OFFER_WORLDS[0].name) made += offers.length;
+    for (const o of offers) {
+      count++;
+      over += o.fee / o.worth;
+      dearest = Math.max(dearest, o.fee);
+      const p = world.d.roster[o.slot];
+      if (o.club === world.d.club) ownClub++;
+      if (p && o.clubRating < p.rtg - 3) {
+        tooSmall++;
+        worstGap = Math.min(worstGap, o.clubRating - p.rtg);
+      }
+      if (o.fee > spendCap(o.clubRating)) tooPoor++;
+      if (p && signedThisSeason(world.d, p)) justSigned++;
     }
   }
 }
+must('nobody bids for their own player', ownClub === 0, '');
+must(
+  'no club bids for a player out of its reach',
+  tooSmall === 0,
+  tooSmall ? `${tooSmall} did, worst ${worstGap}` : 'within three rating points',
+);
+must(
+  'no club bids money it does not have',
+  tooPoor === 0,
+  tooPoor ? `${tooPoor} did` : 'every fee inside the club spend cap',
+);
+must('nobody bids for a man who signed this summer', justSigned === 0, '');
+band('the biggest bid ever made, £m', dearest, 20, 400, 'a transfer record, not a fantasy');
+band('a club rated 30 can spend, £m', spendCap(30), 0, 0, 'nothing at all');
+band('a club rated 84 can spend, £m', spendCap(84), 60, 120, 'about what a big club pays');
+band('a club rated 95 can spend, £m', spendCap(95), 140, 260, 'the record, roughly');
+must('the cap climbs with the club', spendCap(95) > spendCap(84) && spendCap(84) > spendCap(70), '');
 band('offers a summer', round(made / 600), 0.5, 4, 'a good squad is asked about every year');
 band('a bid is worth his value times', round(over / Math.max(1, count)), 1.1, 1.6, 'a player who is not for sale costs more');
 
@@ -128,6 +171,117 @@ if (one) {
   const after = kept.roster[one.slot].morale;
   must('refusing costs him some morale', after < before, 'he knows');
   must('refusing clears the offer', kept.offers.length === 0, '');
+}
+
+/* ---------- signed this summer, sold next ----------
+
+   The money printer this closes: sign a free agent for nothing, sell him
+   the same afternoon for forty million, repeat until the budget is
+   meaningless. */
+{
+  const list = market(base, mulberry32(99));
+  const free = list.find((l) => l.free) ?? list[list.length - 1];
+  const hole = base.roster.findIndex((p) => !p);
+  const slot = hole >= 0 ? hole : 13;
+  const room = slot === 13 ? { ...base, roster: base.roster.map((p, i) => (i === 13 ? null : p)) } : base;
+  const after = sign(room, { ...free, pos: room.slots[slot] ?? free.pos }, slot, mulberry32(3));
+  must('a signing goes through', !!after, free ? free.n : 'nobody on the list');
+  if (after) {
+    must('and he is stamped with the season he arrived', after.roster[slot].joined === after.year, '');
+    must('he cannot be sold the same summer', sell(after, slot) === null, 'no money printer');
+    must('and the screen says why', !!saleBlock(after, after.roster[slot]), '');
+    const later = { ...after, year: after.year + 1 };
+    must('next summer he can be sold', sell(later, slot) !== null, '');
+  }
+
+  const already = base.roster.findIndex((p) => p && !p.loan);
+  must('a man who was already here can be sold', sell(base, already) !== null, '');
+}
+
+/* ---------- the market does not reshuffle ---------- */
+{
+  const seed = 4242;
+  const before = market(base, mulberry32(seed));
+  const soldSlot = base.roster.findIndex((p) => p && !p.loan);
+  const afterSale = sell(base, soldSlot);
+  const after = market(afterSale, mulberry32(seed));
+  const namesBefore = before.map((l) => l.n);
+  const namesAfter = after.map((l) => l.n);
+  const lost = namesBefore.filter((n) => !namesAfter.includes(n));
+  band('names the list keeps after a sale, %',
+    Math.round((namesBefore.filter((n) => namesAfter.includes(n)).length / namesBefore.length) * 100),
+    100, 100, 'selling a player must not deal a new market');
+  must('nobody vanishes from the list because you sold somebody', lost.length === 0, lost.join(', '));
+  must('and the man you sold does not appear on it', !namesAfter.includes(base.roster[soldSlot].n), 'you cannot buy him back');
+
+  /* Signing takes exactly one name off it and touches nothing else. */
+  const hole = base.roster.findIndex((p) => !p);
+  if (hole >= 0) {
+    const pick = before.find((l) => l.price <= base.budget && l.pos === (base.slots[hole] ?? 'MID'));
+    if (pick) {
+      const signed = sign(base, pick, hole, mulberry32(5));
+      const list = market(signed, mulberry32(seed)).map((l) => l.n);
+      must('signing removes only the man you signed',
+        !list.includes(pick.n) && namesBefore.filter((n) => n !== pick.n).every((n) => list.includes(n)),
+        '');
+    }
+  }
+}
+
+/* ---------- changing jobs keeps you in the right division ----------
+
+   The bug this guards: a manager relegated in May and hired in June
+   carried nineteen Championship clubs into a season the game called the
+   Premier League, and a board that asked him to win it. */
+{
+  /* Only clubs the database has a squad for can be managed, which is the
+     same map the season passes in. Without it the offer is a button that
+     does nothing. */
+  const manageable = new Map(clubOptions(2026).map((o) => [o.club, Math.round(o.avg)]));
+  /* A second tier a few seasons in: mostly Championship clubs, with the
+     ones who came down still in it. Those are the ones the database has a
+     squad for, and the ones a manager is actually offered. */
+  const second = [
+    { name: 'Everton', str: 0.44, var: 0.09 },
+    { name: 'Leicester', str: 0.4, var: 0.09 },
+    ...startingChampionship('Arsenal').slice(0, 17),
+  ];
+  const down = { ...base, division: 2, league: second };
+  const offers = jobOffers(down, second, mulberry32(11), true, manageable, 2);
+  must('every second tier offer is a club that can be managed',
+    offers.every((o) => manageable.has(o.club)), offers.map((o) => o.club).join(', '));
+  must('a manager in the second tier gets second tier offers', offers.length > 0, '');
+  if (offers.length) {
+    const o = offers[0];
+    must('and the offer says which division it is', o.division === 2, String(o.division));
+    must('and asks for promotion', o.objective === 'Win promotion', o.objective);
+    const joined = takeJob(down, o);
+    must('taking it goes through', !!joined, o.club);
+    if (joined) {
+      must('you are still in the second tier', joined.division === 2, String(joined.division));
+      must('and the objective is promotion', joined.objective.label.toLowerCase().includes('promotion'), joined.objective.label);
+      /* Everything you carried, everything the second tier can top it up
+         with, and the club you just left. Never a Premier League club you
+         have never played. */
+      const names = new Set(
+        second
+          .map((c) => c.name)
+          .concat(startingChampionship(o.club).map((c) => c.name))
+          .concat(['Arsenal']),
+      );
+      const strays = joined.league.filter((c) => !names.has(c.name));
+      must('and the clubs are second tier clubs', strays.length === 0, strays.map((c) => c.name).join(', '));
+      must('you are never in your own league', !joined.league.some((c) => c.name === o.club), '');
+      must('and there are nineteen of them', joined.league.length === 19, String(joined.league.length));
+    }
+  }
+
+  const up = jobOffers(base, league, mulberry32(11), true, manageable, 1);
+  if (up.length) {
+    const j = takeJob(base, up[0]);
+    must('a top flight job is a top flight job', !!j && j.division === 1, '');
+    must('and nineteen top flight clubs come with it', !!j && j.league.length === 19, '');
+  }
 }
 
 /* ---------- loans ---------- */

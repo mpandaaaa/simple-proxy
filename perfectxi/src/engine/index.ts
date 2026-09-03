@@ -104,6 +104,8 @@ export {
   ageIn,
   seasonYear,
   seedTracks,
+  saleBlock,
+  signedThisSeason,
   ageOne,
   retireOdds,
   value,
@@ -130,6 +132,8 @@ export {
   stature,
   statureFloor,
   boardTarget,
+  scaleSquadTo,
+  clubAt,
   budgetFor,
   primeAge,
   startCareer,
@@ -168,6 +172,7 @@ export {
   moraleWord,
   moraleAfterSeason,
   offersFor,
+  spendCap,
   acceptOffer,
   rejectOffer,
   seasonCards,
@@ -199,6 +204,7 @@ export {
   divisionFor,
   divisionName,
   clubRating,
+  ratingStrength,
 } from './pyramid';
 export type { Club, Division } from './pyramid';
 
@@ -224,3 +230,37 @@ export {
   resultFor,
 } from './daily';
 export type { Daily, DailyEra, DailyResult, DailyRecord } from './daily';
+
+export {
+  weekNumber,
+  nextWeekAt,
+  untilNextWeek,
+  TWISTS,
+  weeklyFor,
+  thisWeek,
+  nextTwist,
+  WEEKLY_KEEP,
+  EMPTY_WEEKLY,
+  bankWeekly,
+  bestThisWeek,
+  weeklyStreak,
+} from './weekly';
+export { EMPTY_DUELS, bankDuel } from './weekly';
+export type {
+  Twist,
+  Weekly,
+  WeeklyBest,
+  WeeklyRecord,
+  DuelResult,
+  DuelRecord,
+} from './weekly';
+
+export {
+  DUEL_SHAPES,
+  encodeDuel,
+  decodeDuel,
+  newDuel,
+  duelOutcome,
+  duelRules,
+} from './duel';
+export type { Duel } from './duel';

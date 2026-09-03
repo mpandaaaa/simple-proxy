@@ -3,6 +3,7 @@ import type { Rng } from './rng';
 import type { Position } from './types';
 import {
   ageIn,
+  saleBlock,
   starters,
   seedTracks,
   value,
@@ -125,11 +126,37 @@ export function seasonInjuries(
 
 /* ---------- the academy ---------- */
 
+/**
+ * What English academy players are called.
+ *
+ * Thirty first names and twenty eight surnames is eight hundred and forty
+ * combinations, which sounds like plenty until a twenty season career has
+ * produced sixty of them and half the names have come round twice. There
+ * are a hundred and twenty of each now, which is fourteen thousand four
+ * hundred, and a career will never see the same one twice.
+ *
+ * They are drawn from the names actually on English academy team sheets:
+ * the traditional, the Irish, the West African, the Caribbean, the South
+ * Asian, the Polish and the Turkish, because that is what an English
+ * academy looks like and a list of Alfies and Archies does not.
+ */
 const FIRST = [
   'Alfie', 'Archie', 'Bobby', 'Callum', 'Dylan', 'Elliot', 'Finley', 'George',
   'Harvey', 'Isaac', 'Jayden', 'Kai', 'Leo', 'Mason', 'Noah', 'Ollie', 'Reuben',
   'Seb', 'Theo', 'Tyler', 'Zac', 'Amari', 'Kofi', 'Rio', 'Junior', 'Malachi',
   'Ronnie', 'Frankie', 'Louie', 'Ezra',
+  'Albie', 'Arlo', 'Ashton', 'Aaron', 'Ali', 'Ayo', 'Beau', 'Blake', 'Brandon',
+  'Caleb', 'Casey', 'Charlie', 'Chidi', 'Cody', 'Connor', 'Corey', 'Dane',
+  'Darius', 'Deacon', 'Demi', 'Dexter', 'Eddie', 'Eli', 'Emeka', 'Ethan',
+  'Felix', 'Fabio', 'Freddie', 'Gabriel', 'Harrison', 'Hugo', 'Idris', 'Jacob',
+  'Jaden', 'Jamal', 'Jesse', 'Joel', 'Jonah', 'Jordan', 'Josh', 'Kane',
+  'Kayden', 'Kaleb', 'Kian', 'Kwame', 'Kyle', 'Lennon', 'Levi', 'Lewis',
+  'Liam', 'Lucas', 'Mahdi', 'Marcus', 'Micah', 'Miles', 'Musa', 'Nathan',
+  'Nico', 'Obi', 'Omar', 'Oscar', 'Otis', 'Patrick', 'Quincy', 'Rafferty',
+  'Raheem', 'Reece', 'Regan', 'Rhys', 'Riley', 'Roman', 'Rory', 'Ryan',
+  'Samuel', 'Shay', 'Sonny', 'Stefan', 'Sulli', 'Taye', 'Tobi', 'Tommy',
+  'Travis', 'Tyrese', 'Vinnie', 'Wilf', 'Yusuf', 'Zaid', 'Zane', 'Zeki',
+  'Bailey', 'Carter', 'Dominic', 'Elias', 'Fraser', 'Hakim',
 ];
 
 const LAST = [
@@ -138,6 +165,25 @@ const LAST = [
   'Norrington', 'Oakley', 'Prentice', 'Quinn', 'Rowntree', 'Sackville', 'Thorne',
   'Underhill', 'Vance', 'Whitlock', 'Yarwood', 'Ababio', 'Boateng', 'Okonkwo',
   'Adeyemi',
+  'Abbott', 'Acheampong', 'Ainsworth', 'Akinola', 'Alcock', 'Amankwaa',
+  'Applewhite', 'Armitage', 'Asante', 'Attwood', 'Baptiste', 'Barlow',
+  'Bellamy', 'Bhandari', 'Blackwood', 'Bonner', 'Braithwaite', 'Brennan',
+  'Burdett', 'Carlisle', 'Carrington', 'Chikwendu', 'Clayton', 'Coker',
+  'Copeland', 'Cornish', 'Cresswell', 'Danquah', 'Darlington', 'Devlin',
+  'Duffield', 'Dunphy', 'Eastwood', 'Egbuna', 'Fenwick', 'Fitzgerald',
+  'Fletcher', 'Frimpong', 'Garvey', 'Gill', 'Golding', 'Greenhalgh',
+  'Hadley', 'Halliwell', 'Hargreaves', 'Hepburn', 'Hewitt', 'Hoskins',
+  'Ijeh', 'Iqbal', 'Jephcott', 'Kavanagh', 'Kelleher', 'Kowalski',
+  'Ladipo', 'Lamptey', 'Larkin', 'Latimer', 'Lawal', 'Ledger',
+  'Mahmood', 'Mainoo', 'Marshall', 'Mensah', 'Merrick', 'Millington',
+  'Mowbray', 'Mulready', 'Nkemelu', 'Nwachukwu', 'Ogilvie', 'Olaleye',
+  'Osei', 'Padmore', 'Pemberton', 'Pickering', 'Playfair', 'Purcell',
+  'Rademaker', 'Rasheed', 'Redfern', 'Renshaw', 'Ridley', 'Rutherford',
+  'Sadler', 'Sanderson', 'Sarpong', 'Sekhon', 'Shackleton', 'Sheridan',
+  'Sinclair', 'Somerville', 'Southgate', 'Stanhope', 'Sterling', 'Swindon',
+  'Tavernier', 'Templeton', 'Thackeray', 'Tomlinson', 'Trafford', 'Tulloch',
+  'Uddin', 'Vickery', 'Wainwright', 'Wardle', 'Waverley', 'Wilberforce',
+  'Winstanley', 'Woodrow', 'Yeboah', 'Yildiz', 'Zawadzki', 'Zeffman',
 ];
 
 const YOUTH_POS: Position[] = ['GK', 'DEF', 'DEF', 'MID', 'MID', 'ATT'];
@@ -321,9 +367,37 @@ const ORDER: Record<Position, number> = { GK: 0, DEF: 1, MID: 2, ATT: 3 };
 const STAR_BAR = 78;
 const ELITE_BAR = 85;
 
+/**
+ * A footballer's place in the queue, from his name rather than his turn.
+ *
+ * The market used to be shuffled by dealing a random number to each name
+ * in array order. That meant removing one player from the pool shifted
+ * every number after him, so selling somebody dealt a completely new
+ * list: three names you were thinking about all summer, gone, because
+ * you raised money. A key that comes from the name itself does not move
+ * when the man standing next to him does.
+ */
+function drawKey(name: string, salt: number): number {
+  let h = salt >>> 0;
+  for (let i = 0; i < name.length; i++) {
+    h = Math.imul(h ^ name.charCodeAt(i), 0x01000193) >>> 0;
+  }
+  return h / 4294967296;
+}
+
+/** The name off the front of a line in the sold column. */
+function soldName(line: string): string {
+  return line.replace(/ (for £|to ).*$/, '');
+}
+
 export function market(d: Dynasty, rnd: Rng): Listing[] {
+  /* Nobody who is already yours, nobody in the academy, and nobody you
+     have sold. The last one is why a player cannot be sold in June and
+     bought back in June. */
   const have = new Set<string>();
   for (const p of d.roster) if (p) have.add(p.n);
+  for (const y of d.youth ?? []) have.add(y.n);
+  for (const line of d.sold ?? []) have.add(soldName(line));
 
   const keys = Object.keys(SQUADS);
   const seen = new Map<string, Listing>();
@@ -353,11 +427,11 @@ export function market(d: Dynasty, rnd: Rng): Listing[] {
   }
 
   const all = [...seen.values()];
+  /* One salt for the whole list, drawn after the pool so the stream is
+     still a pure function of the seed. */
+  const salt = Math.floor(rnd() * 0xffffffff) >>> 0;
   const shuffle = (arr: Listing[]) =>
-    arr
-      .map((v) => ({ v, k: rnd() }))
-      .sort((a, b) => a.k - b.k)
-      .map((x) => x.v);
+    [...arr].sort((a, b) => drawKey(a.n, salt) - drawKey(b.n, salt));
 
   /* The Chief Scout is the difference between a list and a shortlist.
      With nobody in the job you get nine names over 78 and take your
@@ -438,6 +512,8 @@ export function sign(
   p.book = listing.price;
   p.amort = Math.round(listing.price / yrs);
   p.amortLeft = yrs;
+  // He signed this summer, so this summer he is not going anywhere else.
+  p.joined = d.year;
 
   const roster = [...d.roster];
   roster[slot] = p;
@@ -463,10 +539,15 @@ export function sign(
  * The profit is the fee less whatever is left on the books, which is why
  * an academy graduate is almost pure profit and a player you paid £90m for
  * last summer is not.
+ *
+ * Not a man who signed this summer, and not one who is out on loan. Both
+ * of those were sales the screen would happily let you make and neither
+ * of them is a thing that happens.
  */
 export function sell(d: Dynasty, slot: number): Dynasty | null {
   const p = d.roster[slot];
   if (!p) return null;
+  if (saleBlock(d, p)) return null;
   const fee = value(p.rtg, p.age, p.pos, p.contract.yrs);
   const roster = [...d.roster];
   roster[slot] = null;
@@ -496,8 +577,11 @@ export function promote(d: Dynasty, youthIndex: number, slot: number): Dynasty |
   // He keeps his own position. Putting him in a place that does not suit
   // him is allowed and costs him, which is what the fit penalty is for.
   // Rewriting the position instead would hide the cost.
+  /* Promoting him counts as arriving, so he cannot be brought up in June
+     and sold in June. A graduate has no book value at all, which would
+     make that the cleanest money in the game. */
   const roster = [...d.roster];
-  roster[slot] = { ...y, youth: true };
+  roster[slot] = { ...y, youth: true, joined: d.year };
   return {
     ...d,
     roster,

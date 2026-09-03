@@ -194,3 +194,48 @@ export function weeklyStreak(record: WeeklyRecord, n: number): number {
   if (!record.best) return 0;
   return n - record.week <= 1 ? record.streak : 0;
 }
+
+/* ---------- duels, as a record rather than a code ---------- */
+
+export type DuelResult = {
+  /** the code that was played, so it can be shown again */
+  code: string;
+  /** what you scored, and what they had */
+  mine: number;
+  theirs: number;
+  outcome: 'won' | 'drew' | 'lost';
+  /** true when you were the one who sent it */
+  sent: boolean;
+  at: number;
+};
+
+export type DuelRecord = {
+  played: number;
+  won: number;
+  drew: number;
+  lost: number;
+  /** the most recent twelve, newest first */
+  results: DuelResult[];
+  /** a challenge you have sent and can show again */
+  outstanding: string | null;
+};
+
+export const EMPTY_DUELS: DuelRecord = {
+  played: 0,
+  won: 0,
+  drew: 0,
+  lost: 0,
+  results: [],
+  outstanding: null,
+};
+
+export function bankDuel(record: DuelRecord, result: DuelResult): DuelRecord {
+  return {
+    played: record.played + 1,
+    won: record.won + (result.outcome === 'won' ? 1 : 0),
+    drew: record.drew + (result.outcome === 'drew' ? 1 : 0),
+    lost: record.lost + (result.outcome === 'lost' ? 1 : 0),
+    results: [result, ...record.results].slice(0, 12),
+    outstanding: result.sent ? result.code : record.outstanding,
+  };
+}

@@ -41,6 +41,7 @@ import {
   type Dynasty,
   type DynastyPlayer,
   type Position,
+  saleBlock,
 } from '../../src/engine';
 import { useCareer, getCareer, setCareer, updateCareer } from '../../src/game/career';
 
@@ -451,6 +452,7 @@ export default function DynastyHub() {
                         </Text>
                         <Text style={styles.offerFrom} numberOfLines={1}>
                           {o.club} {'·'} rated {o.clubRating}
+                          {o.abroad ? ' · abroad' : ''}
                           {o.stepUp ? ' · a bigger club than yours' : ''}
                         </Text>
                       </View>
@@ -829,6 +831,7 @@ export default function DynastyHub() {
         open={open !== null}
         onClose={() => setOpen(null)}
         onSell={open ? () => doSell(open.slot) : undefined}
+        sellBlock={open ? saleBlock(career, open.p) : null}
         onBench={open && open.slot < 11 ? () => toBench(open.slot) : undefined}
         benchLabel="Move to the bench"
         onSwap={

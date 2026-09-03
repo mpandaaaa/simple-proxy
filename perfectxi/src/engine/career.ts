@@ -1,8 +1,8 @@
 import { SQUADS } from '../data/squads';
 import { CAPACITY, DOB, RIVALS } from '../data/dynasty';
 import { FORMATIONS } from './formations';
-import { startingFans } from './dynastyClub';
-import { startingLeague } from './pyramid';
+import { FAN_CEIL, startingFans } from './dynastyClub';
+import { divisionFor, ratingStrength, startingLeague } from './pyramid';
 import { CHAMPIONSHIP } from './sim';
 import { mulberry32 } from './rng';
 import type { Position } from './types';
@@ -10,6 +10,8 @@ import {
   ageIn,
   careerSeed,
   seedTracks,
+  squadRating,
+  starters,
   wage,
   EMPTY_STAFF,
   EMPTY_TACTIC,
@@ -372,6 +374,85 @@ export function startCareer(args: {
 }
 
 /**
+ * Lift or drop a whole squad to the level a club has reached.
+ *
+ * The nineteen other clubs drift across a career: one gets bought and
+ * climbs, one rots and falls. That is their strength in the league, and
+ * until now it was only a number. The squad the database holds for them
+ * is the squad they had in 2026 and never changes, so joining a club that
+ * had grown into a ninety eight handed over the eighty four they were
+ * seventeen seasons ago.
+ *
+ * So the squad is brought to the club. Every player moves by the same
+ * amount, which keeps the shape of the side, who its best player is and
+ * where it is thin. Wages follow the new ratings, because a better squad
+ * is a more expensive one and a club that has climbed pays for it.
+ */
+export function scaleSquadTo(d: Dynasty, target: number): Dynasty {
+  const xi = starters(d);
+  if (!xi.length) return d;
+  const now = squadRating(xi);
+  const shift = Math.round(target - now);
+  if (shift === 0) return d;
+
+  const move = (p: DynastyPlayer): DynastyPlayer => {
+    const rtg = clamp(p.rtg + shift, 40, 99);
+    return {
+      ...p,
+      rtg,
+      phys: clamp(p.phys + shift, 40, 99),
+      tech: clamp(p.tech + shift, 40, 99),
+      ment: clamp(p.ment + shift, 40, 99),
+      pot: clamp(Math.max(p.pot + shift, rtg), 40, 99),
+      contract: { ...p.contract, wage: wage(rtg, p.age) },
+    };
+  };
+
+  return {
+    ...d,
+    roster: d.roster.map((p) => (p ? move(p) : null)),
+    youth: d.youth.map(move),
+  };
+}
+
+/**
+ * The club that goes with a squad of this quality.
+ *
+ * A side rated in the nineties has a training ground, an academy, a
+ * backroom and a ground to match, because that is how it got there. The
+ * facilities used to be whatever a 2026 career started with whoever you
+ * joined, so a ninety eight rated club came with a two star everything
+ * and a following of three million.
+ */
+export function clubAt(d: Dynasty, rating: number): Dynasty {
+  // Nought at 72 and one at 96, which is the range of a top flight club.
+  const level = Math.max(0, Math.min(1, (rating - 72) / 24));
+  const stars = (from: number, to: number) => Math.round(from + (to - from) * level);
+
+  return {
+    ...d,
+    staff: {
+      coach: stars(1, 5),
+      medical: stars(1, 4),
+      youth: stars(1, 4),
+      setpiece: stars(1, 4),
+      scout: stars(1, 4),
+    },
+    infra: {
+      ...d.infra,
+      training: stars(2, 5),
+      academy: stars(2, 5),
+      retail: stars(1, 4),
+      capacity: Math.round(d.infra.capacity * (1 + level * 0.45)),
+    },
+    fans:
+      Math.round(
+        Math.min(FAN_CEIL, startingFans(d.infra.capacity) * (1 + level * 1.9)) * 100,
+      ) / 100,
+  };
+}
+
+/**
  * Take the job.
  *
  * A career belongs to the manager, so what you won stays with you: the
@@ -388,7 +469,7 @@ function clamp(v: number, a: number, b: number): number {
 
 export function takeJob(
   d: Dynasty,
-  offer: { club: string; objective: string; budget: number },
+  offer: { club: string; objective: string; budget: number; rating?: number; division?: 1 | 2 },
 ): Dynasty | null {
   const option = clubOptions(2026).find((o) => o.club === offer.club);
   if (!option) return null;
@@ -412,10 +493,73 @@ export function takeJob(
     best: d.seasons.length ? Math.min(...d.seasons.map((s) => s.fin)) : 20,
   };
 
-  const target = clamp(objectiveFor(option.avg).target, 1, 20);
+  /* The club is whatever it has become, not whatever it was in 2026, so
+     the squad in the offer is the squad that arrives. */
+  const rating = offer.rating ?? option.avg;
+  const lifted = scaleSquadTo(fresh, rating);
+  /* Which division you are joining. The offers come out of the division
+     you are in, so it is that one, and it used to be hard coded to the
+     top flight: a manager relegated in May and hired in June carried
+     nineteen second tier clubs into a season the game insisted was the
+     Premier League, with a board asking him to win it. */
+  const division: 1 | 2 = offer.division === 2 ? 2 : 1;
+  const target = division === 2 ? 2 : clamp(objectiveFor(rating).target, 1, 20);
+
+  /* And a club that has climbed has built. A side rated in the nineties
+     did not get there with a two star training ground, an empty academy
+     and thirty thousand seats, so everything off the pitch is brought up
+     to the level too. */
+  const built = clubAt(lifted, rating);
+
+  /* The league comes with you.
+     It used to be rebuilt from the 2026 defaults, so seventeen seasons of
+     clubs rising and falling were thrown away the moment you changed job:
+     an Arsenal you had left rated eighty came back the next season at
+     ninety five because that is what the book says they are.
+
+     So the division you were in carries over, the club you are joining
+     comes out of it because you cannot play yourself, and the club you
+     have just left goes in at the strength of the squad you left behind. */
+  /* Only if you are staying in the same division. Moving between them
+     means a different set of clubs entirely, so the one you are joining
+     is built fresh. */
+  const carried = (division !== d.division ? divisionFor(division, offer.club) : d.league)
+    .filter((c) => c.name !== offer.club)
+    .concat([
+      ...(division === d.division
+        ? [
+            {
+              name: d.club,
+              str: ratingStrength(squadRating(starters(d))),
+              var: 0.09,
+            },
+          ]
+        : []),
+    ])
+    .filter((c, i, all) => all.findIndex((x) => x.name === c.name) === i);
+
+  /* Exactly nineteen, always. When the club you are joining was not one of
+     your nineteen there is one too many, and when something has been
+     deduplicated there is one too few, so the list is topped up from the
+     default division rather than thrown away: giving up on the whole thing
+     is what put a club you had left rated eighty back at ninety five. */
+  for (const c of divisionFor(division, offer.club)) {
+    if (carried.length >= 19) break;
+    if (carried.some((x) => x.name === c.name) || c.name === d.club) continue;
+    carried.push({ ...c });
+  }
+  carried.sort((a, b) => b.str - a.str);
+  const nineteen = carried.slice(0, 19);
+  const mustKeep = carried.find((c) => c.name === d.club);
+  if (mustKeep && !nineteen.some((c) => c.name === d.club)) {
+    nineteen[nineteen.length - 1] = mustKeep;
+  }
 
   return {
-    ...fresh,
+    ...built,
+    league: nineteen.length === 19 ? nineteen : divisionFor(division, offer.club),
+    below: d.below.map((c) => ({ ...c })),
+    division,
     /* The manager's record, which is his and not the club's. */
     spells: [...d.spells, spell],
     honours: { ...(d.honours ?? {}) },
@@ -423,7 +567,10 @@ export function takeJob(
     year: d.year,
     /* A new board that has just hired you starts you well thought of. */
     mgr: 62,
-    objective: { label: objectiveLabel(target), target },
+    objective: {
+      label: division === 2 ? 'Win promotion' : objectiveLabel(target),
+      target,
+    },
     budget: offer.budget,
   };
 }

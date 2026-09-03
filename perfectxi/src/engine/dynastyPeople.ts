@@ -4,6 +4,8 @@ import { clubRating } from './pyramid';
 import {
   everyone,
   playerValue,
+  saleBlock,
+  signedThisSeason,
   starters,
   squadRating,
   type Dynasty,
@@ -112,23 +114,79 @@ export type Offer = {
   club: string;
   /** how good they are, so the size of the move is readable */
   clubRating: number;
-  /** in £m */
+  /** in \u00a3m */
   fee: number;
   /** what he is actually worth, for the comparison */
   worth: number;
   /** true if the club is a step up from yours */
   stepUp: boolean;
+  /** true when the buyer is not in your division */
+  abroad: boolean;
 };
+
+/**
+ * The clubs outside your division who come for footballers.
+ *
+ * A ninety rated forward in the Premier League is not asked about by
+ * Millwall. He is asked about by Madrid. Without somebody above the
+ * league in it, the only clubs able to bid for the best players you have
+ * are the four or five at the top of your own table, and in the seasons
+ * where you are one of them nobody bids at all.
+ *
+ * These sit outside the pyramid and never move, because they are not
+ * clubs you can play, manage or be relegated past. They exist to be the
+ * phone call.
+ */
+const ABROAD: readonly { name: string; rating: number; keen: number }[] = [
+  { name: 'Real Madrid', rating: 95, keen: 1 },
+  { name: 'Bayern Munich', rating: 92, keen: 1 },
+  { name: 'Barcelona', rating: 91, keen: 1 },
+  { name: 'Paris Saint-Germain', rating: 91, keen: 1.08 },
+  { name: 'Inter Milan', rating: 88, keen: 1 },
+  { name: 'Atletico Madrid', rating: 87, keen: 1 },
+  { name: 'Juventus', rating: 86, keen: 1 },
+  { name: 'AC Milan', rating: 86, keen: 1 },
+  { name: 'Borussia Dortmund', rating: 84, keen: 0.95 },
+  { name: 'Napoli', rating: 84, keen: 1 },
+  { name: 'Ajax', rating: 80, keen: 0.9 },
+  /* Saudi money, which is why a thirty year old on big wages has a buyer
+     at all and why the fee makes no sense against his age. */
+  { name: 'Al Hilal', rating: 82, keen: 1.55 },
+  { name: 'Al Nassr', rating: 80, keen: 1.5 },
+];
+
+/**
+ * The most a club can pay for one footballer, in \u00a3m.
+ *
+ * Squared off the rating, so it climbs the way transfer records climb:
+ * a club rated 95 can find about \u00a3190m, one rated 84 about \u00a387m, one
+ * rated 74 about \u00a339m and one rated 64 about \u00a311m. A club rated 30 can
+ * find nothing at all, which is the whole point. Millwall bidding \u00a3170m
+ * for a ninety rated striker is not a bid, it is a bug.
+ */
+export function spendCap(rating: number): number {
+  return Math.round(0.06 * Math.pow(Math.max(0, rating - 52), 2.1));
+}
 
 /**
  * Who is being asked about this summer.
  *
- * Real clubs bid over the odds, because a player who is not for sale
- * costs more than one who is. The bid is between ten and sixty percent
- * above what he is worth and it scales with how badly they want him.
+ * Two things have to be true before a club picks up the phone, and they
+ * are the two things that were missing:
  *
- * Only clubs who could plausibly afford him make an approach, which is
- * why a nineteenth placed side is not offered £120m for anybody.
+ *   He would go.   A footballer rated ninety does not drop into a club
+ *                  rated thirty. The buyer has to be within three rating
+ *                  points of him, so the move is one he would make.
+ *   They can pay.  The bid has to sit inside what that club could
+ *                  actually spend on one player.
+ *
+ * If nobody clears both, nobody bids. There is no falling back to a
+ * random club in the division, which is exactly how a rated 30 side
+ * ended up offering \u00a3170m.
+ *
+ * Real clubs bid over the odds, because a player who is not for sale
+ * costs more than one who is, so the bid is ten to sixty percent above
+ * what he is worth.
  */
 export function offersFor(
   d: Dynasty,
@@ -138,10 +196,22 @@ export function offersFor(
   const out: Offer[] = [];
   const mine = squadRating(starters(d));
 
+  /* Everybody who could conceivably come: your division at the rating
+     they are actually at, and the clubs above the league. */
+  const buyers = [
+    ...league
+      .filter((c) => c.name !== d.club)
+      .map((c) => ({ name: c.name, rating: clubRating(c.str), keen: 1, abroad: false })),
+    ...ABROAD.filter((c) => c.name !== d.club).map((c) => ({ ...c, abroad: true })),
+  ];
+
   d.roster.forEach((p, slot) => {
     if (!p) return;
     // Nobody bids for a squad player or for a man about to retire.
     if (p.rtg < 74 || p.age >= 33) return;
+    /* And nobody bids for a man who signed this summer. He has not kicked
+       a ball here yet. */
+    if (signedThisSeason(d, p)) return;
 
     /* How likely somebody is to come for him. A ninety rated twenty five
        year old is asked about most summers; a seventy five rated one
@@ -149,25 +219,39 @@ export function offersFor(
     const want = Math.max(0, (p.rtg - 72) / 26) * (p.age <= 27 ? 1.15 : 0.75);
     if (rnd() > want * 0.55) return;
 
-    // Somebody who could actually afford him.
-    const able = league.filter((c) => clubRating(c.str) >= p.rtg - 6);
-    const pool = able.length ? able : league;
-    const club = pool[Math.floor(rnd() * pool.length)];
-    if (!club || club.name === d.club) return;
-
     const worth = playerValue(p);
-    const keen = 1.1 + rnd() * 0.5;
-    const fee = Math.max(1, Math.round(worth * keen));
-    const rating = clubRating(club.str);
+    const over = 1.1 + rnd() * 0.5;
+
+    /* Only the clubs he would go to and who could pay what it would take.
+       Their own keenness moves the fee, so the Saudi bid is the silly one
+       and Dortmund's is the sensible one. */
+    const able = buyers
+      .map((c) => ({ c, fee: Math.max(1, Math.round(worth * over * c.keen)) }))
+      .filter(({ c, fee }) => c.rating >= p.rtg - 3 && spendCap(c.rating) >= fee);
+    if (!able.length) return;
+
+    /* Weighted toward the bigger club, because the bigger club is usually
+       the one who comes. Never a flat draw, which would have Ajax
+       outbidding Madrid half the time. */
+    const weights = able.map(({ c }) => Math.max(1, c.rating - p.rtg + 8));
+    const total = weights.reduce((a, w) => a + w, 0);
+    let roll = rnd() * total;
+    let i = 0;
+    while (i < weights.length - 1 && roll > weights[i]) {
+      roll -= weights[i];
+      i++;
+    }
+    const { c: club, fee } = able[i];
 
     out.push({
       slot,
       name: p.n,
       club: club.name,
-      clubRating: rating,
+      clubRating: club.rating,
       fee,
       worth,
-      stepUp: rating > mine + 2,
+      stepUp: club.rating > mine + 2,
+      abroad: club.abroad,
     });
   });
 
@@ -178,6 +262,10 @@ export function offersFor(
 export function acceptOffer(d: Dynasty, offer: Offer): Dynasty | null {
   const p = d.roster[offer.slot];
   if (!p || p.n !== offer.name) return null;
+  /* The same rule as a sale. An offer should never have been made for a
+     man who signed this summer, and if one somehow reaches here it is
+     refused rather than honoured. */
+  if (saleBlock(d, p)) return null;
   const roster = [...d.roster];
   roster[offer.slot] = null;
   return {
@@ -379,6 +467,17 @@ export type JobOffer = {
   objective: string;
   budget: number;
   note: string;
+  /**
+   * Which division the club is in.
+   *
+   * The offers are drawn from the division you are in, so this is that
+   * division. Taking a job used to hard code the top flight, which meant
+   * a manager relegated in May and hired by a Championship club in June
+   * carried nineteen Championship clubs into a season the game called the
+   * Premier League. The table read as the second tier because it was the
+   * second tier.
+   */
+  division: 1 | 2;
 };
 
 /**
@@ -424,13 +523,20 @@ export function jobOffers(
    */
   sacked = false,
   /**
-   * The clubs a career can actually be started at.
+   * The clubs a career can actually be started at, and what their squad
+   * is really rated.
    *
-   * Not every name in a division is one the database has a squad for, and
+   * Two things at once, because they turn out to be the same thing. Not
+   * every name in a division is one the database has a squad for, and
    * offering a job at a club that cannot be built is a button that does
-   * nothing. Anything not in here is never offered.
+   * nothing. And the rating in the offer has to be the rating you get:
+   * a club's strength in your league drifts upwards across a long career
+   * while its squad in the database does not, so an offer that quoted the
+   * league said Newcastle were 98 and then handed over an 84.
    */
-  canManage?: ReadonlySet<string>,
+  manageable?: ReadonlyMap<string, number>,
+  /** the division those clubs are in, which is the one you are in */
+  division: 1 | 2 = 1,
 ): JobOffer[] {
   const rep = reputation(d);
   if (!sacked && rep < 34) return [];
@@ -445,9 +551,16 @@ export function jobOffers(
   if (!many) return [];
 
   const mine = squadRating(starters(d));
-  const real = canManage ? league.filter((c) => canManage.has(c.name)) : league;
+  const real = manageable ? league.filter((c) => manageable.has(c.name)) : league;
+  /* What the club is now, which is its level in your league rather than
+     the squad the database froze in 2026. Taking the job brings that
+     club's squad up to this number, so the offer and what arrives are the
+     same thing. The map is still needed, because a club the database has
+     never heard of cannot be managed at all. */
+  const ratingOf = (_name: string, str: number) => clubRating(str);
+
   const pool = real.filter((c) => {
-    const r = clubRating(c.str);
+    const r = ratingOf(c.name, c.str);
     // A club will not sack its manager for somebody it does not rate.
     if (r > rep + (sacked ? 2 : 16)) return false;
     // Nor is a sacked manager choosy about how far down he starts again.
@@ -460,13 +573,15 @@ export function jobOffers(
     if (!sacked) return [];
     const last = [...real].sort((a, b) => a.str - b.str)[0];
     if (!last) return [];
+    const r = ratingOf(last.name, last.str);
     return [
       {
         club: last.name,
-        rating: clubRating(last.str),
-        objective: 'Avoid the relegation fight',
-        budget: Math.round(Math.max(15, (clubRating(last.str) - 62) * 9)),
+        rating: r,
+        objective: division === 2 ? 'Win promotion' : 'Avoid the relegation fight',
+        budget: Math.round(Math.max(15, (r - 62) * 9)),
         note: 'A long way down from where you were',
+        division,
       },
     ];
   }
@@ -477,21 +592,24 @@ export function jobOffers(
     const club = pool[Math.floor(rnd() * pool.length)];
     if (!club || used.has(club.name)) continue;
     used.add(club.name);
-    const rating = clubRating(club.str);
+    const rating = ratingOf(club.name, club.str);
     const better = rating > mine + 3;
     out.push({
       club: club.name,
       rating,
+      division,
       objective:
-        rating >= 88
-          ? 'Win the Premier League'
-          : rating >= 82
-            ? 'Champions League, top four'
-            : rating >= 76
-              ? 'European places, top seven'
-              : rating >= 70
-                ? 'Top half finish'
-                : 'Avoid the relegation fight',
+        division === 2
+          ? 'Win promotion'
+          : rating >= 88
+            ? 'Win the Premier League'
+            : rating >= 82
+              ? 'Champions League, top four'
+              : rating >= 76
+                ? 'European places, top seven'
+                : rating >= 70
+                  ? 'Top half finish'
+                  : 'Avoid the relegation fight',
       budget: Math.round(Math.max(15, (rating - 62) * 9)),
       note: better
         ? 'A bigger job than the one you have'
