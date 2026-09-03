@@ -1,6 +1,5 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { router } from 'expo-router';
-import { openMatch, pushProgress, type Match } from '../net/lobby';
 import {
   ENGINE_VERSION,
   canPlay,
@@ -14,8 +13,6 @@ import {
   type Pick,
   type SeasonResult,
   type SpinResult,
-  draftOpponent,
-  type Opponent,
 } from '../engine';
 
 /**
@@ -30,35 +27,6 @@ import {
  * The engine stays pure: this holds the run, the engine decides what
  * happens to it.
  */
-
-export type LiveDuel = {
-  /**
-   * The stand in, drafted from the same seed.
-   *
-   * Always worked out, because it costs a millisecond, and used only when
-   * `match` is null or when the person on the other end never turns up.
-   */
-  opponent: Opponent;
-  /**
-   * The real one, when somebody was found.
-   *
-   * When this is set the strip reads their progress off the server rather
-   * than off the stand in, and the result at the end is their result
-   * rather than a season the phone played for them.
-   */
-  match: Match | null;
-  /**
-   * When your draft opened, on the wall clock, or 0 before it has.
-   *
-   * Stamped by the board rather than by the lobby, so the opponent does
-   * not draft three players while a screen is pushing.
-   */
-  startedAt: number;
-  /** what their XI scored, once the season has been played */
-  theirPts: number | null;
-  /** what yours scored, so the head to head survives a redraw */
-  minePts: number | null;
-};
 
 export type Run = {
   seed: number;
@@ -85,16 +53,13 @@ export type Run = {
   /** true when this run is being played to make a code to send */
   sending: boolean;
   /**
-   * The other chair, when this is a live duel.
+   * True when the XI came out of a head to head draft.
    *
-   * Their whole draft is worked out before you spin once, from the same
-   * seed, so they see the same clubs in the same order as you do. The
-   * screen reads their picks off it against the clock rather than being
-   * told about them, which is why a live duel works with no signal and
-   * why a real opponent will drop into exactly this shape: the only thing
-   * that changes is where the picks come from.
+   * The season is played exactly as any other, and only the page at the
+   * end is different: a duel is a comparison rather than a report, so it
+   * has its own review.
    */
-  live: LiveDuel | null;
+  h2h: boolean;
   state: DraftState;
   /** the board on the table right now, unfiltered by blitz */
   board: Pick[] | null;
@@ -132,8 +97,6 @@ export function startRun(
     weekly?: number | null;
     duel?: string | null;
     sending?: boolean;
-    /** the duel found in the lobby, real or otherwise */
-    live?: Match;
   } = {},
 ): void {
   rnd = mulberry32(seed);
@@ -144,20 +107,7 @@ export function startRun(
     weekly: kind.weekly ?? null,
     duel: kind.duel ?? null,
     sending: kind.sending ?? false,
-    live: kind.live
-      ? {
-          opponent: draftOpponent({
-            config,
-            seed,
-            name: kind.live.name,
-            bot: kind.live.bot,
-          }),
-          match: kind.live.bot ? null : kind.live,
-          startedAt: 0,
-          theirPts: null,
-          minePts: null,
-        }
-      : null,
+    h2h: false,
     state: newDraft(config),
     board: null,
     club: null,
@@ -173,33 +123,35 @@ export function getRun(): Run | null {
 }
 
 /**
- * Start the other one's clock.
+ * Start a run with the XI already picked.
  *
- * Called by the board the first time it draws. Until then the opponent
- * has not begun, so a slow push or a cold start cannot cost you three
- * picks before you have seen a single board.
+ * The head to head does its own drafting, on its own screen, with its own
+ * rules. What comes out of it is eleven footballers, and from there it is
+ * a season like any other: the same engine, the same page playing it out
+ * match by match. Only the review at the end is different.
  */
-export function beginLive(): void {
-  if (!run?.live || run.live.startedAt) return;
-  const match = run.live.match;
-  run = { ...run, live: { ...run.live, startedAt: Date.now() } };
-  emit();
-  /* Open the row both of you write to. Whoever gets there first makes it
-     and the other one's attempt is ignored, so neither has to wait on
-     the other to have started. */
-  if (match) void openMatch(match);
-}
-
-/** How far into the duel you are, in milliseconds. */
-export function liveElapsed(): number {
-  const at = run?.live?.startedAt ?? 0;
-  return at ? Date.now() - at : 0;
-}
-
-/** Bank the two scores, so the head to head survives a redraw. */
-export function setDuelScores(mine: number, theirs: number): void {
-  if (!run?.live) return;
-  run = { ...run, live: { ...run.live, minePts: mine, theirPts: theirs } };
+export function startRunWithSquad(
+  config: DraftConfig,
+  seed: number,
+  squad: DraftState['squad'],
+): void {
+  rnd = mulberry32(seed);
+  const base = newDraft(config);
+  run = {
+    seed,
+    engineVersion: ENGINE_VERSION,
+    daily: null,
+    weekly: null,
+    duel: null,
+    sending: false,
+    h2h: true,
+    state: { ...base, squad, filled: squad.filter((s) => s.player).length },
+    board: null,
+    club: null,
+    season: null,
+    spinning: false,
+    result: null,
+  };
   emit();
 }
 
@@ -242,10 +194,6 @@ export function pickPlayer(player: Pick, slotIndex: number): void {
   if (next === run.state) return;
   run = { ...run, state: next, board: null, club: null, season: null };
   emit();
-  /* Tell the other one where you are up to. Fire and forget on purpose:
-     a signing must land the instant it is tapped whatever the network is
-     doing, and a lost update is one tick of a counter. */
-  if (run.live?.match) pushProgress(run.live.match, next.filled, player.n);
 }
 
 /** Rerolls do not refund a pick, they only replace the board in front of you. */

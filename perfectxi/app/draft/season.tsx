@@ -164,7 +164,10 @@ export default function Season() {
     if (!done || watching) return;
     stopAuto();
     haptic('success');
-    const t = setTimeout(() => router.replace('/draft/results'), FINAL_HOLD);
+    /* A duel is a comparison rather than a report, so it has its own
+       page at the end. */
+    const to = run?.h2h ? '/h2hreview' : '/draft/results';
+    const t = setTimeout(() => router.replace(to), FINAL_HOLD);
     return () => clearTimeout(t);
   }, [done, watching, stopAuto]);
 

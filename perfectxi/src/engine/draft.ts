@@ -1,6 +1,6 @@
 import { SQUADS } from '../data/squads';
 import type { DraftConfig, Pick, Position, Slot } from './types';
-import type { Rng } from './rng';
+import { mulberry32, type Rng } from './rng';
 import { posCompat, slotsFor } from './formations';
 
 /**
@@ -161,8 +161,23 @@ export type SpinResult = {
  * always something you can actually pick from. The board is sorted best
  * first, which is how the web build presents it.
  */
-export function spin(state: DraftState, rnd: Rng): SpinResult | null {
-  const placed = new Set<string>();
+/**
+ * Draw a board.
+ *
+ * `gone` is for a head to head, where one board is shared by two people
+ * and a footballer taken by either of them is off it for both. On a solo
+ * draft it is left out and the only names missing are your own.
+ *
+ * It never touches the draw. The club and the season come off the
+ * generator before anything is filtered, so a shared sequence is the same
+ * sequence whoever is picking from it.
+ */
+export function spin(
+  state: DraftState,
+  rnd: Rng,
+  gone?: ReadonlySet<string>,
+): SpinResult | null {
+  const placed = new Set<string>(gone);
   for (const s of state.squad) if (s.player) placed.add(s.player.n);
 
   if (state.config.mode === 'alltime') {
@@ -220,6 +235,58 @@ export function spin(state: DraftState, rnd: Rng): SpinResult | null {
     }))
     .sort((a, b) => b.rtg - a.rtg);
 
+  return { club, season: seasonStr(year), board };
+}
+
+/**
+ * The club-seasons a seed deals, in order.
+ *
+ * The draw and the board are two separate things, and this is the first
+ * of them on its own. Spinning takes exactly two numbers off the
+ * generator, before anything is filtered, so which club comes up on the
+ * seventh spin does not depend on who has been taken off the sixth
+ * board. That is what makes a shared sequence shared.
+ *
+ * Pulling it apart matters for the head to head, where the board has to
+ * be rebuilt from a list of picks after every pick: working the sequence
+ * out once and filtering it is the difference between a screen that
+ * responds to a tap and one that does not.
+ */
+export function dealSequence(config: DraftConfig, seed: number, rounds: number): string[] {
+  const rnd = mulberry32(seed >>> 0);
+  const map = clubsInEra(config.eraFrom, config.eraTo);
+  const clubs = Object.keys(map);
+  const out: string[] = [];
+  if (!clubs.length) return out;
+  for (let i = 0; i < rounds; i++) {
+    const club = clubs[Math.floor(rnd() * clubs.length)];
+    const keys = map[club];
+    out.push(keys[Math.floor(rnd() * keys.length)]);
+  }
+  return out;
+}
+
+/** And the board one of them gives, minus everybody already taken. */
+export function boardFrom(
+  config: DraftConfig,
+  key: string,
+  gone: ReadonlySet<string>,
+): SpinResult {
+  const bar = key.lastIndexOf('|');
+  const club = key.slice(0, bar);
+  const year = Number(key.slice(bar + 1));
+  const board = (SQUADS[key] ?? [])
+    .filter((p) => !gone.has(p.n))
+    .filter((p) => !config.nation || p.nat === config.nation)
+    .map((p) => ({
+      n: p.n,
+      nat: p.nat,
+      pos: p.pos,
+      rtg: ratingOf(p, config.rtype),
+      club,
+      season: seasonStr(year),
+    }))
+    .sort((a, b) => b.rtg - a.rtg);
   return { club, season: seasonStr(year), board };
 }
 

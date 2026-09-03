@@ -65,8 +65,7 @@ import {
   type TableRow,
 } from '../../src/engine';
 import { startDynasty } from '../../src/engine';
-import { clearRun, setDuelScores, useRun } from '../../src/game/run';
-import { pullProgress, pushResult } from '../../src/net/lobby';
+import { clearRun, useRun } from '../../src/game/run';
 import { getCareer, setCareer } from '../../src/game/career';
 import {
   careerStore,
@@ -172,11 +171,6 @@ export default function Results() {
      that banks the season, and then drawn. */
   const [challenge, setChallenge] = useState<string | null>(null);
   const [codeCopied, setCodeCopied] = useState(false);
-  /* Who you are still waiting on, when the other chair holds a person who
-     has not finished their season yet. */
-  const [waitingOn, setWaitingOn] = useState<string | null>(null);
-  const waiting = useRef<(() => void) | null>(null);
-  useEffect(() => () => waiting.current?.(), []);
 
   // The season goes on the record here rather than while it was playing, so
   // a season abandoned halfway never counts.
@@ -284,68 +278,6 @@ export default function Results() {
       duelStore.update((rec) => sendDuel(rec, made));
     }
 
-    /* A live duel is decided here, because their XI has to play a season
-       too and only this screen knows yours has finished. Their season is
-       drawn from the run seed rather than from the clock, so the result
-       is the same one however many times it is worked out. */
-    if (run.live) {
-      const them = run.live.opponent;
-      const match = run.live.match;
-      const bank = (theirPts: number, who: string, bot: boolean) => {
-        setDuelScores(r.pts, theirPts);
-        duelStore.update((rec) =>
-          bankDuel(rec, {
-            code: `live:${who}`,
-            who,
-            live: true,
-            bot,
-            mine: r.pts,
-            theirs: theirPts,
-            outcome: duelOutcome(r.pts, theirPts),
-            sent: false,
-            at: Date.now(),
-          }),
-        );
-      };
-
-      if (match) {
-        /* A person. Your score goes up first so they are never the one
-           left waiting, then theirs is waited for. */
-        pushResult(match, r.pts, Math.round(rating));
-        setWaitingOn(match.name);
-        let stopped = false;
-        const until = Date.now() + 45000;
-        const ask = async () => {
-          while (!stopped && Date.now() < until) {
-            const got = await pullProgress(match);
-            if (got?.pts != null) {
-              if (!stopped) {
-                setWaitingOn(null);
-                bank(got.pts, match.name, false);
-              }
-              return;
-            }
-            await new Promise((res) => setTimeout(res, 2000));
-          }
-          if (!stopped) setWaitingOn(null);
-        };
-        void ask();
-        waiting.current = () => {
-          stopped = true;
-        };
-      } else {
-        /* The Machine. Its XI plays a season from the run seed, so the
-           result is the same one however many times it is worked out. */
-        const theirs = simulateSeason(
-          them.squad,
-          config.formation,
-          chemBonus(them.squad),
-          mulberry32((run.seed ^ 0x5bf03635) >>> 0),
-        );
-        bank(theirs.pts, them.name, true);
-      }
-    }
-
     /* A duel answered is a duel decided, one way or the other. */
     if (run.duel) {
       const sent = decodeDuel(run.duel);
@@ -405,7 +337,7 @@ export default function Results() {
   const result = run?.result ?? null;
   const isDaily = run?.daily != null;
   const isWeekly = run?.weekly != null;
-  const isDuel = run?.duel != null || run?.sending === true || run?.live != null;
+  const isDuel = run?.duel != null || run?.sending === true;
 
   /* Where "another go" goes. Back to the thing you were playing, never to
      a plain draft, because a plain draft is not what you opened. */
@@ -422,20 +354,7 @@ export default function Results() {
      banking pass, because the banking pass runs once and this has to be
      on the page every time it draws. */
   const duelWas = useMemo(() => {
-    if (!result) return null;
-    /* Live first: their season has been played and both scores are on the
-       run, so nothing has to be decoded. */
-    if (run?.live && run.live.theirPts != null) {
-      return {
-        who: run.live.opponent.name,
-        bot: run.live.opponent.bot,
-        rating: run.live.opponent.rating,
-        mine: result.pts,
-        theirs: run.live.theirPts,
-        outcome: duelOutcome(result.pts, run.live.theirPts),
-      };
-    }
-    if (!run?.duel) return null;
+    if (!result || !run?.duel) return null;
     const sent = decodeDuel(run.duel);
     if (!sent) return null;
     return {
@@ -446,7 +365,7 @@ export default function Results() {
       theirs: sent.pts,
       outcome: duelOutcome(result.pts, sent.pts),
     };
-  }, [run?.duel, run?.live, result]);
+  }, [run?.duel, result]);
 
   const shareChallenge = useCallback(async () => {
     if (!challenge) return;
@@ -599,19 +518,6 @@ ${challenge}
             result.position,
           )}`}
         />
-
-        {/* ================= still waiting on them ================= */}
-        {waitingOn && !duelWas ? (
-          <View style={[styles.duelCard, { borderColor: 'rgba(245,165,36,0.4)' }]}>
-            <Text style={[styles.duelKey, { color: color.warning }]}>
-              Waiting for {waitingOn}
-            </Text>
-            <Text style={styles.duelNote}>
-              You are done. They are still playing their season. The result
-              lands here the moment they finish.
-            </Text>
-          </View>
-        ) : null}
 
         {/* ================= the duel you answered ================= */}
         {duelWas ? (

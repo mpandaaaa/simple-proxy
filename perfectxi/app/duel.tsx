@@ -18,6 +18,7 @@ import {
 } from '../src/engine';
 import { duelStore, me } from '../src/save';
 import { findMatch, type Match } from '../src/net/lobby';
+import { startH2H } from '../src/game/h2h';
 import { startRun } from '../src/game/run';
 
 /**
@@ -92,8 +93,16 @@ export default function Duel() {
 
     timer.current = setTimeout(() => {
       if (gone.current) return;
-      startRun({ ...defaultConfig, diff: 'normal' }, match.seed, { live: match });
-      router.push('/draft/board');
+      /* A duel is a head to head draft: one board, alternate first pick,
+         and a footballer taken is gone for the other one. */
+      startH2H({
+        config: { ...defaultConfig, diff: 'normal' },
+        seed: match.seed,
+        opponentName: match.name,
+        bot: match.bot,
+        match: match.bot ? null : match,
+      });
+      router.push('/h2h');
       setFinding('idle');
       setFound(null);
     }, 1200);
@@ -165,9 +174,9 @@ export default function Duel() {
         <Shine radius={radius.lg} group="feature" bevel={false} clip={false} />
         <Text style={styles.liveKey}>Play somebody now</Text>
         <Text style={styles.liveNote}>
-          You and them draft the same spins at the same time, and you watch
-          their XI fill up while you fill yours. If nobody is about you play
-          the Machine instead, on the same boards.
+          One board between the two of you, taking turns to pick first. A
+          footballer they take is gone, so you never end up with the same
+          team. If nobody is about you play the Machine, by the same rules.
         </Text>
 
         {finding === 'idle' ? (

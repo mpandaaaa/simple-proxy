@@ -266,13 +266,31 @@ export {
 } from './duel';
 export type { Duel } from './duel';
 
+
 export {
-  draftOpponent,
-  handleFor,
-  landedBy,
-  partialSquad,
-  opponentDone,
-  SKILL_LOW,
-  SKILL_HIGH,
-} from './opponent';
-export type { Opponent, BotPick } from './opponent';
+  newH2H,
+  h2hFrom,
+  pickH2H,
+  autoPick,
+  machinePick,
+  playableFor,
+  slotsFor as h2hSlotsFor,
+  squadOf,
+  xiOf,
+  ratings,
+  roundsFor,
+  firstOf,
+  other,
+  playOut,
+} from './headToHead';
+export type { H2HState, H2HPick, Side } from './headToHead';
+
+export {
+  duelScore,
+  duelVerdict,
+  compareSeasons,
+  winnerOf,
+  DUEL_BONUS,
+} from './duelScore';
+export type { DuelScore, DuelHonours, Compare } from './duelScore';
+export { handleFor } from './handles';

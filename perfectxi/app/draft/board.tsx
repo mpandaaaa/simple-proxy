@@ -14,7 +14,6 @@ import {
   ClubDisc,
   Sheet,
   Confirm,
-  OpponentStrip,
 } from '../../src/ui/components';
 import type { Anchor } from '../../src/ui/components/PlayerCard';
 import type { SlotRect } from '../../src/ui/components/Pitch';
@@ -35,7 +34,6 @@ import {
 } from '../../src/engine';
 import {
   autoFill,
-  beginLive,
   clearRun,
   doSpin,
   pickPlayer,
@@ -99,12 +97,6 @@ export default function DraftBoard() {
     [cfg?.eraFrom, cfg?.eraTo],
   );
 
-
-  /* The opponent does not start drafting until you can see a board. A
-     slow push or a cold start should never cost you three picks. */
-  useEffect(() => {
-    beginLive();
-  }, []);
 
   /**
    * The eleventh signing ends the draft.
@@ -241,18 +233,6 @@ export default function DraftBoard() {
 
   const header = (
     <View style={styles.header}>
-      {/* The other one, when there is one. Above your own numbers, because
-          in a live duel what they are doing is the thing you keep looking
-          up at. */}
-      {run?.live ? (
-        <OpponentStrip
-          opponent={run.live.opponent}
-          match={run.live.match}
-          startedAt={run.live.startedAt}
-          total={state.total}
-          mine={state.filled}
-        />
-      ) : null}
       <OverallStrip overall={avg} lines={lines} />
 
       <View style={styles.block}>
