@@ -77,9 +77,10 @@
     "career-run": "tsc -p tsconfig.headless.json && node scripts/check-career-run.mjs",
     "save": "tsc -p tsconfig.headless.json && node scripts/check-save.mjs",
     "realism": "tsc -p tsconfig.headless.json && node scripts/check-realism.mjs",
+    "pyramid": "tsc -p tsconfig.headless.json && node scripts/check-pyramid.mjs",
     "scout": "tsc -p tsconfig.headless.json && node scripts/check-scout.mjs",
     "source": "node scripts/check-source.mjs",
-    "verify": "npm run typecheck && npm run source && npm run golden && npm run dynasty && npm run realism && npm run scout && npm run career && npm run save"
+    "verify": "npm run typecheck && npm run source && npm run golden && npm run dynasty && npm run realism && npm run scout && npm run pyramid && npm run cups && npm run career && npm run save"
   },
   "private": true
 }

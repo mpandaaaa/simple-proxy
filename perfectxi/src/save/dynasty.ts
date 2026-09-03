@@ -2,6 +2,8 @@ import { defineStore } from './storage';
 import { EMPTY_STAFF, EMPTY_TACTIC, type Dynasty, type DynastyPlayer } from '../engine/dynasty';
 import { tidySquad } from '../engine/dynastySquad';
 import { startingFans } from '../engine/dynastyClub';
+import { startingLeague } from '../engine/pyramid';
+import { CHAMPIONSHIP } from '../engine/sim';
 
 /**
  * The Dynasty career in progress, or null when there is not one.
@@ -84,6 +86,7 @@ function isDynasty(v: unknown): v is Dynasty | null {
     typeof d.capacity === 'number' &&
     typeof d.fans === 'number' &&
     obj(d.honours) &&
+    Array.isArray(d.league) &&
     obj(d.tactic) &&
     typeof (d.tactic as Record<string, unknown>).form === 'string' &&
     obj(d.staff) &&
@@ -199,6 +202,14 @@ function migrateToFour(v: unknown): Dynasty | null {
         ? (d.honours as Record<string, number>)
         : {},
     lastCups: d.lastCups ?? null,
+    division: d.division === 2 ? 2 : 1,
+    league: Array.isArray(d.league) && d.league.length
+      ? (d.league as Dynasty['league'])
+      : startingLeague(typeof d.club === 'string' ? d.club : ''),
+    below: Array.isArray(d.below) && d.below.length
+      ? (d.below as Dynasty['below'])
+      : CHAMPIONSHIP.map((c) => ({ ...c })),
+    parachute: typeof d.parachute === 'number' ? d.parachute : 0,
     rival: typeof d.rival === 'string' ? d.rival : null,
     tactic: { ...EMPTY_TACTIC, form: formation },
     staff: { ...EMPTY_STAFF },
@@ -231,7 +242,7 @@ function migrateToFour(v: unknown): Dynasty | null {
 
 export const dynastyStore = defineStore<Dynasty | null>({
   key: 'dynasty',
-  version: 8,
+  version: 9,
   fallback: null,
   validate: isDynasty,
   migrations: {
@@ -249,6 +260,20 @@ export const dynastyStore = defineStore<Dynasty | null>({
     6: (v) => (v ? tidySquad(v as Dynasty) : null),
     // Seven is the following and the club shop. A career from before them
     // starts with the crowd its ground would hold and a shop at level one.
+    /* Nine is promotion and relegation. A career from before it keeps the
+       division it was in, which was always the top one, and starts with
+       the real 2026/27 clubs. */
+    9: (v) => {
+      if (!v) return null;
+      const d = v as Dynasty;
+      return {
+        ...d,
+        division: d.division === 2 ? 2 : 1,
+        league: d.league?.length ? d.league : startingLeague(d.club),
+        below: d.below?.length ? d.below : CHAMPIONSHIP.map((c) => ({ ...c })),
+        parachute: d.parachute ?? 0,
+      };
+    },
     // Eight is the cups: which competition in Europe, and what has been won.
     8: (v) =>
       v

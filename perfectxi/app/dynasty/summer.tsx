@@ -147,7 +147,7 @@ export default function Summer() {
         if (xi.length < 11) return null;
         const rnd = mulberry32((career.seed ^ Math.imul(career.year, 0x9e3779b1)) >>> 0);
         const squad = asSquad(xi);
-        return simulateSeason(squad, career.tactic.form, chemBonus(squad), rnd, career.club);
+        return simulateSeason(squad, career.tactic.form, chemBonus(squad), rnd, career.club, career.league);
       })();
 
     if (!result) {
@@ -276,7 +276,7 @@ export default function Summer() {
             </Text>
           </View>
           <Text style={styles.pvSub}>
-            They wanted you to {objectiveClause(before.objective.target)}
+            They wanted you to {objectiveClause(before.objective.target, before.division)}
           </Text>
         </View>
 

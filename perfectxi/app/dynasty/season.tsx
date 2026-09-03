@@ -59,8 +59,12 @@ const OUTCOME = {
 
 /* Built per club, because the club you manage is not in your own league
    and a promoted side has taken its place. */
-function strengthOf(club: string | null, opp: string): number {
-  for (const t of leagueFor(club)) if (t.name === opp) return t.str;
+function strengthOf(
+  club: string | null,
+  league: readonly { name: string; str: number; var: number }[] | null,
+  opp: string,
+): number {
+  for (const t of leagueFor(club, league)) if (t.name === opp) return t.str;
   return 0.5;
 }
 
@@ -91,7 +95,7 @@ export default function DynastySeason() {
     if (xi.length < 11) return null;
     const rnd = mulberry32((career.seed ^ Math.imul(career.year, 0x9e3779b1)) >>> 0);
     const squad = asSquad(xi);
-    return simulateSeason(squad, career.tactic.form, chemBonus(squad), rnd, career.club);
+    return simulateSeason(squad, career.tactic.form, chemBonus(squad), rnd, career.club, career.league);
   }, [career?.seed, career?.year]);
 
   const total = result ? result.matches.length : 38;
@@ -327,7 +331,7 @@ export default function DynastySeason() {
                   <Text style={styles.nextName} numberOfLines={1}>
                     {next.opp}
                   </Text>
-                  <Strength value={strengthOf(career.club, next.opp)} />
+                  <Strength value={strengthOf(career.club, career.league, next.opp)} />
                 </View>
               </View>
 
@@ -396,6 +400,7 @@ export default function DynastySeason() {
               key={m.n}
               match={m}
               club={career.club}
+              league={career.league}
               derby={career.rival === m.opp}
               state={i < played ? 'played' : i === played ? 'next' : 'later'}
               onPress={
@@ -500,12 +505,14 @@ function Fixture({
   state,
   derby,
   club,
+  league,
   onPress,
 }: {
   match: MatchResult;
   state: 'played' | 'next' | 'later';
   derby: boolean;
   club: string;
+  league: readonly { name: string; str: number; var: number }[];
   onPress?: () => void;
 }) {
   const oc = OUTCOME[match.oc];
@@ -523,7 +530,7 @@ function Fixture({
         {state === 'played' ? (
           <Text style={styles.fxHint}>Watch it back</Text>
         ) : (
-          <Strength value={strengthOf(club, match.opp)} />
+          <Strength value={strengthOf(club, league, match.opp)} />
         )}
       </View>
 

@@ -29,7 +29,18 @@ import { AGE_CURVES, DOB } from '../data/dynasty';
    is still under €80m. */
 const POS_VALUE: Record<Position, number> = { ATT: 1.15, MID: 1.05, DEF: 0.9, GK: 0.68 };
 
-export type Contract = { yrs: number; wage: number };
+export type Contract = {
+  yrs: number;
+  wage: number;
+  /**
+   * What he was on before a relegation clause cut it.
+   *
+   * Only set while the club is down, and only on the players who were
+   * there when it happened. Anybody signed in the Championship never had
+   * a cut, so promotion must not hand him a seventy percent rise.
+   */
+  full?: number;
+};
 
 export type DynastyPlayer = {
   n: string;
@@ -516,6 +527,14 @@ export type Dynasty = {
   europe: 'ucl' | 'uel' | 'uecl' | null;
   /** every trophy the club has won under you, by competition */
   honours: Record<string, number>;
+  /** which division, 1 for the Premier League and 2 for the Championship */
+  division: 1 | 2;
+  /** the nineteen clubs you play, which changes every summer */
+  league: { name: string; str: number; var: number }[];
+  /** the division below, so clubs that go down can come back */
+  below: { name: string; str: number; var: number }[];
+  /** seasons of parachute payment left after a relegation */
+  parachute: number;
   /** last season's cup runs, kept so the cabinet can show them */
   lastCups: unknown | null;
   /**
@@ -665,6 +684,10 @@ export function startDynasty(
     capacity: 40000,
     europe: null,
     honours: {},
+    division: 1,
+    league: [],
+    below: [],
+    parachute: 0,
     lastCups: null,
     fans: 2.9,
     rival: null,

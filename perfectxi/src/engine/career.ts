@@ -2,6 +2,8 @@ import { SQUADS } from '../data/squads';
 import { CAPACITY, DOB, RIVALS } from '../data/dynasty';
 import { FORMATIONS } from './formations';
 import { startingFans } from './dynastyClub';
+import { startingLeague } from './pyramid';
+import { CHAMPIONSHIP } from './sim';
 import { mulberry32 } from './rng';
 import type { Position } from './types';
 import {
@@ -182,7 +184,8 @@ export function objectiveLabel(target: number): string {
  * league". Lower casing the label whole was doing that to every proper
  * noun in it, so the clause is written out rather than mangled.
  */
-export function objectiveClause(target: number): string {
+export function objectiveClause(target: number, division: 1 | 2 = 1): string {
+  if (division === 2) return 'win promotion';
   if (target <= 1) return 'win the Premier League';
   if (target <= 2) return 'finish in the top two';
   if (target <= 4) return 'finish in the Champions League places';
@@ -326,6 +329,10 @@ export function startCareer(args: {
        nothing. */
     europe: target <= 4 ? 'ucl' : target <= 6 ? 'uel' : target <= 8 ? 'uecl' : null,
     honours: {},
+    division: 1,
+    league: startingLeague(club),
+    below: CHAMPIONSHIP.map((c) => ({ ...c })),
+    parachute: 0,
     lastCups: null,
     rival: RIVALS[club] ?? null,
     tactic: { ...EMPTY_TACTIC, form: formation },

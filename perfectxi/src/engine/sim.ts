@@ -18,26 +18,80 @@ const DC = { GAMMA: 0.27, RHO: -0.13, BASE: 0.13 } as const;
  * The nineteen clubs your XI plays home and away. Fixed, so the league a
  * season is graded against is the same league for everybody.
  */
-export const SIM_LEAGUE: readonly { name: string; str: number; var: number }[] = [
-  { name: 'Liverpool', str: 0.88, var: 0.06 },
-  { name: 'Man City', str: 0.86, var: 0.06 },
-  { name: 'Arsenal', str: 0.83, var: 0.07 },
+/**
+ * The twenty of 2026/27.
+ *
+ * The real division as it stands: Coventry, Ipswich and Hull came up,
+ * Wolves, Burnley and West Ham went down, and Arsenal are the defending
+ * champions. `str` is a strength on the same 0.30 to 0.97 scale a squad
+ * rating maps to, and `var` is how much a club swings from season to
+ * season, which is why Brighton are less predictable than Liverpool.
+ */
+export const PREMIER_LEAGUE: readonly { name: string; str: number; var: number }[] = [
+  { name: 'Arsenal', str: 0.87, var: 0.06 },
+  { name: 'Liverpool', str: 0.85, var: 0.07 },
+  { name: 'Man City', str: 0.84, var: 0.07 },
   { name: 'Chelsea', str: 0.76, var: 0.08 },
   { name: 'Newcastle', str: 0.72, var: 0.08 },
   { name: 'Aston Villa', str: 0.69, var: 0.08 },
-  { name: 'Spurs', str: 0.68, var: 0.09 },
-  { name: 'Man United', str: 0.67, var: 0.09 },
-  { name: 'Brighton', str: 0.61, var: 0.09 },
-  { name: 'West Ham', str: 0.53, var: 0.1 },
-  { name: 'Fulham', str: 0.52, var: 0.09 },
+  { name: 'Spurs', str: 0.67, var: 0.09 },
+  { name: 'Man United', str: 0.66, var: 0.09 },
+  { name: 'Nottm Forest', str: 0.6, var: 0.09 },
+  { name: 'Brighton', str: 0.59, var: 0.09 },
+  { name: 'Bournemouth', str: 0.54, var: 0.1 },
   { name: 'Brentford', str: 0.51, var: 0.09 },
-  { name: 'Nottm Forest', str: 0.5, var: 0.09 },
-  { name: 'Crystal Palace', str: 0.48, var: 0.1 },
-  { name: 'Bournemouth', str: 0.46, var: 0.1 },
-  { name: 'Everton', str: 0.43, var: 0.11 },
-  { name: 'Wolves', str: 0.37, var: 0.11 },
-  { name: 'Leeds', str: 0.33, var: 0.12 },
-  { name: 'Sunderland', str: 0.28, var: 0.12 },
+  { name: 'Crystal Palace', str: 0.5, var: 0.1 },
+  { name: 'Fulham', str: 0.49, var: 0.09 },
+  { name: 'Everton', str: 0.45, var: 0.11 },
+  { name: 'Sunderland', str: 0.4, var: 0.11 },
+  { name: 'Leeds', str: 0.36, var: 0.12 },
+  { name: 'Ipswich', str: 0.32, var: 0.12 },
+  { name: 'Coventry', str: 0.3, var: 0.12 },
+  { name: 'Hull', str: 0.28, var: 0.12 },
+];
+
+/**
+ * The nineteen clubs a draft XI plays home and away.
+ *
+ * The real twenty with the weakest left out, because a draft XI is the
+ * twentieth club itself. A career gets its own league instead, which
+ * changes every summer.
+ */
+export const SIM_LEAGUE: readonly { name: string; str: number; var: number }[] =
+  PREMIER_LEAGUE.slice(0, 19);
+
+/**
+ * The division below.
+ *
+ * Nobody comes up strong. Every promoted club in the last ten years has
+ * been in the bottom half the following May and most of them have gone
+ * straight back down, which is why the bottom of the table churns.
+ */
+export const CHAMPIONSHIP: readonly { name: string; str: number; var: number }[] = [
+  { name: 'West Ham', str: 0.33, var: 0.12 },
+  { name: 'Wolves', str: 0.31, var: 0.12 },
+  { name: 'Burnley', str: 0.3, var: 0.12 },
+  { name: 'Leicester', str: 0.31, var: 0.12 },
+  { name: 'Southampton', str: 0.29, var: 0.12 },
+  { name: 'Middlesbrough', str: 0.28, var: 0.12 },
+  { name: 'Norwich', str: 0.27, var: 0.13 },
+  { name: 'Sheff Wed', str: 0.25, var: 0.13 },
+  { name: 'West Brom', str: 0.27, var: 0.13 },
+  { name: 'Watford', str: 0.26, var: 0.13 },
+  { name: 'Stoke', str: 0.25, var: 0.13 },
+  { name: 'Preston', str: 0.24, var: 0.13 },
+  { name: 'Blackburn', str: 0.26, var: 0.13 },
+  { name: 'Millwall', str: 0.24, var: 0.13 },
+  { name: 'QPR', str: 0.23, var: 0.13 },
+  { name: 'Bristol City', str: 0.25, var: 0.13 },
+  { name: 'Swansea', str: 0.23, var: 0.13 },
+  { name: 'Cardiff', str: 0.22, var: 0.13 },
+  { name: 'Derby', str: 0.22, var: 0.13 },
+  { name: 'Plymouth', str: 0.2, var: 0.14 },
+  { name: 'Portsmouth', str: 0.22, var: 0.13 },
+  { name: 'Charlton', str: 0.21, var: 0.13 },
+  { name: 'Wrexham', str: 0.23, var: 0.14 },
+  { name: 'Birmingham', str: 0.24, var: 0.13 },
 ];
 
 /**
@@ -70,7 +124,10 @@ const PROMOTED: readonly { name: string; str: number; var: number }[] = [
  */
 export function leagueFor(
   club?: string | null,
+  /** a career carries its own division, which changes every summer */
+  own?: readonly { name: string; str: number; var: number }[] | null,
 ): readonly { name: string; str: number; var: number }[] {
+  if (own && own.length) return own;
   if (!club) return SIM_LEAGUE;
   const i = SIM_LEAGUE.findIndex((t) => t.name === club);
   if (i < 0) return SIM_LEAGUE;
@@ -532,6 +589,8 @@ export function simulateSeason(
   rnd: Rng,
   /** the club you manage, so it is not also one of your opponents */
   club?: string | null,
+  /** the nineteen this career is actually playing, if it has its own */
+  own?: readonly { name: string; str: number; var: number }[] | null,
 ): SeasonResult {
   const filled = squad.filter((s) => s.player);
   if (filled.length !== squad.length) {
@@ -545,7 +604,7 @@ export function simulateSeason(
   const stats: Record<string, PlayerStat> = {};
   for (const s of filled) stats[s.player!.n] = { g: 0, a: 0, cs: 0 };
 
-  const league = leagueFor(club);
+  const league = leagueFor(club, own);
 
   // Home and away against all nineteen, drawn so a club is not played twice
   // in a row: shuffle each half, then alternate them.

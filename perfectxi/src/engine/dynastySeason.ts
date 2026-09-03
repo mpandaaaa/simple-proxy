@@ -26,6 +26,7 @@ import {
 } from './dynastyClub';
 import { learnTactic } from './dynastyTactics';
 import { COMPS, simulateSeasonCups, type CupSeason } from './cups';
+import { endOfSeason, startingChampionship, startingLeague } from './pyramid';
 import {
   autoRenews,
   intakeSize,
@@ -72,6 +73,11 @@ export type SummerReport = {
   fansSwing: number;
   /** every cup the club played, with its money and its trophies */
   cups: CupSeason;
+  /** what May did to the division */
+  relegated: string[];
+  promoted: string[];
+  youWentDown: boolean;
+  youWentUp: boolean;
   news: InboxItem[];
 };
 
@@ -161,7 +167,7 @@ export function processSeasonEnd(
   next.sacked = sacked;
   say(
     met ? 'The board are pleased' : 'The board are not pleased',
-    `You were asked to ${objectiveClause(d.objective.target)} and you finished ${ordinalOf(
+    `You were asked to ${objectiveClause(d.objective.target, d.division)} and you finished ${ordinalOf(
       result.position,
     )}. Confidence is ${next.mgr}.`,
     met ? 'good' : 'bad',
@@ -394,12 +400,80 @@ export function processSeasonEnd(
   /* the tactic is a season better understood */
   next.tactic = learnTactic(next.tactic);
 
+  /* 11b. promotion and relegation, which is what makes a twentieth
+     season a different league from a fifth. */
+  const pyramid = endOfSeason({
+    division: d.division,
+    league: d.league,
+    table: result.table,
+    club: d.club,
+    below: d.below,
+    rnd,
+  });
+  next.below = pyramid.below;
+  next.league = pyramid.league;
+
+  if (pyramid.youWentDown) {
+    next.division = 2;
+    next.league = startingChampionship(d.club);
+    next.europe = null;
+    next.parachute = 3;
+    /* Nearly every Premier League contract carries a relegation clause,
+       usually between forty and fifty percent. Without it a club goes
+       down carrying a £150m wage bill into a division that pays £8m of
+       central money, and the books never recover. */
+    const cut = (c: { yrs: number; wage: number; full?: number }) => ({
+      ...c,
+      full: c.full ?? c.wage,
+      wage: Math.max(3, Math.round(c.wage * 0.55)),
+    });
+    for (const p of next.roster) if (p) p.contract = cut(p.contract);
+    for (const p of next.youth) p.contract = cut(p.contract);
+    say(
+      'Relegated',
+      `${d.club} finished ${ordinalOf(result.position)} and are down. The Championship next season, and the money that goes with it.`,
+      'bad',
+    );
+  } else if (pyramid.youWentUp) {
+    next.division = 1;
+    next.league = startingLeague(d.club);
+    next.parachute = 0;
+    /* The clause runs the other way when you go back up, but only for the
+       men who took the cut. Anybody signed while you were down never had
+       one and does not get a rise for being promoted. */
+    const restore = (c: { yrs: number; wage: number; full?: number }) =>
+      c.full ? { yrs: c.yrs, wage: c.full } : { yrs: c.yrs, wage: c.wage };
+    for (const p of next.roster) if (p) p.contract = restore(p.contract);
+    for (const p of next.youth) p.contract = restore(p.contract);
+    say(
+      'Promoted',
+      `${d.club} are back in the Premier League.`,
+      'good',
+    );
+  } else if (pyramid.promoted.length) {
+    say(
+      'Up and down',
+      `${pyramid.relegated.filter((n) => n !== d.club).join(', ')} went down. ${pyramid.promoted.join(', ')} came up.`,
+      'news',
+    );
+  }
+
   /* 12. next season */
   next.year = d.year + 1;
   const avg = squadAverage(starters(next));
   const sc = scenarioById(d.scenario as ScenarioId);
-  const target = clamp(objectiveFor(avg).target + sc.expect, 1, 20);
-  next.objective = { label: objectiveLabel(target), target };
+  /* In the Championship the board wants one thing and it is not a top
+     half finish. Everywhere else the objective comes off the squad. */
+  if (next.division === 2) {
+    next.objective = { label: 'Win promotion', target: 2 };
+  } else {
+    const target = clamp(objectiveFor(avg).target + sc.expect, 1, 20);
+    next.objective = { label: objectiveLabel(target), target };
+  }
+  // A year of the parachute is a year gone.
+  if (next.division === 2 && !pyramid.youWentDown) {
+    next.parachute = Math.max(0, (d.parachute ?? 0) - 1);
+  }
   next.inbox = [...news, ...d.inbox].slice(0, 40);
 
   return {
@@ -425,6 +499,10 @@ export function processSeasonEnd(
       fansBefore,
       fansSwing: Math.round((next.fans - fansBefore) * 100) / 100,
       cups,
+      relegated: pyramid.relegated.filter((n) => n !== d.club),
+      promoted: pyramid.promoted,
+      youWentDown: pyramid.youWentDown,
+      youWentUp: pyramid.youWentUp,
       news,
     },
   };

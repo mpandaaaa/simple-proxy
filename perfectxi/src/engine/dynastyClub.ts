@@ -195,7 +195,26 @@ export function merchRevenue(d: Dynasty): number {
   return Math.round((d.fans ?? 0) * 9 * retailMultiplier(d));
 }
 
+/**
+ * What three years out of the Premier League is worth.
+ *
+ * A relegated club keeps a share of the broadcast money for three
+ * seasons so that going down does not end it: roughly £49m, £40m and
+ * £17m. It is the difference between rebuilding and administration.
+ */
+export const PARACHUTE = [0, 17, 40, 49];
+
 export function revenue(finish: number, d: Dynasty): number {
+  /* The Championship is a different sport financially. Central money is
+     about £8m against the Premier League's £145m, which is why a club
+     that goes down and does not come straight back tends to stay down. */
+  if (d.division === 2) {
+    const central = 8 + Math.max(0, 25 - finish) * 0.35;
+    const chute = PARACHUTE[Math.max(0, Math.min(3, d.parachute ?? 0))] ?? 0;
+    return Math.round(
+      central + chute + merchRevenue(d) * 0.55 + matchdayRevenue(d) * 0.6,
+    );
+  }
   const equal = 96.9;
   const merit = Math.max(2.6, 53.1 - (finish - 1) * 2.66);
   const facility = 9 + Math.max(0, 21 - finish) * 0.8;

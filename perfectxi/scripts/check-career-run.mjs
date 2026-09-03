@@ -22,7 +22,7 @@ import { mulberry32 } from '../.headless/engine/rng.js';
 const LABELS = [
   'Win the Premier League', 'Finish in the top two', 'Champions League, top four',
   'European places, top seven', 'Top half finish', 'Comfortable mid-table',
-  'Avoid the relegation fight',
+  'Avoid the relegation fight', 'Win promotion',
 ];
 
 let failures = 0;
@@ -46,6 +46,7 @@ for (const sc of SCENARIOS) {
 
   console.log(`\n${sc.title} at ${club.club}`);
   let worstWageRatio = 0;
+  let worstTopFlightRatio = 0;
   let sacked = 0;
   let heldTotal = 0;
   let intakeTotal = 0;
@@ -60,7 +61,10 @@ for (const sc of SCENARIOS) {
 
     const rnd = mulberry32((d.seed ^ (d.year * 2654435761)) >>> 0);
     const squad = asSquad(xi);
-    const result = simulateSeason(squad, d.tactic.form, chemBonus(squad), rnd);
+    /* The club's own division, which changes every May, and never the club
+       itself among its own opponents. */
+    const playedIn = d.division;
+    const result = simulateSeason(squad, d.tactic.form, chemBonus(squad), rnd, d.club, d.league);
 
     const out = processSeasonEnd(d, result);
     const r = out.report;
@@ -99,6 +103,10 @@ for (const sc of SCENARIOS) {
     const rev = r.ledger.rev;
     const wages = r.ledger.wages;
     worstWageRatio = Math.max(worstWageRatio, wages / rev);
+    /* Measured on the division the season was actually played in, not the
+       one the club is in afterwards. A club that has just won promotion
+       spent the year on Championship money. */
+    if (playedIn === 1) worstTopFlightRatio = Math.max(worstTopFlightRatio, wages / rev);
     heldTotal += r.held.length;
     intakeTotal += r.intake.length;
     retiredTotal += r.retired.length;
@@ -147,7 +155,13 @@ for (const sc of SCENARIOS) {
 
   // The specification's own bound: bills sit at 51 to 66% of revenue even if
   // you renew everything every season. Anything near 86% is the old bug.
-  if (worstWageRatio > 0.8) fail(`${sc.title}: wage bill reached ${Math.round(worstWageRatio * 100)}% of revenue`);
+  /* A club in the Championship genuinely spends more than it earns, which
+     is what the parachute payment exists for and why going down twice
+     ruins a club. The guard is on the top flight, where it should never
+     happen. */
+  if (worstTopFlightRatio > 0.8) {
+    fail(`${sc.title}: wage bill reached ${Math.round(worstTopFlightRatio * 100)}% of revenue in the Premier League`);
+  }
   if (intakeTotal === 0) fail(`${sc.title}: the academy produced nobody in twenty years`);
   if (retiredTotal === 0) fail(`${sc.title}: nobody retired in twenty years`);
 }
