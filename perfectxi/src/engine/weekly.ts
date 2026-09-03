@@ -211,6 +211,12 @@ export function weeklyStreak(record: WeeklyRecord, n: number): number {
 export type DuelResult = {
   /** the code that was played, so it can be shown again */
   code: string;
+  /** who you played, when it was live and there was somebody to name */
+  who?: string;
+  /** true when it was played live rather than answered from a code */
+  live?: boolean;
+  /** true when the other chair was filled by the game */
+  bot?: boolean;
   /** what you scored, and what they had */
   mine: number;
   theirs: number;

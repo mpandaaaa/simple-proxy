@@ -51,6 +51,8 @@ import {
   duelOutcome,
   encodeDuel,
   ordinal,
+  mulberry32,
+  simulateSeason,
   simulateCups,
   squadAvg,
   verdict,
@@ -63,7 +65,7 @@ import {
   type TableRow,
 } from '../../src/engine';
 import { startDynasty } from '../../src/engine';
-import { clearRun, useRun } from '../../src/game/run';
+import { clearRun, setDuelScores, useRun } from '../../src/game/run';
 import { getCareer, setCareer } from '../../src/game/career';
 import {
   careerStore,
@@ -276,6 +278,34 @@ export default function Results() {
       duelStore.update((rec) => sendDuel(rec, made));
     }
 
+    /* A live duel is decided here, because their XI has to play a season
+       too and only this screen knows yours has finished. Their season is
+       drawn from the run seed rather than from the clock, so the result
+       is the same one however many times it is worked out. */
+    if (run.live) {
+      const them = run.live.opponent;
+      const theirs = simulateSeason(
+        them.squad,
+        config.formation,
+        chemBonus(them.squad),
+        mulberry32((run.seed ^ 0x5bf03635) >>> 0),
+      );
+      setDuelScores(r.pts, theirs.pts);
+      duelStore.update((rec) =>
+        bankDuel(rec, {
+          code: `live:${them.name}`,
+          who: them.name,
+          live: true,
+          bot: them.bot,
+          mine: r.pts,
+          theirs: theirs.pts,
+          outcome: duelOutcome(r.pts, theirs.pts),
+          sent: false,
+          at: Date.now(),
+        }),
+      );
+    }
+
     /* A duel answered is a duel decided, one way or the other. */
     if (run.duel) {
       const sent = decodeDuel(run.duel);
@@ -335,7 +365,7 @@ export default function Results() {
   const result = run?.result ?? null;
   const isDaily = run?.daily != null;
   const isWeekly = run?.weekly != null;
-  const isDuel = run?.duel != null || run?.sending === true;
+  const isDuel = run?.duel != null || run?.sending === true || run?.live != null;
 
   /* Where "another go" goes. Back to the thing you were playing, never to
      a plain draft, because a plain draft is not what you opened. */
@@ -352,15 +382,31 @@ export default function Results() {
      banking pass, because the banking pass runs once and this has to be
      on the page every time it draws. */
   const duelWas = useMemo(() => {
-    if (!run?.duel || !result) return null;
-    const theirs = decodeDuel(run.duel);
-    if (!theirs) return null;
+    if (!result) return null;
+    /* Live first: their season has been played and both scores are on the
+       run, so nothing has to be decoded. */
+    if (run?.live && run.live.theirPts != null) {
+      return {
+        who: run.live.opponent.name,
+        bot: run.live.opponent.bot,
+        rating: run.live.opponent.rating,
+        mine: result.pts,
+        theirs: run.live.theirPts,
+        outcome: duelOutcome(result.pts, run.live.theirPts),
+      };
+    }
+    if (!run?.duel) return null;
+    const sent = decodeDuel(run.duel);
+    if (!sent) return null;
     return {
-      theirs,
+      who: null,
+      bot: false,
+      rating: sent.rating,
       mine: result.pts,
-      outcome: duelOutcome(result.pts, theirs.pts),
+      theirs: sent.pts,
+      outcome: duelOutcome(result.pts, sent.pts),
     };
-  }, [run?.duel, result]);
+  }, [run?.duel, run?.live, result]);
 
   const shareChallenge = useCallback(async () => {
     if (!challenge) return;
@@ -551,11 +597,12 @@ ${challenge}
                     : 'You lost the duel'}
               </Text>
               <Text style={styles.duelScore} allowFontScaling={false}>
-                {duelWas.mine} {'–'} {duelWas.theirs.pts}
+                {duelWas.mine} {'–'} {duelWas.theirs}
               </Text>
               <Text style={styles.duelNote}>
-                Their XI was rated {duelWas.theirs.rating} and yours{' '}
-                {Math.round(avg)}. Same spins, same shape, same era.
+                {duelWas.who
+                  ? `${duelWas.who}${duelWas.bot ? ', the Machine' : ''} drafted an XI rated ${duelWas.rating}. Yours was ${Math.round(avg)}. The same spins, at the same time.`
+                  : `Their XI was rated ${duelWas.rating} and yours ${Math.round(avg)}. Same spins, same shape, same era.`}
               </Text>
             </View>
           </Rise>

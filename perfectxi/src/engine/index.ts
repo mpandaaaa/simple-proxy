@@ -265,3 +265,14 @@ export {
   duelRules,
 } from './duel';
 export type { Duel } from './duel';
+
+export {
+  draftOpponent,
+  handleFor,
+  landedBy,
+  partialSquad,
+  opponentDone,
+  SKILL_LOW,
+  SKILL_HIGH,
+} from './opponent';
+export type { Opponent, BotPick } from './opponent';

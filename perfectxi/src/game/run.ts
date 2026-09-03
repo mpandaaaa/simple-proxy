@@ -13,6 +13,8 @@ import {
   type Pick,
   type SeasonResult,
   type SpinResult,
+  draftOpponent,
+  type Opponent,
 } from '../engine';
 
 /**
@@ -27,6 +29,21 @@ import {
  * The engine stays pure: this holds the run, the engine decides what
  * happens to it.
  */
+
+export type LiveDuel = {
+  opponent: Opponent;
+  /**
+   * When your draft opened, on the wall clock, or 0 before it has.
+   *
+   * Stamped by the board rather than by the lobby, so the opponent does
+   * not draft three players while a screen is pushing.
+   */
+  startedAt: number;
+  /** what their XI scored, once the season has been played */
+  theirPts: number | null;
+  /** what yours scored, so the head to head survives a redraw */
+  minePts: number | null;
+};
 
 export type Run = {
   seed: number;
@@ -52,6 +69,17 @@ export type Run = {
   duel: string | null;
   /** true when this run is being played to make a code to send */
   sending: boolean;
+  /**
+   * The other chair, when this is a live duel.
+   *
+   * Their whole draft is worked out before you spin once, from the same
+   * seed, so they see the same clubs in the same order as you do. The
+   * screen reads their picks off it against the clock rather than being
+   * told about them, which is why a live duel works with no signal and
+   * why a real opponent will drop into exactly this shape: the only thing
+   * that changes is where the picks come from.
+   */
+  live: LiveDuel | null;
   state: DraftState;
   /** the board on the table right now, unfiltered by blitz */
   board: Pick[] | null;
@@ -89,6 +117,8 @@ export function startRun(
     weekly?: number | null;
     duel?: string | null;
     sending?: boolean;
+    /** draft an opponent from the same seed and play them live */
+    live?: boolean;
   } = {},
 ): void {
   rnd = mulberry32(seed);
@@ -99,6 +129,14 @@ export function startRun(
     weekly: kind.weekly ?? null,
     duel: kind.duel ?? null,
     sending: kind.sending ?? false,
+    live: kind.live
+      ? {
+          opponent: draftOpponent({ config, seed }),
+          startedAt: 0,
+          theirPts: null,
+          minePts: null,
+        }
+      : null,
     state: newDraft(config),
     board: null,
     club: null,
@@ -111,6 +149,32 @@ export function startRun(
 
 export function getRun(): Run | null {
   return run;
+}
+
+/**
+ * Start the other one's clock.
+ *
+ * Called by the board the first time it draws. Until then the opponent
+ * has not begun, so a slow push or a cold start cannot cost you three
+ * picks before you have seen a single board.
+ */
+export function beginLive(): void {
+  if (!run?.live || run.live.startedAt) return;
+  run = { ...run, live: { ...run.live, startedAt: Date.now() } };
+  emit();
+}
+
+/** How far into the duel you are, in milliseconds. */
+export function liveElapsed(): number {
+  const at = run?.live?.startedAt ?? 0;
+  return at ? Date.now() - at : 0;
+}
+
+/** Bank the two scores, so the head to head survives a redraw. */
+export function setDuelScores(mine: number, theirs: number): void {
+  if (!run?.live) return;
+  run = { ...run, live: { ...run.live, minePts: mine, theirPts: theirs } };
+  emit();
 }
 
 export function useRun(): Run | null {

@@ -239,7 +239,7 @@ export default function Home() {
             subtitle={
               duels.played
                 ? `${duels.won} won · ${duels.drew} drawn · ${duels.lost} lost`
-                : 'Seeded run · share the code'
+                : 'Live · the same spins at the same time'
             }
             onPress={() => {
               haptic('light');

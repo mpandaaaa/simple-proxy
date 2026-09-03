@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Share, StyleSheet, Text, TextInput, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -11,6 +11,7 @@ import {
   decodeDuel,
   duelRules,
   defaultConfig,
+  handleFor,
   ordinal,
   type DuelRecord,
   type DuelResult,
@@ -46,6 +47,52 @@ export default function Duel() {
      so the card underneath fills in as the last character lands. */
   const incoming = useMemo(() => (code.trim() ? decodeDuel(code) : null), [code]);
   const typed = code.replace(/[^0-9A-Za-z]/g, '').length;
+
+  /* Looking for somebody.
+     Idle, then a few seconds of searching, then whoever is in the other
+     chair. The wait is real time rather than a spinner that lies: there
+     is a moment where a person could answer, and when nobody does the
+     game fills the chair rather than telling you to come back later. */
+  const [finding, setFinding] = useState<'idle' | 'searching' | 'found'>('idle');
+  const [found, setFound] = useState<{ seed: number; name: string } | null>(null);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  useEffect(
+    () => () => {
+      for (const t of timers.current) clearTimeout(t);
+    },
+    [],
+  );
+
+  const findOpponent = useCallback(() => {
+    if (finding !== 'idle') return;
+    haptic('medium');
+    sfx('tick');
+    setFinding('searching');
+
+    const seed = Math.floor(Math.random() * 0x100000000) >>> 0;
+    /* Two and a half to four and a half seconds. Long enough that it is
+       plainly looking for somebody, short enough that nobody puts the
+       phone down. */
+    const wait = 2500 + Math.random() * 2000;
+
+    timers.current.push(
+      setTimeout(() => {
+        setFound({ seed, name: handleFor(seed) });
+        setFinding('found');
+        haptic('success');
+        sfx('pick');
+      }, wait),
+    );
+    timers.current.push(
+      setTimeout(() => {
+        startRun({ ...defaultConfig, diff: 'normal' }, seed, { live: true });
+        router.push('/draft/board');
+        setFinding('idle');
+        setFound(null);
+      }, wait + 1100),
+    );
+  }, [finding]);
 
   const send = useCallback(() => {
     haptic('medium');
@@ -107,6 +154,37 @@ export default function Duel() {
           <Stat value={String(record.lost)} label="lost" tint={hue.crimson} />
         </View>
       ) : null}
+
+      {/* ---- live ---- */}
+      <View style={styles.live}>
+        <Shine radius={radius.lg} group="feature" bevel={false} clip={false} />
+        <Text style={styles.liveKey}>Play somebody now</Text>
+        <Text style={styles.liveNote}>
+          You and them draft the same spins at the same time, and you watch
+          their XI fill up while you fill yours. If nobody is about you play
+          the Machine instead, on the same boards.
+        </Text>
+
+        {finding === 'idle' ? (
+          <Press onPress={findOpponent} feel="medium" scaleTo={0.98} style={styles.find}>
+            <Text style={styles.findText}>Find an opponent</Text>
+          </Press>
+        ) : (
+          <View style={styles.searching}>
+            <Text style={styles.searchKey}>
+              {finding === 'found' ? 'Opponent found' : 'Looking for somebody'}
+            </Text>
+            <Text style={styles.searchName} numberOfLines={1}>
+              {found ? found.name : <Dots />}
+            </Text>
+            <Text style={styles.searchNote}>
+              {finding === 'found'
+                ? 'Nobody else is online, so the Machine is taking the other chair. Same spins, same rules.'
+                : 'Checking who is drafting right now.'}
+            </Text>
+          </View>
+        )}
+      </View>
 
       {/* ---- answering one ---- */}
       <View style={[styles.card, wantsEnter ? styles.cardFirst : null]}>
@@ -216,6 +294,16 @@ export default function Duel() {
   );
 }
 
+/** Three dots that move, so a wait looks like a wait rather than a freeze. */
+function Dots() {
+  const [n, setN] = useState(1);
+  useEffect(() => {
+    const t = setInterval(() => setN((v) => (v % 3) + 1), 380);
+    return () => clearInterval(t);
+  }, []);
+  return <Text>{'.'.repeat(n)}</Text>;
+}
+
 function Stat({ value, label, tint }: { value: string; label: string; tint: string }) {
   return (
     <View style={styles.stat}>
@@ -237,7 +325,7 @@ function PastDuel({ duel: d }: { duel: DuelResult }) {
         {d.mine} {'–'} {d.theirs}
       </Text>
       <Text style={styles.pastWho} numberOfLines={1}>
-        {d.sent ? 'you set it' : 'you answered'}
+        {d.live ? `live · ${d.who ?? 'somebody'}` : d.sent ? 'you set it' : 'you answered'}
       </Text>
     </View>
   );
@@ -262,6 +350,57 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   statLabel: { ...text.key, fontSize: 8, color: color.text3 },
+
+  live: {
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: alpha(hue.sky, 0.34),
+    backgroundColor: '#0A121D',
+    experimental_backgroundImage:
+      'linear-gradient(180deg, #12233A 0%, #0B1524 64%, #060A11 100%)',
+    overflow: 'hidden',
+    gap: space.s2,
+    marginBottom: space.s4,
+  },
+  liveKey: { ...text.key, fontSize: 9.5, color: hue.sky },
+  liveNote: { ...text.small, fontSize: 12.5, lineHeight: 18 },
+  find: {
+    marginTop: space.s3,
+    minHeight: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    backgroundColor: hue.sky,
+    experimental_backgroundImage: 'linear-gradient(140deg, #6EB5FF 0%, #2277E0 100%)',
+    boxShadow: '0px 10px 26px rgba(76,160,255,0.3), inset 0px 1px 0px rgba(255,255,255,0.26)',
+  },
+  findText: { ...text.button, fontSize: 17, color: '#04101E' },
+  searching: {
+    marginTop: space.s3,
+    paddingVertical: space.s4,
+    paddingHorizontal: space.s3,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    alignItems: 'center',
+    gap: 3,
+  },
+  searchKey: { ...text.key, fontSize: 8.5, color: hue.sky },
+  searchName: {
+    fontFamily: font.displayBlack,
+    fontSize: 24,
+    lineHeight: 31,
+    color: color.text1,
+  },
+  searchNote: {
+    ...text.small,
+    fontSize: 11.5,
+    lineHeight: 16,
+    color: color.text3,
+    textAlign: 'center',
+  },
 
   card: {
     padding: space.s4,
