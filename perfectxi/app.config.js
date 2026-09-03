@@ -24,12 +24,27 @@
  */
 
 const OTA = {
-  runtimeVersion: '1.0.0',
   updates: {
     url: 'https://u.expo.dev/ad10b44d-55a2-4708-a3d5-715849cf6baa',
     fallbackToCacheTimeout: 10000,
   },
 };
+
+/**
+ * And the second half of the same problem.
+ *
+ * Dropping the runtime version was not enough, because with none set the
+ * development server resolves the default one, and resolving it is what
+ * spawns the tool that cannot start. It came back after an hour of the
+ * server being fine, which is what an intermittent spawn failure looks
+ * like: the manifest breaks, the bundle keeps working, and the phone says
+ * it cannot connect to a server that is plainly running.
+ *
+ * A literal string needs no resolving. It is the same string the update
+ * channel uses, so a real build is unaffected, and it is spelled out here
+ * rather than derived so that nothing has to shell out to work it out.
+ */
+const RUNTIME = '1.0.0';
 
 module.exports = () => ({
   name: 'Perfect XI',
@@ -104,6 +119,8 @@ module.exports = () => ({
       key: 'sb_publishable_PlbOP9B2umhLCiH8hRO-Ag_vldKYAcb',
     },
   },
-  // Only a real build ships updates. The dev server never resolves one.
-  ...(process.env.EAS_BUILD ? OTA : {}),
+  runtimeVersion: RUNTIME,
+  // Only a real build ships updates. The dev server never fetches one, and
+  // saying so plainly is what stops it going looking.
+  ...(process.env.EAS_BUILD ? OTA : { updates: { enabled: false } }),
 });
