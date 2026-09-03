@@ -1,22 +1,34 @@
-import { Text, View } from 'react-native';
-import { StyleSheet } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
 import { Sheet } from './Sheet';
 import { Press } from './Press';
-import { color, hue, line, positionColor, radius, space, alpha } from '../tokens';
+import { color, hue, positionColor, radius, space, alpha } from '../tokens';
 import { font, text } from '../type';
 import { canFill, placeName, posFit, type Position } from '../../engine';
 
 /**
  * Which place he fills.
  *
- * Every empty place listed, with what it would cost him to play there.
- * Out of position is allowed, because sometimes it is the only option,
- * and the price is shown rather than hidden.
+ * Grouped by line, because that is the decision. A 4-3-3 with three
+ * defenders missing used to list three identical rows saying "in the
+ * eleven, in defence", then two identical rows for midfield, then three
+ * identical benches: ten choices where there were only four. Whichever of
+ * the three empty defensive shirts he takes, he is a defender.
  *
- * Shared, because signing a player and promoting one out of the academy
- * are the same question asked twice and they should not answer it in two
- * different shapes.
+ * Out of position is allowed, because sometimes it is the only option, and
+ * the price is shown rather than hidden. The bench takes anybody and costs
+ * nobody anything.
  */
+
+type Group = {
+  key: string;
+  /** the roster place he actually goes into */
+  index: number;
+  pos: Position;
+  bench: boolean;
+  places: number;
+  fit: number;
+};
+
 export function SlotSheet({
   open,
   title,
@@ -36,73 +48,109 @@ export function SlotSheet({
 }) {
   /* A keeper only goes in goal, and only a keeper goes in goal. Places he
      cannot fill are not shown at all rather than shown and refused. */
-  const open2 = holes.filter((h) => h.index >= 11 || canFill(playerPos, h.pos));
+  const allowed = holes.filter((h) => h.index >= 11 || canFill(playerPos, h.pos));
+
+  const groups: Group[] = [];
+  for (const h of allowed) {
+    const bench = h.index >= 11;
+    const key = bench ? 'bench' : h.pos;
+    const found = groups.find((g) => g.key === key);
+    if (found) {
+      found.places++;
+      // Always offer the first of the identical shirts.
+      found.index = Math.min(found.index, h.index);
+      continue;
+    }
+    groups.push({
+      key,
+      index: h.index,
+      pos: bench ? playerPos : h.pos,
+      bench,
+      places: 1,
+      fit: bench ? 1 : posFit(playerPos, h.pos),
+    });
+  }
+
+  /* His own position first, then whatever costs him least, and the bench
+     last because it is not really a choice about football. */
+  groups.sort((a, b) => Number(a.bench) - Number(b.bench) || b.fit - a.fit);
 
   return (
     <Sheet visible={open} onClose={onClose}>
       <Text style={styles.sheetTitle}>{title}</Text>
       <Text style={styles.sheetSub}>{subtitle}</Text>
 
-      {open2.length ? (
+      {groups.length ? (
         <>
           <Text style={styles.sheetKey}>Where does he play?</Text>
           <View style={styles.slots}>
-            {[...open2]
-              .sort((a, b) => posFit(playerPos, b.pos) - posFit(playerPos, a.pos))
-              .map((h) => {
-                // A place on the bench costs a player nothing, whoever he is.
-                const fit = h.index >= 11 ? 1 : posFit(playerPos, h.pos);
-                const tint = h.index >= 11 ? positionColor[playerPos] : positionColor[h.pos];
-                return (
-                  <Press
-                    key={h.index}
-                    onPress={() => onPick(h.index)}
-                    feel="medium"
-                    scaleTo={0.98}
+            {groups.map((g) => {
+              const tint = positionColor[g.pos];
+              const perfect = !g.bench && g.fit === 1;
+              return (
+                <Press
+                  key={g.key}
+                  onPress={() => onPick(g.index)}
+                  feel="medium"
+                  scaleTo={0.98}
+                  style={[
+                    styles.slot,
+                    {
+                      borderColor: alpha(tint, perfect ? 0.45 : 0.22),
+                      backgroundColor: alpha(tint, perfect ? 0.11 : 0.05),
+                    },
+                  ]}
+                >
+                  <View
                     style={[
-                      styles.slot,
-                      {
-                        borderColor: alpha(tint, fit === 1 ? 0.45 : 0.22),
-                        backgroundColor: alpha(tint, fit === 1 ? 0.11 : 0.05),
-                      },
+                      styles.badge,
+                      { backgroundColor: alpha(tint, 0.16), borderColor: alpha(tint, 0.4) },
                     ]}
                   >
-                    <View
+                    <Text style={[styles.badgeText, { color: tint }]}>
+                      {g.bench ? 'SUB' : g.pos}
+                    </Text>
+                  </View>
+
+                  <View style={styles.body}>
+                    <Text style={styles.where}>
+                      {g.bench
+                        ? 'On the bench'
+                        : `In the eleven, ${placeName(g.pos)}`}
+                    </Text>
+                    <Text
                       style={[
-                        styles.badge,
-                        { backgroundColor: alpha(tint, 0.16), borderColor: alpha(tint, 0.4) },
+                        styles.fit,
+                        {
+                          color: g.bench
+                            ? color.text3
+                            : g.fit === 1
+                              ? hue.emerald
+                              : g.fit >= 0.94
+                                ? hue.amber
+                                : hue.crimson,
+                        },
                       ]}
                     >
-                      <Text style={[styles.badgeText, { color: tint }]}>
-                        {h.index >= 11 ? 'SUB' : h.pos}
-                      </Text>
-                    </View>
-                    <View style={styles.slotBody}>
-                      <Text style={styles.slotWhere}>
-                        {h.index < 11 ? `In the eleven, ${placeName(h.pos)}` : 'On the bench, any position'}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.slotFit,
-                          {
-                            color:
-                              fit === 1 ? hue.emerald : fit >= 0.94 ? hue.amber : hue.crimson,
-                          },
-                        ]}
-                      >
-                        {h.index >= 11
-                          ? 'Nothing lost, he is a substitute'
-                          : fit === 1
-                            ? 'His own position'
-                            : `${Math.round((1 - fit) * 100)}% off his best`}
-                      </Text>
-                    </View>
-                    <Text style={styles.slotArrow} allowFontScaling={false}>
-                      {'\u203a'}
+                      {g.bench
+                        ? 'Any position, nothing lost'
+                        : g.fit === 1
+                          ? 'His own position'
+                          : `${Math.round((1 - g.fit) * 100)}% off his best`}
                     </Text>
-                  </Press>
-                );
-              })}
+                  </View>
+
+                  {g.places > 1 ? (
+                    <Text style={styles.places} allowFontScaling={false}>
+                      {g.places} open
+                    </Text>
+                  ) : null}
+                  <Text style={styles.arrow} allowFontScaling={false}>
+                    {'›'}
+                  </Text>
+                </Press>
+              );
+            })}
           </View>
         </>
       ) : (
@@ -142,19 +190,19 @@ const styles = StyleSheet.create({
     padding: space.s3,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: line.card,
   },
   badge: {
-    width: 36,
-    height: 24,
+    width: 38,
+    height: 26,
     borderRadius: 7,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   badgeText: { ...text.key, fontSize: 8.5 },
-  slotBody: { flex: 1, minWidth: 0 },
-  slotWhere: { fontFamily: font.bodySemi, fontSize: 14, lineHeight: 19, color: color.text1 },
-  slotFit: { fontFamily: font.body, fontSize: 11, lineHeight: 15 },
-  slotArrow: { fontSize: 18, color: color.text3 },
+  body: { flex: 1, minWidth: 0 },
+  where: { fontFamily: font.bodySemi, fontSize: 15, lineHeight: 20, color: color.text1 },
+  fit: { fontFamily: font.body, fontSize: 11.5, lineHeight: 16 },
+  places: { ...text.key, fontSize: 8.5, color: color.text3 },
+  arrow: { fontSize: 18, color: color.text3 },
 });
