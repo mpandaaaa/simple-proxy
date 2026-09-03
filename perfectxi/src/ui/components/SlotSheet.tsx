@@ -50,8 +50,9 @@ export function SlotSheet({
             {[...open2]
               .sort((a, b) => posFit(playerPos, b.pos) - posFit(playerPos, a.pos))
               .map((h) => {
-                const fit = posFit(playerPos, h.pos);
-                const tint = positionColor[h.pos];
+                // A place on the bench costs a player nothing, whoever he is.
+                const fit = h.index >= 11 ? 1 : posFit(playerPos, h.pos);
+                const tint = h.index >= 11 ? positionColor[playerPos] : positionColor[h.pos];
                 return (
                   <Press
                     key={h.index}
@@ -72,11 +73,13 @@ export function SlotSheet({
                         { backgroundColor: alpha(tint, 0.16), borderColor: alpha(tint, 0.4) },
                       ]}
                     >
-                      <Text style={[styles.badgeText, { color: tint }]}>{h.pos}</Text>
+                      <Text style={[styles.badgeText, { color: tint }]}>
+                        {h.index >= 11 ? 'SUB' : h.pos}
+                      </Text>
                     </View>
                     <View style={styles.slotBody}>
                       <Text style={styles.slotWhere}>
-                        {h.index < 11 ? `In the eleven, ${placeName(h.pos)}` : 'On the bench'}
+                        {h.index < 11 ? `In the eleven, ${placeName(h.pos)}` : 'On the bench, any position'}
                       </Text>
                       <Text
                         style={[
@@ -87,9 +90,11 @@ export function SlotSheet({
                           },
                         ]}
                       >
-                        {fit === 1
-                          ? 'His own position'
-                          : `${Math.round((1 - fit) * 100)}% off his best`}
+                        {h.index >= 11
+                          ? 'Nothing lost, he is a substitute'
+                          : fit === 1
+                            ? 'His own position'
+                            : `${Math.round((1 - fit) * 100)}% off his best`}
                       </Text>
                     </View>
                     <Text style={styles.slotArrow} allowFontScaling={false}>

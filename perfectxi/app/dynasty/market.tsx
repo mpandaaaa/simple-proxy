@@ -25,6 +25,7 @@ import {
   posFit,
   canFill,
   placeName,
+  styleOf,
   playerValue,
   revenue,
   sell,
@@ -244,7 +245,7 @@ export default function Market() {
                       {l.n}
                     </Text>
                     <Text style={styles.cardMeta} numberOfLines={1}>
-                      {l.age} {'·'} {l.club} {'·'} £{l.wage}k a week
+                      {l.age} {'·'} {styleOf(l.n, l.pos).name} {'·'} £{l.wage}k a week
                     </Text>
                     {noRoom ? (
                       <Text style={styles.cardFit} numberOfLines={1}>

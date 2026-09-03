@@ -30,13 +30,19 @@ import {
   squadValue,
   slotAccepts,
   placeName,
+  playerStyle,
+  acceptOffer,
+  rejectOffer,
+  takeJob,
+  moraleWord,
+  type Offer,
   clubColour,
   starters,
   type Dynasty,
   type DynastyPlayer,
   type Position,
 } from '../../src/engine';
-import { useCareer, setCareer, updateCareer } from '../../src/game/career';
+import { useCareer, getCareer, setCareer, updateCareer } from '../../src/game/career';
 
 /**
  * The Dynasty hub.
@@ -167,6 +173,11 @@ export default function DynastyHub() {
      place he can go lights up, and tapping one of them puts him there.
      Tapping his own arrows again puts him back down. */
   const [swapping, setSwapping] = useState<number | null>(null);
+  const [jobTarget, setJobTarget] = useState<{
+    club: string;
+    objective: string;
+    budget: number;
+  } | null>(null);
 
   const played = useMemo(
     () => (career ? career.seasons.some((s) => s.s === career.year) : false),
@@ -217,6 +228,32 @@ export default function DynastyHub() {
     });
     return set;
   }, [career, swapping]);
+
+  const takeOffer = useCallback((o: Offer) => {
+    updateCareer((d) => acceptOffer(d, o) ?? d);
+    haptic('success');
+    sfx('pick');
+  }, []);
+
+  const refuseOffer = useCallback((o: Offer) => {
+    updateCareer((d) => rejectOffer(d, o));
+    haptic('warning');
+  }, []);
+
+  const turnDownJob = useCallback((club: string) => {
+    updateCareer((d) => ({ ...d, jobs: d.jobs.filter((j) => j.club !== club) }));
+    haptic('light');
+  }, []);
+
+  /* Taking a job is not undoable, so it asks twice. */
+  const goToJob = useCallback((job: { club: string; objective: string; budget: number }) => {
+    const next = takeJob(getCareer() as Dynasty, job);
+    if (!next) return;
+    setCareer(next);
+    setJobTarget(null);
+    haptic('success');
+    sfx('trophy');
+  }, []);
 
   const doSwap = useCallback((a: number, b: number) => {
     updateCareer((d) => {
@@ -393,6 +430,131 @@ export default function DynastyHub() {
             {career.psrHit ? ` ${career.psrHit} points come off for the books.` : ''}
           </Text>
         </View>
+
+        {/* ---- somebody wants your players ---- */}
+        {career.offers.length ? (
+          <Rise delay={0}>
+            <View style={styles.offers}>
+              <View style={styles.offersHead}>
+                <Text style={styles.offersKey}>On the table</Text>
+                <Text style={styles.offersCount} allowFontScaling={false}>
+                  {career.offers.length}
+                </Text>
+              </View>
+              <Text style={styles.offersNote}>
+                Take the money and he goes. Turn it down and he knows you
+                turned it down.
+              </Text>
+              {career.offers.map((o) => {
+                const p = career.roster[o.slot];
+                return (
+                  <View key={`${o.slot}-${o.name}`} style={styles.offer}>
+                    <View style={styles.offerTop}>
+                      <ClubDisc club={o.club} size={30} />
+                      <View style={styles.offerBody}>
+                        <Text style={styles.offerName} numberOfLines={1}>
+                          {o.name}
+                        </Text>
+                        <Text style={styles.offerFrom} numberOfLines={1}>
+                          {o.club} {'·'} rated {o.clubRating}
+                          {o.stepUp ? ' · a bigger club than yours' : ''}
+                        </Text>
+                      </View>
+                      <View style={styles.offerMoney}>
+                        <Text style={styles.offerFee} allowFontScaling={false}>
+                          £{o.fee}m
+                        </Text>
+                        <Text style={styles.offerWorth} allowFontScaling={false}>
+                          worth £{o.worth}m
+                        </Text>
+                      </View>
+                    </View>
+                    {p ? (
+                      <Text style={styles.offerWhat}>
+                        {p.age} {'·'} rated {p.rtg} {'·'} {playerStyle(p).name.toLowerCase()}
+                        {o.stepUp ? ' · saying no will not go down well' : ''}
+                      </Text>
+                    ) : null}
+                    <View style={styles.offerActs}>
+                      <Press
+                        onPress={() => takeOffer(o)}
+                        feel="medium"
+                        scaleTo={0.98}
+                        style={[styles.offerAct, styles.offerYes]}
+                      >
+                        <Text style={[styles.offerActText, { color: hue.emerald }]}>
+                          Accept £{o.fee}m
+                        </Text>
+                      </Press>
+                      <Press
+                        onPress={() => refuseOffer(o)}
+                        feel="warning"
+                        scaleTo={0.98}
+                        style={[styles.offerAct, styles.offerNo]}
+                      >
+                        <Text style={[styles.offerActText, { color: hue.crimson }]}>
+                          He is not for sale
+                        </Text>
+                      </Press>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          </Rise>
+        ) : null}
+
+        {/* ---- somebody wants you ---- */}
+        {career.jobs.length ? (
+          <Rise delay={0}>
+            <View style={styles.jobs}>
+              <Text style={styles.jobsKey}>An approach</Text>
+              <Text style={styles.jobsNote}>
+                Your trophies and your seasons go with you. Their squad, their
+                money and their stadium do not.
+              </Text>
+              {career.jobs.map((j) => (
+                <View key={j.club} style={styles.job}>
+                  <View style={styles.offerTop}>
+                    <ClubDisc club={j.club} size={30} />
+                    <View style={styles.offerBody}>
+                      <Text style={styles.offerName} numberOfLines={1}>
+                        {j.club}
+                      </Text>
+                      <Text style={styles.offerFrom} numberOfLines={1}>
+                        {j.note} {'·'} rated {j.rating}
+                      </Text>
+                    </View>
+                    <Text style={styles.jobBudget} allowFontScaling={false}>
+                      £{j.budget}m
+                    </Text>
+                  </View>
+                  <Text style={styles.offerWhat}>They would want you to {j.objective.toLowerCase()}.</Text>
+                  <View style={styles.offerActs}>
+                    <Press
+                      onPress={() => setJobTarget(j)}
+                      feel="medium"
+                      scaleTo={0.98}
+                      style={[styles.offerAct, styles.jobYes]}
+                    >
+                      <Text style={[styles.offerActText, { color: hue.sky }]}>Take the job</Text>
+                    </Press>
+                    <Press
+                      onPress={() => turnDownJob(j.club)}
+                      feel="light"
+                      scaleTo={0.98}
+                      style={[styles.offerAct, styles.offerNo]}
+                    >
+                      <Text style={[styles.offerActText, { color: color.text2 }]}>
+                        Stay here
+                      </Text>
+                    </Press>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </Rise>
+        ) : null}
 
         {/* ---- the desk ---- */}
         {career.inbox.length ? (
@@ -618,7 +780,8 @@ export default function DynastyHub() {
 
         <Text style={[text.label, styles.sect]}>Substitutes</Text>
         <Text style={styles.subsNote}>
-          Depth is insurance. The bench only counts when someone is injured.
+          Three places, and any three players you like. Depth is insurance:
+          the bench counts when somebody is injured or suspended.
         </Text>
         <View style={styles.list}>
           {career.roster.slice(11).map((p, i) =>
@@ -648,6 +811,7 @@ export default function DynastyHub() {
               <EmptySlot
                 key={`sub${i}`}
                 pos={career.slots[11 + i]}
+                anyone
                 target={swapping !== null && canTake.has(11 + i)}
                 onPress={
                   swapping !== null && canTake.has(11 + i)
@@ -683,6 +847,16 @@ export default function DynastyHub() {
             : undefined
         }
         swapLabel="Move him"
+      />
+
+      {/* Leaving a club is not undoable either. */}
+      <Confirm
+        visible={jobTarget !== null}
+        title={jobTarget ? `Leave for ${jobTarget.club}?` : ''}
+        body="Your trophies and your seasons come with you. This squad, this budget and this stadium stay behind, and you cannot come back."
+        confirmLabel="Take the job"
+        onCancel={() => setJobTarget(null)}
+        onConfirm={() => jobTarget && goToJob(jobTarget)}
       />
 
       {/* Two steps, because there is no way back from this one. */}
@@ -754,20 +928,34 @@ function HeroStat({ label, value, tint }: { label: string; value: string; tint?:
 function EmptySlot({
   pos,
   target,
+  anyone,
   onPress,
 }: {
   pos: Position;
   target?: boolean;
+  /** a place on the bench, which takes anybody */
+  anyone?: boolean;
   onPress?: () => void;
 }) {
   const tint = positionColor[pos] ?? color.text3;
   const body = (
     <>
-      <View style={[styles.badge, { backgroundColor: tint + '12', borderColor: tint + '3D' }]}>
-        <Text style={[styles.badgeText, { color: tint, opacity: 0.6 }]}>{pos}</Text>
+      <View
+        style={[
+          styles.badge,
+          anyone
+            ? { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.16)' }
+            : { backgroundColor: tint + '12', borderColor: tint + '3D' },
+        ]}
+      >
+        <Text
+          style={[styles.badgeText, { color: anyone ? color.text3 : tint, opacity: 0.7 }]}
+        >
+          {anyone ? 'SUB' : pos}
+        </Text>
       </View>
       <Text style={[styles.emptyText, target ? { color: hue.sky } : null]}>
-        {target ? 'Put him here' : 'Nobody in this place'}
+        {target ? 'Put him here' : anyone ? 'An empty place on the bench' : 'Nobody in this place'}
       </Text>
     </>
   );
@@ -811,20 +999,25 @@ export function PlayerRow({
   const tint = positionColor[p.pos];
   const wrong = p.pos !== slot;
 
+  const unhappy = (p.morale ?? 70) < 40;
   const status =
-    p.daysOut >= 60
-      ? `${p.daysOut} days out`
-      : p.contract.yrs === 0
-        ? 'out of contract'
-        : p.contract.yrs === 1
-          ? 'final year'
-          : wrong
-            ? `playing ${placeName(slot)}`
-            : p.youth
-              ? 'academy'
-              : `${p.contract.yrs} yr deal`;
+    unhappy
+      ? moraleWord(p.morale ?? 70).toLowerCase()
+      : p.daysOut >= 60
+        ? `${p.daysOut} days out`
+        : p.banned >= 2
+          ? `${p.banned} games suspended`
+          : p.contract.yrs === 0
+            ? 'out of contract'
+            : p.contract.yrs === 1
+              ? 'final year'
+              : wrong
+                ? `playing ${placeName(slot)}`
+                : p.youth
+                  ? 'academy'
+                  : `${p.contract.yrs} yr deal`;
 
-  const flag = p.contract.yrs <= 1 || p.daysOut >= 60 || wrong;
+  const flag = unhappy || p.contract.yrs <= 1 || p.daysOut >= 60 || wrong || p.banned >= 2;
 
   return (
     <Press
@@ -1174,6 +1367,96 @@ const styles = StyleSheet.create({
     boxShadow:
       'inset 0px 1px 0px rgba(255,255,255,0.06), inset 0px 0px 0px 1px rgba(255,255,255,0.035)',
   },
+  offers: {
+    marginTop: space.s4,
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: alpha(hue.amber, 0.34),
+    backgroundColor: '#171208',
+    experimental_backgroundImage:
+      'linear-gradient(180deg, #26200C 0%, #16120A 62%, #0B0A07 100%)',
+    gap: space.s2,
+  },
+  offersHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  offersKey: { ...text.key, fontSize: 9.5, color: hue.amber },
+  offersCount: {
+    fontFamily: font.displayBlack,
+    fontSize: 20,
+    lineHeight: 25,
+    color: hue.amber,
+  },
+  offersNote: { ...text.small, fontSize: 11.5, lineHeight: 16, marginBottom: 2 },
+  offer: {
+    padding: space.s3,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.09)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    gap: space.s2,
+  },
+  offerTop: { flexDirection: 'row', alignItems: 'center', gap: space.s3 },
+  offerBody: { flex: 1, minWidth: 0 },
+  offerName: { fontFamily: font.displayBold, fontSize: 17, lineHeight: 21, color: color.text1 },
+  offerFrom: { ...text.small, fontSize: 11, lineHeight: 15, color: color.text3 },
+  offerMoney: { alignItems: 'flex-end' },
+  offerFee: {
+    fontFamily: font.displayBlack,
+    fontSize: 20,
+    lineHeight: 25,
+    color: hue.emerald,
+    fontVariant: ['tabular-nums'],
+  },
+  offerWorth: { ...text.small, fontSize: 9.5, lineHeight: 13, color: color.text3 },
+  offerWhat: { ...text.small, fontSize: 11, lineHeight: 15, color: color.text3 },
+  offerActs: { flexDirection: 'row', gap: space.s2 },
+  offerAct: {
+    flex: 1,
+    minHeight: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    borderWidth: 1,
+  },
+  offerYes: { borderColor: alpha(hue.emerald, 0.45), backgroundColor: alpha(hue.emerald, 0.12) },
+  offerNo: { borderColor: 'rgba(255,255,255,0.12)', backgroundColor: 'rgba(255,255,255,0.04)' },
+  jobYes: { borderColor: alpha(hue.sky, 0.45), backgroundColor: alpha(hue.sky, 0.12) },
+  offerActText: {
+    fontFamily: font.displayBold,
+    fontSize: 13.5,
+    lineHeight: 18,
+    letterSpacing: 0.3,
+  },
+
+  jobs: {
+    marginTop: space.s4,
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: alpha(hue.sky, 0.34),
+    backgroundColor: '#0B1119',
+    experimental_backgroundImage:
+      'linear-gradient(180deg, #13202E 0%, #0C1219 62%, #070A0E 100%)',
+    gap: space.s2,
+  },
+  jobsKey: { ...text.key, fontSize: 9.5, color: hue.sky },
+  jobsNote: { ...text.small, fontSize: 11.5, lineHeight: 16, marginBottom: 2 },
+  job: {
+    padding: space.s3,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.09)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    gap: space.s2,
+  },
+  jobBudget: {
+    fontFamily: font.displayBlack,
+    fontSize: 18,
+    lineHeight: 23,
+    color: hue.sky,
+    fontVariant: ['tabular-nums'],
+  },
+
   lineGroup: { marginBottom: space.s4 },
   lineHead: {
     flexDirection: 'row',

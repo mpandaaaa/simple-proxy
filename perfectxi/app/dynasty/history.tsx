@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { ModeScreen, Press, Shine, Trophy } from '../../src/ui/components';
+import Svg, { Circle, Line as SvgLine, Path, Rect } from 'react-native-svg';
+import { ModeScreen, Press, Shine, Trophy, ClubDisc } from '../../src/ui/components';
 import { color, gradient, line, positionColor, radius, space, hue, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic } from '../../src/ui/feel';
@@ -72,6 +73,85 @@ export default function History() {
           />
         </View>
       </View>
+
+      {/* ---- the shape of it ---- */}
+      {seasons.length > 1 ? (
+        <>
+          <Text style={[text.label, styles.sect]}>The shape of the career</Text>
+          <View style={styles.arcWrap}>
+            <Arc seasons={career.seasons} />
+            <View style={styles.arcKeys}>
+              <Text style={styles.arcKey}>1st</Text>
+              <Text style={styles.arcKey}>20th</Text>
+            </View>
+          </View>
+        </>
+      ) : null}
+
+      {/* ---- the clubs, if there has been more than one ---- */}
+      {career.spells.length ? (
+        <>
+          <Text style={[text.label, styles.sect]}>Every club</Text>
+          <View style={styles.spells}>
+            {[...career.spells, {
+              club: career.club,
+              seasons: career.seasons.length,
+              titles: career.titles,
+              cups: Object.values(career.honours ?? {}).reduce((a, n) => a + (n as number), 0),
+              best: career.records.bestFin,
+              from: 0,
+              to: 0,
+            }].map((sp, i) => (
+              <View key={`${sp.club}-${i}`} style={styles.spell}>
+                <ClubDisc club={sp.club} size={30} />
+                <View style={styles.spellBody}>
+                  <Text style={styles.spellClub} numberOfLines={1}>
+                    {sp.club}
+                  </Text>
+                  <Text style={styles.spellNote} numberOfLines={1}>
+                    {sp.seasons} season{sp.seasons === 1 ? '' : 's'}
+                    {sp.best <= 20 ? ` · best ${ordinal(sp.best)}` : ''}
+                  </Text>
+                </View>
+                <View style={styles.spellRight}>
+                  {sp.titles ? (
+                    <Text style={[styles.spellCount, { color: hue.gold }]} allowFontScaling={false}>
+                      {sp.titles} {sp.titles === 1 ? 'title' : 'titles'}
+                    </Text>
+                  ) : null}
+                  {sp.cups ? (
+                    <Text style={[styles.spellCount, { color: hue.violet }]} allowFontScaling={false}>
+                      {sp.cups} {sp.cups === 1 ? 'cup' : 'cups'}
+                    </Text>
+                  ) : null}
+                </View>
+              </View>
+            ))}
+          </View>
+        </>
+      ) : null}
+
+      {/* ---- the derby ---- */}
+      {career.rival && career.derby.w + career.derby.d + career.derby.l > 0 ? (
+        <>
+          <Text style={[text.label, styles.sect]}>Against {career.rival}</Text>
+          <View style={styles.derby}>
+            <ClubDisc club={career.rival} size={38} />
+            <View style={styles.derbyRow}>
+              <DerbyStat n={career.derby.w} label="Won" tint={hue.emerald} />
+              <DerbyStat n={career.derby.d} label="Drawn" tint={hue.amber} />
+              <DerbyStat n={career.derby.l} label="Lost" tint={hue.crimson} />
+            </View>
+          </View>
+          <Text style={styles.derbyNote}>
+            {career.derby.w > career.derby.l
+              ? 'The city is yours.'
+              : career.derby.w < career.derby.l
+                ? 'They have had the better of it, and everybody knows.'
+                : 'Nothing between you.'}
+          </Text>
+        </>
+      ) : null}
 
       {/* ---- season by season ---- */}
       <Text style={[text.label, styles.sect]}>Season by season</Text>
@@ -237,6 +317,54 @@ function Hon({ label, value, tint }: { label: string; value: string; tint?: stri
   );
 }
 
+/**
+ * Twenty seasons as one line.
+ *
+ * Where you finished, year on year, with the title at the top and the drop
+ * at the bottom. It is the only place a career has a shape rather than a
+ * list, and it is the screen somebody screenshots.
+ */
+function Arc({ seasons }: { seasons: readonly { s: number; fin: number }[] }) {
+  const W = 320;
+  const H = 132;
+  const pad = 10;
+  const n = seasons.length;
+  const x = (i: number) => pad + (n === 1 ? (W - pad * 2) / 2 : (i / (n - 1)) * (W - pad * 2));
+  const y = (fin: number) => pad + ((fin - 1) / 19) * (H - pad * 2);
+
+  const line = seasons.map((s, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(s.fin).toFixed(1)}`).join(' ');
+
+  return (
+    <Svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+      {/* the zones behind it, so a finish means something without a label */}
+      <Rect x={0} y={y(1) - 4} width={W} height={y(4) - y(1) + 4} fill={alpha(hue.sky, 0.1)} />
+      <Rect x={0} y={y(18)} width={W} height={y(20) - y(18) + 5} fill={alpha(hue.crimson, 0.12)} />
+      <SvgLine x1={0} y1={y(1)} x2={W} y2={y(1)} stroke={alpha(hue.gold, 0.5)} strokeWidth={1} />
+      <Path d={line} stroke={color.text1} strokeWidth={2} fill="none" strokeLinejoin="round" />
+      {seasons.map((s, i) => (
+        <Circle
+          key={s.s}
+          cx={x(i)}
+          cy={y(s.fin)}
+          r={s.fin === 1 ? 4.5 : 3}
+          fill={s.fin === 1 ? hue.gold : s.fin <= 4 ? hue.sky : s.fin >= 18 ? hue.crimson : color.text2}
+        />
+      ))}
+    </Svg>
+  );
+}
+
+function DerbyStat({ n, label, tint }: { n: number; label: string; tint: string }) {
+  return (
+    <View style={styles.derbyStat}>
+      <Text style={[styles.derbyN, { color: tint }]} allowFontScaling={false}>
+        {n}
+      </Text>
+      <Text style={styles.derbyLabel}>{label}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   honours: {
     alignItems: 'center',
@@ -270,6 +398,56 @@ const styles = StyleSheet.create({
   honLabel: { ...text.key, fontSize: 7.5, color: color.text3 },
 
   sect: { marginTop: space.s6, marginBottom: space.s3 },
+  arcWrap: {
+    padding: space.s3,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#0D1610',
+    overflow: 'hidden',
+  },
+  arcKeys: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 },
+  arcKey: { ...text.key, fontSize: 8, color: color.text3 },
+
+  spells: { gap: space.s2 },
+  spell: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s3,
+    padding: space.s3,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#101A14',
+  },
+  spellBody: { flex: 1, minWidth: 0 },
+  spellClub: { fontFamily: font.displayBold, fontSize: 16, lineHeight: 21, color: color.text1 },
+  spellNote: { ...text.small, fontSize: 11, lineHeight: 15, color: color.text3 },
+  spellRight: { alignItems: 'flex-end' },
+  spellCount: { ...text.key, fontSize: 8.5 },
+
+  derby: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s4,
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: alpha(hue.crimson, 0.24),
+    backgroundColor: '#160C0D',
+    experimental_backgroundImage:
+      'linear-gradient(180deg, #251214 0%, #150C0D 70%, #0A0607 100%)',
+  },
+  derbyRow: { flex: 1, flexDirection: 'row' },
+  derbyStat: { flex: 1, alignItems: 'center', gap: 1 },
+  derbyN: {
+    fontFamily: font.displayBlack,
+    fontSize: 24,
+    lineHeight: 30,
+    fontVariant: ['tabular-nums'],
+  },
+  derbyLabel: { ...text.key, fontSize: 8, color: color.text3 },
+  derbyNote: { ...text.small, fontSize: 12, lineHeight: 17, marginTop: space.s2 },
   none: { ...text.small, fontSize: 12.5 },
 
   table: {

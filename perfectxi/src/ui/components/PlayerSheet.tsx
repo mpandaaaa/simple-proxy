@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { color, gradient, line, positionColor, radius, space } from '../tokens';
+import { color, gradient, line, positionColor, radius, space, hue, alpha } from '../tokens';
 import { font, text } from '../type';
 import { haptic } from '../feel';
 import { Sheet } from './Sheet';
@@ -11,6 +11,8 @@ import {
   playerValue,
   renewalTerms,
   scoutRange,
+  playerStyle,
+  moraleWord,
   type DynastyPlayer,
 } from '../../engine';
 
@@ -60,6 +62,7 @@ export function PlayerSheet({
   const terms = renewalTerms(p);
   const expected = expectedRating(p.rtg);
   const range = youth ? scoutRange(p) : null;
+  const style = playerStyle(p);
 
   return (
     <Sheet visible={open} onClose={onClose}>
@@ -227,6 +230,42 @@ export function PlayerSheet({
         </View>
       )}
 
+      {/* what kind of player he is, and how he feels about being here */}
+      <View style={styles.notes}>
+        <View style={styles.note}>
+          <Text style={styles.noteKey}>What kind of player</Text>
+          <Text style={styles.noteTitle}>{style.name}</Text>
+          <Text style={styles.noteBody}>{style.note}</Text>
+        </View>
+        <View style={styles.note}>
+          <Text style={styles.noteKey}>How he feels</Text>
+          <Text style={[styles.noteTitle, { color: moraleTint(p.morale ?? 70) }]}>
+            {moraleWord(p.morale ?? 70)}
+          </Text>
+          <View style={styles.moraleTrack}>
+            <View
+              style={[
+                styles.moraleFill,
+                {
+                  width: `${Math.max(3, p.morale ?? 70)}%`,
+                  backgroundColor: moraleTint(p.morale ?? 70),
+                },
+              ]}
+            />
+          </View>
+        </View>
+        {p.cards || p.banned ? (
+          <View style={styles.note}>
+            <Text style={styles.noteKey}>Discipline</Text>
+            <Text style={styles.noteBody}>
+              {p.cards} booking{p.cards === 1 ? '' : 's'}
+              {p.reds ? ` and a red card` : ''} last season
+              {p.banned ? `, ${p.banned} game${p.banned === 1 ? '' : 's'} missed for it` : ''}.
+            </Text>
+          </View>
+        ) : null}
+      </View>
+
       <View style={styles.actions}>
         {onScout ? (
           <Press
@@ -313,6 +352,10 @@ export function PlayerSheet({
       </View>
     </Sheet>
   );
+}
+
+function moraleTint(m: number): string {
+  return m >= 70 ? hue.emerald : m >= 50 ? hue.amber : hue.crimson;
 }
 
 function Tab({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
@@ -417,6 +460,13 @@ const styles = StyleSheet.create({
   noteBad: { borderColor: line.danger, backgroundColor: 'rgba(229,72,77,0.08)' },
   noteWarn: { borderColor: 'rgba(245,165,36,0.4)', backgroundColor: 'rgba(245,165,36,0.08)' },
   noteKey: { ...text.key, fontSize: 8.5, color: color.text3, marginBottom: 3 },
+  noteTitle: {
+    fontFamily: font.displayBold,
+    fontSize: 15,
+    lineHeight: 20,
+    color: color.text1,
+    marginBottom: 1,
+  },
   noteBody: { ...text.small, fontSize: 12.5, lineHeight: 18 },
 
   career: { marginTop: space.s3 },
@@ -444,6 +494,16 @@ const styles = StyleSheet.create({
   crClub: { flex: 1, paddingRight: space.s2 },
   crN: { width: 28, textAlign: 'right' },
   crR: { width: 42, textAlign: 'right' },
+
+  notes: { gap: space.s2, marginTop: space.s4 },
+  moraleTrack: {
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.09)',
+    overflow: 'hidden',
+    marginTop: 5,
+  },
+  moraleFill: { height: 5, borderRadius: 3 },
 
   actions: { gap: space.s2, marginTop: space.s4, marginBottom: space.s2 },
   action: {

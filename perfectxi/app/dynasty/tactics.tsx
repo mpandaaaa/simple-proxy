@@ -11,6 +11,7 @@ import {
   STYLES,
   changeShape,
   placeName,
+  styleMisfits,
   effectiveRating,
   misfits,
   setPieceShare,
@@ -36,6 +37,7 @@ export default function Tactics() {
   const strength = strFromAvg(effectiveRating(career));
   const deltas = tacticDeltas(t, strength);
   const wrong = misfits(career);
+  const styleWrong = styleMisfits(career);
   const immersive = career.mode === 'immersive';
 
   const set = (patch: Partial<typeof t>) => {
@@ -130,6 +132,19 @@ export default function Tactics() {
           );
         })}
       </View>
+
+      {styleWrong.length ? (
+        <View style={styles.styleWarn}>
+          <Text style={styles.styleWarnText}>
+            {styleWrong.length === 1
+              ? `${styleWrong[0].name} is a ${styleWrong[0].style.toLowerCase()}, which does not suit ${styleWrong[0].want.toLowerCase()}.`
+              : `${styleWrong.length} of the eleven do not suit ${styleWrong[0].want.toLowerCase()}: ${styleWrong
+                  .slice(0, 3)
+                  .map((m) => m.name)
+                  .join(', ')}.`}
+          </Text>
+        </View>
+      ) : null}
 
       {/* ---- style ---- */}
       <Text style={[text.label, styles.sect]}>Style</Text>
@@ -333,6 +348,16 @@ const styles = StyleSheet.create({
     borderColor: line.card,
     backgroundColor: '#101A14',
   },
+  styleWarn: {
+    marginTop: space.s3,
+    padding: space.s3,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: alpha(hue.indigo, 0.3),
+    backgroundColor: alpha(hue.indigo, 0.09),
+  },
+  styleWarnText: { ...text.small, fontSize: 12, lineHeight: 17, color: color.text2 },
+
   segOn: { borderColor: alpha(hue.indigo, 0.45), backgroundColor: alpha(hue.indigo, 0.14) },
   segText: {
     fontFamily: font.displaySemi,

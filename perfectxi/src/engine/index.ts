@@ -157,3 +157,45 @@ export { processSeasonEnd } from './dynastySeason';
 export type { SummerReport } from './dynastySeason';
 export type { Tactic, Staff, Infra, Ledger, SeasonRow, AllTime, InboxItem } from './dynasty';
 export { EMPTY_TACTIC, EMPTY_STAFF } from './dynasty';
+
+export {
+  MORALE_BASE,
+  MORALE_UNHAPPY,
+  moraleFit,
+  moraleWord,
+  moraleAfterSeason,
+  offersFor,
+  acceptOffer,
+  rejectOffer,
+  seasonCards,
+  LOAN_CLUBS,
+  LOAN_LIMIT,
+  loanClubFor,
+  loanSeason,
+  autoLoanPicks,
+  averageWage,
+  reputation,
+  jobOffers,
+} from './dynastyPeople';
+export type { Offer, Discipline, LoanSpell, JobOffer } from './dynastyPeople';
+
+export {
+  styleOf,
+  playerStyle,
+  styleFit,
+  squadStyleFit,
+  styleMisfits,
+  STYLE_EDGE,
+} from './dynastyStyles';
+export type { PlayerStyle } from './dynastyStyles';
+
+export {
+  endOfSeason,
+  startingLeague,
+  startingChampionship,
+  divisionFor,
+  divisionName,
+} from './pyramid';
+export type { Club, Division } from './pyramid';
+
+export { PREMIER_LEAGUE, CHAMPIONSHIP } from './sim';

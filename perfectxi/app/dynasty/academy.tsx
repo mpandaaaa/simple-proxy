@@ -15,6 +15,8 @@ import { haptic } from '../../src/ui/feel';
 import { sfx } from '../../src/ui/sound';
 import {
   emptySlots,
+  loanClubFor,
+  mulberry32,
   promote,
   releaseYouth,
   scoutRange,
@@ -99,6 +101,35 @@ export default function Academy() {
     setOpen(null);
   }, []);
 
+  const sendOut = useCallback((index: number) => {
+    updateCareer((d) => {
+      const y = d.youth[index];
+      if (!y || y.loan) return d;
+      const rnd = mulberry32((d.seed ^ Math.imul(d.year * 31 + index, 0x9e3779b1)) >>> 0);
+      const youth = [...d.youth];
+      youth[index] = { ...y, loan: loanClubFor(y.rtg, rnd).n };
+      return { ...d, youth };
+    });
+    haptic('medium');
+    sfx('tick');
+  }, []);
+
+  const bringBack = useCallback((index: number) => {
+    updateCareer((d) => {
+      const y = d.youth[index];
+      if (!y) return d;
+      const youth = [...d.youth];
+      youth[index] = { ...y, loan: null };
+      return { ...d, youth };
+    });
+    haptic('light');
+  }, []);
+
+  const toggleAuto = useCallback(() => {
+    updateCareer((d) => ({ ...d, autoLoan: !d.autoLoan }));
+    haptic('select');
+  }, []);
+
   const release = useCallback((index: number) => {
     updateCareer((d) => releaseYouth(d, index));
     haptic('warning');
@@ -132,6 +163,19 @@ export default function Academy() {
             into an empty place costs nothing and he counts as homegrown.
           </Text>
         </View>
+
+        <Press onPress={toggleAuto} feel="none" scaleTo={0.99} style={styles.auto}>
+          <View style={styles.autoBody}>
+            <Text style={styles.autoTitle}>Send them out automatically</Text>
+            <Text style={styles.autoNote}>
+              Every summer, anybody over sixteen who is not ready for the first
+              team goes out on loan for the season. Games are what makes them.
+            </Text>
+          </View>
+          <View style={[styles.switch, career.autoLoan ? styles.switchOn : null]}>
+            <View style={[styles.knob, career.autoLoan ? styles.knobOn : null]} />
+          </View>
+        </Press>
 
         {career.youth.length > 1 ? (
           <View style={styles.sorts}>
@@ -178,13 +222,14 @@ export default function Academy() {
                 }}
                 onScout={career.budget >= SCOUT_FEE ? () => scout(i) : undefined}
                 onPromote={
-                  holes.length
+                  holes.length && !p.loan
                     ? () => {
                         haptic('medium');
                         setPromoting(i);
                       }
                     : undefined
                 }
+                onLoan={p.loan ? () => bringBack(i) : () => sendOut(i)}
               />
             </Rise>
             );
@@ -251,12 +296,15 @@ function Prospect({
   onPress,
   onScout,
   onPromote,
+  onLoan,
 }: {
   player: DynastyPlayer;
   chief: number;
   onPress: () => void;
   onScout?: () => void;
   onPromote?: () => void;
+  /** send him out for the season, or bring him back before it starts */
+  onLoan?: () => void;
 }) {
   const tint = positionColor[p.pos];
   const range = scoutRange(p, chief);
@@ -275,8 +323,13 @@ function Prospect({
           <Text style={styles.cardName} numberOfLines={1}>
             {p.n}
           </Text>
-          <Text style={styles.cardMeta}>
-            {p.age} {'·'} {p.scout === 0 ? 'never scouted' : `scouted ${p.scout}×`}
+          <Text style={[styles.cardMeta, p.loan ? { color: hue.mint } : null]}>
+            {p.age} {'·'}{' '}
+            {p.loan
+              ? `on loan at ${p.loan}`
+              : p.scout === 0
+                ? 'never scouted'
+                : `scouted ${p.scout}×`}
           </Text>
         </View>
         <Text style={styles.cardRtg} allowFontScaling={false}>
@@ -311,6 +364,11 @@ function Prospect({
         {onPromote ? (
           <Press onPress={onPromote} feel="medium" scaleTo={0.98} style={styles.promote}>
             <Text style={styles.promoteText}>Promote him</Text>
+          </Press>
+        ) : null}
+        {onLoan ? (
+          <Press onPress={onLoan} feel="light" scaleTo={0.98} style={styles.loan}>
+            <Text style={styles.loanText}>{p.loan ? 'Keep him here' : 'Send him out'}</Text>
           </Press>
         ) : null}
       </View>
@@ -400,6 +458,58 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     letterSpacing: 0.3,
     color: hue.lime,
+  },
+
+  auto: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s3,
+    marginTop: space.s4,
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: alpha(hue.mint, 0.26),
+    backgroundColor: '#0A1614',
+    experimental_backgroundImage:
+      'linear-gradient(180deg, #10241F 0%, #0A1614 70%, #060D0B 100%)',
+  },
+  autoBody: { flex: 1, minWidth: 0 },
+  autoTitle: { fontFamily: font.displayBold, fontSize: 15, lineHeight: 20, color: color.text1 },
+  autoNote: { ...text.small, fontSize: 11, lineHeight: 15, marginTop: 2 },
+  switch: {
+    width: 46,
+    height: 28,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  switchOn: { borderColor: hue.mint, backgroundColor: alpha(hue.mint, 0.3) },
+  knob: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: color.text3,
+  },
+  knobOn: { backgroundColor: hue.mint, alignSelf: 'flex-end' },
+
+  loan: {
+    flex: 1,
+    minHeight: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderLeftWidth: 1,
+    borderLeftColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: alpha(hue.sky, 0.1),
+  },
+  loanText: {
+    fontFamily: font.displayBold,
+    fontSize: 13,
+    lineHeight: 17,
+    letterSpacing: 0.3,
+    color: hue.sky,
   },
 
   sorts: { flexDirection: 'row', gap: 5, marginTop: space.s5, marginBottom: space.s3 },
