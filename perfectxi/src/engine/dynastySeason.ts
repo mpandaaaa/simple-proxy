@@ -25,7 +25,7 @@ import {
   wageBill,
 } from './dynastyClub';
 import { learnTactic } from './dynastyTactics';
-import { COMPS, simulateSeasonCups, type CupSeason } from './cups';
+import { COMPS, simulateSeasonCups, type CupSeason, type ShieldTie } from './cups';
 import { endOfSeason, startingChampionship, startingLeague } from './pyramid';
 import {
   MORALE_UNHAPPY,
@@ -133,12 +133,13 @@ export function processSeasonEnd(
     myAvg: squadRating(starters(d)),
     leaguePosition: result.position,
     europe: d.europe,
-    shield: d.seasons.length > 0 && (d.seasons[d.seasons.length - 1].fin === 1 || (d.honours.fa ?? 0) > 0),
+    shield: d.shield,
     runSeed: (d.seed ^ Math.imul(d.year, 0x2545f491)) >>> 0,
     club: d.club,
   });
   next.europe = cups.europeNext;
   next.lastCups = cups;
+  next.shield = nextShield(d, result, cups, rnd);
   next.honours = { ...d.honours };
   for (const t of cups.trophies) {
     next.honours[t] = (next.honours[t] ?? 0) + 1;
@@ -748,6 +749,61 @@ function shareByAppearances(d: Dynasty, result: SeasonResult): void {
     if (!st.cs) continue;
     st.cs = Math.round(st.cs * (played(p) / 38));
   }
+}
+
+/**
+ * Who plays in next season's Community Shield.
+ *
+ * The champions against the FA Cup holders. A club that has won both plays
+ * the league runners up instead, which is the one part of it people forget
+ * and the game had wrong.
+ *
+ * When somebody else won the FA Cup it has to be somebody, and no cups are
+ * simulated for the other nineteen clubs, so the holders are drawn from the
+ * top half of the table with the champions excluded. That is where FA Cup
+ * winners come from.
+ */
+function nextShield(
+  d: Dynasty,
+  result: SeasonResult,
+  cups: CupSeason,
+  rnd: Rng,
+): ShieldTie | null {
+  const table = result.table;
+  if (table.length < 2) return null;
+
+  const nameOf = (row: { name: string; isYou: boolean }) => (row.isYou ? d.club : row.name);
+  const champion = nameOf(table[0]);
+  const runnerUp = nameOf(table[1]);
+
+  const iAmChampion = result.position === 1;
+  const iWonTheCup = cups.trophies.includes('fa');
+  if (!iAmChampion && !iWonTheCup) return null;
+
+  const ratingOf = (name: string): number => {
+    const club = d.league.find((c) => c.name === name);
+    return club ? Math.round(club.str * 100 + 8) : 80;
+  };
+
+  // The double: you play whoever finished second.
+  if (iAmChampion && iWonTheCup) {
+    return { club: runnerUp, rating: ratingOf(runnerUp), as: 'champions', they: 'runners-up' };
+  }
+
+  if (iAmChampion) {
+    /* Somebody else has the cup. Drawn from the top half, because that is
+       who wins FA Cups, and never the champions themselves because that
+       case is the one above. */
+    const field = table
+      .filter((r) => !r.isYou && r.name !== champion)
+      .slice(0, 10)
+      .map((r) => r.name);
+    const holder = field.length ? field[Math.floor(rnd() * field.length)] : runnerUp;
+    return { club: holder, rating: ratingOf(holder), as: 'champions', they: 'holders' };
+  }
+
+  // You have the cup, so you play the champions.
+  return { club: champion, rating: ratingOf(champion), as: 'holders', they: 'champions' };
 }
 
 function ordinalOf(n: number): string {

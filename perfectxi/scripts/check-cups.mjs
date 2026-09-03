@@ -21,6 +21,10 @@ function band(label, got, lo, hi, real) {
   rows.push({ ok, label, got, lo, hi, real });
 }
 const pct = (n) => Math.round((n / N) * 1000) / 10;
+function must(label, ok, note) {
+  if (!ok) failures++;
+  rows.push({ ok, label, got: ok ? 'yes' : 'NO', lo: 'yes', hi: 'yes', real: note });
+}
 
 function run(myAvg, position, europe, shield, club = 'Arsenal') {
   const out = { fa: 0, efl: 0, ucl: 0, uel: 0, uecl: 0, shield: 0, treble: 0, double: 0, money: 0 };
@@ -131,6 +135,57 @@ const b = simulateSeasonCups({ myAvg: 89, leaguePosition: 2, europe: 'ucl', shie
 if (JSON.stringify(a) !== JSON.stringify(b)) {
   failures++;
   rows.push({ ok: false, label: 'the same seed gives the same cups', got: 'no', lo: 'yes', hi: 'yes', real: '' });
+}
+
+
+/* ---- the Community Shield, by its actual rules ---- */
+{
+  const shield = (tie) =>
+    simulateSeasonCups({
+      myAvg: 90,
+      leaguePosition: 1,
+      europe: 'ucl',
+      shield: tie,
+      runSeed: 4242,
+      club: 'Arsenal',
+    }).runs.find((r) => r.id === 'shield');
+
+  const none = shield(null);
+  must('no Shield unless you earned one', !none.entered, 'champions or FA Cup holders only');
+
+  const tie = shield({ club: 'Liverpool', rating: 89, as: 'champions', they: 'holders' });
+  must('the Shield is one match', tie.ties.length === 1, '');
+  must('it is played at Wembley', tie.ties[0].neutral === true, 'never anybody\u2019s ground');
+  must('against the club the rules name', tie.ties[0].opp === 'Liverpool', 'not a club drawn out of a hat');
+  must('and it pays nothing', tie.money === 0, 'the takings go to charity');
+
+  /* Level after ninety minutes goes straight to penalties, with no extra
+     time, which is the one thing the Shield does differently. */
+  let levels = 0;
+  let shootouts = 0;
+  for (let i = 0; i < 800; i++) {
+    const r = simulateSeasonCups({
+      myAvg: 84,
+      leaguePosition: 1,
+      europe: null,
+      shield: { club: 'Man City', rating: 84, as: 'champions', they: 'holders' },
+      runSeed: i * 977 + 5,
+      club: 'Arsenal',
+    }).runs.find((x) => x.id === 'shield');
+    const t = r.ties[0];
+    if (t.gf === t.ga) {
+      levels++;
+      if (t.pens) shootouts++;
+    }
+  }
+  must('a level Shield goes to penalties', levels > 0 && levels === shootouts, 'no extra time is played');
+  band(
+    'Shields still level after ninety minutes, %',
+    Math.round((levels / 800) * 1000) / 10,
+    12,
+    32,
+    'about a fifth of knockout ties are',
+  );
 }
 
 console.log('\nThe cups, against how often they are really won\n');

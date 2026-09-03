@@ -128,13 +128,23 @@ if (one) {
 let gained = 0;
 let apps = 0;
 for (let i = 0; i < 2000; i++) {
-  const kid = { rtg: 58, pot: 80, pos: 'MID', n: 'A Kid' };
+  const kid = { rtg: 58, pot: 80, pos: 'MID', n: 'A Kid', age: 18 };
   const club = loanClubFor(kid.rtg, rnd);
   const spell = loanSeason(kid, club, rnd);
   gained += spell.gained;
   apps += spell.apps;
 }
-band('a season on loan is worth', round(gained / 2000), 1.2, 4.5, 'games are what makes a young player');
+band('a season on loan is worth', round(gained / 2000), 3, 9, 'a full season of games makes a footballer');
+/* And it is capped by how far he had left to go, which is what stops a
+   loan being a way round the ceiling you paid to scout. */
+{
+  const nearly = { rtg: 78, pot: 80, pos: 'MID', n: 'Nearly There', age: 20 };
+  let tight = 0;
+  for (let i = 0; i < 500; i++) {
+    tight += loanSeason(nearly, loanClubFor(nearly.rtg, mulberry32(i + 1)), mulberry32(i + 40)).gained;
+  }
+  band('a player near his ceiling gains', round(tight / 500), 0, 1.2, 'never more than half of what is left');
+}
 band('games out on loan', round(apps / 2000), 12, 40, 'he goes where he will play');
 must(
   'a good young player gets a better loan than a poor one',

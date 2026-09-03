@@ -44,6 +44,26 @@ export const COMPS: Record<CompId, { name: string; short: string; mark: string }
 /** Which European competition a club is in, if any. */
 export type Europe = 'ucl' | 'uel' | 'uecl' | null;
 
+/**
+ * The Community Shield tie, worked out at the end of the season before.
+ *
+ * The rules are exact and the game was making all three of them up. It is
+ * the champions against the FA Cup holders. If one club has won both, the
+ * other place goes to the league runners up rather than to the beaten
+ * finalists. And if you are in it, you are in it for one of those two
+ * reasons, which is worth saying on the screen.
+ */
+export type ShieldTie = {
+  /** who you play */
+  club: string;
+  /** how good they are */
+  rating: number;
+  /** why you are in it */
+  as: 'champions' | 'holders';
+  /** why they are in it */
+  they: 'champions' | 'holders' | 'runners-up';
+};
+
 export const CONTINENTAL_CLUBS: readonly CupClub[] = [
   { n: 'Real Madrid', r: 95 }, { n: 'Man City', r: 93 }, { n: 'Bayern Munich', r: 92 },
   { n: 'Liverpool', r: 91 }, { n: 'Barcelona', r: 90 }, { n: 'Inter Milan', r: 88 },
@@ -268,7 +288,22 @@ function winChance(myAvg: number, oppRating: number, flatten: number): number {
   return p * (1 - flatten) + flatten / 2;
 }
 
-function score(won: boolean, rnd: Rng): { gf: number; ga: number } {
+/**
+ * A cup score.
+ *
+ * The winner scores more, unless it finished level, which is the whole
+ * point of a cup tie and which this could not produce at all: the loser's
+ * goals were always drawn strictly below the winner's, so no tie in the
+ * game had ever gone to penalties. About a fifth of knockout ties are
+ * still level after ninety minutes.
+ */
+const LEVEL_ODDS = 0.21;
+
+function score(won: boolean, rnd: Rng, canDraw = true): { gf: number; ga: number } {
+  if (canDraw && rnd() < LEVEL_ODDS) {
+    const n = Math.floor(rnd() * 3);
+    return { gf: n, ga: n };
+  }
   if (won) {
     const gf = Math.floor(rnd() * 3) + 1;
     return { gf, ga: Math.floor(rnd() * gf) };
@@ -344,11 +379,11 @@ function twoLegs(
   const first = score(rnd() < 0.5, rnd);
   // The second leg is built so the aggregate agrees with the result.
   const need = won ? 1 : -1;
-  let second = score(won, rnd);
+  let second = score(won, rnd, false);
   let agg = first.gf + second.gf - (first.ga + second.ga);
   let guard = 0;
   while (Math.sign(agg) !== need && guard++ < 24) {
-    second = score(won, rnd);
+    second = score(won, rnd, false);
     agg = first.gf + second.gf - (first.ga + second.ga);
   }
   const level = agg === 0;
@@ -622,7 +657,8 @@ export function simulateSeasonCups(args: {
   myAvg: number;
   leaguePosition: number;
   europe: Europe;
-  shield: boolean;
+  /** the Shield tie earned last season, or null if there is not one */
+  shield: ShieldTie | null;
   runSeed: number;
   /** the club you manage, so you are never drawn against yourself */
   club?: string | null;
@@ -632,9 +668,13 @@ export function simulateSeasonCups(args: {
 
   const runs: CupRun[] = [];
 
-  /* The Shield. One match in August, worth nothing but the day out. */
+  /* The Shield.
+     One match at Wembley the weekend before the season starts, against the
+     club the rules say it is against. Ninety minutes and no extra time: if
+     it is level it goes straight to penalties. Worth nothing but the day
+     out, because the takings go to charity rather than to the winners. */
   if (shield) {
-    const opp = pickOpp(band(fieldFor(NATIONAL_CLUBS, club), 78, 93), new Set(), rnd);
+    const opp = { n: shield.club, r: shield.rating };
     const tie = oneLeg(myAvg, opp, 0.18, 'Final', 0, true, rnd);
     runs.push({
       id: 'shield',
@@ -702,7 +742,9 @@ export function simulateCups(
     myAvg,
     leaguePosition,
     europe: leaguePosition <= 5 ? 'ucl' : null,
-    shield: false,
+    /* A draft XI has no season before it, so it has never been champions
+       and has never held the FA Cup. */
+    shield: null,
     runSeed,
   });
   const national = season.runs.find((r) => r.id === 'fa')!;

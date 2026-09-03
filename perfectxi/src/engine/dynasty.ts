@@ -620,6 +620,18 @@ export type Dynasty = {
   /** last season's cup runs, kept so the cabinet can show them */
   lastCups: unknown | null;
   /**
+   * The Community Shield tie this season, earned last season.
+   *
+   * Null unless you were champions or won the FA Cup, because those are
+   * the only two ways into it.
+   */
+  shield: {
+    club: string;
+    rating: number;
+    as: 'champions' | 'holders';
+    they: 'champions' | 'holders' | 'runners-up';
+  } | null;
+  /**
    * The following, in millions.
    *
    * Fans are won by winning and by signing players people want to watch,
@@ -777,6 +789,7 @@ export function startDynasty(
     derby: { w: 0, d: 0, l: 0 },
     spells: [],
     lastCups: null,
+    shield: null,
     fans: 2.9,
     rival: null,
     retired: [],

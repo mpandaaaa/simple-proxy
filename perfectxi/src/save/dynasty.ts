@@ -210,6 +210,7 @@ function migrateToFour(v: unknown): Dynasty | null {
         ? (d.honours as Record<string, number>)
         : {},
     lastCups: d.lastCups ?? null,
+    shield: (d.shield as Dynasty['shield']) ?? null,
     division: d.division === 2 ? 2 : 1,
     league: Array.isArray(d.league) && d.league.length
       ? (d.league as Dynasty['league'])
@@ -259,7 +260,7 @@ function migrateToFour(v: unknown): Dynasty | null {
 
 export const dynastyStore = defineStore<Dynasty | null>({
   key: 'dynasty',
-  version: 11,
+  version: 12,
   fallback: null,
   validate: isDynasty,
   migrations: {
@@ -277,6 +278,9 @@ export const dynastyStore = defineStore<Dynasty | null>({
     6: (v) => (v ? tidySquad(v as Dynasty) : null),
     // Seven is the following and the club shop. A career from before them
     // starts with the crowd its ground would hold and a shop at level one.
+    /* Twelve is the Community Shield played by its real rules. A career
+       from before it works its next tie out at the end of this season. */
+    12: (v) => (v ? { ...(v as Dynasty), shield: (v as Dynasty).shield ?? null } : null),
     /* Eleven is the injuries switch. Every career that already exists
        had injuries, so it keeps them until it is told otherwise. */
     11: (v) => (v ? { ...(v as Dynasty), injuriesOn: (v as Dynasty).injuriesOn ?? true } : null),
@@ -306,6 +310,7 @@ export const dynastyStore = defineStore<Dynasty | null>({
         jobs: d.jobs ?? [],
         autoLoan: d.autoLoan ?? false,
         injuriesOn: d.injuriesOn ?? true,
+        shield: d.shield ?? null,
         derby: d.derby ?? { w: 0, d: 0, l: 0 },
         spells: d.spells ?? [],
       };

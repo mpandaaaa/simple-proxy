@@ -148,6 +148,19 @@ export default function History() {
                 ? ' Finish in the top seven, or win a cup, and there is European football here.'
                 : ' Win promotion and all of that is back on the table.'}
         </Text>
+        {career.shield ? (
+          <Text style={styles.shield}>
+            And the Community Shield at Wembley the weekend before it starts, as{' '}
+            {career.shield.as === 'champions' ? 'champions' : 'FA Cup holders'}, against{' '}
+            {career.shield.club}
+            {career.shield.they === 'runners-up'
+              ? ', who finished second, because you won both'
+              : career.shield.they === 'champions'
+                ? ', the champions'
+                : ', who hold the cup'}
+            . Ninety minutes and penalties if it is level.
+          </Text>
+        ) : null}
       </View>
 
       {/* ---- the shape of it ---- */}
@@ -677,6 +690,7 @@ const styles = StyleSheet.create({
   },
   inKey: { ...text.key, fontSize: 9.5, color: hue.sky },
   inBody: { ...text.small, fontSize: 12.5, lineHeight: 18 },
+  shield: { ...text.small, fontSize: 12.5, lineHeight: 18, color: hue.mint },
 
   trWon: { fontSize: 11, lineHeight: 15, marginRight: 2 },
   trChevron: { fontSize: 13, lineHeight: 17, color: color.text3, width: 12, textAlign: 'center' },

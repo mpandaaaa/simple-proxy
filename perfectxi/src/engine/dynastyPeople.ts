@@ -294,10 +294,21 @@ export function loanClubFor(rtg: number, rnd: Rng): { n: string; level: number }
 /**
  * A season out on loan.
  *
- * Games are the whole point. A year of thirty five in the Championship is
- * worth two or three rating points more than a year of nothing in your
- * under twenty ones, and it is the only way a fifty one rated seventeen
- * year old ever becomes anything.
+ * Games are the whole point, and a full season of them is worth a great
+ * deal more than the two or three points this used to hand out. A
+ * seventeen year old who plays forty games in the Championship comes back
+ * a different footballer, which is the entire reason English clubs send
+ * them: Jude Bellingham, Harry Kane at Leicester, Declan Rice's first
+ * season of men's football.
+ *
+ * Three things decide it. How many games he actually played, how hard the
+ * division was, and how young he still is, because eighteen learns faster
+ * than twenty two.
+ *
+ * And it is capped by how far he had left to go. A player two points off
+ * his ceiling gains one however many games he plays; a boy twenty five
+ * points off it can gain nine in a season. That cap is what stops a loan
+ * being a cheat code and it is why scouting a prospect's ceiling matters.
  */
 export function loanSeason(
   p: DynastyPlayer,
@@ -310,7 +321,17 @@ export function loanSeason(
   const bar = club.level === 2 ? 60 : 52;
   const share = Math.max(0.15, Math.min(0.95, 0.5 + (p.rtg - bar) * 0.055));
   const apps = Math.round(38 * share * (0.75 + rnd() * 0.4));
-  const gained = Math.round(((apps / 38) * 4 + rnd() * 1.4) * 10) / 10;
+
+  const games = Math.min(1, apps / 38);
+  // The Championship teaches more than League One does.
+  const division = club.level === 2 ? 1 : 0.74;
+  const age = p.age ?? 19;
+  const young = age <= 18 ? 1.3 : age <= 20 ? 1.15 : age <= 22 ? 1 : 0.85;
+
+  const raw = games * 7.4 * division * young + rnd() * 1.9;
+  const headroom = Math.max(0, (p.pot ?? p.rtg) - p.rtg);
+  const gained = Math.round(Math.min(raw, headroom * 0.5) * 10) / 10;
+
   return { name: p.n, club: club.n, apps: Math.min(46, apps), gained };
 }
 

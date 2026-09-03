@@ -342,6 +342,8 @@ export function startCareer(args: {
     derby: { w: 0, d: 0, l: 0 },
     spells: [],
     lastCups: null,
+    /* You have not won anything yet, so there is no Shield to play in. */
+    shield: null,
     rival: RIVALS[club] ?? null,
     tactic: { ...EMPTY_TACTIC, form: formation },
     staff: { ...EMPTY_STAFF },
