@@ -336,6 +336,9 @@ export function startCareer(args: {
     offers: [],
     jobs: [],
     autoLoan: false,
+    /* Off to begin with. A manager who wants them can turn them on from
+       the club screen. */
+    injuriesOn: false,
     derby: { w: 0, d: 0, l: 0 },
     spells: [],
     lastCups: null,

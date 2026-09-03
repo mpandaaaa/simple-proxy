@@ -3,13 +3,43 @@ import { StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import Svg, { Circle, Line as SvgLine, Path, Rect } from 'react-native-svg';
 import { ModeScreen, Press, Shine, Trophy, ClubDisc } from '../../src/ui/components';
-import { color, gradient, line, positionColor, radius, space, hue, alpha } from '../../src/ui/tokens';
+import {
+  color,
+  gradient,
+  line,
+  positionColor,
+  radius,
+  space,
+  hue,
+  alpha,
+  type Hue,
+} from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic } from '../../src/ui/feel';
-import { ordinal, type AllTime, type Position } from '../../src/engine';
+import {
+  COMPS,
+  divisionName,
+  ordinal,
+  type AllTime,
+  type CompId,
+  type Position,
+  type SeasonRow,
+} from '../../src/engine';
 import { useCareer } from '../../src/game/career';
 
 type Board = 'apps' | 'g' | 'a' | 'rating';
+
+/** Every competition, in the order a cabinet is arranged. */
+const CUP_ORDER: CompId[] = ['ucl', 'uel', 'uecl', 'fa', 'efl', 'shield'];
+
+const CUP_TINT: Record<CompId, Hue> = {
+  shield: 'mint',
+  efl: 'violet',
+  fa: 'gold',
+  ucl: 'sky',
+  uel: 'amber',
+  uecl: 'lime',
+};
 
 /**
  * The record books.
@@ -22,6 +52,8 @@ type Board = 'apps' | 'g' | 'a' | 'rating';
 export default function History() {
   const career = useCareer();
   const [board, setBoard] = useState<Board>('apps');
+  /** which season is open, so the whole of it can be read */
+  const [openSeason, setOpenSeason] = useState<number | null>(null);
 
   const leaders = useMemo(() => {
     if (!career) return [];
@@ -44,19 +76,25 @@ export default function History() {
 
   if (!career) return null;
   const seasons = [...career.seasons].reverse();
+  const trophies =
+    career.titles +
+    Object.values(career.honours ?? {}).reduce((a, n) => a + (n as number), 0);
 
   return (
     <ModeScreen overline={career.club} title="History" onBack={() => router.back()}>
-      {/* ---- the honours ---- */}
+      {/* ---- the cabinet ---- */}
       <View style={styles.honours}>
         <Shine radius={radius.xl} group="feature" bevel={false} clip={false} />
-        <Trophy size={64} tint={career.titles ? color.gold : '#4A4F48'} />
+        <Trophy size={58} tint={trophies ? color.gold : '#4A4F48'} />
+        <Text style={styles.honCount} allowFontScaling={false}>
+          {trophies}
+        </Text>
         <Text style={styles.honTitle}>
-          {career.titles === 0
-            ? 'No silverware yet'
-            : career.titles === 1
-              ? 'One league title'
-              : `${career.titles} league titles`}
+          {trophies === 0
+            ? 'Nothing in the cabinet yet'
+            : trophies === 1
+              ? 'One trophy'
+              : `${trophies} trophies`}
         </Text>
         <View style={styles.honStats}>
           <Hon label="Seasons" value={String(career.seasons.length)} />
@@ -72,6 +110,44 @@ export default function History() {
             tint={career.records.unbeaten ? color.accent : undefined}
           />
         </View>
+      </View>
+
+      {/* every competition, and how many times */}
+      <View style={styles.medals}>
+        {career.titles ? (
+          <Medal mark="🏅" name="Premier League" n={career.titles} tint={hue.emerald} />
+        ) : null}
+        {CUP_ORDER.filter((id) => (career.honours?.[id] ?? 0) > 0).map((id) => (
+          <Medal
+            key={id}
+            mark={COMPS[id].mark}
+            name={COMPS[id].name}
+            n={career.honours[id] ?? 0}
+            tint={hue[CUP_TINT[id]]}
+          />
+        ))}
+        {!trophies ? (
+          <Text style={styles.medalNone}>
+            The League Cup is the one most clubs win first.
+          </Text>
+        ) : null}
+      </View>
+
+      {/* where you are this season */}
+      <View style={styles.inEurope}>
+        <Text style={styles.inKey}>Season {career.year}</Text>
+        <Text style={styles.inBody}>
+          {divisionName(career.division)}
+          {career.europe ? `, the ${COMPS[career.europe].name}` : ''}, the FA Cup and
+          the League Cup.
+          {career.europe === 'ucl'
+            ? ' Eight league phase games, and the top eight go straight to the last sixteen.'
+            : career.europe
+              ? ' A league phase, then a knockout the same shape as the Champions League.'
+              : career.division === 1
+                ? ' Finish in the top seven, or win a cup, and there is European football here.'
+                : ' Win promotion and all of that is back on the table.'}
+        </Text>
       </View>
 
       {/* ---- the shape of it ---- */}
@@ -165,7 +241,25 @@ export default function History() {
             <Text style={[styles.th, styles.cMoney]}>Profit</Text>
           </View>
           {seasons.map((s, i) => (
-            <View key={`${s.s}-${i}`} style={styles.tr}>
+            <SeasonRowView
+              key={`${s.s}-${i}`}
+              row={s}
+              open={openSeason === s.s}
+              onPress={() => {
+                haptic('light');
+                setOpenSeason((cur) => (cur === s.s ? null : s.s));
+              }}
+            />
+          ))}
+        </View>
+      ) : (
+        <Text style={styles.none}>You have not finished a season yet.</Text>
+      )}
+
+      {false ? (
+        <View>
+          {seasons.map((s, i) => (
+            <View key={`old-${s.s}-${i}`} style={styles.tr}>
               <View style={[styles.zone, { backgroundColor: finTint(s.fin) }]} />
               <Text style={[styles.td, styles.cS]} allowFontScaling={false}>
                 {s.s}
@@ -217,9 +311,7 @@ export default function History() {
             </View>
           ))}
         </View>
-      ) : (
-        <Text style={styles.none}>You have not finished a season yet.</Text>
-      )}
+      ) : null}
 
       {/* ---- all time ---- */}
       <Text style={[text.label, styles.sect]}>All time</Text>
@@ -317,6 +409,147 @@ function Hon({ label, value, tint }: { label: string; value: string; tint?: stri
   );
 }
 
+function Medal({
+  mark,
+  name,
+  n,
+  tint,
+}: {
+  mark: string;
+  name: string;
+  n: number;
+  tint: string;
+}) {
+  return (
+    <View
+      style={[styles.medal, { borderColor: alpha(tint, 0.4), backgroundColor: alpha(tint, 0.1) }]}
+    >
+      <Text style={styles.medalMark} allowFontScaling={false}>
+        {mark}
+      </Text>
+      <Text style={[styles.medalN, { color: tint }]} allowFontScaling={false}>
+        {n}
+      </Text>
+      <Text style={styles.medalName} numberOfLines={1}>
+        {name}
+      </Text>
+    </View>
+  );
+}
+
+/**
+ * One season, folded down to a line until you want the whole of it.
+ *
+ * The line is where you finished and what it won. Opening it is the
+ * record, the money and how far every cup run got, because a season is
+ * not only a league position.
+ */
+function SeasonRowView({
+  row,
+  open,
+  onPress,
+}: {
+  row: SeasonRow;
+  open: boolean;
+  onPress: () => void;
+}) {
+  const won = (row.won ?? []) as CompId[];
+  return (
+    <View>
+      <Press onPress={onPress} feel="none" scaleTo={0.995} style={styles.tr}>
+        <View style={[styles.zone, { backgroundColor: finTint(row.fin) }]} />
+        <Text style={[styles.td, styles.cS]} allowFontScaling={false}>
+          {row.s}
+        </Text>
+        <View style={styles.cFin}>
+          <Text
+            style={[styles.tdFin, { color: finTint(row.fin) }]}
+            numberOfLines={1}
+            allowFontScaling={false}
+          >
+            {ordinal(row.fin)}
+          </Text>
+          {row.ded ? (
+            <Text style={styles.tdDed} allowFontScaling={false}>
+              &#8722;{row.ded} pts
+            </Text>
+          ) : row.met ? (
+            <Text style={styles.tdMet}>target met</Text>
+          ) : (
+            <Text style={styles.tdMiss}>missed</Text>
+          )}
+        </View>
+        {won.length ? (
+          <Text style={styles.trWon} allowFontScaling={false}>
+            {won.map((id) => COMPS[id].mark).join('')}
+          </Text>
+        ) : null}
+        <Text style={[styles.td, styles.cN]} numberOfLines={1} allowFontScaling={false}>
+          {row.pts}
+        </Text>
+        <Text
+          style={[styles.td, styles.tdTight, styles.cRec]}
+          numberOfLines={1}
+          allowFontScaling={false}
+        >
+          {row.w}-{row.d}-{row.l}
+        </Text>
+        <Text style={styles.trChevron} allowFontScaling={false}>
+          {open ? '\u2303' : '\u2304'}
+        </Text>
+      </Press>
+
+      {open ? (
+        <View style={styles.trOpen}>
+          <Text style={styles.trWhere}>
+            {row.club ?? ''}
+            {row.div === 2 ? ' \u00b7 Championship' : ' \u00b7 Premier League'}
+            {' \u00b7 '}
+            {row.gf} scored, {row.ga} conceded
+          </Text>
+          <View style={styles.trMoney}>
+            <Text style={styles.trMoneyItem}>&#163;{Math.round(row.rev)}m in</Text>
+            <Text
+              style={[
+                styles.trMoneyItem,
+                { color: row.profit >= 0 ? hue.emerald : hue.crimson },
+              ]}
+            >
+              {row.profit >= 0 ? '+' : '\u2212'}&#163;{Math.abs(Math.round(row.profit))}m profit
+            </Text>
+          </View>
+          {row.runs?.length ? (
+            <View style={styles.trCups}>
+              {row.runs.map((r) => {
+                const id = r.id as CompId;
+                const winner = r.fate === 'Winners';
+                return (
+                  <View key={r.id} style={styles.trCup}>
+                    <Text style={styles.trCupMark} allowFontScaling={false}>
+                      {COMPS[id]?.mark ?? '\u00b7'}
+                    </Text>
+                    <Text style={styles.trCupName} numberOfLines={1}>
+                      {COMPS[id]?.short ?? r.id}
+                    </Text>
+                    <Text
+                      style={[styles.trCupFate, { color: winner ? hue.gold : color.text3 }]}
+                      numberOfLines={1}
+                    >
+                      {winner ? 'Winners' : r.fate ? `out in the ${r.fate}` : 'did not enter'}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          ) : (
+            <Text style={styles.trNoCups}>No cup record kept for this season.</Text>
+          )}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 /**
  * Twenty seasons as one line.
  *
@@ -396,6 +629,85 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   honLabel: { ...text.key, fontSize: 7.5, color: color.text3 },
+
+  honCount: {
+    fontFamily: font.hero,
+    fontSize: 52,
+    lineHeight: 68,
+    color: hue.gold,
+    fontVariant: ['tabular-nums'],
+    marginTop: space.s2,
+  },
+  medals: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.s2,
+    marginTop: space.s3,
+  },
+  medal: {
+    width: '31.5%',
+    flexGrow: 1,
+    alignItems: 'center',
+    paddingVertical: space.s3,
+    paddingHorizontal: space.s2,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    gap: 1,
+  },
+  medalMark: { fontSize: 18, lineHeight: 23 },
+  medalN: {
+    fontFamily: font.displayBlack,
+    fontSize: 20,
+    lineHeight: 25,
+    fontVariant: ['tabular-nums'],
+  },
+  medalName: { ...text.key, fontSize: 7.5, color: color.text3, textAlign: 'center' },
+  medalNone: { ...text.small, fontSize: 12, lineHeight: 17 },
+
+  inEurope: {
+    marginTop: space.s4,
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: alpha(hue.sky, 0.24),
+    backgroundColor: '#0C1219',
+    experimental_backgroundImage:
+      'linear-gradient(180deg, #14212F 0%, #0D1319 70%, #080B0E 100%)',
+    gap: space.s2,
+  },
+  inKey: { ...text.key, fontSize: 9.5, color: hue.sky },
+  inBody: { ...text.small, fontSize: 12.5, lineHeight: 18 },
+
+  trWon: { fontSize: 11, lineHeight: 15, marginRight: 2 },
+  trChevron: { fontSize: 13, lineHeight: 17, color: color.text3, width: 12, textAlign: 'center' },
+  trOpen: {
+    paddingLeft: space.s3 + 6,
+    paddingRight: space.s3,
+    paddingBottom: space.s3,
+    gap: 5,
+    backgroundColor: 'rgba(255,255,255,0.02)',
+  },
+  trWhere: { ...text.small, fontSize: 11, lineHeight: 15, color: color.text3 },
+  trMoney: { flexDirection: 'row', gap: space.s4 },
+  trMoneyItem: {
+    fontFamily: font.body,
+    fontSize: 11.5,
+    lineHeight: 16,
+    color: color.text2,
+    fontVariant: ['tabular-nums'],
+  },
+  trCups: { gap: 3, marginTop: 2 },
+  trCup: { flexDirection: 'row', alignItems: 'center', gap: space.s2 },
+  trCupMark: { fontSize: 12, lineHeight: 16, width: 16 },
+  trCupName: {
+    fontFamily: font.bodySemi,
+    fontSize: 11.5,
+    lineHeight: 16,
+    color: color.text1,
+    width: 88,
+  },
+  trCupFate: { fontFamily: font.body, fontSize: 11, lineHeight: 15, flex: 1 },
+  trNoCups: { ...text.small, fontSize: 11, color: color.text3 },
 
   sect: { marginTop: space.s6, marginBottom: space.s3 },
   arcWrap: {

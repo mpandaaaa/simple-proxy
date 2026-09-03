@@ -126,6 +126,36 @@ check('champion points', championPts / RUNS, 86, 96, (v) => v.toFixed(1));
    even-match numbers above are untouched. */
 check('league goals per game', (goalsTotal / RUNS) * 2, 2.7, 3.2);
 
+/* A fixture list has to be a fixture list. Everyone once before anyone
+   twice, once home and once away, and never the same club two weeks
+   running: the old builder dealt the home and away halves alternately and
+   put Aston Villa at home on matchday three and away on matchday four. */
+{
+  let minGap = 99;
+  let backToBack = 0;
+  let wrong = 0;
+  for (let i = 0; i < 60; i++) {
+    const rr = mulberry32(i * 7919 + 5);
+    const st = draftXI(rr);
+    const r = simulateSeason(st.squad, st.config.formation, 0, rr);
+    const seen = {};
+    r.matches.forEach((m, n) => {
+      if (seen[m.opp] !== undefined) minGap = Math.min(minGap, n - seen[m.opp]);
+      seen[m.opp] = n;
+    });
+    for (let n = 1; n < r.matches.length; n++) {
+      if (r.matches[n].opp === r.matches[n - 1].opp) backToBack++;
+    }
+    const balance = {};
+    for (const m of r.matches) balance[m.opp] = (balance[m.opp] ?? 0) + (m.home ? 1 : -1);
+    for (const k of Object.keys(balance)) if (balance[k] !== 0) wrong++;
+    if (new Set(r.matches.map((m) => m.opp)).size !== 19) wrong++;
+  }
+  check('closest reverse fixture, matchdays', minGap, 6, 30);
+  check('the same club two weeks running', backToBack, 0, 0);
+  check('every club once home and once away', wrong, 0, 0);
+}
+
 console.log('\nDRAFT');
 check('average squad rating', avgRating / RUNS, 78, 88, (v) => v.toFixed(1));
 check('points for a random XI', yourPts / RUNS, 40, 80, (v) => v.toFixed(1));

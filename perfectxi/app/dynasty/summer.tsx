@@ -290,6 +290,37 @@ export default function Summer() {
           <Tile value={result.pts} label="Points" tint={tone.tint} />
         </View>
 
+        {/* ================= back from loan ================= */}
+        {report.loans.length ? (
+          <>
+            <Text style={[text.label, styles.sect]}>Back from loan</Text>
+            <View style={styles.backFrom}>
+              {report.loans.map((l) => (
+                <View key={l.name} style={styles.backRow}>
+                  <View style={styles.backBody}>
+                    <Text style={styles.backName} numberOfLines={1}>
+                      {l.name}
+                    </Text>
+                    <Text style={styles.backNote} numberOfLines={1}>
+                      {l.apps} games at {l.club}
+                    </Text>
+                  </View>
+                  <Text
+                    style={[
+                      styles.backGain,
+                      { color: l.gained > 0 ? hue.emerald : color.text3 },
+                    ]}
+                    allowFontScaling={false}
+                  >
+                    {l.gained > 0 ? '+' : ''}
+                    {l.gained}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </>
+        ) : null}
+
         {/* ================= the cups ================= */}
         {report.cups.runs.some((r) => r.entered) ? (
           <>
@@ -1167,6 +1198,27 @@ const styles = StyleSheet.create({
   pvSub: { ...text.small, fontSize: 12, marginTop: space.s2, textAlign: 'center' },
 
   sectNote: { ...text.small, fontSize: 11.5, marginBottom: space.s3, marginTop: -space.s2 },
+  backFrom: { gap: space.s2, marginBottom: space.s2 },
+  backRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s3,
+    padding: space.s3,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: alpha(hue.mint, 0.24),
+    backgroundColor: alpha(hue.mint, 0.06),
+  },
+  backBody: { flex: 1, minWidth: 0 },
+  backName: { fontFamily: font.bodySemi, fontSize: 14.5, lineHeight: 19, color: color.text1 },
+  backNote: { ...text.small, fontSize: 11, lineHeight: 15, color: color.text3 },
+  backGain: {
+    fontFamily: font.displayBlack,
+    fontSize: 20,
+    lineHeight: 25,
+    fontVariant: ['tabular-nums'],
+  },
+
   cups: { gap: space.s2, marginBottom: space.s2 },
   cup: {
     flexDirection: 'row',

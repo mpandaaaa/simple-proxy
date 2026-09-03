@@ -65,6 +65,11 @@ export default function Club() {
     sfx('pick');
   }, []);
 
+  const toggleInjuries = useCallback(() => {
+    updateCareer((d) => ({ ...d, injuriesOn: !d.injuriesOn }));
+    haptic('select');
+  }, []);
+
   const openShop = useCallback(() => {
     updateCareer((d) => {
       const cur = d.infra.retail;
@@ -123,6 +128,22 @@ export default function Club() {
           takes a very long time to come back.
         </Text>
       </View>
+
+      {/* ---- how you want to play it ---- */}
+      <Text style={[text.label, styles.sect]}>How you want to play it</Text>
+      <Press onPress={toggleInjuries} feel="none" scaleTo={0.99} style={styles.setting}>
+        <View style={styles.settingBody}>
+          <Text style={styles.settingTitle}>Injuries</Text>
+          <Text style={styles.settingNote}>
+            {career.injuriesOn
+              ? 'On. Players pick up knocks and miss games, at the rate the Premier League actually records.'
+              : 'Off. Nobody gets injured, ever. Your best player is available every week.'}
+          </Text>
+        </View>
+        <View style={[styles.switch, career.injuriesOn ? styles.switchOn : null]}>
+          <View style={[styles.knob, career.injuriesOn ? styles.knobOn : null]} />
+        </View>
+      </Press>
 
       {/* ---- the following ---- */}
       <Text style={[text.label, styles.sect]}>The following</Text>
@@ -410,6 +431,34 @@ const styles = StyleSheet.create({
   off: { borderColor: line.card, backgroundColor: 'rgba(255,255,255,0.03)' },
 
   sect: { marginTop: space.s6, marginBottom: space.s3 },
+  setting: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s3,
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: '#101A14',
+    experimental_backgroundImage: gradient.card,
+  },
+  settingBody: { flex: 1, minWidth: 0 },
+  settingTitle: { fontFamily: font.displayBold, fontSize: 16, lineHeight: 21, color: color.text1 },
+  settingNote: { ...text.small, fontSize: 11.5, lineHeight: 16, marginTop: 2 },
+  switch: {
+    width: 46,
+    height: 28,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  switchOn: { borderColor: hue.crimson, backgroundColor: alpha(hue.crimson, 0.3) },
+  knob: { width: 20, height: 20, borderRadius: 10, backgroundColor: color.text3 },
+  knobOn: { backgroundColor: hue.crimson, alignSelf: 'flex-end' },
+
   fans: {
     padding: space.s4,
     borderRadius: radius.lg,

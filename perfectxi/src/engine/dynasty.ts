@@ -65,6 +65,14 @@ export type DynastyPlayer = {
   banned: number;
   /** the club he is out on loan at, academy players only */
   loan: string | null;
+  /**
+   * Every season he has spent out on loan.
+   *
+   * Kept on the player rather than the career, because it is his record
+   * and it is the whole argument for having sent him: thirty games at
+   * Preston and four rating points is a different footballer coming back.
+   */
+  loans: { s: number; club: string; apps: number; gained: number; to: number }[];
   /** the three tracks the rating is blended from */
   phys: number;
   tech: number;
@@ -168,6 +176,14 @@ export type SeasonRow = {
   rev: number;
   profit: number;
   ded: number;
+  /** what was won that season, by competition */
+  won?: string[];
+  /** how far the cup runs got, so a season reads as a whole season */
+  runs?: { id: string; fate: string }[];
+  /** which club, because a career can have more than one */
+  club?: string;
+  /** which division it was played in */
+  div?: 1 | 2;
 };
 
 export type AllTime = {
@@ -273,6 +289,7 @@ export function seedTracks(base: PlayerSeed, rnd: Rng): DynastyPlayer {
     assists: 0,
     avgR: null,
     morale: 70,
+    loans: [],
     cards: 0,
     reds: 0,
     banned: 0,
@@ -575,6 +592,14 @@ export type Dynasty = {
   }[];
   /** send academy players out on loan without being asked */
   autoLoan: boolean;
+  /**
+   * Whether footballers get injured at all.
+   *
+   * On by default in a new career because it is football, and a switch
+   * because it is a game and losing your best player for a hundred and
+   * ninety six days is not everybody's idea of one.
+   */
+  injuriesOn: boolean;
   /** how the derby has gone under you */
   derby: { w: number; d: number; l: number };
   /**
@@ -748,6 +773,7 @@ export function startDynasty(
     offers: [],
     jobs: [],
     autoLoan: false,
+    injuriesOn: false,
     derby: { w: 0, d: 0, l: 0 },
     spells: [],
     lastCups: null,

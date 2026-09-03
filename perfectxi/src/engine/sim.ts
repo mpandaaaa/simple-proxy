@@ -606,20 +606,28 @@ export function simulateSeason(
 
   const league = leagueFor(club, own);
 
-  // Home and away against all nineteen, drawn so a club is not played twice
-  // in a row: shuffle each half, then alternate them.
-  const homeFx = shuffle(
-    league.map((t) => ({ team: t, home: true })),
-    rnd,
-  );
-  const awayFx = shuffle(
-    league.map((t) => ({ team: t, home: false })),
-    rnd,
-  );
+  /* Home and away against all nineteen, the way a real fixture list is
+     built rather than by shuffling two piles and dealing them alternately.
+
+     The old version drew the home half and the away half separately and
+     interleaved them, which put Aston Villa at home on matchday three and
+     away on matchday four. A league plays everyone once before it plays
+     anyone twice.
+
+     So: one shuffled order for the first half, alternating venues, and the
+     same order rotated by ten for the second with the venue swapped. That
+     leaves every reverse fixture between nine and twenty eight matchdays
+     after the first, which is what a real calendar does. */
+  const order = shuffle([...league], rnd);
+  const HALF = 19;
+  const ROT = 10;
   const fixtures: { team: { name: string; str: number; var: number }; home: boolean }[] = [];
-  for (let i = 0; i < 19; i++) {
-    fixtures.push(homeFx[i]);
-    fixtures.push(awayFx[i]);
+  for (let i = 0; i < HALF; i++) {
+    fixtures.push({ team: order[i], home: i % 2 === 0 });
+  }
+  for (let i = 0; i < HALF; i++) {
+    const j = (i + ROT) % HALF;
+    fixtures.push({ team: order[j], home: j % 2 !== 0 });
   }
 
   let wins = 0;

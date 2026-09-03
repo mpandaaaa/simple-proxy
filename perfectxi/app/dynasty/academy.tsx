@@ -337,6 +337,38 @@ function Prospect({
         </Text>
       </Press>
 
+      {/* what a season out on loan did for him */}
+      {p.loans?.length ? (
+        <View style={styles.spells}>
+          {p.loans
+            .slice(-3)
+            .reverse()
+            .map((l) => (
+              <View key={`${l.s}-${l.club}`} style={styles.spell}>
+                <Text style={styles.spellSeason} allowFontScaling={false}>
+                  s{l.s}
+                </Text>
+                <Text style={styles.spellClub} numberOfLines={1}>
+                  {l.club}
+                </Text>
+                <Text style={styles.spellApps} allowFontScaling={false}>
+                  {l.apps} games
+                </Text>
+                <Text
+                  style={[
+                    styles.spellGain,
+                    { color: l.gained > 0 ? hue.emerald : color.text3 },
+                  ]}
+                  allowFontScaling={false}
+                >
+                  {l.gained > 0 ? '+' : ''}
+                  {l.gained} to {l.to}
+                </Text>
+              </View>
+            ))}
+        </View>
+      ) : null}
+
       {/* now, and the band he might end up in */}
       <View style={styles.fogWrap}>
         <View style={styles.fogTrack}>
@@ -527,6 +559,44 @@ const styles = StyleSheet.create({
     ...text.key,
     fontSize: 8.5,
     color: color.text3,
+  },
+
+  spells: {
+    paddingHorizontal: space.s3,
+    paddingBottom: space.s2,
+    gap: 3,
+  },
+  spell: { flexDirection: 'row', alignItems: 'center', gap: space.s2 },
+  spellSeason: {
+    fontFamily: font.body,
+    fontSize: 10,
+    lineHeight: 14,
+    color: color.text3,
+    width: 22,
+    fontVariant: ['tabular-nums'],
+  },
+  spellClub: {
+    fontFamily: font.bodySemi,
+    fontSize: 11.5,
+    lineHeight: 15,
+    color: color.text2,
+    flex: 1,
+    minWidth: 0,
+  },
+  spellApps: {
+    fontFamily: font.body,
+    fontSize: 10.5,
+    lineHeight: 14,
+    color: color.text3,
+    fontVariant: ['tabular-nums'],
+  },
+  spellGain: {
+    fontFamily: font.displayBold,
+    fontSize: 11,
+    lineHeight: 15,
+    fontVariant: ['tabular-nums'],
+    width: 60,
+    textAlign: 'right',
   },
 
   acts: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.07)' },

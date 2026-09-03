@@ -1,5 +1,12 @@
 import { ReactNode, useCallback, useEffect, useState } from 'react';
-import { Modal, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import {
+  Modal,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+  type LayoutChangeEvent,
+} from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   interpolate,
@@ -63,10 +70,15 @@ export function Sheet({
   children: ReactNode;
 }) {
   const reduce = useReduceMotion();
+  const { height: screen } = useWindowDimensions();
   const [mounted, setMounted] = useState(visible);
   const height = useSharedValue(600);
   const y = useSharedValue(600);
   const start = useSharedValue(0);
+  /* Whether the content inside is scrolled to the top. The sheet can only
+     be thrown away from there, or every flick down inside a long page
+     would close it instead of scrolling. */
+  const atTop = useSharedValue(1);
 
   const unmount = useCallback(() => {
     setMounted(false);
@@ -109,12 +121,15 @@ export function Sheet({
   }, [onClose]);
 
   const pan = Gesture.Pan()
+    .activeOffsetY(10)
+    .failOffsetY(-10)
     .onBegin(() => {
       'worklet';
       start.value = y.value;
     })
     .onUpdate((e) => {
       'worklet';
+      if (!atTop.value) return;
       // Downwards only. Dragging up should not peel the sheet off the top.
       y.value = Math.max(0, start.value + e.translationY);
     })
@@ -165,10 +180,25 @@ export function Sheet({
             {bare ? (
               children
             ) : (
-              <View style={styles.panel}>
+              /* Capped at seven eighths of the screen and scrolling inside.
+                 A player's page grew past the height of a phone and the top
+                 of it went under the status bar with no way to reach the
+                 bottom. The handle stays put and the content moves. */
+              <View style={[styles.panel, { maxHeight: screen * 0.87 }]}>
                 <View style={styles.edge} pointerEvents="none" />
                 <View style={styles.grab} />
-                {children}
+                <ScrollView
+                  style={styles.scroll}
+                  contentContainerStyle={styles.scrollBody}
+                  showsVerticalScrollIndicator={false}
+                  bounces={false}
+                  scrollEventThrottle={16}
+                  onScroll={(e) => {
+                    atTop.value = e.nativeEvent.contentOffset.y <= 1 ? 1 : 0;
+                  }}
+                >
+                  {children}
+                </ScrollView>
               </View>
             )}
           </Animated.View>
@@ -199,11 +229,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.10)',
     boxShadow: '0px -20px 50px rgba(0,0,0,0.6)',
-    paddingHorizontal: space.s5,
     paddingTop: space.s3,
+    overflow: 'hidden',
+  },
+  scroll: { flexGrow: 0 },
+  scrollBody: {
+    paddingHorizontal: space.s5,
     paddingBottom: space.s7,
     gap: space.s2,
-    overflow: 'hidden',
   },
   edge: {
     position: 'absolute',

@@ -163,6 +163,7 @@ function repairPlayer(v: unknown): DynastyPlayer | null {
     reds: typeof p.reds === 'number' ? p.reds : 0,
     banned: typeof p.banned === 'number' ? p.banned : 0,
     loan: typeof p.loan === 'string' ? p.loan : null,
+    loans: Array.isArray(p.loans) ? (p.loans as DynastyPlayer['loans']) : [],
     hist: Array.isArray(p.hist) ? (p.hist as DynastyPlayer['hist']) : [],
   };
 }
@@ -220,6 +221,7 @@ function migrateToFour(v: unknown): Dynasty | null {
     offers: Array.isArray(d.offers) ? (d.offers as Dynasty['offers']) : [],
     jobs: Array.isArray(d.jobs) ? (d.jobs as Dynasty['jobs']) : [],
     autoLoan: d.autoLoan === true,
+    injuriesOn: d.injuriesOn === true,
     derby:
       typeof d.derby === 'object' && d.derby !== null
         ? (d.derby as Dynasty['derby'])
@@ -257,7 +259,7 @@ function migrateToFour(v: unknown): Dynasty | null {
 
 export const dynastyStore = defineStore<Dynasty | null>({
   key: 'dynasty',
-  version: 10,
+  version: 11,
   fallback: null,
   validate: isDynasty,
   migrations: {
@@ -275,6 +277,9 @@ export const dynastyStore = defineStore<Dynasty | null>({
     6: (v) => (v ? tidySquad(v as Dynasty) : null),
     // Seven is the following and the club shop. A career from before them
     // starts with the crowd its ground would hold and a shop at level one.
+    /* Eleven is the injuries switch. Every career that already exists
+       had injuries, so it keeps them until it is told otherwise. */
+    11: (v) => (v ? { ...(v as Dynasty), injuriesOn: (v as Dynasty).injuriesOn ?? true } : null),
     /* Ten is the people: how they feel, who wants them, who gets booked,
        who goes out on loan, and who wants you. */
     10: (v) => {
@@ -289,6 +294,7 @@ export const dynastyStore = defineStore<Dynasty | null>({
               reds: p.reds ?? 0,
               banned: p.banned ?? 0,
               loan: p.loan ?? null,
+              loans: p.loans ?? [],
             }
           : null;
       return {
@@ -299,6 +305,7 @@ export const dynastyStore = defineStore<Dynasty | null>({
         offers: d.offers ?? [],
         jobs: d.jobs ?? [],
         autoLoan: d.autoLoan ?? false,
+        injuriesOn: d.injuriesOn ?? true,
         derby: d.derby ?? { w: 0, d: 0, l: 0 },
         spells: d.spells ?? [],
       };

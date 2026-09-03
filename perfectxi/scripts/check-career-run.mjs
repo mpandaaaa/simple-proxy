@@ -76,15 +76,22 @@ for (const sc of SCENARIOS) {
     const mrnd = mulberry32((d.seed ^ (d.year * 40503)) >>> 0);
     let listings = market(d, mrnd);
     for (const slot of emptySlots(d)) {
-      const fits = (from, to) =>
-        from === to ? 1 : (to === "MID" && from !== "GK") || (from === "MID" && to !== "GK") ? 0.94 : 0.82;
+      /* The same rule the app enforces: a keeper only goes in goal and
+         only a keeper goes in goal. Without it this stand in manager kept
+         choosing an outfield player for an empty goalkeeping place, the
+         engine refused the signing, and the career died with ten men. */
+      const fits = (from, to) => {
+        if ((from === 'GK') !== (to === 'GK')) return 0;
+        if (from === to) return 1;
+        return to === 'MID' || from === 'MID' ? 0.94 : 0.82;
+      };
       const y = d.youth
         .map((p, i) => ({ p, i, v: p.rtg * fits(p.pos, slot.pos) }))
-        .filter((x) => x.v >= 55)
+        .filter((x) => x.v >= 55 && fits(x.p.pos, slot.pos) > 0)
         .sort((a, b) => b.v - a.v)[0];
       const buy = listings
         .map((l) => ({ l, v: l.rtg * fits(l.pos, slot.pos) }))
-        .filter((x) => x.l.price <= d.budget)
+        .filter((x) => x.l.price <= d.budget && fits(x.l.pos, slot.pos) > 0)
         .sort((a, b) => b.v - a.v)[0]?.l;
       if (buy && (!y || buy.rtg > y.p.rtg + 6)) {
         const after = sign(d, buy, slot.index, mrnd);

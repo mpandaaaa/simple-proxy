@@ -64,7 +64,6 @@ type Href =
   | '/dynasty/staff'
   | '/dynasty/club'
   | '/dynasty/finances'
-  | '/dynasty/cups'
   | '/dynasty/history';
 
 /**
@@ -136,22 +135,17 @@ const DOORS: {
     note: (d) => (d.ledger ? `£${d.ledger.profit}m last year` : 'no accounts yet'),
   },
   {
-    href: '/dynasty/cups',
+    href: '/dynasty/history',
     tint: 'gold',
     mark: '🏆',
-    title: 'The cups',
+    title: 'The record',
     note: (d) => {
       const n =
         d.titles + Object.values(d.honours ?? {}).reduce((a, b) => a + (b as number), 0);
-      return n ? `${n} won` : d.europe ? 'in Europe' : 'nothing yet';
+      return n
+        ? `${n} ${n === 1 ? 'trophy' : 'trophies'}, ${d.seasons.length} season${d.seasons.length === 1 ? '' : 's'}`
+        : `${d.seasons.length} season${d.seasons.length === 1 ? '' : 's'}, nothing won`;
     },
-  },
-  {
-    href: '/dynasty/history',
-    tint: 'rose',
-    mark: '📖',
-    title: 'History',
-    note: (d) => `${d.seasons.length} season${d.seasons.length === 1 ? '' : 's'}`,
   },
 ];
 

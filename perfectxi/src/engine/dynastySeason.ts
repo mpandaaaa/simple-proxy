@@ -219,6 +219,12 @@ export function processSeasonEnd(
   /* 3. the history */
   const row = {
     s: d.year,
+    club: d.club,
+    div: d.division,
+    won: cups.trophies.slice(),
+    runs: cups.runs
+      .filter((r) => r.entered)
+      .map((r) => ({ id: r.id, fate: r.won ? 'Winners' : (r.elim ?? '') })),
     fin: result.position,
     pts: result.pts,
     w: result.wins,
@@ -259,12 +265,77 @@ export function processSeasonEnd(
     next.fans = Math.round(Math.max(0.4, next.fans + derbyW * 0.05 - derbyL * 0.05) * 100) / 100;
   }
 
-  /* 5. match ratings, which development is about to read */
+  /* 5a. injuries, before anything reads how many games a man played.
+
+     This used to run two steps later, which meant the season's ratings and
+     the season's goals were shared out using last season's availability
+     and then this season's injuries overwrote the appearances. That is how
+     a player with thirteen appearances finished with forty six goals. */
+  const medical = injuryMultiplier(next);
+  const injured: { name: string; days: number; injury: string }[] = [];
+  for (const p of everyone(next)) {
+    if (!d.injuriesOn) {
+      p.daysOut = 0;
+      p.lastInj = null;
+      p.apps = 38;
+      continue;
+    }
+    const r = seasonInjuries(p, 1, medical, rnd);
+    if (r.days >= 30 && p.lastInj) {
+      injured.push({ name: p.n, days: r.days, injury: p.lastInj });
+    }
+  }
+  next.injuries = injured.filter((i) => i.days >= 60).map((i) => i.name);
+  if (injured.length >= 4) {
+    say(
+      'An injury crisis',
+      `${injured.length} of the squad missed a month or more. ${injured[0].name} was out for ${injured[0].days} days with a ${injured[0].injury.toLowerCase()}.`,
+      'bad',
+    );
+  }
+
+  /* 5b. bookings, and the games they cost.
+     Five yellows inside the first nineteen and he misses one, whoever he
+     is and whatever the fixture is. It comes off his appearances, which
+     is what development reads. */
+  const suspended: { name: string; yellows: number; reds: number; games: number }[] = [];
+  for (const p of everyone(next)) {
+    const fit = Math.max(0, 38 - Math.round((p.daysOut ?? 0) / 9));
+    const disc = seasonCards(p, fit, rnd);
+    p.cards = disc.yellows;
+    p.reds = disc.reds;
+    p.banned = disc.banned;
+    if (disc.banned > 0) {
+      suspended.push({ name: p.n, yellows: disc.yellows, reds: disc.reds, games: disc.banned });
+    }
+  }
+  const worstBan = [...suspended].sort((a, b) => b.games - a.games)[0];
+  if (worstBan && worstBan.games >= 3) {
+    say(
+      `${worstBan.name} suspended`,
+      worstBan.reds
+        ? `A red card and ${worstBan.games} games out of the side.`
+        : `${worstBan.yellows} bookings across the season and ${worstBan.games} games missed for them.`,
+      'bad',
+    );
+  }
+
+  /* 5c. match ratings, which development is about to read.
+
+     The engine plays the season before it knows who was fit, so the goals
+     it hands out assume everybody played every game. They are shared out
+     again here against the appearances each man actually made, keeping the
+     team's totals exactly as the season produced them. */
+  shareByAppearances(next, result);
   const stats: Record<string, { g: number; a: number }> = {};
   for (const [name, s] of Object.entries(result.playerStats)) {
     stats[name] = { g: s.g, a: s.a };
   }
   seasonRatings(next, result.matches, stats, rnd);
+  // A suspension is games missed, and it comes off after the ratings are in.
+  for (const p of everyone(next)) {
+    if (p.banned > 0) p.apps = Math.max(0, (p.apps ?? 0) - p.banned);
+  }
 
   /* 6. career history */
   for (const p of everyone(next)) {
@@ -302,50 +373,6 @@ export function processSeasonEnd(
       rSum: at.rSum + (p.avgR ?? 0) * (p.avgR == null ? 0 : 1),
       rN: at.rN + (p.avgR == null ? 0 : 1),
     };
-  }
-
-  /* 7. injuries */
-  const medical = injuryMultiplier(next);
-  const injured: { name: string; days: number; injury: string }[] = [];
-  for (const p of everyone(next)) {
-    const r = seasonInjuries(p, 1, medical, rnd);
-    if (r.days >= 30 && p.lastInj) {
-      injured.push({ name: p.n, days: r.days, injury: p.lastInj });
-    }
-  }
-  next.injuries = injured.filter((i) => i.days >= 60).map((i) => i.name);
-  if (injured.length >= 4) {
-    say(
-      'An injury crisis',
-      `${injured.length} of the squad missed a month or more. ${injured[0].name} was out for ${injured[0].days} days with a ${injured[0].injury.toLowerCase()}.`,
-      'bad',
-    );
-  }
-
-  /* 7b. bookings, and the games they cost.
-     Five yellows inside the first nineteen and he misses one, whoever he
-     is and whatever the fixture is. It comes off his appearances, which
-     is what development reads. */
-  const suspended: { name: string; yellows: number; reds: number; games: number }[] = [];
-  for (const p of everyone(next)) {
-    const disc = seasonCards(p, p.apps ?? 0, rnd);
-    p.cards = disc.yellows;
-    p.reds = disc.reds;
-    p.banned = disc.banned;
-    if (disc.banned > 0) {
-      p.apps = Math.max(0, (p.apps ?? 0) - disc.banned);
-      suspended.push({ name: p.n, yellows: disc.yellows, reds: disc.reds, games: disc.banned });
-    }
-  }
-  const worstBan = [...suspended].sort((a, b) => b.games - a.games)[0];
-  if (worstBan && worstBan.games >= 3) {
-    say(
-      `${worstBan.name} suspended`,
-      worstBan.reds
-        ? `A red card and ${worstBan.games} games out of the side.`
-        : `${worstBan.yellows} bookings across the season and ${worstBan.games} games missed for them.`,
-      'bad',
-    );
   }
 
   /* 8. ageing, which is the whole point of a career */
@@ -480,10 +507,15 @@ export function processSeasonEnd(
   for (const y of next.youth) {
     if (!y.loan) continue;
     const spell = loanSeason(y, { n: y.loan, level: y.rtg >= 62 ? 2 : 3 }, rnd);
+    const was = y.rtg;
     y.rtg = Math.min(y.pot, Math.round(y.rtg + spell.gained));
     y.apps = spell.apps;
+    y.loans = [
+      ...(y.loans ?? []),
+      { s: d.year, club: y.loan, apps: spell.apps, gained: y.rtg - was, to: y.rtg },
+    ];
     y.loan = null;
-    loansBack.push(spell);
+    loansBack.push({ ...spell, gained: y.rtg - was });
   }
   if (loansBack.length) {
     const best = [...loansBack].sort((a, b) => b.gained - a.gained)[0];
@@ -651,6 +683,71 @@ export function processSeasonEnd(
       news,
     },
   };
+}
+
+
+/**
+ * Share the season's goals out again, by who was actually there.
+ *
+ * The match engine plays all thirty eight before anybody knows who was
+ * injured, so its scorers assume a fully fit squad all year. Once the
+ * injuries are in, the same total is redistributed by how many games each
+ * man played and how likely his position is to score, which keeps the
+ * team's goals for exactly as the season produced them while making the
+ * individual numbers ones a footballer could have.
+ *
+ * Largest remainder, so nothing is lost or invented in the rounding.
+ */
+function shareByAppearances(d: Dynasty, result: SeasonResult): void {
+  const squad = everyone(d).filter((p) => result.playerStats[p.n]);
+  if (!squad.length) return;
+
+  const played = (p: DynastyPlayer) =>
+    Math.max(0, 38 - Math.min(38, Math.round((p.daysOut ?? 0) / 9)));
+
+  const totals = { g: 0, a: 0 };
+  for (const p of squad) {
+    totals.g += result.playerStats[p.n].g;
+    totals.a += result.playerStats[p.n].a;
+  }
+
+  const share = (key: 'g' | 'a') => {
+    const weights = squad.map((p) => {
+      /* His own share of the season's goals is the best guess at what kind
+         of scorer he is, and games are the rest of it. */
+      const own = result.playerStats[p.n][key];
+      return Math.max(0, own) * (played(p) / 38);
+    });
+    const sum = weights.reduce((a, b) => a + b, 0);
+    if (sum <= 0) return;
+
+    const want = totals[key];
+    const exact = weights.map((w) => (w / sum) * want);
+    const base = exact.map((v) => Math.floor(v));
+    let left = want - base.reduce((a, b) => a + b, 0);
+    const order = exact
+      .map((v, i) => ({ i, frac: v - Math.floor(v) }))
+      .sort((a, b) => b.frac - a.frac);
+    for (const o of order) {
+      if (left <= 0) break;
+      base[o.i]++;
+      left--;
+    }
+    squad.forEach((p, i) => {
+      result.playerStats[p.n][key] = base[i];
+    });
+  };
+
+  share('g');
+  share('a');
+
+  /* Clean sheets are a defender being on the pitch when nothing went in,
+     so they scale with games played too. */
+  for (const p of squad) {
+    const st = result.playerStats[p.n];
+    if (!st.cs) continue;
+    st.cs = Math.round(st.cs * (played(p) / 38));
+  }
 }
 
 function ordinalOf(n: number): string {
