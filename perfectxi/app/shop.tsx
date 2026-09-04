@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import { ModeScreen, Press, Rise, Shine, PackOpen } from '../src/ui/components';
+import { ModeScreen, Press, Rise, Shine, PackOpen, LookTile } from '../src/ui/components';
 import { color, space, radius, line, hue, alpha } from '../src/ui/tokens';
 import { font, text } from '../src/ui/type';
 import { haptic } from '../src/ui/feel';
@@ -40,7 +40,10 @@ export default function Shop() {
   const [coll, setColl] = useState(() => collectionStore.read());
   const [looks, setLooks] = useState(() => looksStore.read());
   const [tab, setTab] = useState<Tab>('packs');
-  const [pulled, setPulled] = useState<{ cards: Card[]; title: string } | null>(null);
+  const [kind, setKind] = useState<CosmeticKind>('frame');
+  const [pulled, setPulled] = useState<{ cards: Card[]; title: string; dupes: string[] } | null>(
+    null,
+  );
   const [said, setSaid] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
@@ -73,7 +76,7 @@ export default function Shop() {
       haptic('medium');
       sfx('tick');
       setSaid(null);
-      setPulled({ cards: got.cards, title: pack.name });
+      setPulled({ cards: got.cards, title: pack.name, dupes: got.dupes });
       refresh();
     },
     [p.coins, refresh],
@@ -143,6 +146,32 @@ export default function Shop() {
                 </Rise>
               ) : null}
 
+              {__DEV__ ? (
+                <Press
+                  onPress={() => {
+                    /* Development only. `__DEV__` is false in every build
+                       that leaves this machine, so this button cannot ship
+                       and the whole block is dropped from the bundle. */
+                    const now = progressStore.read();
+                    progressStore.write({
+                      ...now,
+                      coins: now.coins + 50000,
+                      xp: now.xp + 20000,
+                    });
+                    haptic('success');
+                    refresh();
+                    setSaid('Testing: 50,000 coins and 20,000 experience added.');
+                  }}
+                  feel="none"
+                  scaleTo={0.98}
+                  style={styles.dev}
+                >
+                  <Text style={styles.devText}>
+                    Testing only: add 50,000 coins and 20,000 experience
+                  </Text>
+                </Press>
+              ) : null}
+
               <Text style={styles.note}>
                 A pack looks for somebody you have not got before it settles for
                 somebody you have. The best card in it always comes out last.
@@ -166,7 +195,7 @@ export default function Shop() {
                           <Text style={styles.packName}>{pack.name}</Text>
                           <Text style={styles.packBlurb}>{pack.blurb}</Text>
                           <Text style={[styles.packFloor, { color: tint }]}>
-                            Guaranteed {pack.floor} or better
+                            Guaranteed {word(pack.floor)} or better
                           </Text>
                         </View>
                       </View>
@@ -186,7 +215,7 @@ export default function Shop() {
                       <View style={styles.oddsKey}>
                         {(['icon', 'gold', 'silver', 'bronze'] as Rarity[]).map((r) => (
                           <Text key={r} style={[styles.oddsText, { color: rarityColour(r) }]}>
-                            {Math.round(pack.odds[r] * 1000) / 10}% {r}
+                            {Math.round(pack.odds[r] * 1000) / 10}% {word(r)}
                           </Text>
                         ))}
                       </View>
@@ -215,52 +244,94 @@ export default function Shop() {
 
           {tab === 'looks' ? (
             <>
+              <View style={styles.kinds}>
+                {(['frame', 'pitch', 'title'] as CosmeticKind[]).map((k) => (
+                  <Press
+                    key={k}
+                    onPress={() => {
+                      haptic('light');
+                      setKind(k);
+                      setSaid(null);
+                    }}
+                    feel="none"
+                    scaleTo={0.98}
+                    style={[styles.kind, kind === k ? styles.kindOn : null]}
+                  >
+                    <Text style={[styles.kindText, kind === k ? styles.kindTextOn : null]}>
+                      {k === 'frame' ? 'Frames' : k === 'pitch' ? 'Pitches' : 'Titles'}
+                    </Text>
+                  </Press>
+                ))}
+              </View>
+
               <Text style={styles.note}>
-                Paint, and nothing else. A frame changes how a card is drawn in
-                the album, a pitch changes the turf your draft is played on, and
-                a title is the only one anybody else ever sees.
+                {kind === 'frame'
+                  ? 'The border around a card in your album.'
+                  : kind === 'pitch'
+                    ? 'The turf every draft is played on.'
+                    : 'The word beside your name. The only one another player sees.'}
               </Text>
-              {(['frame', 'pitch', 'title'] as CosmeticKind[]).map((kind) => (
-                <View key={kind}>
-                  <Text style={[text.label, styles.sect]}>
-                    {kind === 'frame' ? 'Card frames' : kind === 'pitch' ? 'Pitches' : 'Titles'}
-                  </Text>
-                  {cosmeticsOfKind(kind).map((c) => (
-                    <LookRow
-                      key={c.id}
-                      item={c}
-                      on={looks[kind] === c.id}
-                      coins={p.coins}
-                      onPress={() => {
-                        if (hasCosmetic(c.id)) {
-                          haptic('light');
-                          sfx('tick');
-                          equip(c.id);
-                          refresh();
-                          setSaid(null);
-                          return;
-                        }
-                        if (c.price <= 0) {
-                          haptic('warning');
-                          setSaid(`That one arrives at level ${c.level}.`);
-                          return;
-                        }
-                        const got = buyCosmetic(c.id);
-                        if (!got.ok) {
-                          haptic('warning');
-                          setSaid(`${c.price - p.coins} coins short of that one.`);
-                          return;
-                        }
-                        haptic('success');
-                        sfx('pick');
+
+              {(() => {
+                const list = cosmeticsOfKind(kind);
+                const yours = list.filter((c) => hasCosmetic(c.id));
+                const rest = list.filter((c) => !hasCosmetic(c.id));
+                const tile = (c: Cosmetic) => (
+                  <LookTile
+                    key={c.id}
+                    item={c}
+                    state={
+                      looks[kind] === c.id
+                        ? 'worn'
+                        : hasCosmetic(c.id)
+                          ? 'owned'
+                          : c.price > 0
+                            ? 'buy'
+                            : 'locked'
+                    }
+                    onPress={() => {
+                      if (hasCosmetic(c.id)) {
+                        haptic('light');
+                        sfx('tick');
                         equip(c.id);
                         refresh();
                         setSaid(null);
-                      }}
-                    />
-                  ))}
-                </View>
-              ))}
+                        return;
+                      }
+                      if (c.price <= 0) {
+                        haptic('warning');
+                        setSaid(`${c.name} arrives at level ${c.level}.`);
+                        return;
+                      }
+                      const got = buyCosmetic(c.id);
+                      if (!got.ok) {
+                        haptic('warning');
+                        setSaid(`${c.price - p.coins} coins short of ${c.name}.`);
+                        return;
+                      }
+                      haptic('success');
+                      sfx('pick');
+                      equip(c.id);
+                      refresh();
+                      setSaid(null);
+                    }}
+                  />
+                );
+                return (
+                  <>
+                    <Text style={[text.label, styles.sect]}>Yours {'\u00b7'} {yours.length}</Text>
+                    <View style={styles.grid}>{yours.map(tile)}</View>
+                    {rest.length ? (
+                      <>
+                        <Text style={[text.label, styles.sect]}>
+                          Still to get {'\u00b7'} {rest.length}
+                        </Text>
+                        <View style={styles.grid}>{rest.map(tile)}</View>
+                      </>
+                    ) : null}
+                  </>
+                );
+              })()}
             </>
           ) : null}
 
@@ -271,7 +342,11 @@ export default function Shop() {
       <PackOpen
         cards={pulled?.cards ?? null}
         title={pulled?.title ?? ''}
-        onDone={() => setPulled(null)}
+        dupes={pulled?.dupes}
+        onDone={() => {
+          setPulled(null);
+          refresh();
+        }}
       />
     </>
   );
@@ -279,69 +354,8 @@ export default function Shop() {
 
 const PACK_TINT = ['#B87333', '#B9C6CE', hue.gold, hue.violet];
 
-function LookRow({
-  item,
-  on,
-  coins,
-  onPress,
-}: {
-  item: Cosmetic;
-  on: boolean;
-  coins: number;
-  onPress: () => void;
-}) {
-  const mine = hasCosmetic(item.id);
-  const locked = !mine && item.price <= 0;
-  const canBuy = !mine && item.price > 0 && coins >= item.price;
-
-  return (
-    <Press
-      onPress={onPress}
-      feel="none"
-      scaleTo={0.99}
-      style={[
-        styles.look,
-        on ? { borderColor: hue.emerald, backgroundColor: alpha(hue.emerald, 0.08) } : null,
-        locked ? styles.lookLocked : null,
-      ]}
-    >
-      <View
-        style={[
-          styles.swatch,
-          item.kind === 'title'
-            ? { backgroundColor: 'transparent', borderColor: item.a }
-            : { backgroundColor: item.a, borderColor: item.a },
-        ]}
-      >
-        {item.kind === 'title' ? (
-          <Text style={[styles.swatchLetter, { color: item.a }]}>T</Text>
-        ) : null}
-      </View>
-      <View style={styles.lookBody}>
-        <Text style={styles.lookName} numberOfLines={1}>
-          {item.name}
-        </Text>
-        <Text style={styles.lookBlurb} numberOfLines={1}>
-          {item.blurb}
-        </Text>
-      </View>
-      <Text
-        style={[
-          styles.lookState,
-          on
-            ? { color: hue.emerald }
-            : mine
-              ? { color: color.text2 }
-              : canBuy
-                ? { color: hue.gold }
-                : { color: color.text3 },
-        ]}
-        allowFontScaling={false}
-      >
-        {on ? 'ON' : mine ? 'WEAR' : locked ? `LVL ${item.level}` : String(item.price)}
-      </Text>
-    </Press>
-  );
+function word(r: Rarity): string {
+  return r.charAt(0).toUpperCase() + r.slice(1);
 }
 
 function rarityColour(r: Rarity): string {
@@ -384,6 +398,18 @@ const styles = StyleSheet.create({
   tabTextOn: { color: hue.gold },
   said: { ...text.small, fontSize: 12.5, color: hue.amber, marginBottom: space.s2 },
   note: { ...text.small, fontSize: 12, lineHeight: 18, color: color.text3, marginBottom: space.s3 },
+  dev: {
+    minHeight: 46,
+    marginBottom: space.s3,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: alpha(hue.crimson, 0.5),
+    backgroundColor: alpha(hue.crimson, 0.08),
+  },
+  devText: { ...text.key, fontSize: 8, color: hue.crimson },
   sect: { marginTop: space.s4, marginBottom: space.s2 },
 
   owed: {
@@ -459,30 +485,19 @@ const styles = StyleSheet.create({
   buyOff: { borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.03)' },
   buyText: { ...text.button, fontSize: 14.5, color: color.text3 },
 
-  look: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.s3,
-    minHeight: 58,
-    marginBottom: 5,
-    paddingHorizontal: space.s3,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: line.card,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-  },
-  lookLocked: { opacity: 0.55 },
-  swatch: {
-    width: 32,
-    height: 32,
-    borderRadius: 9,
-    borderWidth: 2,
+  kinds: { flexDirection: 'row', gap: 6, marginBottom: space.s3 },
+  kind: {
+    flex: 1,
+    minHeight: 38,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  swatchLetter: { fontFamily: font.displayBlack, fontSize: 14 },
-  lookBody: { flex: 1, minWidth: 0 },
-  lookName: { fontFamily: font.displayBold, fontSize: 15, lineHeight: 20, color: color.text1 },
-  lookBlurb: { ...text.small, fontSize: 11, lineHeight: 15, color: color.text3 },
-  lookState: { ...text.key, fontSize: 8.5, fontVariant: ['tabular-nums'] },
+  kindOn: { borderColor: alpha(hue.violet, 0.6), backgroundColor: alpha(hue.violet, 0.12) },
+  kindText: { ...text.key, fontSize: 8.5, color: color.text3 },
+  kindTextOn: { color: hue.violet },
+
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: '4%', rowGap: space.s3 },
 });

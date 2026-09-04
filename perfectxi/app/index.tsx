@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import {
+  AlbumCard,
   Screen,
   ModeCard,
   Collapse,
@@ -36,6 +37,7 @@ import {
   collectionStore,
 } from '../src/save';
 import {
+  bestOwned,
   bestThisWeek,
   levelProgress,
   totals,
@@ -108,6 +110,16 @@ function readWeek() {
   return { week: thisWeek(), best: bestThisWeek(weeklyStore.read(), n) };
 }
 
+function readAlbum() {
+  const coll = collectionStore.read();
+  return {
+    owned: coll.cards.length,
+    total: totals().all,
+    best: bestOwned(new Set(coll.cards), 4),
+    owed: coll.owed.length,
+  };
+}
+
 export default function Home() {
   const [progress, setProgress] = useState<Progress>(() => progressStore.read());
   const [dynasty, setDynasty] = useState<DynastySummary | null>(() =>
@@ -125,7 +137,9 @@ export default function Home() {
   /* The level, and how much of the collection is in. Read here rather
      than worked out in the row, so the front door says something true
      about both without either of them owning the sums. */
-  const [cards, setCards] = useState(() => collectionStore.read().cards.length);
+  /* The album, as the front door needs it: how far along it is, the four
+     best footballers in it, and whether a pack is waiting. */
+  const [album, setAlbum] = useState(() => readAlbum());
 
   // Saves change while you are inside a mode, so the status lines are read
   // again every time Home comes back to the front rather than once on mount.
@@ -139,12 +153,11 @@ export default function Home() {
       setDaily(readDaily());
       setWeekly(readWeek());
       setDuels(duelStore.read());
-      setCards(collectionStore.read().cards.length);
+      setAlbum(readAlbum());
     }, []),
   );
 
   const lvl = levelProgress(progress.xp);
-  const everyCard = totals().all;
 
   return (
     <Screen>
@@ -205,6 +218,18 @@ export default function Home() {
       </Rise>
 
       <Rise delay={4}>
+        <AlbumCard
+          owned={album.owned}
+          total={album.total}
+          best={album.best}
+          coins={progress.coins}
+          packsWaiting={album.owed}
+          onAlbum={() => router.push('/collection')}
+          onPacks={() => router.push('/shop')}
+        />
+      </Rise>
+
+      <Rise delay={5}>
         <View style={styles.achievements}>
           <AchievementPanel career={career} />
         </View>
@@ -270,7 +295,7 @@ export default function Home() {
           />
         </Collapse>
 
-        <Collapse label="Your game" count={3}>
+        <Collapse label="Your game" count={2}>
           <Row
             icon={IconStar}
             tone="purple"
@@ -283,20 +308,6 @@ export default function Home() {
             onPress={() => {
               haptic('light');
               router.push('/progress');
-            }}
-          />
-          <Row
-            icon={IconTrophy}
-            tone="purple"
-            title="The album"
-            subtitle={
-              cards
-                ? `${cards} of ${everyCard} footballers kept`
-                : 'Finish a season and the eleven are yours'
-            }
-            onPress={() => {
-              haptic('light');
-              router.push('/collection');
             }}
           />
           <Row

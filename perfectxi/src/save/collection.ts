@@ -59,16 +59,26 @@ export const collectionStore = defineStore<Collection>({
  * were duplicates and the one that banks a season has to know whether to
  * say anything at all.
  */
-export function addCards(c: Collection, ids: readonly string[]): { next: Collection; added: string[] } {
+export function addCards(
+  c: Collection,
+  ids: readonly string[],
+): { next: Collection; added: string[]; dupes: string[] } {
   const have = new Set(c.cards);
   const added: string[] = [];
+  const dupes: string[] = [];
   for (const id of ids) {
-    if (have.has(id)) continue;
+    if (have.has(id)) {
+      /* Not thrown away. A card you already have is sold on the spot for
+         what it is worth, which is done by the caller because only the
+         caller has the purse. */
+      dupes.push(id);
+      continue;
+    }
     have.add(id);
     added.push(id);
   }
-  if (!added.length) return { next: c, added };
-  return { next: { ...c, cards: [...c.cards, ...added] }, added };
+  if (!added.length) return { next: c, added, dupes };
+  return { next: { ...c, cards: [...c.cards, ...added] }, added, dupes };
 }
 
 /** Cards as a set, which is what every question about them wants. */

@@ -117,12 +117,14 @@ export default function ProgressScreen() {
               <Animated.Text style={[styles.heroLevel, levelStyle]} allowFontScaling={false}>
                 {lvl.level}
               </Animated.Text>
+              <Text style={styles.heroOf}>of {MAX_LEVEL}</Text>
             </View>
             <View style={styles.heroRight}>
               <Text style={styles.heroKey}>Coins</Text>
               <Animated.Text style={[styles.heroCoins, coinStyle]} allowFontScaling={false}>
                 {p.coins}
               </Animated.Text>
+              <Text style={styles.heroOf}>to spend</Text>
             </View>
           </View>
 
@@ -132,11 +134,12 @@ export default function ProgressScreen() {
           <Text style={styles.heroNote}>
             {lvl.maxed
               ? 'Level fifty. There is nothing after it.'
-              : `${lvl.into} of ${lvl.span} to level ${lvl.level + 1}`}
+              : `${lvl.into} of ${lvl.span} experience to level ${lvl.level + 1}`}
           </Text>
           {next ? (
             <Text style={styles.heroNext}>
-              Next up at level {next.level}: {next.name}
+              <Text style={styles.heroNextWord}>Next: </Text>
+              {next.name} at level {next.level}
             </Text>
           ) : null}
         </View>
@@ -273,7 +276,7 @@ export default function ProgressScreen() {
         </Collapse>
 
         <Text style={styles.foot}>
-          Level {lvl.level} of {MAX_LEVEL}. {p.seasons} seasons played.
+          Coins come from playing. Nothing here can be bought with money.
         </Text>
         <View style={{ height: space.s6 }} />
       </ScrollView>
@@ -318,19 +321,27 @@ const styles = StyleSheet.create({
     experimental_backgroundImage:
       'radial-gradient(120% 100% at 50% 0%, rgba(31,197,126,0.16) 0%, rgba(12,22,17,0.7) 52%, #080D0A 100%)',
     overflow: 'hidden',
-    gap: space.s2,
+    gap: space.s3,
   },
-  heroTop: { flexDirection: 'row', alignItems: 'flex-end' },
+  /*
+   * Both labels on one line at the top, both numbers hanging under them.
+   * The level used to be a sixty two point glyph in a seventy four point
+   * box, which a display face overflows upwards, so the word LEVEL had a
+   * two sat on top of it. It has room now, and the two columns line up
+   * rather than one of them floating at the bottom of the other.
+   */
+  heroTop: { flexDirection: 'row', alignItems: 'flex-start' },
   heroLeft: { flex: 1 },
-  heroRight: { alignItems: 'flex-end' },
-  heroKey: { ...text.key, fontSize: 9, color: color.text3 },
+  heroRight: { alignItems: 'flex-end', paddingBottom: 2 },
+  heroKey: { ...text.key, fontSize: 9, color: color.text3, marginBottom: 4 },
   heroLevel: {
     fontFamily: font.hero,
-    fontSize: 62,
-    lineHeight: 74,
+    fontSize: 56,
+    lineHeight: 68,
     color: color.text1,
     fontVariant: ['tabular-nums'],
   },
+  heroOf: { ...text.small, fontSize: 11, lineHeight: 15, color: color.text3, marginTop: -4 },
   heroCoins: {
     fontFamily: font.displayBlack,
     fontSize: 30,
@@ -344,9 +355,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.09)',
     overflow: 'hidden',
   },
-  barFill: { height: 8, borderRadius: 4, backgroundColor: hue.emerald },
+  barFill: { height: 8, borderRadius: 4, backgroundColor: hue.emerald, minWidth: 8 },
   heroNote: { ...text.small, fontSize: 12.5, lineHeight: 18, color: color.text2 },
-  heroNext: { ...text.key, fontSize: 8.5, color: hue.emerald },
+  heroNext: { ...text.small, fontSize: 12, lineHeight: 17, color: color.text2 },
+  heroNextWord: { ...text.key, fontSize: 8.5, color: hue.emerald },
 
   claim: {
     marginTop: space.s4,
@@ -424,7 +436,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.08)',
     overflow: 'hidden',
   },
-  collFill: { height: 5, borderRadius: 3, backgroundColor: hue.violet },
+  collFill: { height: 5, borderRadius: 3, backgroundColor: hue.violet, minWidth: 5 },
   collLine: { ...text.small, fontSize: 11.5, lineHeight: 16, color: color.text3 },
 
   shop: {

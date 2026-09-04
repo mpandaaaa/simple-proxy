@@ -145,13 +145,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.s4,
     backgroundColor: color.bg,
   },
+  /*
+   * The falloff was almost opaque where it met the bar, which is fine
+   * over a long page sliding past and much too heavy over anything that
+   * sits still directly underneath: a row of tabs came out looking
+   * greyed rather than softened. Half the strength does the job, because
+   * the job is only to stop the bar cutting a hard line across the page.
+   */
   falloff: {
     position: 'absolute',
     left: 0,
     right: 0,
     height: FALLOFF,
     experimental_backgroundImage:
-      'linear-gradient(180deg, rgba(10,15,12,0.85) 0%, rgba(10,15,12,0.22) 45%, rgba(10,15,12,0) 100%)',
+      'linear-gradient(180deg, rgba(10,15,12,0.42) 0%, rgba(10,15,12,0.1) 55%, rgba(10,15,12,0) 100%)',
   },
 
   // 44 point target around a 40 point face, so the button is easy to hit

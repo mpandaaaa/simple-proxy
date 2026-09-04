@@ -331,6 +331,8 @@ export {
   clubRows,
   albumFor,
   bestOwned,
+  cardValue,
+  valueOf,
 } from './collection';
 export type {
   Card,

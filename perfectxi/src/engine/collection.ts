@@ -179,10 +179,19 @@ export type Pack = {
   floor: Rarity;
 };
 
+/**
+ * What a pack costs.
+ *
+ * A season pays somewhere around a hundred coins, so the ladder is one
+ * season, three, fourteen and forty five. The top two are deliberately a
+ * long way up: an Icon Pack that a fortnight of playing can afford is not
+ * a thing anybody saves for, and the whole of the collection rests on
+ * there being something worth saving for.
+ */
 export const PACKS: readonly Pack[] = [
   {
     id: 'pack.bronze',
-    name: 'Bronze pack',
+    name: 'Bronze Pack',
     blurb: 'Three squad players. Everybody has to start somewhere.',
     price: 120,
     size: 3,
@@ -191,7 +200,7 @@ export const PACKS: readonly Pack[] = [
   },
   {
     id: 'pack.silver',
-    name: 'Silver pack',
+    name: 'Silver Pack',
     blurb: 'Five cards, and one of them is a Silver at worst.',
     price: 300,
     size: 5,
@@ -200,18 +209,18 @@ export const PACKS: readonly Pack[] = [
   },
   {
     id: 'pack.gold',
-    name: 'Gold pack',
-    blurb: 'Five cards, one of them Gold or better. Where a set gets finished.',
-    price: 700,
+    name: 'Gold Pack',
+    blurb: 'Five cards, one of them Gold or better. Where a squad gets finished.',
+    price: 1400,
     size: 5,
     odds: { icon: 0.06, gold: 0.24, silver: 0.45, bronze: 0.25 },
     floor: 'gold',
   },
   {
     id: 'pack.icon',
-    name: 'Icon pack',
+    name: 'Icon Pack',
     blurb: 'Three cards and one of them is rated ninety or more. Rare on purpose.',
-    price: 2000,
+    price: 4500,
     size: 3,
     odds: { icon: 0.18, gold: 0.4, silver: 0.34, bronze: 0.08 },
     floor: 'icon',
@@ -484,4 +493,44 @@ export function bestOwned(have: ReadonlySet<CardId>, n: number): Card[] {
   }
   out.sort((a, b) => b.rtg - a.rtg || a.n.localeCompare(b.n));
   return out.slice(0, n);
+}
+
+/* ---------- what a card is worth ---------- */
+
+/**
+ * The coins a card fetches when it is sold or arrives as a duplicate.
+ *
+ * The numbers matter more than they look, because they are the one place
+ * this whole thing could turn into a coin printer: if a pack ever
+ * returned more in sale value than it cost, the loop is open and every
+ * other number in the game stops meaning anything.
+ *
+ * So the scale is set well under the packs. A Bronze Pack costs 120 and
+ * the three cards in it are worth about forty five all together. An Icon
+ * Pack costs four and a half thousand and returns about three hundred,
+ * even to somebody who already owns every card in the game and gets
+ * nothing but duplicates. There is no way round it and a check measures
+ * it across ten thousand opens rather than trusting the arithmetic here.
+ *
+ * The other half of the guard is elsewhere and just as important: a set
+ * or a milestone pays out once and is recorded as paid, so finishing a
+ * squad, taking the money and selling it back off pays nothing the second
+ * time.
+ */
+export function cardValue(card: Card): number {
+  switch (card.rarity) {
+    case 'icon':
+      return 180 + Math.max(0, card.rtg - 90) * 40;
+    case 'gold':
+      return 60 + Math.max(0, card.rtg - 85) * 12;
+    case 'silver':
+      return 20 + Math.max(0, card.rtg - 78) * 3;
+    default:
+      return 8;
+  }
+}
+
+/** What a whole list of them is worth, for the line under a pack. */
+export function valueOf(cards: readonly Card[]): number {
+  return cards.reduce((a, c) => a + cardValue(c), 0);
 }

@@ -15,7 +15,8 @@ import { color, hue, radius, space, alpha } from '../tokens';
 import { font, text } from '../type';
 import { haptic, useReduceMotion } from '../feel';
 import { sfx } from '../sound';
-import { RARITY_ORDER, type Card, type Rarity } from '../../engine';
+import { RARITY_ORDER, cardValue, type Card, type Rarity } from '../../engine';
+import { CardFace, RARITY_TINT } from './CardFace';
 
 /**
  * Opening a pack.
@@ -35,29 +36,18 @@ import { RARITY_ORDER, type Card, type Rarity } from '../../engine';
  * move: every card is there, in the same order, on the same taps.
  */
 
-const RARITY_TINT: Record<Rarity, string> = {
-  icon: hue.violet,
-  gold: hue.gold,
-  silver: '#B9C6CE',
-  bronze: '#B87333',
-};
-
-const RARITY_WORD: Record<Rarity, string> = {
-  icon: 'ICON',
-  gold: 'GOLD',
-  silver: 'SILVER',
-  bronze: 'BRONZE',
-};
-
 export function PackOpen({
   cards,
   title,
+  dupes,
   onDone,
 }: {
   /** what came out, in any order: this sorts them */
   cards: Card[] | null;
   /** what was opened, for the line at the top */
   title: string;
+  /** the ids that were already yours, which were sold where they stood */
+  dupes?: readonly string[];
   onDone: () => void;
 }) {
   const reduce = useReduceMotion();
@@ -72,6 +62,7 @@ export function PackOpen({
 
   const [shown, setShown] = useState(0);
   const open = cards !== null;
+  const already = useMemo(() => new Set(dupes ?? []), [dupes]);
 
   useEffect(() => {
     if (open) setShown(0);
@@ -118,16 +109,26 @@ export function PackOpen({
             {Math.min(shown, ordered.length)} / {ordered.length}
           </Text>
 
+          {/* Kept off the card on purpose. It used to sit inside the foot
+              and land on top of the club and the season. */}
+          <View style={styles.banner}>
+            {done && best ? (
+              <Text style={[styles.bannerText, { color: RARITY_TINT[best.rarity] }]}>
+                Best of the pack {'·'} {best.n}
+              </Text>
+            ) : current && already.has(current.id) ? (
+              <Text style={[styles.bannerText, { color: hue.gold }]}>
+                Already yours {'·'} sold for {cardValue(current)} coins
+              </Text>
+            ) : current ? (
+              <Text style={[styles.bannerText, { color: color.text3 }]}>New</Text>
+            ) : null}
+          </View>
+
           <View style={styles.stage}>
             {ordered.map((c, i) =>
               i < shown ? (
-                <Reveal
-                  key={c.id}
-                  card={c}
-                  front={i === shown - 1}
-                  reduce={reduce}
-                  best={done && c.id === best?.id}
-                />
+                <Reveal key={c.id} card={c} front={i === shown - 1} reduce={reduce} />
               ) : null,
             )}
             {shown === 0 ? (
@@ -157,12 +158,10 @@ function Reveal({
   card,
   front,
   reduce,
-  best,
 }: {
   card: Card;
   front: boolean;
   reduce: boolean;
-  best: boolean;
 }) {
   const tint = RARITY_TINT[card.rarity];
   const big = card.rarity === 'icon' || card.rarity === 'gold';
@@ -207,31 +206,14 @@ function Reveal({
   return (
     <Animated.View
       style={[
-        styles.card,
+        styles.holder,
         behind,
-        {
-          borderColor: tint,
-          backgroundColor: alpha(tint, 0.1),
-          boxShadow: `0px 18px 44px ${alpha(tint, big ? 0.4 : 0.22)}`,
-        },
+        { boxShadow: `0px 18px 44px ${alpha(tint, big ? 0.44 : 0.22)}` },
       ]}
       pointerEvents="none"
     >
+      <CardFace card={card} />
       <Animated.View style={[styles.sweep, sweep]} pointerEvents="none" />
-
-      <Text style={[styles.rarity, { color: tint }]}>{RARITY_WORD[card.rarity]}</Text>
-      <Text style={[styles.rating, { color: tint }]} allowFontScaling={false}>
-        {card.rtg}
-      </Text>
-      <Text style={styles.name} numberOfLines={2}>
-        {card.n}
-      </Text>
-      <Text style={styles.meta} numberOfLines={1}>
-        {card.club} {'·'} {card.season}
-      </Text>
-      <View style={[styles.rule, { backgroundColor: alpha(tint, 0.5) }]} />
-      <Text style={styles.pos}>{Array.isArray(card.pos) ? card.pos.join(' / ') : card.pos}</Text>
-      {best ? <Text style={[styles.best, { color: tint }]}>Best of the pack</Text> : null}
     </Animated.View>
   );
 }
@@ -275,19 +257,14 @@ const styles = StyleSheet.create({
   },
   wrapperText: { ...text.key, fontSize: 11, color: color.text2 },
 
-  card: {
+  holder: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: space.s4,
     borderRadius: radius.xl,
-    borderWidth: 2,
     overflow: 'hidden',
-    gap: 2,
   },
   sweep: {
     position: 'absolute',
@@ -296,24 +273,8 @@ const styles = StyleSheet.create({
     width: 70,
     backgroundColor: 'rgba(255,255,255,0.22)',
   },
-  rarity: { ...text.key, fontSize: 9.5 },
-  rating: {
-    fontFamily: font.hero,
-    fontSize: 74,
-    lineHeight: 90,
-    fontVariant: ['tabular-nums'],
-  },
-  name: {
-    fontFamily: font.displayBlack,
-    fontSize: 26,
-    lineHeight: 32,
-    color: color.text1,
-    textAlign: 'center',
-  },
-  meta: { ...text.small, fontSize: 13, lineHeight: 19, color: color.text2, textAlign: 'center' },
-  rule: { height: 1, width: 60, marginVertical: space.s3 },
-  pos: { ...text.key, fontSize: 9, color: color.text3 },
-  best: { ...text.key, fontSize: 8.5, marginTop: space.s3 },
+  banner: { height: 22, justifyContent: 'center', marginTop: space.s2 },
+  bannerText: { ...text.key, fontSize: 8.5 },
 
   hint: { ...text.small, fontSize: 12.5, color: color.text3 },
 });

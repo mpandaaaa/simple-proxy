@@ -1,11 +1,13 @@
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { ModeScreen, Press, Rise, ClubDisc, Sheet } from '../src/ui/components';
+import { ModeScreen, Press, Rise, ClubDisc, Sheet, Confirm, CardFace } from '../src/ui/components';
 import { color, space, radius, line, hue, alpha, positionColor } from '../src/ui/tokens';
 import { font, text } from '../src/ui/type';
 import { haptic } from '../src/ui/feel';
-import { albumFor, cosmeticById, type Card } from '../src/engine';
+import { sfx } from '../src/ui/sound';
+import { sellCard } from '../src/game/progress';
+import { albumFor, cardValue, cosmeticById, type Card } from '../src/engine';
 import { collectionStore, looksStore, owned } from '../src/save';
 import { rarityColour } from './collection';
 
@@ -26,6 +28,8 @@ export default function Album() {
   const [coll, setColl] = useState(() => collectionStore.read());
   const [look, setLook] = useState(() => looksStore.read());
   const [open, setOpen] = useState<Card | null>(null);
+  const [selling, setSelling] = useState<Card | null>(null);
+  const [said, setSaid] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
 
   useFocusEffect(
@@ -71,6 +75,7 @@ export default function Album() {
         }
       >
         <ScrollView style={styles.page} showsVerticalScrollIndicator={false}>
+          {said ? <Text style={styles.said}>{said}</Text> : null}
           <View style={styles.crest}>
             <ClubDisc club={name} size={52} />
             <View style={styles.crestBody}>
@@ -176,52 +181,64 @@ export default function Album() {
         </ScrollView>
       </ModeScreen>
 
-      {/* one footballer, front and back */}
+      {/* one footballer, as the card he is */}
       <Sheet visible={open !== null} onClose={() => setOpen(null)}>
         {open ? (
           <View style={styles.sheet}>
-            <View
-              style={[
-                styles.big,
-                {
-                  borderColor: rarityColour(open.rarity),
-                  backgroundColor: alpha(rarityColour(open.rarity), have.has(open.id) ? 0.12 : 0.04),
-                },
-              ]}
-            >
-              <Text style={[styles.bigRarity, { color: rarityColour(open.rarity) }]}>
-                {open.rarity}
-              </Text>
-              <Text
-                style={[styles.bigRtg, { color: rarityColour(open.rarity) }]}
-                allowFontScaling={false}
-              >
-                {open.rtg}
-              </Text>
-              <Text style={styles.bigName}>{open.n}</Text>
-              <Text style={styles.bigMeta}>
-                {open.club} {'·'} {open.season}
-              </Text>
-              <View style={styles.bigRow}>
-                {(Array.isArray(open.pos) ? open.pos : [open.pos]).map((p) => (
-                  <Text
-                    key={p}
-                    style={[styles.bigPos, { color: positionColor[p as 'GK'] ?? color.text3 }]}
-                  >
-                    {p}
-                  </Text>
-                ))}
-                {open.nat ? <Text style={styles.bigNat}>{open.nat}</Text> : null}
-              </View>
+            <View style={styles.cardBox}>
+              <CardFace card={open} ghost={!have.has(open.id)} edge={frame?.a} />
             </View>
-            <Text style={styles.sheetState}>
-              {have.has(open.id)
-                ? 'In your album.'
-                : 'Not yours yet. Draft him into a finished XI, or find him in a pack.'}
-            </Text>
+
+            {have.has(open.id) ? (
+              <>
+                <Text style={styles.sheetState}>
+                  In your album. Worth {cardValue(open)} coins if you let him go.
+                </Text>
+                <Press
+                  onPress={() => {
+                    haptic('warning');
+                    setSelling(open);
+                  }}
+                  feel="none"
+                  scaleTo={0.98}
+                  style={styles.sell}
+                >
+                  <Text style={styles.sellText}>Sell for {cardValue(open)} coins</Text>
+                </Press>
+              </>
+            ) : (
+              <Text style={styles.sheetState}>
+                Not yours yet. Draft him into a finished XI, or find him in a pack.
+              </Text>
+            )}
           </View>
         ) : null}
       </Sheet>
+
+      <Confirm
+        visible={selling !== null}
+        title={selling ? `Sell ${selling.n}?` : ''}
+        body={
+          selling
+            ? `He leaves the album for ${cardValue(selling)} coins. You can find him again, but only by drafting him or opening a pack.`
+            : ''
+        }
+        confirmLabel="Sell"
+        cancelLabel="Keep him"
+        onCancel={() => setSelling(null)}
+        onConfirm={() => {
+          if (!selling) return;
+          const got = sellCard(selling.id);
+          setSelling(null);
+          setOpen(null);
+          if (got.ok) {
+            haptic('success');
+            sfx('tick');
+            setSaid(`${got.coins} coins.`);
+            setColl(collectionStore.read());
+          }
+        }}
+      />
     </>
   );
 }
@@ -331,31 +348,29 @@ const styles = StyleSheet.create({
   moreText: { ...text.key, fontSize: 9, color: color.text2 },
 
   sheet: { paddingHorizontal: space.s4, paddingTop: space.s4, paddingBottom: space.s6, gap: space.s3 },
-  big: {
-    alignItems: 'center',
-    paddingVertical: space.s5,
-    paddingHorizontal: space.s4,
-    borderRadius: radius.xl,
-    borderWidth: 2,
-    gap: 2,
-  },
-  bigRarity: { ...text.key, fontSize: 9 },
-  bigRtg: {
-    fontFamily: font.hero,
-    fontSize: 62,
-    lineHeight: 74,
-    fontVariant: ['tabular-nums'],
-  },
-  bigName: {
-    fontFamily: font.displayBlack,
-    fontSize: 24,
-    lineHeight: 30,
-    color: color.text1,
+  cardBox: { width: '100%', aspectRatio: 0.72, alignSelf: 'center', maxWidth: 300 },
+  sheetState: {
+    ...text.small,
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: color.text3,
     textAlign: 'center',
   },
-  bigMeta: { ...text.small, fontSize: 13, lineHeight: 18, color: color.text2 },
-  bigRow: { flexDirection: 'row', gap: space.s3, marginTop: space.s3 },
-  bigPos: { ...text.key, fontSize: 9 },
-  bigNat: { ...text.key, fontSize: 9, color: color.text3 },
-  sheetState: { ...text.small, fontSize: 12.5, lineHeight: 18, color: color.text3, textAlign: 'center' },
+  sell: {
+    minHeight: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: alpha(hue.gold, 0.5),
+    backgroundColor: alpha(hue.gold, 0.12),
+  },
+  sellText: { ...text.button, fontSize: 14, color: hue.gold },
+  said: {
+    ...text.small,
+    fontSize: 12.5,
+    color: hue.emerald,
+    marginBottom: space.s2,
+    textAlign: 'center',
+  },
 });

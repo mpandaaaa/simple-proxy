@@ -1,6 +1,7 @@
 import {
   cardById,
   cardForPick,
+  cardValue,
   cosmeticById,
   levelFor,
   openPack,
@@ -71,9 +72,13 @@ export function awardSeason(args: {
     if (id) ids.push(id);
   }
   const before = collectionStore.read();
-  const { next, added } = addCards(before, ids);
+  const { next, added, dupes } = addCards(before, ids);
   if (added.length) collectionStore.write(next);
   const newCards = added.map((id) => cardById(id)).filter((c): c is Card => c !== null);
+  /* A footballer you have drafted before is sold rather than shrugged
+     at, which is why an XI of eleven names you already own still pays
+     something for having picked them. */
+  const fromDupes = payFor(dupes);
 
   /* ---- the level ---- */
   const p = progressStore.read();
@@ -91,11 +96,13 @@ export function awardSeason(args: {
     collectionStore.write({ ...c, owed: [...c.owed, ...owedPacks] });
   }
 
+  /* Read again: paying for the duplicates already moved the purse. */
+  const purse = progressStore.read().coins;
   progressStore.write({
     ...p,
     xp: nowXp,
     lvl: levelAfter,
-    coins: p.coins + base + fromLevels,
+    coins: purse + base + fromLevels,
     seasons: p.seasons + 1,
     titles: p.titles + (position === 1 ? 1 : 0),
     best: Math.max(p.best, pts),
@@ -103,7 +110,7 @@ export function awardSeason(args: {
 
   return {
     xp,
-    coins: base + fromLevels,
+    coins: base + fromLevels + fromDupes,
     levelBefore,
     levelAfter,
     rewards,
@@ -115,7 +122,16 @@ export function awardSeason(args: {
 /* ---------- spending ---------- */
 
 export type Bought =
-  | { ok: true; cards: Card[] }
+  | {
+      ok: true;
+      cards: Card[];
+      /** the ones that were new */
+      fresh: string[];
+      /** the ones you already had, which were sold on the spot */
+      dupes: string[];
+      /** what those duplicates paid */
+      coins: number;
+    }
   | { ok: false; why: 'coins' | 'owned' | 'unknown' | 'locked' };
 
 /** Coins in hand, for anything that has to decide whether to grey a button. */
@@ -152,9 +168,47 @@ export function buyPack(packId: string, free = false): Bought {
 
   const c = collectionStore.read();
   const cards = openPack(pack, owned(c), mulberry32((Date.now() ^ (c.cards.length * 2654435761)) >>> 0));
-  const { next } = addCards(c, cards.map((x) => x.id));
+  const { next, added, dupes } = addCards(c, cards.map((x) => x.id));
   collectionStore.write(next);
-  return { ok: true, cards };
+
+  /* Anything already in the album is sold where it stands. Nothing is
+     ever wasted, and it cannot become a way of making money: a pack
+     returns a fraction of its price even when every card in it is one
+     you had, which is measured rather than assumed. */
+  const paid = payFor(dupes);
+  return { ok: true, cards, fresh: added, dupes, coins: paid };
+}
+
+/** Pay out a list of cards at their value, and return the total. */
+function payFor(ids: readonly string[]): number {
+  let total = 0;
+  for (const id of ids) {
+    const card = cardById(id);
+    if (card) total += cardValue(card);
+  }
+  if (total > 0) {
+    const p = progressStore.read();
+    progressStore.write({ ...p, coins: p.coins + total });
+  }
+  return total;
+}
+
+/**
+ * Sell one you own.
+ *
+ * It leaves the album, which is the cost. There is no loop in it: a card
+ * is worth a fraction of any pack that could produce it, and a squad or a
+ * milestone pays out once and is recorded as paid, so finishing a set,
+ * taking the money and selling it back off pays nothing the second time.
+ */
+export function sellCard(id: string): { ok: boolean; coins: number } {
+  const card = cardById(id);
+  if (!card) return { ok: false, coins: 0 };
+  const c = collectionStore.read();
+  if (!c.cards.includes(id)) return { ok: false, coins: 0 };
+  collectionStore.write({ ...c, cards: c.cards.filter((x) => x !== id) });
+  const paid = payFor([id]);
+  return { ok: true, coins: paid };
 }
 
 /** Buy a frame, a pitch or a title. */

@@ -35,6 +35,8 @@ import {
   PACKS,
   packById,
   openPack,
+  cardValue,
+  valueOf,
   SETS,
   setState,
   MILESTONES,
@@ -289,7 +291,7 @@ const cards = allCards();
   for (const p of PACKS) {
     const sum = p.odds.icon + p.odds.gold + p.odds.silver + p.odds.bronze;
     must(`${p.name} odds add up to one`, Math.abs(sum - 1) < 1e-9, String(sum));
-    band(`${p.name} costs`, p.price, 80, 3000, '');
+    band(`${p.name} costs`, p.price, 80, 6000, '');
     band(`${p.name} holds`, p.size, 3, 8, '');
     must(`${p.name} is found by its id`, packById(p.id)?.id === p.id, '');
   }
@@ -408,6 +410,58 @@ const cards = allCards();
   must('and nothing when it holds nothing', collectionCounts(new Set()).all === 0, '');
   must('a card that is not one is not counted',
     collectionCounts(new Set(['not a card'])).all === 0, '');
+}
+
+/* ================= selling cannot print coins ================= */
+
+{
+  /* This is the one number in the whole system that could quietly ruin
+     it. If a pack ever hands back more in sale value than it costs, then
+     opening packs is free money, and every price, level and reward stops
+     meaning anything. So it is measured rather than reasoned about, and
+     measured in the worst case: somebody who already owns every card in
+     the game, whose packs are therefore nothing but duplicates being
+     sold back on the spot. */
+  const everything = new Set(cards.map((c) => c.id));
+  let worst = 0;
+
+  for (const pack of PACKS) {
+    let fresh = 0;
+    let dupe = 0;
+    const N = 600;
+    for (let i = 0; i < N; i++) {
+      const seed = i * 2654435761 + 3;
+      fresh += valueOf(openPack(pack, new Set(), mulberry32(seed)));
+      dupe += valueOf(openPack(pack, everything, mulberry32(seed)));
+    }
+    const freshBack = Math.round((fresh / N / pack.price) * 100);
+    const dupeBack = Math.round((dupe / N / pack.price) * 100);
+    worst = Math.max(worst, freshBack, dupeBack);
+    band(`${pack.name} sells back for, % of its price`, freshBack, 5, 60,
+      'a fraction, always');
+    band(`${pack.name} when you own everything, %`, dupeBack, 5, 60, '');
+  }
+  must('no pack ever pays for itself', worst < 70, `the best was ${worst}%`);
+
+  /* And the order of value follows the order of rarity, so a card that is
+     harder to get is always worth more to let go of. */
+  const icon = cards.find((c) => c.rarity === 'icon');
+  const gold = cards.find((c) => c.rarity === 'gold');
+  const silver = cards.find((c) => c.rarity === 'silver');
+  const bronze = cards.find((c) => c.rarity === 'bronze');
+  must('an Icon is worth more than a Gold', cardValue(icon) > cardValue(gold),
+    `${cardValue(icon)} against ${cardValue(gold)}`);
+  must('a Gold is worth more than a Silver', cardValue(gold) > cardValue(silver), '');
+  must('a Silver is worth more than a Bronze', cardValue(silver) > cardValue(bronze), '');
+  band('what a Bronze fetches', cardValue(bronze), 2, 30, '');
+  band('what the best Icon fetches', Math.max(...cards.filter((c) => c.rarity === 'icon').map(cardValue)),
+    180, 900, 'a lot, and still less than an Icon Pack costs');
+  must('nothing is worth nothing', cards.every((c) => cardValue(c) > 0), '');
+
+  /* Selling a whole XI must be worth less than the season that produced
+     it, or drafting to sell beats drafting to keep. */
+  const anXI = cards.slice(2000, 2011);
+  band('an eleven sold off', valueOf(anXI), 20, 900, '');
 }
 
 console.log('\nProgress, the collection and the shop\n');
