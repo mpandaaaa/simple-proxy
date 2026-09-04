@@ -49,6 +49,7 @@ import {
   type TableRow,
 } from '../../src/engine';
 import { getCareer, setCareer } from '../../src/game/career';
+import { awardDynasty } from '../../src/game/award';
 import { clearSeasonResult, takeSeasonResult } from '../../src/game/careerSeason';
 
 /** Eight highlights, eight colours, so the grid is not one green block. */
@@ -162,6 +163,9 @@ export default function Summer() {
 
     const out = processSeasonEnd(career, result);
     setCareer(out.dynasty);
+    /* The season is over, so the cabinet is told about it here. Only ever
+       once: this runs on the way into the summer, not on every render. */
+    awardDynasty(out.dynasty);
     clearSeasonResult();
     setState({ report: out.report, result, before: career, after: out.dynasty });
 

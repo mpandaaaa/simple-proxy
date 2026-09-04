@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { uclStore } from '../save';
+import { awardUcl } from './award';
 import {
   uclPlayNext,
   uclSkipLeague,
@@ -74,6 +75,7 @@ export function playNextUcl(): UclPlayed | null {
   const step = uclPlayNext(current);
   if (!step) return null;
   setUcl(step.run);
+  if (step.run.over) awardUcl(step.run);
   return step;
 }
 
@@ -82,6 +84,9 @@ export function skipLeaguePhase(): UclMatch[] {
   if (!current) return [];
   const done = uclSkipLeague(current);
   setUcl(done.run);
+  /* Skipping can end a campaign outright: twenty fifth and below is the
+     end of it, with nothing to drop into. */
+  if (done.run.over) awardUcl(done.run);
   return done.matches;
 }
 

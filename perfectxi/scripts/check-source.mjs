@@ -79,6 +79,76 @@ if (!store.includes('version: 13')) {
   fail('src/save/dynasty.ts changed version. Every bump needs a migration, and check-save has to know about it.');
 }
 
+/* ---- 5. navigating without the guard, which opened pages twice ---- */
+{
+  const offenders = [];
+  for (const f of walk('app').concat(walk('src'))) {
+    if (f.endsWith(join('src', 'game', 'nav.ts'))) continue;
+    const src = readFileSync(f, 'utf8');
+    for (const m of src.matchAll(/router\.(push|replace|navigate|dismissTo|dismissAll)\(/g)) {
+      offenders.push(`${f} uses router.${m[1]}`);
+    }
+  }
+  for (const o of offenders) {
+    fail(`${o}. Everything navigates through src/game/nav.ts or the same page opens twice.`);
+  }
+}
+
+/* ---- 6. a route that does not exist, which draws nothing at all ---- */
+{
+  const routes = new Set();
+  for (const f of walk('app')) {
+    if (!f.endsWith('.tsx')) continue;
+    let r = f
+      .slice('app'.length)
+      .replace(/\\/g, '/')
+      .replace(/\.tsx$/, '');
+    if (r.endsWith('/index')) r = r.slice(0, -'/index'.length) || '/';
+    if (r.endsWith('_layout')) continue;
+    routes.add(r);
+  }
+  for (const f of walk('app').concat(walk('src'))) {
+    const src = readFileSync(f, 'utf8');
+    for (const m of src.matchAll(/\b(?:go|swap|upTo)\('(\/[^']*)'\)/g)) {
+      const target = m[1].split('?')[0].replace(/\/$/, '') || '/';
+      if (!routes.has(target)) {
+        fail(`${f} navigates to ${m[1]}, and there is no screen at ${target}.`);
+      }
+    }
+  }
+}
+
+/* ---- 7. a saved record whose version moved without a migration ---- */
+{
+  for (const f of walk(join('src', 'save'))) {
+    const src = readFileSync(f, 'utf8');
+    const v = src.match(/version:\s*(\d+)/);
+    if (!v || Number(v[1]) <= 1) continue;
+    if (!src.includes('migrations:')) {
+      fail(`${f} is at version ${v[1]} with no migrations. An old save would be thrown away.`);
+    }
+  }
+}
+
+/* ---- 8. a setting that is stored and never read ---- */
+{
+  const settings = readFileSync(join('src', 'save', 'settings.ts'), 'utf8');
+  const block = settings.match(/export type Settings = \{([\s\S]*?)\n\};/);
+  if (block) {
+    const keys = [...block[1].matchAll(/^\s{2}(\w+):/gm)].map((m) => m[1]);
+    const everywhere = walk('app')
+      .concat(walk('src'))
+      .filter((f) => !f.endsWith(join('src', 'save', 'settings.ts')))
+      .map((f) => readFileSync(f, 'utf8'))
+      .join('\n');
+    for (const k of keys) {
+      if (!everywhere.includes(k)) {
+        fail(`settings.${k} is saved and nothing ever reads it. A switch that does nothing is worse than no switch.`);
+      }
+    }
+  }
+}
+
 console.log(
   failures ? `\n${failures} problems.\n` : '\nEvery source rule holds.\n',
 );

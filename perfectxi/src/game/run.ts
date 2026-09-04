@@ -1,5 +1,5 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react';
-import { router } from 'expo-router';
+import { swap } from './nav';
 import {
   ENGINE_VERSION,
   canPlay,
@@ -281,7 +281,7 @@ export function useRequireRun(): Run | null {
   if (run) everHadRun.current = true;
 
   useEffect(() => {
-    if (!run && !everHadRun.current) router.replace('/draft');
+    if (!run && !everHadRun.current) swap('/draft');
   }, [run]);
 
   return run;

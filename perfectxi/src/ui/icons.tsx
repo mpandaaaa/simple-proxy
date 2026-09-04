@@ -205,3 +205,24 @@ export function IconKeypad({ color, size = 22 }: IconProps) {
     </Svg>
   );
 }
+
+/**
+ * Settings.
+ *
+ * The teeth are placed round the circle rather than drawn by hand, so
+ * they are evenly spaced at any size.
+ */
+export function IconGear({ color, size = 22 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 26 26" fill="none">
+      <Circle cx={13} cy={13} r={6.2} stroke={color} strokeWidth={1.8} />
+      <Circle cx={13} cy={13} r={2.4} stroke={color} strokeWidth={1.6} />
+      <Path
+        d="M19.2 13.0L22.0 13.0M17.4 17.4L19.4 19.4M13.0 19.2L13.0 22.0M8.6 17.4L6.6 19.4M6.8 13.0L4.0 13.0M8.6 8.6L6.6 6.6M13.0 6.8L13.0 4.0M17.4 8.6L19.4 6.6"
+        stroke={color}
+        strokeWidth={1.9}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}

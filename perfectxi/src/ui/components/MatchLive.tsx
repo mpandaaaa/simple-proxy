@@ -17,14 +17,26 @@ import { font, text } from '../type';
 import { GRAIN_URI } from '../grain';
 import { haptic, useReduceMotion } from '../feel';
 import { sfx, soundOn, toggleSound } from '../sound';
+import { settingsStore, type MatchSpeed } from '../../save';
 import { ClubDisc } from './ClubDisc';
 import { Press } from './Press';
 import { Shine } from './Shine';
 import { buildMatch, type MatchEvent, type LiveMatch } from '../../game/commentary';
 import type { MatchResult } from '../../engine';
 
-/** Ninety minutes in eight seconds. The site plays a minute every 90ms. */
-const MINUTE_MS = 90;
+/**
+ * Ninety minutes in eight seconds. The site plays a minute every 90ms.
+ *
+ * A setting, because some people want to watch a match and some people
+ * want the score, and both are reasonable. Instant skips straight to full
+ * time without an animation at all.
+ */
+const MINUTE_BY_SPEED: Record<MatchSpeed, number> = {
+  slow: 150,
+  normal: 90,
+  fast: 42,
+  instant: 0,
+};
 /** The break, so half time is a moment rather than a line in a list. */
 const HALF_TIME_MS = 750;
 
@@ -161,6 +173,13 @@ export function MatchLive({
      is measured against this rather than against ninety. */
   const full = built?.full ?? 90;
 
+  /* The pace, read once when the match opens rather than every frame.
+     Instant is the same path Reduce Motion takes: the whole thing lands
+     at once and the score is simply there. */
+  const speed = useMemo(() => settingsStore.read().matchSpeed, [visible]);
+  const minuteMs = MINUTE_BY_SPEED[speed] ?? MINUTE_BY_SPEED.normal;
+  const rushIt = reduce || speed === 'instant';
+
   const drop = useCallback(() => setMounted(false), []);
 
   /* ---- presentation ---- */
@@ -229,7 +248,7 @@ export function MatchLive({
     swing.value = built.momentum[0] ?? 0;
     statsIn.value = 0;
 
-    if (reduce) {
+    if (rushIt) {
       rush();
       return;
     }
@@ -241,7 +260,7 @@ export function MatchLive({
       clock.current += 1;
       const m = clock.current;
       setMinute(m);
-      clockBar.value = withTiming(m / full, { duration: MINUTE_MS, easing: Easing.linear });
+      clockBar.value = withTiming(m / full, { duration: minuteMs, easing: Easing.linear });
       swing.value = withTiming(built.momentum[m] ?? 0, { duration: 260 });
 
       let paused = false;
@@ -282,7 +301,7 @@ export function MatchLive({
         finish();
         return;
       }
-      timer.current = setTimeout(step, paused ? HALF_TIME_MS : MINUTE_MS);
+      timer.current = setTimeout(step, paused ? HALF_TIME_MS : minuteMs);
     };
 
     timer.current = setTimeout(step, 620);
@@ -292,6 +311,8 @@ export function MatchLive({
     built,
     full,
     reduce,
+    rushIt,
+    minuteMs,
     rush,
     stop,
     finish,

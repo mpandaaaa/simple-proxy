@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import { awardSweep } from '../src/game/award';
 import { go } from '../src/game/nav';
 import {
   commas,
@@ -15,6 +16,7 @@ import {
 } from '../src/ui/components';
 import {
   IconTrophy,
+  IconGear,
   IconCalendar,
   IconSpark,
   IconSwords,
@@ -201,6 +203,10 @@ export default function Home() {
       setAlbum(readAlbum());
       setWorldCup(readWorldCup());
       setUcl(readUcl());
+      /* Cards, sets, levels and streaks move in half a dozen places. They
+         are all re-readable, so rather than a hook on every one of them
+         the front door checks them on the way back in. */
+      awardSweep();
     }, []),
   );
 
@@ -392,7 +398,7 @@ export default function Home() {
 
         <Collapse
           label="Records"
-          count={3}
+          count={4}
           tone="gold"
           hint={`${record.cabinet} · ${record.hall}`}
         >
@@ -420,6 +426,16 @@ export default function Home() {
               go('/players');
             }}
           />
+          <Row
+            icon={IconGear}
+            tone="gold"
+            title="Settings"
+            subtitle="Sound, match speed, your name, what is saved"
+            onPress={() => {
+              haptic('light');
+              go('/settings');
+            }}
+          />
         </Collapse>
       </Rise>
 
@@ -429,6 +445,17 @@ export default function Home() {
         </Text>
 
         <View style={styles.footer}>
+          <Press
+            onPress={() => {
+              haptic('light');
+              go('/settings');
+            }}
+            feel="select"
+            scaleTo={0.94}
+            style={styles.footerChip}
+          >
+            <Text style={styles.footerText}>Settings</Text>
+          </Press>
           <Press
             onPress={() => {
               haptic('light');
@@ -465,15 +492,6 @@ const FOOTER = [
   },
   { label: 'Contact', blurb: 'Feedback, bug reports, or an argument about a rating.' },
 ];
-
-/**
- * One honest screen for anything not built yet, rather than a dead tap or a
- * badge on the home screen. Each entry carries its own real description from
- * the live site, so the screen says something true about the mode.
- */
-function soon(overline: string, title: string, blurb: string) {
-  go({ pathname: '/soon', params: { overline, title, blurb } });
-}
 
 /** No career yet is a real state, so the card keeps its description. */
 function dynastyStatus(d: DynastySummary | null): string | null {

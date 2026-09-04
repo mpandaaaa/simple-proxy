@@ -1,4 +1,4 @@
-import type { Cups, DraftConfig, SeasonResult } from '../engine';
+import type { Cups, DraftConfig, Dynasty, SeasonResult, UclRun, WcRun } from '../engine';
 
 /**
  * The trophy cabinet's catalogue.
@@ -18,7 +18,11 @@ export type AchCategory =
   | 'Challenges'
   | 'Milestones'
   | 'Cups'
-  | 'World Cup';
+  | 'World Cup'
+  | 'Champions League'
+  | 'Dynasty'
+  | 'Play Today'
+  | 'Collection';
 
 export type Achievement = {
   key: string;
@@ -94,6 +98,73 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
   { key: 'wcBoot', mark: '🔥', cat: 'World Cup', name: 'Golden Boot Hero', desc: 'A striker on fire all tournament.', hint: 'Score 6 or more with one player' },
   { key: 'wcWall', mark: '🧤', cat: 'World Cup', name: 'Iron Curtain', desc: 'Shutting out the world, game after game.', hint: '4 or more clean sheets in a tournament' },
   { key: 'wcDynasty', mark: '👑', cat: 'World Cup', name: 'World Dynasty', desc: 'Three World Cups. An era of dominance.', hint: 'Win 3 World Cups' },
+  /* champions league */
+  { key: 'uclDebut', mark: '⭐', cat: 'Champions League', name: 'European Nights', desc: 'You took a club into Europe and saw it through.', hint: 'Finish a Champions League campaign' },
+  { key: 'uclTop8', mark: '🎖', cat: 'Champions League', name: 'Straight Through', desc: 'Top eight in the league phase. No play-off needed.', hint: 'Finish the league phase in the top eight' },
+  { key: 'uclKnockout', mark: '🔓', cat: 'Champions League', name: 'Into the Last Sixteen', desc: 'Out of the league phase and into the bracket.', hint: 'Reach the Round of 16' },
+  { key: 'uclQuarter', mark: '🎯', cat: 'Champions League', name: 'Last Eight in Europe', desc: 'A genuine contender now.', hint: 'Reach the Quarter-Final' },
+  { key: 'uclSemi', mark: '🥈', cat: 'Champions League', name: 'Semi-Final Nights', desc: 'Two legs from the final.', hint: 'Reach the Semi-Final' },
+  { key: 'uclFinal', mark: '🎪', cat: 'Champions League', name: 'One Game From It', desc: 'A place in the Champions League final.', hint: 'Reach the final' },
+  { key: 'uclChampion', mark: '🏆', cat: 'Champions League', name: 'Kings of Europe', desc: 'The Champions League. The one everybody wants.', hint: 'Win the Champions League' },
+  { key: 'uclPerfect', mark: '💯', cat: 'Champions League', name: 'Eight From Eight', desc: 'The league phase, won outright.', hint: 'Win all eight matchdays' },
+  { key: 'uclUnbeaten', mark: '⚡', cat: 'Champions League', name: 'Untouched in Europe', desc: 'Lifted it without losing a match.', hint: 'Win the Champions League unbeaten' },
+  { key: 'uclComeback', mark: '🔄', cat: 'Champions League', name: 'The Second Leg', desc: 'Beaten in the first leg. Through on aggregate.', hint: 'Win a tie after losing the first leg' },
+  { key: 'uclPens', mark: '🎲', cat: 'Champions League', name: 'From Twelve Yards', desc: 'A shootout, and you were the ones still standing.', hint: 'Win a tie on penalties' },
+  { key: 'uclUnderdog', mark: '🐺', cat: 'Champions League', name: 'Nobody Fancied You', desc: 'A pot four club in the last eight.', hint: 'Reach the Quarter-Final from pot four' },
+  { key: 'uclDraftWin', mark: '🌌', cat: 'Champions League', name: 'Assembled', desc: 'An XI drafted out of thirty six squads, and it won the lot.', hint: 'Win it with a drafted Champions XI' },
+  { key: 'uclTreble', mark: '👑', cat: 'Champions League', name: 'European Dynasty', desc: 'Three European Cups. An era.', hint: 'Win the Champions League 3 times' },
+
+  /* dynasty */
+  { key: 'dynFirst', mark: '📋', cat: 'Dynasty', name: 'Taking the Job', desc: 'One season in the dugout, start to finish.', hint: 'Finish a Dynasty season' },
+  { key: 'dynTitle', mark: '🏆', cat: 'Dynasty', name: 'Champions', desc: 'A title won across a whole season with a real squad.', hint: 'Win the league in Dynasty' },
+  { key: 'dynTitles3', mark: '🥉', cat: 'Dynasty', name: 'A Proper Run', desc: 'Three titles at the same club.', hint: 'Win 3 titles in one career' },
+  { key: 'dynTitles5', mark: '💎', cat: 'Dynasty', name: 'An Era', desc: 'Five titles. They will name a stand after you.', hint: 'Win 5 titles in one career' },
+  { key: 'dynPromotion', mark: '⬆', cat: 'Dynasty', name: 'Going Up', desc: 'Out of the Championship and back where you belong.', hint: 'Win promotion' },
+  { key: 'dynRebuild', mark: '🦅', cat: 'Dynasty', name: 'All the Way Back', desc: 'Promoted, then champions of the division above.', hint: 'Win the league after a promotion' },
+  { key: 'dynFive', mark: '📆', cat: 'Dynasty', name: 'Five Seasons', desc: 'Long enough to be judged on it.', hint: '5 seasons in one career' },
+  { key: 'dynTen', mark: '🗓', cat: 'Dynasty', name: 'A Decade', desc: 'Ten seasons at the wheel.', hint: '10 seasons in one career' },
+  { key: 'dynTwentyFive', mark: '🏛', cat: 'Dynasty', name: 'Institution', desc: 'Twenty five seasons. Nobody remembers who came before.', hint: '25 seasons in one career' },
+  { key: 'dynPts100', mark: '💯', cat: 'Dynasty', name: 'A Hundred Points', desc: 'A hundred, in a real league, with a real squad.', hint: '100 points in a Dynasty season' },
+  { key: 'dynSacked', mark: '🚪', cat: 'Dynasty', name: 'Thanks For Your Time', desc: 'It happens to everybody eventually.', hint: 'Get sacked' },
+  { key: 'dynAcademy', mark: '🌱', cat: 'Dynasty', name: 'One of Our Own', desc: 'A boy out of the academy in the first team.', hint: 'Promote a youth player' },
+
+  /* play today */
+  { key: 'dailyFirst', mark: '📅', cat: 'Play Today', name: 'Today\u2019s XI', desc: 'The first Daily of many.', hint: 'Play a Daily' },
+  { key: 'dailyWin', mark: '🥇', cat: 'Play Today', name: 'Top of the Pile', desc: 'A Daily finished top of the table.', hint: 'Win a Daily' },
+  { key: 'dailyWeek', mark: '🔥', cat: 'Play Today', name: 'Seven Days', desc: 'A week without missing one.', hint: 'A 7 day Daily streak' },
+  { key: 'dailyMonth', mark: '🌙', cat: 'Play Today', name: 'Thirty Days', desc: 'A month straight. That is a habit now.', hint: 'A 30 day Daily streak' },
+  { key: 'daily50', mark: '📚', cat: 'Play Today', name: 'Fifty Dailies', desc: 'Fifty puzzles deep.', hint: 'Play 50 Dailies' },
+  { key: 'dailyWin10', mark: '👑', cat: 'Play Today', name: 'Serial Winner', desc: 'Ten Dailies won outright.', hint: 'Win 10 Dailies' },
+  { key: 'weeklyFirst', mark: '🎡', cat: 'Play Today', name: 'This Week\u2019s Twist', desc: 'The Weekly Event, attempted.', hint: 'Play a Weekly Event' },
+  { key: 'weeklyStreak4', mark: '🎠', cat: 'Play Today', name: 'Four Weeks Running', desc: 'Every week, whatever the twist was.', hint: 'A 4 week Weekly streak' },
+  { key: 'duelFirst', mark: '⚔', cat: 'Play Today', name: 'Head to Head', desc: 'Your first duel.', hint: 'Play a duel' },
+  { key: 'duelWin', mark: '🗡', cat: 'Play Today', name: 'Beaten Them', desc: 'A duel won.', hint: 'Win a duel' },
+  { key: 'duelWin10', mark: '🛡', cat: 'Play Today', name: 'Ten Scalps', desc: 'Ten duels won.', hint: 'Win 10 duels' },
+  { key: 'duelWin25', mark: '⚜', cat: 'Play Today', name: 'Unbeatable', desc: 'Twenty five duels won.', hint: 'Win 25 duels' },
+
+  /* collection */
+  { key: 'cards10', mark: '🃏', cat: 'Collection', name: 'A Start', desc: 'Ten cards in the album.', hint: 'Own 10 cards' },
+  { key: 'cards100', mark: '📔', cat: 'Collection', name: 'A Hundred Cards', desc: 'The album is filling up.', hint: 'Own 100 cards' },
+  { key: 'cards500', mark: '📕', cat: 'Collection', name: 'Five Hundred', desc: 'A serious collection.', hint: 'Own 500 cards' },
+  { key: 'cards1000', mark: '📚', cat: 'Collection', name: 'A Thousand', desc: 'Most people stop a long way before this.', hint: 'Own 1,000 cards' },
+  { key: 'firstIcon', mark: '✨', cat: 'Collection', name: 'An Icon', desc: 'Ninety or better. The ones you remember.', hint: 'Own an icon card' },
+  { key: 'icons10', mark: '🌠', cat: 'Collection', name: 'Ten Icons', desc: 'A shelf of the very best.', hint: 'Own 10 icon cards' },
+  { key: 'card95', mark: '💫', cat: 'Collection', name: 'The Very Best', desc: 'A ninety five. There are not many.', hint: 'Own a card rated 95 or better' },
+  { key: 'setFirst', mark: '🧩', cat: 'Collection', name: 'A Complete Set', desc: 'Every card in one set.', hint: 'Complete a set' },
+  { key: 'sets5', mark: '🧷', cat: 'Collection', name: 'Five Sets', desc: 'Five of them finished.', hint: 'Complete 5 sets' },
+  { key: 'setsAll', mark: '🏅', cat: 'Collection', name: 'Every Set', desc: 'All of them. Nothing left to chase.', hint: 'Complete every set' },
+  { key: 'level10', mark: '🔟', cat: 'Collection', name: 'Level Ten', desc: 'Ten levels in.', hint: 'Reach level 10' },
+  { key: 'level25', mark: '🎖', cat: 'Collection', name: 'Level Twenty Five', desc: 'Halfway up.', hint: 'Reach level 25' },
+  { key: 'level50', mark: '🏔', cat: 'Collection', name: 'The Top', desc: 'Level fifty. There is nothing above it.', hint: 'Reach level 50' },
+
+  /* more of what one season can do */
+  { key: 'pts120', mark: '🚀', cat: 'Records', name: 'Beyond Reason', desc: '120 points. That should not be possible.', hint: '120 points or more' },
+  { key: 'goals120', mark: '🌋', cat: 'Records', name: 'Avalanche', desc: '120 goals in thirty eight games.', hint: '120 goals or more' },
+  { key: 'gd75', mark: '📐', cat: 'Records', name: 'Not Even Close', desc: 'A goal difference nobody could live with.', hint: 'A goal difference of 75 or more' },
+  { key: 'streak25', mark: '🌀', cat: 'Records', name: 'Twenty Five Straight', desc: 'Two thirds of a season, all won.', hint: 'A 25 game winning streak' },
+  { key: 'blitzTitle', mark: '⏱', cat: 'Challenges', name: 'Blitz Champion', desc: 'The title, drafted against the clock.', hint: 'Win the title in Blitz' },
+  { key: 'retroTitle', mark: '📼', cat: 'Challenges', name: 'Before Your Time', desc: 'Won it with players from another era.', hint: 'Win the title with an era ending before 2005' },
+  { key: 'cleanSweep', mark: '🌟', cat: 'Challenges', name: 'The Perfect Year', desc: 'Everything, and not beaten once.', hint: 'Win the treble unbeaten' },
 ];
 
 export const CATEGORIES: readonly AchCategory[] = [
@@ -103,7 +174,25 @@ export const CATEGORIES: readonly AchCategory[] = [
   'Milestones',
   'Cups',
   'World Cup',
+  'Champions League',
+  'Dynasty',
+  'Play Today',
+  'Collection',
 ];
+
+/** One line under each heading, so a shelf says what it is for. */
+export const CATEGORY_NOTE: Record<AchCategory, string> = {
+  'First Steps': 'The first time you did each of these',
+  Records: 'What one season can be made to do',
+  Challenges: 'Done the hard way, or not at all',
+  Milestones: 'Everything you have ever done, added up',
+  Cups: 'The National and Continental Cups',
+  'World Cup': 'Forty eight nations, seven matches',
+  'Champions League': 'A league phase, then the knockout',
+  Dynasty: 'A career at one club, across seasons',
+  'Play Today': 'The Daily, the Weekly and duels',
+  Collection: 'Cards, sets and levels',
+};
 
 export function achievementFor(key: string): Achievement | undefined {
   return ACHIEVEMENTS.find((a) => a.key === key);
@@ -131,6 +220,26 @@ export type Career = {
   lastRelegated: boolean;
   /** formations a title has been won with */
   titleFormations: string[];
+
+  /**
+   * The tournaments and the career.
+   *
+   * These are counted here rather than read back off a run, because a run
+   * is thrown away when the next one starts and a third World Cup has to
+   * know about the first two.
+   */
+  wcRuns: number;
+  wcTitles: number;
+  /** the furthest a World Cup run has got, nought to six */
+  wcBest: number;
+  uclRuns: number;
+  uclTitles: number;
+  /** the furthest a Champions League campaign has got, nought to six */
+  uclBest: number;
+  dynSeasons: number;
+  dynTitles: number;
+  dynBestPts: number;
+
   earned: string[];
 };
 
@@ -146,6 +255,15 @@ export const EMPTY_CAREER: Career = {
   trebles: 0,
   lastRelegated: false,
   titleFormations: [],
+  wcRuns: 0,
+  wcTitles: 0,
+  wcBest: 0,
+  uclRuns: 0,
+  uclTitles: 0,
+  uclBest: 0,
+  dynSeasons: 0,
+  dynTitles: 0,
+  dynBestPts: 0,
   earned: [],
 };
 
@@ -181,6 +299,15 @@ export function foldSeason(
       champion && !career.titleFormations.includes(config.formation)
         ? [...career.titleFormations, config.formation]
         : career.titleFormations,
+    wcRuns: career.wcRuns,
+    wcTitles: career.wcTitles,
+    wcBest: career.wcBest,
+    uclRuns: career.uclRuns,
+    uclTitles: career.uclTitles,
+    uclBest: career.uclBest,
+    dynSeasons: career.dynSeasons,
+    dynTitles: career.dynTitles,
+    dynBestPts: career.dynBestPts,
     earned: career.earned,
   };
 }
@@ -271,6 +398,14 @@ export function earn(args: {
     avg < 80 && (cups.national.won || cups.national.elim === 'Final'),
   );
 
+  give('pts120', result.pts >= 120);
+  give('goals120', result.gf >= 120);
+  give('gd75', result.gf - result.ga >= 75);
+  give('streak25', result.longestStreak >= 25);
+  give('blitzTitle', champion && Boolean(config.blitz));
+  give('retroTitle', champion && config.eraTo < 2005);
+  give('cleanSweep', cups.treble && unbeaten);
+
   return out;
 }
 
@@ -310,6 +445,19 @@ export function nextUp(career: Career, limit = 3): Target[] {
     { key: 'continentalCup', have: career.continentalCups, need: 1 },
     { key: 'cupDouble', have: career.doubles, need: 1 },
     { key: 'treble', have: career.trebles, need: 1 },
+    { key: 'wcDebut', have: career.wcRuns, need: 1 },
+    { key: 'wcChampion', have: career.wcTitles, need: 1 },
+    { key: 'wcDynasty', have: career.wcTitles, need: 3 },
+    { key: 'uclDebut', have: career.uclRuns, need: 1 },
+    { key: 'uclChampion', have: career.uclTitles, need: 1 },
+    { key: 'uclTreble', have: career.uclTitles, need: 3 },
+    { key: 'dynFirst', have: career.dynSeasons, need: 1 },
+    { key: 'dynFive', have: career.dynSeasons, need: 5 },
+    { key: 'dynTen', have: career.dynSeasons, need: 10 },
+    { key: 'dynTwentyFive', have: career.dynSeasons, need: 25 },
+    { key: 'dynTitle', have: career.dynTitles, need: 1 },
+    { key: 'dynTitles3', have: career.dynTitles, need: 3 },
+    { key: 'dynTitles5', have: career.dynTitles, need: 5 },
   ];
 
   return countable
@@ -330,5 +478,257 @@ export function recent(career: Career, limit = 4): Achievement[] {
     const a = achievementFor(career.earned[i]);
     if (a) out.push(a);
   }
+  return out;
+}
+
+/* ================= the tournaments ================= */
+
+/**
+ * How far a World Cup run got, as a number.
+ *
+ * Nought is the group stage and six is the trophy, so "reached the
+ * quarter-finals" is one comparison rather than a chain of them.
+ */
+const WC_ORDER: readonly string[] = ['group', 'r32', 'r16', 'qf', 'sf', 'final'];
+
+export function wcReached(run: WcRun): number {
+  if (run.won) return 6;
+  const at = WC_ORDER.indexOf(run.outAt ?? 'group');
+  return at < 0 ? 0 : at;
+}
+
+/** One finished World Cup, folded into the career. */
+export function foldWorldCup(career: Career, run: WcRun): Career {
+  return {
+    ...career,
+    wcRuns: career.wcRuns + 1,
+    wcTitles: career.wcTitles + (run.won ? 1 : 0),
+    wcBest: Math.max(career.wcBest, wcReached(run)),
+  };
+}
+
+/**
+ * What a finished World Cup earned.
+ *
+ * `career` must already have the run folded in, the same way the season
+ * ones work, so a third World Cup can be the one that earns the third.
+ */
+export function earnWorldCup(career: Career, run: WcRun): string[] {
+  const has = new Set(career.earned);
+  const out: string[] = [];
+  const give = (key: string, when: boolean) => {
+    if (when && !has.has(key)) {
+      has.add(key);
+      out.push(key);
+    }
+  };
+
+  const got = wcReached(run);
+  const lost = run.played.some((m) =>
+    m.pens ? m.pens.a < m.pens.b : m.ga < m.gb,
+  );
+  const topScorer = Math.max(0, ...Object.values(run.squad).map((s) => s.g));
+
+  give('wcDebut', true);
+  give('wcKnockout', got >= 1);
+  give('wcQuarter', got >= 3);
+  give('wcSemi', got >= 4);
+  give('wcFinal', got >= 5);
+  give('wcChampion', run.won);
+  give('wcUnbeaten', run.won && !lost);
+  give('wcWorldXI', run.won && Boolean(run.custom));
+  give('wcBoot', topScorer >= 6);
+  give('wcWall', run.cleanSheets >= 4);
+  give('wcDynasty', career.wcTitles >= 3);
+
+  return out;
+}
+
+const UCL_ORDER: readonly string[] = ['league', 'po', 'r16', 'qf', 'sf', 'final'];
+
+export function uclReached(run: UclRun): number {
+  if (run.won) return 6;
+  const at = UCL_ORDER.indexOf(run.outAt ?? 'league');
+  return at < 0 ? 0 : at;
+}
+
+/** One finished Champions League campaign, folded into the career. */
+export function foldUcl(career: Career, run: UclRun): Career {
+  return {
+    ...career,
+    uclRuns: career.uclRuns + 1,
+    uclTitles: career.uclTitles + (run.won ? 1 : 0),
+    uclBest: Math.max(career.uclBest, uclReached(run)),
+  };
+}
+
+export function earnUcl(career: Career, run: UclRun, pot: number): string[] {
+  const has = new Set(career.earned);
+  const out: string[] = [];
+  const give = (key: string, when: boolean) => {
+    if (when && !has.has(key)) {
+      has.add(key);
+      out.push(key);
+    }
+  };
+
+  const got = uclReached(run);
+  const league = run.played.filter((m) => m.stage === 'league');
+  const leagueWins = league.filter((m) => m.ga > m.gb).length;
+  const lost = run.played.some((m) => m.ga < m.gb);
+  const rank = run.rank[run.you] ?? 36;
+
+  /* A comeback is a first leg lost and the tie won anyway, which is
+     readable off the second leg's aggregate. */
+  let comeback = false;
+  let shootout = false;
+  for (let i = 0; i < run.played.length; i++) {
+    const m = run.played[i];
+    if (m.stage === 'league' || m.stage === 'final') continue;
+    if (m.n !== 2 || !m.agg) continue;
+    const wonTie = m.pens ? m.pens.a > m.pens.b : m.agg.a > m.agg.b;
+    if (m.pens && m.pens.a > m.pens.b) shootout = true;
+    const first = run.played[i - 1];
+    if (wonTie && first && first.n === 1 && first.ga < first.gb) comeback = true;
+  }
+
+  give('uclDebut', true);
+  give('uclTop8', run.order.length > 0 && rank <= 8);
+  give('uclKnockout', got >= 2);
+  give('uclQuarter', got >= 3);
+  give('uclSemi', got >= 4);
+  give('uclFinal', got >= 5);
+  give('uclChampion', run.won);
+  give('uclPerfect', league.length === 8 && leagueWins === 8);
+  give('uclUnbeaten', run.won && !lost);
+  give('uclComeback', comeback);
+  give('uclPens', shootout);
+  give('uclUnderdog', got >= 3 && pot === 4);
+  give('uclDraftWin', run.won && Boolean(run.custom));
+  give('uclTreble', career.uclTitles >= 3);
+
+  return out;
+}
+
+/* ================= dynasty ================= */
+
+/** One finished Dynasty season, folded into the career. */
+export function foldDynasty(career: Career, d: Dynasty): Career {
+  return {
+    ...career,
+    dynSeasons: Math.max(career.dynSeasons, d.year),
+    dynTitles: Math.max(career.dynTitles, d.titles),
+    dynBestPts: Math.max(career.dynBestPts, d.records?.bestPts ?? 0),
+  };
+}
+
+export function earnDynasty(career: Career, d: Dynasty): string[] {
+  const has = new Set(career.earned);
+  const out: string[] = [];
+  const give = (key: string, when: boolean) => {
+    if (when && !has.has(key)) {
+      has.add(key);
+      out.push(key);
+    }
+  };
+
+  const rows = d.seasons ?? [];
+  /* Promotion is a season in the division below followed by one above it,
+     which is the only place the fact survives. */
+  let promoted = false;
+  let titleAfterPromotion = false;
+  for (let i = 1; i < rows.length; i++) {
+    if ((rows[i - 1].div ?? 1) === 2 && (rows[i].div ?? 1) === 1) promoted = true;
+    if (promoted && (rows[i].div ?? 1) === 1 && rows[i].fin === 1) titleAfterPromotion = true;
+  }
+  if (rows.length && (rows[rows.length - 1].div ?? 1) === 1 && rows.some((r) => (r.div ?? 1) === 2)) {
+    promoted = true;
+  }
+
+  /* A shirt in the first team that came out of the academy. The youth
+     themselves sit outside the roster until they are promoted, so a
+     roster place is exactly the fact worth rewarding. */
+  const roster = d.roster ?? [];
+  const academy = roster.some((p) => p !== null && p.season === 'Academy');
+
+  give('dynFirst', rows.length >= 1);
+  give('dynTitle', d.titles >= 1);
+  give('dynTitles3', d.titles >= 3);
+  give('dynTitles5', d.titles >= 5);
+  give('dynPromotion', promoted);
+  give('dynRebuild', titleAfterPromotion);
+  give('dynFive', d.year >= 5);
+  give('dynTen', d.year >= 10);
+  give('dynTwentyFive', d.year >= 25);
+  give('dynPts100', (d.records?.bestPts ?? 0) >= 100);
+  give('dynSacked', Boolean(d.sacked));
+  give('dynAcademy', academy);
+
+  return out;
+}
+
+/* ================= everything that can be re-read ================= */
+
+/**
+ * What the rest of the app is holding, as the cabinet needs to see it.
+ *
+ * These conditions are all re-derivable: how many cards are in the album,
+ * what level you are, how long the Daily streak is. Nothing here has to be
+ * caught at the moment it happens, so rather than wiring a hook into every
+ * screen that could earn one, the cabinet sweeps them whenever it opens
+ * and whenever a run ends. A condition that can be checked later should be
+ * checked later; only the ones that would be lost need a hook.
+ */
+export type Standing = {
+  /** cards owned, by rarity and in total */
+  cards: { all: number; icon: number };
+  /** the best rated card in the album */
+  bestCard: number;
+  /** sets finished, and how many there are */
+  sets: number;
+  setsTotal: number;
+  level: number;
+  daily: { played: number; won: number; streak: number };
+  weekly: { played: number; streak: number };
+  duels: { played: number; won: number };
+};
+
+export function sweep(career: Career, now: Standing): string[] {
+  const has = new Set(career.earned);
+  const out: string[] = [];
+  const give = (key: string, when: boolean) => {
+    if (when && !has.has(key)) {
+      has.add(key);
+      out.push(key);
+    }
+  };
+
+  give('cards10', now.cards.all >= 10);
+  give('cards100', now.cards.all >= 100);
+  give('cards500', now.cards.all >= 500);
+  give('cards1000', now.cards.all >= 1000);
+  give('firstIcon', now.cards.icon >= 1);
+  give('icons10', now.cards.icon >= 10);
+  give('card95', now.bestCard >= 95);
+  give('setFirst', now.sets >= 1);
+  give('sets5', now.sets >= 5);
+  give('setsAll', now.setsTotal > 0 && now.sets >= now.setsTotal);
+  give('level10', now.level >= 10);
+  give('level25', now.level >= 25);
+  give('level50', now.level >= 50);
+
+  give('dailyFirst', now.daily.played >= 1);
+  give('dailyWin', now.daily.won >= 1);
+  give('dailyWeek', now.daily.streak >= 7);
+  give('dailyMonth', now.daily.streak >= 30);
+  give('daily50', now.daily.played >= 50);
+  give('dailyWin10', now.daily.won >= 10);
+  give('weeklyFirst', now.weekly.played >= 1);
+  give('weeklyStreak4', now.weekly.streak >= 4);
+  give('duelFirst', now.duels.played >= 1);
+  give('duelWin', now.duels.won >= 1);
+  give('duelWin10', now.duels.won >= 10);
+  give('duelWin25', now.duels.won >= 25);
+
   return out;
 }

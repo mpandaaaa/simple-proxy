@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { worldCupStore } from '../save';
+import { awardWorldCup } from './award';
 import { wcPlayNext, wcStart, type WcCustom, type WcPlayed, type WcRun } from '../engine';
 
 /**
@@ -68,6 +69,9 @@ export function playNextMatch(): WcPlayed | null {
   const step = wcPlayNext(current);
   if (!step) return null;
   setWorldCup(step.run);
+  /* A tournament that has just ended is the moment the cabinet has to be
+     told, because the run is thrown away when the next one starts. */
+  if (step.run.over) awardWorldCup(step.run);
   return step;
 }
 
