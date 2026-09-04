@@ -43,6 +43,34 @@
 const RUNTIME = '1.0.0';
 
 /**
+ * Which build this is.
+ *
+ * EAS sets this while it builds. Running locally there is no profile, and
+ * a development server is only ever feeding a development build, so that
+ * is the sensible default.
+ */
+const PROFILE = process.env.EAS_BUILD_PROFILE ?? 'development';
+const IS_DEV_BUILD = PROFILE === 'development';
+
+/**
+ * The bundle identifier, and why the development one is different.
+ *
+ * iOS decides whether an install is a new app or an update to an existing
+ * one purely on this string. With one identifier for everything, putting
+ * a preview build on the phone silently replaced the development build,
+ * which is the only one that can talk to a development server. One tap
+ * and the whole working setup is gone.
+ *
+ * So the development build gets its own identifier and its own name, and
+ * lives on the phone beside the real one. Preview and production keep the
+ * real identifier deliberately: it is the one registered with AdMob, and
+ * an advert unit will not serve to an app whose identifier does not match
+ * the one it was created for.
+ */
+const BUNDLE = IS_DEV_BUILD ? 'app.perfectxi.game.dev' : 'app.perfectxi.game';
+const APP_NAME = IS_DEV_BUILD ? 'Perfect XI dev' : 'Perfect XI';
+
+/**
  * The advert account.
  *
  * The application id is the real one and has to be here, because it goes
@@ -74,7 +102,7 @@ const ADMOB = {
 };
 
 module.exports = () => ({
-  name: 'Perfect XI',
+  name: APP_NAME,
   slug: 'perfectxi',
   version: '1.0.0',
   orientation: 'portrait',
@@ -86,18 +114,30 @@ module.exports = () => ({
     /* An iPad runs this perfectly well and it is the same portrait layout
        on a bigger screen. Locked to portrait, like the phone. */
     supportsTablet: true,
-    /* The window behind the screens. Without it the back gesture, which
-       slides the top screen off whatever is underneath, framed the whole
-       app in white for the length of the swipe. */
+    /* The window behind the screens. */
     backgroundColor: '#0A0F0C',
-    bundleIdentifier: 'app.perfectxi.game',
+    /*
+     * The app owns the screen.
+     *
+     * Turning on iPad support quietly wrote UIRequiresFullScreen false
+     * into the app, which tells iOS the app is content to run in a
+     * resizable window rather than owning the display. That is what put a
+     * light frame around everything, status bar included, and it is why
+     * nothing in JavaScript could shift it: React Native cannot draw
+     * outside its own window and the frame was outside it.
+     *
+     * This game is portrait only and phone shaped. It has no use for a
+     * resizable window on any device, so it says so.
+     */
+    requireFullScreen: true,
+    bundleIdentifier: BUNDLE,
     buildNumber: '1',
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },
   },
   android: {
-    package: 'app.perfectxi.game',
+    package: BUNDLE,
     adaptiveIcon: {
       backgroundColor: '#0A0F0C',
       foregroundImage: './assets/android-icon-foreground.png',
