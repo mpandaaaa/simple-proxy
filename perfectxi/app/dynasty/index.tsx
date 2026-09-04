@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
-import { go, back } from '../../src/game/nav';
+import { back, enter, go } from '../../src/game/nav';
 import {
   ModeScreen,
   Press,
@@ -44,6 +44,7 @@ import {
   saleBlock,
 } from '../../src/engine';
 import { useCareer, getCareer, setCareer, slotSummaries, updateCareer } from '../../src/game/career';
+import { getUcl, startUclFromDynasty } from '../../src/game/ucl';
 
 /**
  * The Dynasty hub.
@@ -316,6 +317,18 @@ export default function DynastyHub() {
   const short = xi.length < 11;
   const outOfPosition = misfits(career);
   const tiles = DOORS;
+
+  /*
+   * A European campaign already on the go for this season.
+   *
+   * The run itself is the record of it, so this asks the run rather than
+   * the career: it is this club's, it is this year's, and it has not been
+   * folded into a season yet.
+   */
+  const live = getUcl();
+  const playedEurope = Boolean(
+    live && live.owner && live.owner.club === career.club && live.owner.year === career.year,
+  );
 
   return (
     <>
@@ -646,6 +659,34 @@ export default function DynastyHub() {
             <Text style={styles.playText}>Play season {career.year}</Text>
           </Press>
         )}
+
+        {/* ---- your European season, if there is one ---- */}
+        {career.europe === 'ucl' ? (
+          <Press
+            onPress={() => {
+              haptic('medium');
+              if (playedEurope) {
+                go('/ucl/hub');
+                return;
+              }
+              startUclFromDynasty(career);
+              enter('/ucl/hub');
+            }}
+            feel="none"
+            style={styles.euro}
+            scaleTo={0.98}
+          >
+            <Text style={styles.euroKey}>★ CHAMPIONS LEAGUE</Text>
+            <Text style={styles.euroTitle}>
+              {playedEurope ? 'Your European campaign' : 'Play it yourself'}
+            </Text>
+            <Text style={styles.euroSub}>
+              {playedEurope
+                ? 'Carry on where you left off. It counts as this season.'
+                : `${career.club} are in it this season. Play every night with this squad, or leave it and the summer will simulate it.`}
+            </Text>
+          </Press>
+        ) : null}
 
         {/* ---- the doors ---- */}
         <View style={styles.tiles}>
@@ -1263,6 +1304,24 @@ const styles = StyleSheet.create({
   lastKey: { ...text.key, fontSize: 9, color: color.text3 },
   lastPos: { fontFamily: font.displayBlack, fontSize: 34, lineHeight: 42, letterSpacing: 0.3 },
   lastMeta: { ...text.small, fontVariant: ['tabular-nums'] },
+
+  euro: {
+    marginTop: space.s3,
+    padding: space.s4,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: 'rgba(120,166,255,0.46)',
+    backgroundColor: 'rgba(79,143,255,0.13)',
+    gap: 2,
+  },
+  euroKey: { ...text.key, fontSize: 8, color: '#4FC3FF' },
+  euroTitle: {
+    fontFamily: font.displayBlack,
+    fontSize: 21,
+    lineHeight: 27,
+    color: color.text1,
+  },
+  euroSub: { ...text.small, fontSize: 12, lineHeight: 17, color: color.text2 },
 
   play: {
     marginTop: space.s4,

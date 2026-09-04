@@ -1,6 +1,7 @@
 import { UCL_CLUBS, UCL_SQUADS, type UclPlayer } from '../data/ucl';
 import { SQUADS } from '../data/squads';
 import { dcExpected, poissonR, strFromAvg } from './sim';
+import type { CupLeg, PlayedEuro } from './cups';
 import { mulberry32, type Rng } from './rng';
 
 /**
@@ -112,6 +113,14 @@ export type UclRun = {
   won: boolean;
   /** the rest of the field's scorers, for the golden boot */
   world: UclWorldScorer[];
+  /**
+   * The Dynasty career this campaign belongs to, if it belongs to one.
+   *
+   * A campaign started from a career is that career's European season and
+   * is handed back to it when it ends. A campaign started from the front
+   * door belongs to nobody and this is null.
+   */
+  owner?: { club: string; year: number } | null;
 };
 
 export type UclWorldScorer = {
@@ -603,7 +612,12 @@ function yourFixtures(you: string): UclMatch[] {
   return out.sort((x, y) => x.n - y.n);
 }
 
-export function uclStart(you: string, seed: number, custom?: UclCustom | null): UclRun {
+export function uclStart(
+  you: string,
+  seed: number,
+  custom?: UclCustom | null,
+  owner?: { club: string; year: number } | null,
+): UclRun {
   return {
     seed: seed >>> 0,
     you,
@@ -622,6 +636,7 @@ export function uclStart(you: string, seed: number, custom?: UclCustom | null): 
     outAt: null,
     won: false,
     world: [],
+    owner: owner ?? null,
   };
 }
 
@@ -1013,6 +1028,100 @@ export function uclScorers(run: UclRun): { n: string; g: number; a: number }[] {
   return Object.entries(run.squad)
     .map(([n, s]) => ({ n, g: s.g, a: s.a }))
     .sort((x, y) => y.g - x.g || y.a - x.a || x.n.localeCompare(y.n));
+}
+
+/* ---------- handing a campaign back to a career ---------- */
+
+const ROUND_NAME: Record<string, string> = {
+  po: 'Playoff',
+  r16: 'Last 16',
+  qf: 'Quarter-Final',
+  sf: 'Semi-Final',
+  final: 'Final',
+};
+
+/**
+ * A finished campaign, in the shape a Dynasty season wants.
+ *
+ * A career that plays its European nights for real must not also have
+ * them simulated, so the season is handed this instead and builds its
+ * European run out of it. Everything a Dynasty cares about is in here:
+ * where the league phase left you, every tie in order, and whether you
+ * lifted it.
+ */
+export function uclAsPlayed(run: UclRun): PlayedEuro {
+  const league = run.played.filter((m) => m.stage === 'league');
+  let w = 0;
+  let d = 0;
+  let l = 0;
+  let gf = 0;
+  let ga = 0;
+  for (const m of league) {
+    gf += m.ga;
+    ga += m.gb;
+    if (m.ga > m.gb) w++;
+    else if (m.ga < m.gb) l++;
+    else d++;
+  }
+
+  /* Every knockout tie, rebuilt from its legs. A two legged tie is two
+     matches with an aggregate on the second; a final is one match. */
+  const ties: PlayedEuro['ties'] = [];
+  const knockouts = run.played.filter((m) => m.stage !== 'league');
+  for (let i = 0; i < knockouts.length; i++) {
+    const m = knockouts[i];
+    if (m.stage === 'final') {
+      ties.push({
+        round: 'Final',
+        opp: m.b,
+        oppRating: Math.round(ratingOf(run, m.b)),
+        gf: m.ga,
+        ga: m.gb,
+        won: m.pens ? m.pens.a > m.pens.b : m.ga > m.gb,
+        legs: null,
+        pens: m.pens
+          ? m.pens.a > m.pens.b
+            ? 'won on penalties'
+            : 'lost on penalties'
+          : null,
+      });
+      continue;
+    }
+    /* The first leg is only half a tie, so it is read from the second. */
+    if (m.n !== 2) continue;
+    const first = knockouts[i - 1];
+    const legs: CupLeg[] = [
+      { gf: first?.ga ?? 0, ga: first?.gb ?? 0, home: Boolean(first?.home) },
+      { gf: m.ga, ga: m.gb, home: m.home },
+    ];
+    const aggA = m.agg?.a ?? legs[0].gf + legs[1].gf;
+    const aggB = m.agg?.b ?? legs[0].ga + legs[1].ga;
+    ties.push({
+      round: ROUND_NAME[m.stage] ?? 'Last 16',
+      opp: m.b,
+      oppRating: Math.round(ratingOf(run, m.b)),
+      gf: aggA,
+      ga: aggB,
+      won: m.pens ? m.pens.a > m.pens.b : aggA > aggB,
+      legs,
+      pens: m.pens
+        ? m.pens.a > m.pens.b
+          ? 'won on penalties'
+          : 'lost on penalties'
+        : null,
+    });
+  }
+
+  return {
+    place: run.rank[run.you] ?? uclPosition(run),
+    w,
+    d,
+    l,
+    gf,
+    ga,
+    ties,
+    won: run.won,
+  };
 }
 
 /** Where you sit in the table right now. */

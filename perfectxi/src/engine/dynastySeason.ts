@@ -158,11 +158,17 @@ export function processSeasonEnd(
     myAvg: squadRating(starters(d)),
     leaguePosition: result.position,
     europe: d.europe,
+    /* A campaign played match by match beats one drawn here, and only for
+       the season it belongs to. */
+    played: d.euro && d.euro.year === d.year ? d.euro : null,
     shield: d.shield,
     runSeed: (d.seed ^ Math.imul(d.year, 0x2545f491)) >>> 0,
     club: d.club,
   });
   next.europe = cups.europeNext;
+  /* Used, and gone. A campaign belongs to the season it was played in and
+     must never be folded into a second one. */
+  next.euro = null;
   next.lastCups = cups;
   next.shield = nextShield(d, result, cups, rnd);
   next.honours = { ...d.honours };

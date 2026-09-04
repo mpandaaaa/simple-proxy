@@ -609,6 +609,131 @@ function european(
   };
 }
 
+/* ---------- a European run somebody actually played ---------- */
+
+/**
+ * A real Champions League campaign, as a Dynasty season's European run.
+ *
+ * Dynasty has always simulated its European campaign as part of the
+ * season: eight abstract matchdays, a placing, a couple of ties. The
+ * Champions League is now a competition you can play match by match with
+ * your own squad, and both cannot count.
+ *
+ * So the real one wins. When a season's European campaign has been played
+ * out for real, this turns it into the same `CupRun` the season would
+ * have produced, and everything downstream carries on unchanged: the
+ * trophy, the prize money, the qualification for next season, and the
+ * treble. Nothing is simulated twice and nothing is counted twice.
+ *
+ * The money is the same table the simulation pays from, so playing it
+ * yourself is worth exactly what letting it run would have been worth.
+ */
+export type PlayedEuro = {
+  /** where the league phase left you, one to thirty six */
+  place: number;
+  w: number;
+  d: number;
+  l: number;
+  gf: number;
+  ga: number;
+  /** every knockout tie, in the order they were played */
+  ties: {
+    /** 'Playoff', 'Last 16', 'Quarter-Final', 'Semi-Final' or 'Final' */
+    round: string;
+    opp: string;
+    oppRating: number;
+    gf: number;
+    ga: number;
+    won: boolean;
+    legs: CupLeg[] | null;
+    pens: string | null;
+  }[];
+  won: boolean;
+};
+
+export function playedEuroRun(id: 'ucl' | 'uel' | 'uecl', got: PlayedEuro): CupRun {
+  const pay = EURO_MONEY[id];
+  const stages = ['League Phase', 'Playoff', ...EURO_KO];
+  const ties: CupTie[] = [];
+
+  const place = Math.max(1, Math.min(36, Math.round(got.place)));
+  let earned = pay.base + got.w * pay.win + got.d * pay.draw + (37 - place) * pay.place;
+
+  ties.push({
+    round: 'League Phase',
+    opp: null,
+    oppRating: 0,
+    gf: got.gf,
+    ga: got.ga,
+    won: place <= 24,
+    md: 4,
+    home: true,
+    neutral: false,
+    legs: null,
+    pens: null,
+    detail: `${place}${ordinalSuffix(place)} of 36 · P${got.w + got.d + got.l} W${got.w} D${got.d} L${got.l}`,
+  });
+
+  if (place > 24) {
+    return {
+      id,
+      name: COMPS[id].name,
+      entered: true,
+      qualified: true,
+      ties,
+      won: false,
+      elim: 'League Phase',
+      stages,
+      reached: 0,
+      money: Math.round(earned * 100) / 100,
+    };
+  }
+
+  earned += place > 8 ? pay.playoff : pay.topEight;
+
+  let elim: string | null = null;
+  for (const t of got.ties) {
+    const last = t.round === 'Final';
+    ties.push({
+      round: t.round,
+      opp: t.opp,
+      oppRating: t.oppRating,
+      gf: t.gf,
+      ga: t.ga,
+      won: t.won,
+      md: last ? 37 : (EURO_KO_MD[EURO_KO.indexOf(t.round)] ?? 22),
+      home: true,
+      neutral: last,
+      legs: t.legs,
+      pens: t.pens,
+      detail: t.legs
+        ? `${t.legs[0]?.gf ?? 0}-${t.legs[0]?.ga ?? 0}, ${t.legs[1]?.gf ?? 0}-${t.legs[1]?.ga ?? 0} on aggregate`
+        : null,
+    });
+    const k = EURO_KO.indexOf(t.round);
+    if (k >= 0) earned += pay.ko[k];
+    if (!t.won) {
+      elim = t.round;
+      break;
+    }
+  }
+
+  if (!elim && got.won) earned += pay.lift;
+
+  return {
+    id,
+    name: COMPS[id].name,
+    entered: true,
+    qualified: true,
+    ties,
+    won: got.won,
+    elim,
+    stages,
+    reached: elim ? Math.max(0, stages.indexOf(elim)) : stages.length,
+    money: Math.round(earned * 100) / 100,
+  };
+}
+
 function ordinalSuffix(n: number): string {
   const s = ['th', 'st', 'nd', 'rd'];
   const v = n % 100;
@@ -662,8 +787,25 @@ export function simulateSeasonCups(args: {
   runSeed: number;
   /** the club you manage, so you are never drawn against yourself */
   club?: string | null;
+  /**
+   * A European campaign that was played match by match rather than
+   * simulated here.
+   *
+   * When it is given, the European run is built from it and nothing about
+   * it is drawn: the trophy, the money and the qualification for next
+   * season all come from what actually happened.
+   */
+  played?: PlayedEuro | null;
 }): CupSeason {
-  const { myAvg, leaguePosition, europe, shield, runSeed, club = null } = args;
+  const {
+    myAvg,
+    leaguePosition,
+    europe,
+    shield,
+    runSeed,
+    club = null,
+    played = null,
+  } = args;
   const rnd = mulberry32(cupSeed(runSeed));
 
   const runs: CupRun[] = [];
@@ -692,7 +834,11 @@ export function simulateSeasonCups(args: {
     runs.push(emptyRun('shield'));
   }
 
-  const euroRun = europe ? european(europe, myAvg, club, rnd) : null;
+  const euroRun = europe
+    ? played
+      ? playedEuroRun(europe, played)
+      : european(europe, myAvg, club, rnd)
+    : null;
 
   runs.push(domestic('efl', myAvg, europe !== null, club, rnd));
   runs.push(domestic('fa', myAvg, europe !== null, club, rnd));

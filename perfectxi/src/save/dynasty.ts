@@ -274,7 +274,7 @@ function migrateToFour(v: unknown): Dynasty | null {
 function makeSlot(key: string) {
   return defineStore<Dynasty | null>({
   key,
-  version: 13,
+  version: 14,
   fallback: null,
   validate: isDynasty,
   migrations: {
@@ -393,6 +393,10 @@ function makeSlot(key: string) {
         infra: { ...d.infra, retail: typeof d.infra.retail === 'number' ? d.infra.retail : 1 },
       };
     },
+    /* Fourteen is playing your European campaign yourself. A career from
+       before it has not played one, which is what null means, so its
+       seasons carry on being simulated exactly as they were. */
+    14: (v) => (v ? { ...(v as Dynasty), euro: null } : null),
   },
   });
 }

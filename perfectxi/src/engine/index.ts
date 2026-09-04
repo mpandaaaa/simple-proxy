@@ -79,6 +79,9 @@ export type {
   Highlight,
 } from './sim';
 
+export { playedEuroRun } from './cups';
+export type { PlayedEuro } from './cups';
+
 export {
   simulateCups,
   simulateSeasonCups,
@@ -428,6 +431,7 @@ export {
   uclSummary,
   uclScorers,
   uclPosition,
+  uclAsPlayed,
 } from './ucl';
 export type {
   UclStage,

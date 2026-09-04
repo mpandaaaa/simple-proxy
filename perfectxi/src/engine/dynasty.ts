@@ -1,3 +1,4 @@
+import type { PlayedEuro } from './cups';
 import type { Position, Slot } from './types';
 import type { Rng } from './rng';
 import { mulberry32 } from './rng';
@@ -722,6 +723,16 @@ export type Dynasty = {
   /** who is injured right now, by name */
   injuries: string[];
   sacked: boolean;
+  /**
+   * A European campaign played match by match rather than simulated.
+   *
+   * Set when you take the club into the real Champions League from the
+   * hub, and read once when the season is closed: the season builds its
+   * European run out of this instead of drawing one, so the trophy and
+   * the money are the ones you actually won. Cleared with the season, so
+   * it can never be counted twice.
+   */
+  euro?: (PlayedEuro & { year: number }) | null;
 };
 
 export const EMPTY_TACTIC: Tactic = {
