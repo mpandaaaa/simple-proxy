@@ -21,4 +21,5 @@ export { looksStore, EMPTY_LOOKS, type Looks } from './looks';
 export { worldCupStore } from './worldcup';
 export { wcDraftStore } from './worldcupDraft';
 export { uclStore } from './ucl';
+export { cupStore } from './cup';
 export { uclDraftStore } from './uclDraft';

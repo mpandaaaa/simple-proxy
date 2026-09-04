@@ -460,3 +460,19 @@ export {
   uclDraftSquad,
 } from './uclDraft';
 export type { UclPick, UclDraftState, UclDraftSlot } from './uclDraft';
+
+export {
+  CUP_ROUND_NAME,
+  CUP_ROUNDS,
+  cupSide,
+  cupSquad,
+  cupField,
+  strongestSixteen,
+  spreadSixteen,
+  drawSixteen,
+  playTie,
+  cupStart,
+  cupPlayNext,
+  cupReached,
+} from './cupTie';
+export type { CupSide, CupRound, CupMatch, CupRun as CupTieRun, CupPlayed } from './cupTie';

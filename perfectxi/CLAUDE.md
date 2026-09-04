@@ -75,6 +75,7 @@ app/draft/           setup, board, season
 app/dynasty/         the career. start hub season summer market tactics
                      squad academy staff club finances history
 app/ucl/            the Champions League. index draft hub match report
+app/cup/            the knockout, any era. index hub match
 app/hall.tsx         every season kept, ranked
 app/cabinet.tsx      silverware and the achievement catalogue, ten shelves
 app/settings.tsx     sound, speed, voice, reminder, backup, what is saved
@@ -214,6 +215,8 @@ npm run source                         # the mistakes that reached a phone once
 npm run cabinet                        # every achievement can be earned
 npm run tscreens                       # every field a tournament screen reads
 npm run slots                          # no career can write over another
+npm run dyneurope                      # a played campaign counts once
+npm run cup                            # every bracket halves cleanly
 npm run verify                         # all of the above
 ```
 

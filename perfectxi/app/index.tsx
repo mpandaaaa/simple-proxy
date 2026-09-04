@@ -48,10 +48,13 @@ import {
   collectionStore,
   worldCupStore,
   uclStore,
+  cupStore,
 } from '../src/save';
 import {
   STAGE_NAME,
   UCL_STAGE_NAME,
+  CUP_ROUND_NAME,
+  cupSide,
   uclNameOf,
   wcTeam,
   nameIn,
@@ -129,6 +132,22 @@ function readWeek() {
   return { week: thisWeek(), best: bestThisWeek(weeklyStore.read(), n) };
 }
 
+function readCup() {
+  const run = cupStore.read();
+  if (!run) return null;
+  const me = cupSide(run.you);
+  if (!me) return null;
+  return {
+    name: `${me.club} ${me.season}`,
+    over: run.over,
+    where: run.over
+      ? run.won
+        ? 'won it'
+        : `out in the ${CUP_ROUND_NAME[run.outAt ?? 'r16'].toLowerCase()}`
+      : `${CUP_ROUND_NAME[run.round].toLowerCase()}, ${run.played.length} played`,
+  };
+}
+
 function readUcl() {
   const run = uclStore.read();
   if (!run) return null;
@@ -194,6 +213,8 @@ export default function Home() {
   const [worldCup, setWorldCup] = useState(() => readWorldCup());
   /* The same for Europe, so the card says where you are in it. */
   const [ucl, setUcl] = useState(() => readUcl());
+  /* And the knockout, if one is on the go. */
+  const [cup, setCup] = useState(() => readCup());
 
   // Saves change while you are inside a mode, so the status lines are read
   // again every time Home comes back to the front rather than once on mount.
@@ -210,6 +231,7 @@ export default function Home() {
       setAlbum(readAlbum());
       setWorldCup(readWorldCup());
       setUcl(readUcl());
+      setCup(readCup());
       /* Cards, sets, levels and streaks move in half a dozen places. They
          are all re-readable, so rather than a hook on every one of them
          the front door checks them on the way back in. */
@@ -299,6 +321,20 @@ export default function Home() {
 
       <Rise delay={4}>
         <ModeCard
+          tone="gold"
+          kicker="Any era"
+          title="The Cup"
+          subtitle={cup ? `${cup.name} · ${cup.where}` : 'Sixteen sides from thirty five seasons'}
+          icon={IconTrophy}
+          onPress={() => {
+            haptic('light');
+            go(cup && !cup.over ? '/cup/hub' : '/cup');
+          }}
+        />
+      </Rise>
+
+      <Rise delay={5}>
+        <ModeCard
           tone="purple"
           kicker="Career"
           title="Dynasty"
@@ -315,7 +351,7 @@ export default function Home() {
         />
       </Rise>
 
-      <Rise delay={5}>
+      <Rise delay={6}>
         <AlbumCard
           owned={album.owned}
           total={album.total}
@@ -327,13 +363,13 @@ export default function Home() {
         />
       </Rise>
 
-      <Rise delay={6}>
+      <Rise delay={7}>
         <View style={styles.achievements}>
           <AchievementPanel career={career} />
         </View>
       </Rise>
 
-      <Rise delay={5} style={styles.groups}>
+      <Rise delay={6} style={styles.groups}>
         <Collapse
           label="Play today"
           count={4}
@@ -469,7 +505,7 @@ export default function Home() {
         </Collapse>
       </Rise>
 
-      <Rise delay={6}>
+      <Rise delay={7}>
         <Text style={styles.dbLine}>
           51 clubs · 712 squad-seasons · 1992 to 2026
         </Text>
