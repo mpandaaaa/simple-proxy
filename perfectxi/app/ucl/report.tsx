@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { ModeScreen, Press, Rise, Shine, Confetti } from '../../src/ui/components';
-import { back, swap } from '../../src/game/nav';
+import { back, enter } from '../../src/game/nav';
 import { color, space, radius, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { ucl as sky } from '../../src/ui/ucl';
@@ -143,7 +143,7 @@ export default function UclReport() {
         onPress={() => {
           haptic('medium');
           clearUcl();
-          swap('/ucl');
+          enter('/ucl');
         }}
         feel="medium"
         scaleTo={0.98}

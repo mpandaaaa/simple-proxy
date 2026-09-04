@@ -56,6 +56,27 @@ export function swap(href: Href): void {
 }
 
 /**
+ * Into a mode, from wherever you happen to be.
+ *
+ * A hub is the front door of its mode, so back out of it should reach
+ * Home whether it is the button or the edge swipe. That only holds if
+ * nothing is left underneath it: arriving at a hub from a draft screen
+ * left the screen that picked the side on the stack, so the button went
+ * Home and the swipe went somewhere else.
+ *
+ * Everything under it goes, and the hub is pushed onto Home.
+ */
+export function enter(href: Href): void {
+  const key = `>${keyOf(href)}`;
+  const now = Date.now();
+  if (key === lastKey && now - lastAt < GAP_MS) return;
+  lastKey = key;
+  lastAt = now;
+  router.dismissAll();
+  router.push(href);
+}
+
+/**
  * Back to a screen already underneath you, rather than a new copy of it.
  *
  * `swap` replaces what is on top, which is right for a screen that has

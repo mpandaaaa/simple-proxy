@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { ModeScreen, Press, Rise, Shine, Confirm } from '../../src/ui/components';
-import { back, swap } from '../../src/game/nav';
+import { back, enter } from '../../src/game/nav';
 import { color, space, radius } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { ucl as sky } from '../../src/ui/ucl';
@@ -53,7 +53,7 @@ export default function UclDraft() {
    * choice anybody should be asked to make: choosing the seat rather than
    * the side is how you hand yourself a pot one seeding.
    */
-  const enter = useCallback(() => {
+  const startIt = useCallback(() => {
     if (!draft) return;
     setAsking(false);
     haptic('success');
@@ -64,15 +64,15 @@ export default function UclDraft() {
       squad: uclDraftSquad(draft),
     });
     clearUclDraft();
-    swap('/ucl/hub');
+    enter('/ucl/hub');
   }, [draft]);
 
   const begin = useCallback(() => {
     haptic('medium');
     const on = getUcl();
     if (on && !on.over) setAsking(true);
-    else enter();
-  }, [enter]);
+    else startIt();
+  }, [startIt]);
 
   const board = useMemo(() => (draft && !uclDraftDone(draft) ? uclBoard(draft) : []), [draft]);
 
@@ -214,7 +214,7 @@ export default function UclDraft() {
           confirmLabel="Start again"
           cancelLabel="Keep it"
           onCancel={() => setAsking(false)}
-          onConfirm={enter}
+          onConfirm={startIt}
         />
       </ModeScreen>
     );

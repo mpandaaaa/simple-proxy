@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { useFocusEffect } from 'expo-router';
 import { ModeScreen, Press, Rise, Shine, Confirm } from '../../src/ui/components';
-import { back, go, swap } from '../../src/game/nav';
+import { back, enter, go } from '../../src/game/nav';
 import { color, space, radius, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { ucl as sky } from '../../src/ui/ucl';
@@ -78,7 +78,7 @@ export default function UclPick() {
     haptic('success');
     sfx('pick');
     startUcl(name);
-    swap('/ucl/hub');
+    enter('/ucl/hub');
   }, []);
 
   const tap = useCallback(

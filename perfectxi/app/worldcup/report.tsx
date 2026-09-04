@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ModeScreen, Press, Rise, Shine, Confetti, Collapse } from '../../src/ui/components';
-import { back, home, swap } from '../../src/game/nav';
+import { back, enter, home } from '../../src/game/nav';
 import { color, space, radius, line, hue, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic } from '../../src/ui/feel';
@@ -39,7 +39,7 @@ export default function WorldCupReport() {
   const run = useWorldCup();
 
   useEffect(() => {
-    if (!run) swap('/worldcup');
+    if (!run) enter('/worldcup');
   }, [run]);
 
   const summary = useMemo(() => (run ? wcSummary(run) : null), [run]);
@@ -240,7 +240,7 @@ export default function WorldCupReport() {
             onPress={() => {
               haptic('medium');
               clearWorldCup();
-              swap('/worldcup');
+              enter('/worldcup');
             }}
             feel="none"
             scaleTo={0.98}

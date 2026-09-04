@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { ModeScreen, Press, Rise, Shine, Confirm } from '../../src/ui/components';
-import { back, swap } from '../../src/game/nav';
+import { back, enter } from '../../src/game/nav';
 import { color, space, radius, line, hue, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic } from '../../src/ui/feel';
@@ -54,7 +54,7 @@ export default function WorldCupDraft() {
    * choice anybody should be asked to make: choosing the seat rather than
    * the side is how you hand yourself the easiest group in the draw.
    */
-  const enter = useCallback(() => {
+  const startIt = useCallback(() => {
     if (!draft) return;
     setAsking(false);
     haptic('success');
@@ -66,15 +66,15 @@ export default function WorldCupDraft() {
       squad: wcCustomSquad(draft),
     });
     clearWcDraft();
-    swap('/worldcup/hub');
+    enter('/worldcup/hub');
   }, [draft]);
 
   const begin = useCallback(() => {
     haptic('medium');
     const on = getWorldCup();
     if (on && !on.over) setAsking(true);
-    else enter();
-  }, [enter]);
+    else startIt();
+  }, [startIt]);
 
   const board = useMemo(() => (draft && !wcDraftDone(draft) ? wcBoard(draft) : []), [draft]);
 
@@ -221,7 +221,7 @@ export default function WorldCupDraft() {
           confirmLabel="Start again"
           cancelLabel="Keep it"
           onCancel={() => setAsking(false)}
-          onConfirm={enter}
+          onConfirm={startIt}
         />
       </ModeScreen>
     );

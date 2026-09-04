@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { useFocusEffect } from 'expo-router';
 import { ModeScreen, Press, Rise, Shine, Confirm } from '../../src/ui/components';
-import { back, go, swap } from '../../src/game/nav';
+import { back, enter, go } from '../../src/game/nav';
 import { color, space, radius, line, hue, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic } from '../../src/ui/feel';
@@ -47,7 +47,7 @@ export default function WorldCupPick() {
     haptic('success');
     sfx('pick');
     startWorldCup(code);
-    swap('/worldcup/hub');
+    enter('/worldcup/hub');
   }, []);
 
   const tap = useCallback(
