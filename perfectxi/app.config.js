@@ -140,6 +140,77 @@ module.exports = () => ({
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },
+    /*
+     * The privacy manifest.
+     *
+     * Apple requires an app to declare every "required reason" interface
+     * it touches and why, and to say whether it tracks. Three of the
+     * libraries in here ship no manifest of their own, so the app
+     * declares on their behalf rather than letting the submission go up
+     * silent and come back with a warning.
+     *
+     * Every reason code below is the one Apple publishes for that use,
+     * and every one is true of this app: it reads and writes its own
+     * files, keeps its own settings, and shows adverts.
+     */
+    privacyManifests: {
+      NSPrivacyTracking: true,
+      /* Where an advert request goes. Listed so that iOS can block them
+         by itself when somebody has said no to tracking, which is the
+         behaviour that question is supposed to produce. */
+      NSPrivacyTrackingDomains: [
+        'googleads.g.doubleclick.net',
+        'pagead2.googlesyndication.com',
+        'googlesyndication.com',
+        'google-analytics.com',
+        'app-measurement.com',
+      ],
+      NSPrivacyCollectedDataTypes: [
+        {
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeDeviceID',
+          NSPrivacyCollectedDataTypeLinked: false,
+          NSPrivacyCollectedDataTypeTracking: true,
+          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeThirdPartyAdvertising'],
+        },
+        {
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeAdvertisingData',
+          NSPrivacyCollectedDataTypeLinked: false,
+          NSPrivacyCollectedDataTypeTracking: true,
+          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeThirdPartyAdvertising'],
+        },
+        {
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeCrashData',
+          NSPrivacyCollectedDataTypeLinked: false,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+        },
+      ],
+      NSPrivacyAccessedAPITypes: [
+        {
+          /* Every setting in the game, and the save itself. C56D.1 is the
+             code for an app reading back only what it wrote. */
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryUserDefaults',
+          NSPrivacyAccessedAPITypeReasons: ['CA92.1'],
+        },
+        {
+          /* The save, and the backup snapshots beside it, both of which
+             are inside the app's own container. */
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryFileTimestamp',
+          NSPrivacyAccessedAPITypeReasons: ['C617.1'],
+        },
+        {
+          /* Writing a backup has to know whether there is room for it. */
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryDiskSpace',
+          NSPrivacyAccessedAPITypeReasons: ['E174.1'],
+        },
+        {
+          /* Working out how long ago a backup was taken, and whether a
+             Daily has rolled over. */
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategorySystemBootTime',
+          NSPrivacyAccessedAPITypeReasons: ['35F9.1'],
+        },
+      ],
+    },
   },
   android: {
     package: BUNDLE,
