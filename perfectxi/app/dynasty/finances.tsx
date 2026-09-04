@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { back } from '../../src/game/nav';
 import { ModeScreen, Shine } from '../../src/ui/components';
 import { color, gradient, line, radius, space, hue } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
@@ -67,7 +67,7 @@ export default function Finances() {
   ].filter((c) => c.v > 0);
 
   return (
-    <ModeScreen overline={career.club} title="Finances" onBack={() => router.back()}>
+    <ModeScreen overline={career.club} title="Finances" onBack={() => back()}>
       {/* ---- the line ---- */}
       <View style={styles.psr}>
         <Shine radius={radius.xl} group="feature" bevel={false} clip={false} />

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { swap, home } from '../src/game/nav';
 import { ModeScreen, Press, Rise, Shine, Confetti } from '../src/ui/components';
 import { color, space, radius, line, hue, alpha, positionColor } from '../src/ui/tokens';
 import { font, text } from '../src/ui/type';
@@ -228,7 +228,7 @@ export default function H2HReview() {
         bot: m.bot,
         match: m.match ? { ...m.match, seed } : null,
       });
-      router.replace('/h2h');
+      swap('/h2h');
     },
     [m],
   );
@@ -285,8 +285,8 @@ export default function H2HReview() {
       onBack={() => {
         clearH2H();
         clearRun();
-        router.dismissAll();
-        router.replace('/duel');
+        home();
+        swap('/duel');
       }}
     >
       <Confetti fire={outcome === 'won'} />
@@ -414,8 +414,8 @@ export default function H2HReview() {
               haptic('light');
               clearH2H();
               clearRun();
-              router.dismissAll();
-              router.replace('/duel');
+              home();
+              swap('/duel');
             }}
             feel="none"
             scaleTo={0.98}

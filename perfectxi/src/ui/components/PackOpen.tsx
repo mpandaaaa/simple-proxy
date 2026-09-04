@@ -17,6 +17,7 @@ import { haptic, useReduceMotion } from '../feel';
 import { sfx } from '../sound';
 import { RARITY_ORDER, cardValue, type Card, type Rarity } from '../../engine';
 import { CardFace, RARITY_TINT } from './CardFace';
+import { commas } from './Coin';
 
 /**
  * Opening a pack.
@@ -118,7 +119,7 @@ export function PackOpen({
               </Text>
             ) : current && already.has(current.id) ? (
               <Text style={[styles.bannerText, { color: hue.gold }]}>
-                Already yours {'·'} sold for {cardValue(current)} coins
+                Already yours {'·'} sold for {commas(cardValue(current))} coins
               </Text>
             ) : current ? (
               <Text style={[styles.bannerText, { color: color.text3 }]}>New</Text>

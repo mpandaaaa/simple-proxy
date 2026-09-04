@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { back } from '../../src/game/nav';
 import {
   ModeScreen,
   Press,
@@ -143,7 +143,7 @@ export default function Academy() {
       <ModeScreen
         overline={`Academy level ${career.infra.academy}`}
         title="The academy"
-        onBack={() => router.back()}
+        onBack={() => back()}
       >
         <View style={styles.lead}>
           <Shine radius={radius.lg} group="panel" />

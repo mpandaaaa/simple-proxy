@@ -102,37 +102,38 @@ export function CardFace({
         </Svg>
       </View>
 
-      {/* ---- top left: what he is ---- */}
-      <View style={styles.corner}>
-        <Text
-          style={[styles.rating, { color: ghost ? color.text3 : tint }]}
-          allowFontScaling={false}
-        >
-          {ghost ? '?' : card.rtg}
-        </Text>
-        <Text style={[styles.pos, { color: ghost ? color.text3 : positionColor[main] }]}>
-          {posList.join(' ')}
-        </Text>
-        {card.nat ? (
-          <Text style={styles.nat} numberOfLines={1}>
-            {card.nat}
+      {/* ---- the head: what he is, and how rare ---- */}
+      <View style={styles.head}>
+        <View style={styles.corner}>
+          <Text
+            style={[styles.rating, { color: ghost ? color.text3 : tint }]}
+            allowFontScaling={false}
+          >
+            {ghost ? '?' : card.rtg}
           </Text>
-        ) : null}
-      </View>
+          <Text style={[styles.pos, { color: ghost ? color.text3 : positionColor[main] }]}>
+            {posList.join(' ')}
+          </Text>
+          {card.nat ? (
+            <Text style={styles.nat} numberOfLines={1}>
+              {card.nat}
+            </Text>
+          ) : null}
+        </View>
 
-      {/* ---- top right: how rare he is ---- */}
-      <View
-        style={[
-          styles.rarity,
-          {
-            borderColor: alpha(ghost ? '#6E7E74' : tint, 0.6),
-            backgroundColor: alpha(ghost ? '#6E7E74' : tint, 0.14),
-          },
-        ]}
-      >
-        <Text style={[styles.rarityText, { color: ghost ? color.text3 : tint }]}>
-          {card.rarity.charAt(0).toUpperCase() + card.rarity.slice(1)}
-        </Text>
+        <View
+          style={[
+            styles.rarity,
+            {
+              borderColor: alpha(ghost ? '#6E7E74' : tint, 0.6),
+              backgroundColor: alpha(ghost ? '#6E7E74' : tint, 0.14),
+            },
+          ]}
+        >
+          <Text style={[styles.rarityText, { color: ghost ? color.text3 : tint }]}>
+            {card.rarity.charAt(0).toUpperCase() + card.rarity.slice(1)}
+          </Text>
+        </View>
       </View>
 
       {/* ---- the middle: him ---- */}
@@ -170,7 +171,7 @@ export function CardFace({
           </View>
         </View>
 
-        {/* the badge, small, where a badge goes */}
+        {/* the badge, under the shirt rather than on top of it */}
         <View style={[styles.crest, ghost ? styles.ghostKit : null]}>
           <ClubDisc club={card.club} size={26} />
         </View>
@@ -239,20 +240,28 @@ const styles = StyleSheet.create({
   },
   ghost: { borderStyle: 'dashed' },
 
-  corner: { position: 'absolute', top: space.s4, left: space.s4, maxWidth: '46%' },
+  /*
+   * Everything on this card is a flex child of the one above it. Nothing
+   * is positioned on top of anything, and nothing reserves room for text
+   * by guessing at its height, because guessing wrong is exactly how a
+   * rating ends up printed through the middle of a shirt.
+   *
+   * The one absolute position left is the name on the back of the shirt,
+   * which is meant to be on the shirt and is the only thing there.
+   */
+  head: { flexDirection: 'row', alignItems: 'flex-start', gap: space.s3 },
+  corner: { flex: 1, minWidth: 0 },
   rating: {
     fontFamily: font.hero,
     fontSize: 50,
-    lineHeight: 60,
+    lineHeight: 62,
     fontVariant: ['tabular-nums'],
   },
-  pos: { ...text.key, fontSize: 10, marginTop: -6 },
+  pos: { ...text.key, fontSize: 10, marginTop: -4 },
   nat: { ...text.key, fontSize: 8, color: color.text3, marginTop: 3 },
 
   rarity: {
-    position: 'absolute',
-    top: space.s4,
-    right: space.s4,
+    marginTop: 2,
     paddingHorizontal: space.s2,
     paddingVertical: 4,
     borderRadius: radius.sm,
@@ -260,8 +269,8 @@ const styles = StyleSheet.create({
   },
   rarityText: { ...text.key, fontSize: 8 },
 
-  kit: { flex: 1, alignItems: 'center', justifyContent: 'center', marginTop: space.s4 },
-  shirtBox: { width: '78%', aspectRatio: 1 },
+  kit: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.s2 },
+  shirtBox: { flex: 1, aspectRatio: 1, maxWidth: '80%' },
   ghostKit: { opacity: 0.18 },
   shirtName: {
     position: 'absolute',
@@ -277,7 +286,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     textAlign: 'center',
   },
-  crest: { position: 'absolute', bottom: 0, alignSelf: 'center' },
+  crest: {},
 
   foot: { alignItems: 'center', gap: 3, marginTop: space.s3 },
   rule: { height: 2, width: 46, borderRadius: 1, marginBottom: space.s2 },

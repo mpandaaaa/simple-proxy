@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { back } from '../../src/game/nav';
 import { ModeScreen, Press, Shine, OptionGroup } from '../../src/ui/components';
 import { color, gradient, line, radius, space, hue, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
@@ -46,7 +46,7 @@ export default function Tactics() {
   };
 
   return (
-    <ModeScreen overline={career.club} title="Tactics" onBack={() => router.back()}>
+    <ModeScreen overline={career.club} title="Tactics" onBack={() => back()}>
       {/* ---- what it adds up to ---- */}
       <View style={styles.readout}>
         <Shine radius={radius.lg} group="feature" bevel={false} clip={false} />

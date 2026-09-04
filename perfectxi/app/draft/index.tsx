@@ -6,7 +6,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { router } from 'expo-router';
+import { go } from '../../src/game/nav';
 import {
   ModeScreen,
   Button,
@@ -204,7 +204,7 @@ export default function DraftSetup() {
           style={styles.go}
           onPress={() => {
             startRun(config);
-            router.push('/draft/board');
+            go('/draft/board');
           }}
         />
       </Rise>

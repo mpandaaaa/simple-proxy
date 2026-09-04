@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
+import { go, swap, home } from '../../src/game/nav';
 import {
   ModeScreen,
   Press,
@@ -137,7 +138,7 @@ export default function Summer() {
 
     const career = getCareer();
     if (!career) {
-      router.replace('/dynasty');
+      swap('/dynasty');
       return;
     }
 
@@ -155,7 +156,7 @@ export default function Summer() {
       })();
 
     if (!result) {
-      router.replace('/dynasty');
+      swap('/dynasty');
       return;
     }
 
@@ -220,7 +221,7 @@ export default function Summer() {
       <ModeScreen
         overline={`${before.club} · season ${before.year}`}
         title="Season review"
-        onBack={() => router.replace('/dynasty')}
+        onBack={() => swap('/dynasty')}
       >
         {/* ================= where you finished ================= */}
         <View
@@ -632,7 +633,7 @@ export default function Summer() {
                       if (!next) return;
                       setCareer(next);
                       sfx('pick');
-                      router.replace('/dynasty');
+                      swap('/dynasty');
                     }}
                     feel="none"
                     style={styles.sackedJob}
@@ -658,8 +659,8 @@ export default function Summer() {
               onPress={() => {
                 haptic('medium');
                 setCareer(null);
-                router.dismissAll();
-                router.push('/dynasty/start');
+                home();
+                go('/dynasty/start');
               }}
               feel="none"
               style={styles.sackedCta}
@@ -836,7 +837,7 @@ export default function Summer() {
           <Press
             onPress={() => {
               haptic('medium');
-              router.replace('/dynasty');
+              swap('/dynasty');
             }}
             feel="none"
             style={styles.cta}

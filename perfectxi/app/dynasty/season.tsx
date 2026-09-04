@@ -6,7 +6,8 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
+import { swap } from '../../src/game/nav';
 import {
   ModeScreen,
   Press,
@@ -102,7 +103,7 @@ export default function DynastySeason() {
   const done = result !== null && played >= total;
 
   useEffect(() => {
-    if (!career) router.replace('/dynasty');
+    if (!career) swap('/dynasty');
   }, [career]);
 
   const standing = useMemo(() => {
@@ -218,7 +219,7 @@ export default function DynastySeason() {
       <ModeScreen
         overline={done ? 'Full time' : `Matchday ${played + 1} of ${total}`}
         title={career.club}
-        onBack={() => router.replace('/dynasty')}
+        onBack={() => swap('/dynasty')}
       >
         {/* ---- where you are ---- */}
         <View
@@ -379,7 +380,7 @@ export default function DynastySeason() {
           <Press
             onPress={() => {
               haptic('medium');
-              router.replace('/dynasty/summer');
+              swap('/dynasty/summer');
             }}
             feel="none"
             style={styles.cta}

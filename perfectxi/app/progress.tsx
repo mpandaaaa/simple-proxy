@@ -8,8 +8,9 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { router, useFocusEffect } from 'expo-router';
-import { ModeScreen, Press, Rise, Shine, Collapse } from '../src/ui/components';
+import { useFocusEffect } from 'expo-router';
+import { go, back } from '../src/game/nav';
+import { ModeScreen, Press, Rise, Shine, Collapse, Coin, commas } from '../src/ui/components';
 import { color, space, radius, line, hue, alpha } from '../src/ui/tokens';
 import { font, text } from '../src/ui/type';
 import { haptic, useReduceMotion } from '../src/ui/feel';
@@ -102,7 +103,7 @@ export default function ProgressScreen() {
   const owedPacks = coll.owed.length;
 
   return (
-    <ModeScreen overline="Your game" title="Progress" scroll={false} onBack={() => router.back()}>
+    <ModeScreen overline="Your game" title="Progress" scroll={false} onBack={() => back()}>
       <ScrollView
         style={styles.page}
         contentContainerStyle={styles.pageContent}
@@ -121,9 +122,12 @@ export default function ProgressScreen() {
             </View>
             <View style={styles.heroRight}>
               <Text style={styles.heroKey}>Coins</Text>
-              <Animated.Text style={[styles.heroCoins, coinStyle]} allowFontScaling={false}>
-                {p.coins}
-              </Animated.Text>
+              <View style={styles.heroCoinRow}>
+                <Coin size={22} />
+                <Animated.Text style={[styles.heroCoins, coinStyle]} allowFontScaling={false}>
+                  {commas(p.coins)}
+                </Animated.Text>
+              </View>
               <Text style={styles.heroOf}>to spend</Text>
             </View>
           </View>
@@ -134,7 +138,7 @@ export default function ProgressScreen() {
           <Text style={styles.heroNote}>
             {lvl.maxed
               ? 'Level fifty. There is nothing after it.'
-              : `${lvl.into} of ${lvl.span} experience to level ${lvl.level + 1}`}
+              : `${commas(lvl.into)} of ${commas(lvl.span)} experience to level ${lvl.level + 1}`}
           </Text>
           {next ? (
             <Text style={styles.heroNext}>
@@ -154,19 +158,24 @@ export default function ProgressScreen() {
               <Text style={styles.claimNames} numberOfLines={2}>
                 {claims.map((c) => c.name).join(', ')}
               </Text>
-              <Text style={styles.claimTake}>
-                Take {claims.reduce((a, c) => a + c.coins, 0)} coins
-              </Text>
+              <View style={styles.claimRow}>
+                <Coin size={15} />
+                <Text style={styles.claimTake}>
+                  Take {commas(claims.reduce((a, c) => a + c.coins, 0))}
+                </Text>
+              </View>
             </Press>
           </Rise>
         ) : null}
-        {took !== null ? <Text style={styles.tookText}>{took} coins banked.</Text> : null}
+        {took !== null ? (
+          <Text style={styles.tookText}>{commas(took)} coins banked.</Text>
+        ) : null}
 
         {owedPacks ? (
           <Press
             onPress={() => {
               haptic('light');
-              router.push('/shop');
+              go('/shop');
             }}
             feel="none"
             scaleTo={0.98}
@@ -189,7 +198,7 @@ export default function ProgressScreen() {
         <Press
           onPress={() => {
             haptic('light');
-            router.push('/collection');
+            go('/collection');
           }}
           feel="none"
           scaleTo={0.99}
@@ -198,8 +207,8 @@ export default function ProgressScreen() {
           <View style={styles.collTop}>
             <Text style={styles.collKey}>The album</Text>
             <Text style={styles.collCount} allowFontScaling={false}>
-              {counts.all}
-              <Text style={styles.collOf}> / {all.all}</Text>
+              {commas(counts.all)}
+              <Text style={styles.collOf}> / {commas(all.all)}</Text>
             </Text>
           </View>
           <View style={styles.collBar}>
@@ -219,12 +228,13 @@ export default function ProgressScreen() {
         <Press
           onPress={() => {
             haptic('light');
-            router.push('/shop');
+            go('/shop');
           }}
           feel="medium"
           scaleTo={0.98}
           style={styles.shop}
         >
+          <Coin size={18} />
           <Text style={styles.shopText}>Spend your coins</Text>
         </Press>
 
@@ -267,7 +277,7 @@ export default function ProgressScreen() {
                     </Text>
                   </View>
                   <Text style={styles.trackCoins} allowFontScaling={false}>
-                    +{coinsForLevel(k.level)}
+                    +{commas(coinsForLevel(k.level))}
                   </Text>
                 </View>
               );
@@ -342,6 +352,7 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   heroOf: { ...text.small, fontSize: 11, lineHeight: 15, color: color.text3, marginTop: -4 },
+  heroCoinRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   heroCoins: {
     fontFamily: font.displayBlack,
     fontSize: 30,
@@ -371,7 +382,8 @@ const styles = StyleSheet.create({
   },
   claimKey: { ...text.key, fontSize: 9, color: hue.gold },
   claimNames: { ...text.small, fontSize: 12.5, lineHeight: 18, color: color.text2 },
-  claimTake: { ...text.button, fontSize: 15, color: hue.gold, marginTop: space.s2 },
+  claimRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: space.s2 },
+  claimTake: { ...text.button, fontSize: 15, color: hue.gold },
   tookText: {
     ...text.small,
     fontSize: 12.5,
@@ -440,6 +452,8 @@ const styles = StyleSheet.create({
   collLine: { ...text.small, fontSize: 11.5, lineHeight: 16, color: color.text3 },
 
   shop: {
+    flexDirection: 'row',
+    gap: space.s2,
     marginTop: space.s3,
     minHeight: 58,
     alignItems: 'center',

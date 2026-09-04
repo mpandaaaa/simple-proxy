@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
-import { router } from 'expo-router';
+import { go, back, home } from '../../src/game/nav';
 import { ModeScreen, Press, Rise, Shine, ClubDisc } from '../../src/ui/components';
 import { color, gradient, line, radius, space } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
@@ -42,7 +42,7 @@ export default function StartCareer() {
 
   const back = () => {
     if (step === 0) {
-      router.back();
+      back();
       return;
     }
     haptic('light');
@@ -141,8 +141,8 @@ export default function StartCareer() {
           <Press
             onPress={() => {
               haptic('light');
-              router.dismissAll();
-              router.push('/draft');
+              home();
+              go('/draft');
             }}
             feel="none"
             style={styles.own}
@@ -282,8 +282,8 @@ function Offer({ club, sc, mode }: { club: ClubOption; sc: Scenario; mode: Mode 
               seed: Math.floor(Math.random() * 0x7fffffff),
             }),
           );
-          router.dismissAll();
-          router.push('/dynasty');
+          home();
+          go('/dynasty');
         }}
         feel="none"
         style={styles.take}

@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { back } from '../../src/game/nav';
 import {
   ModeScreen,
   Press,
@@ -122,7 +122,7 @@ export default function Market() {
       <ModeScreen
         overline={`£${career.budget}m to spend`}
         title="Transfers"
-        onBack={() => router.back()}
+        onBack={() => back()}
       >
         {/* ---- what you have, and what it costs ---- */}
         <View style={styles.money}>

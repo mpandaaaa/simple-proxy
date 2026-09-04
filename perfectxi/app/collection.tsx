@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
-import { ModeScreen, Press, Rise, Shine, ClubDisc } from '../src/ui/components';
+import { useFocusEffect } from 'expo-router';
+import { go, back } from '../src/game/nav';
+import { ModeScreen, Press, Rise, Shine, ClubDisc, commas } from '../src/ui/components';
 import { color, space, radius, line, hue, alpha } from '../src/ui/tokens';
 import { font, text } from '../src/ui/type';
 import { haptic } from '../src/ui/feel';
@@ -61,11 +62,11 @@ export default function CollectionScreen() {
       overline="Your game"
       title="The album"
       scroll={false}
-      onBack={() => router.back()}
+      onBack={() => back()}
       right={
         <View style={styles.countChip}>
           <Text style={styles.countChipText} allowFontScaling={false}>
-            {counts.all}
+            {commas(counts.all)}
           </Text>
         </View>
       }
@@ -91,7 +92,7 @@ export default function CollectionScreen() {
                 {counts[r]}
               </Text>
               <Text style={styles.headLabel}>
-                {r} {'·'} {all[r]}
+                {r} {'·'} {commas(all[r])}
               </Text>
             </View>
           ))}
@@ -129,7 +130,17 @@ export default function CollectionScreen() {
                 contentContainerStyle={styles.shelf}
               >
                 {best.map((c) => (
-                  <MiniCard key={c.id} card={c} />
+                  <MiniCard
+                    key={c.id}
+                    card={c}
+                    onPress={() => {
+                      haptic('light');
+                      go({
+                        pathname: '/album',
+                        params: { club: c.club, year: String(c.year), who: c.n },
+                      });
+                    }}
+                  />
                 ))}
               </ScrollView>
             </>
@@ -151,7 +162,7 @@ export default function CollectionScreen() {
               <Press
                 onPress={() => {
                   haptic('light');
-                  router.push({ pathname: '/album', params: { club: row.club } });
+                  go({ pathname: '/album', params: { club: row.club } });
                 }}
                 feel="none"
                 scaleTo={0.99}
@@ -238,7 +249,7 @@ export default function CollectionScreen() {
                 </View>
 
                 <Text style={styles.setPay}>
-                  {s.done ? 'Finished' : `${s.total - s.owned} to go, worth ${s.set.coins} coins`}
+                  {s.done ? 'Finished' : `${s.total - s.owned} to go, worth ${commas(s.set.coins)} coins`}
                 </Text>
               </View>
             </Rise>
@@ -286,7 +297,7 @@ export default function CollectionScreen() {
                     />
                   </View>
                   <Text style={styles.setPay}>
-                    {st.done ? 'Finished' : `Worth ${m.coins} coins`}
+                    {st.done ? 'Finished' : `Worth ${commas(m.coins)} coins`}
                   </Text>
                 </View>
               </Rise>
@@ -299,10 +310,15 @@ export default function CollectionScreen() {
   );
 }
 
-function MiniCard({ card }: { card: Card }) {
+function MiniCard({ card, onPress }: { card: Card; onPress: () => void }) {
   const tint = rarityColour(card.rarity);
   return (
-    <View style={[styles.mini, { borderColor: tint, backgroundColor: alpha(tint, 0.1) }]}>
+    <Press
+      onPress={onPress}
+      feel="none"
+      scaleTo={0.96}
+      style={[styles.mini, { borderColor: tint, backgroundColor: alpha(tint, 0.1) }]}
+    >
       <Text style={[styles.miniRtg, { color: tint }]} allowFontScaling={false}>
         {card.rtg}
       </Text>
@@ -310,9 +326,12 @@ function MiniCard({ card }: { card: Card }) {
         {card.n}
       </Text>
       <Text style={styles.miniMeta} numberOfLines={1}>
+        {card.club}
+      </Text>
+      <Text style={styles.miniMeta} numberOfLines={1}>
         {card.season}
       </Text>
-    </View>
+    </Press>
   );
 }
 
@@ -385,7 +404,7 @@ const styles = StyleSheet.create({
 
   shelf: { gap: space.s2, paddingRight: space.s4 },
   mini: {
-    width: 92,
+    width: 100,
     paddingVertical: space.s3,
     paddingHorizontal: space.s2,
     borderRadius: radius.md,

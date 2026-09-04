@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Share, StyleSheet, Text, TextInput, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { go, back } from '../src/game/nav';
 import { ModeScreen, Press, Rise, Shine, Collapse } from '../src/ui/components';
 import { color, hue, line, radius, space, alpha, gradient } from '../src/ui/tokens';
 import { font, text } from '../src/ui/type';
@@ -102,7 +103,7 @@ export default function Duel() {
         bot: match.bot,
         match: match.bot ? null : match,
       });
-      router.push('/h2h');
+      go('/h2h');
       setFinding('idle');
       setFound(null);
     }, 1200);
@@ -116,7 +117,7 @@ export default function Duel() {
        both of you have to be playing the same game for the code to mean
        anything. */
     startRun({ ...defaultConfig, diff: 'normal' }, undefined, { sending: true });
-    router.push('/draft/board');
+    go('/draft/board');
   }, []);
 
   const answer = useCallback(() => {
@@ -124,7 +125,7 @@ export default function Duel() {
     haptic('medium');
     sfx('pick');
     startRun(incoming.config, incoming.seed, { duel: code.trim().toUpperCase() });
-    router.push('/draft/board');
+    go('/draft/board');
   }, [incoming, code]);
 
   const showAgain = useCallback(async () => {
@@ -158,7 +159,7 @@ export default function Duel() {
   const wantsEnter = params.mode === 'enter';
 
   return (
-    <ModeScreen overline="Play today" title="Duels" onBack={() => router.back()}>
+    <ModeScreen overline="Play today" title="Duels" onBack={() => back()}>
       {/* ---- your record ---- */}
       {record.played ? (
         <View style={styles.record}>

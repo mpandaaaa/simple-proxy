@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
+import { swap, home } from '../../src/game/nav';
 import {
   ModeScreen,
   Button,
@@ -108,7 +109,7 @@ export default function DraftBoard() {
   useEffect(() => {
     if (!run || reveal || pending) return;
     if (run.state.filled < run.state.total) return;
-    const t = setTimeout(() => router.replace('/draft/complete'), 260);
+    const t = setTimeout(() => swap('/draft/complete'), 260);
     return () => clearTimeout(t);
   }, [run, reveal, pending]);
 
@@ -517,7 +518,7 @@ export default function DraftBoard() {
         onConfirm={() => {
           setLeaving(false);
           clearRun();
-          router.dismissAll();
+          home();
         }}
       />
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
+import { go, back } from '../src/game/nav';
 import { ModeScreen, Press, Rise, Shine, Collapse } from '../src/ui/components';
 import { color, hue, line, radius, space, alpha, gradient } from '../src/ui/tokens';
 import { font, text } from '../src/ui/type';
@@ -59,11 +60,11 @@ export default function Weekly() {
     haptic('medium');
     sfx('pick');
     startRun(week.config, undefined, { weekly: week.n });
-    router.push('/draft/board');
+    go('/draft/board');
   }, [week]);
 
   return (
-    <ModeScreen overline="Play today" title={week.twist.name} onBack={() => router.back()}>
+    <ModeScreen overline="Play today" title={week.twist.name} onBack={() => back()}>
       {/* ---- the rule ---- */}
       <View style={styles.rule}>
         <Shine radius={radius.xl} group="feature" bevel={false} clip={false} />

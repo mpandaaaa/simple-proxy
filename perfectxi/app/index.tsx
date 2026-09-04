@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
+import { go } from '../src/game/nav';
 import {
+  commas,
   AlbumCard,
   Screen,
   ModeCard,
@@ -184,7 +186,7 @@ export default function Home() {
           kicker="All-Time Premier League"
           title="START A DRAFT"
           subtitle="Spin real club-seasons · build your XI · simulate 38 games"
-          onPress={() => router.push('/draft')}
+          onPress={() => go('/draft')}
         />
       </Rise>
 
@@ -213,7 +215,7 @@ export default function Home() {
           subtitle="A career across seasons · ages, transfers, the board"
           status={dynastyStatus(dynasty)}
           icon={IconBank}
-          onPress={() => router.push(dynasty ? '/dynasty' : '/dynasty/start')}
+          onPress={() => go(dynasty ? '/dynasty' : '/dynasty/start')}
         />
       </Rise>
 
@@ -224,8 +226,8 @@ export default function Home() {
           best={album.best}
           coins={progress.coins}
           packsWaiting={album.owed}
-          onAlbum={() => router.push('/collection')}
-          onPacks={() => router.push('/shop')}
+          onAlbum={() => go('/collection')}
+          onPacks={() => go('/shop')}
         />
       </Rise>
 
@@ -236,7 +238,14 @@ export default function Home() {
       </Rise>
 
       <Rise delay={4} style={styles.groups}>
-        <Collapse label="Play today" count={4}>
+        <Collapse
+          label="Play today"
+          count={4}
+          tone="blue"
+          hint={`${daily.done ? 'Daily played' : `Daily #${daily.n}`} · ${
+            weekly.week.twist.name
+          }${duels.played ? ` · ${duels.won} duels won` : ''}`}
+        >
           <Row
             icon={IconCalendar}
             tone="blue"
@@ -249,7 +258,7 @@ export default function Home() {
             }
             onPress={() => {
               haptic('light');
-              router.push('/daily');
+              go('/daily');
             }}
           />
           <Row
@@ -264,7 +273,7 @@ export default function Home() {
             }
             onPress={() => {
               haptic('light');
-              router.push('/weekly');
+              go('/weekly');
             }}
           />
           <Row
@@ -279,7 +288,7 @@ export default function Home() {
             }
             onPress={() => {
               haptic('light');
-              router.push('/duel');
+              go('/duel');
             }}
           />
           <Row
@@ -290,94 +299,66 @@ export default function Home() {
             subtitle="Same spins · beat their points"
             onPress={() => {
               haptic('light');
-              router.push('/duel?mode=enter');
+              go('/duel?mode=enter');
             }}
           />
         </Collapse>
 
-        <Collapse label="Your game" count={2}>
+        <Collapse
+          label="Your game"
+          count={1}
+          tone="purple"
+          hint={`Level ${lvl.level} · ${commas(progress.coins)} coins · ${
+            progress.seasons
+          } seasons`}
+        >
           <Row
             icon={IconStar}
             tone="purple"
             title={`Progress · Level ${lvl.level}`}
             subtitle={
               lvl.maxed
-                ? `${progress.coins} coins · level fifty`
-                : `${progress.coins} coins · ${lvl.toNext} to level ${lvl.level + 1}`
+                ? `${commas(progress.coins)} coins · level fifty`
+                : `${commas(progress.coins)} coins · ${commas(lvl.toNext)} to level ${
+                    lvl.level + 1
+                  }`
             }
             onPress={() => {
               haptic('light');
-              router.push('/progress');
+              go('/progress');
             }}
-          />
-          <Row
-            icon={IconMedal}
-            tone="gold"
-            title="Hall of Fame"
-            subtitle={record.hall}
-            onPress={() => router.push('/hall')}
           />
         </Collapse>
 
-        <Collapse label="Records and tools" count={5}>
+        <Collapse
+          label="Records"
+          count={3}
+          tone="gold"
+          hint={`${record.cabinet} · ${record.hall}`}
+        >
           <Row
             icon={IconTrophy}
             tone="gold"
             title="Trophy cabinet"
             subtitle={record.cabinet}
-            onPress={() => router.push('/cabinet')}
-          />
-          <Row
-            icon={IconCalendar}
-            tone="neutral"
-            title="Draft history"
-            subtitle="Every completed run, saved"
-            onPress={() =>
-              soon(
-                'Records',
-                'Draft history',
-                'Draft your first XI and simulate a full 38-game season. Every completed run gets saved here.',
-              )
-            }
+            onPress={() => go('/cabinet')}
           />
           <Row
             icon={IconMedal}
             tone="accent"
-            title="Best seasons"
-            subtitle="Your campaigns, ranked by points"
-            onPress={() =>
-              soon(
-                'Records',
-                'Best seasons',
-                'Complete a full 38-game season and your best campaigns will be ranked here.',
-              )
-            }
-          />
-          <Row
-            icon={IconSwords}
-            tone="danger"
-            title="Versus"
-            subtitle="Head to head against a friend"
-            onPress={() =>
-              soon(
-                'Records',
-                'Versus',
-                'Draft head to head against a friend from the same spins.',
-              )
-            }
+            title="Hall of Fame"
+            subtitle={record.hall}
+            onPress={() => go('/hall')}
           />
           <Row
             icon={IconYou}
             tone="blue"
             title="Player index"
-            subtitle="Search all 3,003 players"
-            onPress={() =>
-              soon(
-                'Records',
-                'Player index',
-                'Search every player in the database and see every club-season they appear in.',
-              )
-            }
+            subtitle="Search every footballer in the database"
+            onPress={() => {
+              haptic('light');
+              go('/players');
+            }}
           />
         </Collapse>
       </Rise>
@@ -388,17 +369,17 @@ export default function Home() {
         </Text>
 
         <View style={styles.footer}>
-          {FOOTER.map((f) => (
-            <Press
-              key={f.label}
-              onPress={() => soon('Perfect XI', f.label, f.blurb)}
-              feel="select"
-              scaleTo={0.94}
-              style={styles.footerChip}
-            >
-              <Text style={styles.footerText}>{f.label}</Text>
-            </Press>
-          ))}
+          <Press
+            onPress={() => {
+              haptic('light');
+              go('/privacy');
+            }}
+            feel="select"
+            scaleTo={0.94}
+            style={styles.footerChip}
+          >
+            <Text style={styles.footerText}>Privacy</Text>
+          </Press>
         </View>
 
         <Text style={styles.legal}>
@@ -431,7 +412,7 @@ const FOOTER = [
  * the live site, so the screen says something true about the mode.
  */
 function soon(overline: string, title: string, blurb: string) {
-  router.push({ pathname: '/soon', params: { overline, title, blurb } });
+  go({ pathname: '/soon', params: { overline, title, blurb } });
 }
 
 /** No career yet is a real state, so the card keeps its description. */

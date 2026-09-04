@@ -182,10 +182,10 @@ export type Pack = {
 /**
  * What a pack costs.
  *
- * A season pays somewhere around a hundred coins, so the ladder is one
- * season, three, fourteen and forty five. The top two are deliberately a
- * long way up: an Icon Pack that a fortnight of playing can afford is not
- * a thing anybody saves for, and the whole of the collection rests on
+ * A season pays somewhere around a hundred coins, so the ladder is about
+ * one season, four, fourteen and forty five. The top two are deliberately
+ * a long way up: an Icon Pack that a fortnight of playing can afford is
+ * not a thing anybody saves for, and the whole of the collection rests on
  * there being something worth saving for.
  */
 export const PACKS: readonly Pack[] = [
@@ -193,7 +193,7 @@ export const PACKS: readonly Pack[] = [
     id: 'pack.bronze',
     name: 'Bronze Pack',
     blurb: 'Three squad players. Everybody has to start somewhere.',
-    price: 120,
+    price: 150,
     size: 3,
     odds: { icon: 0.005, gold: 0.045, silver: 0.25, bronze: 0.7 },
     floor: 'bronze',
@@ -202,7 +202,7 @@ export const PACKS: readonly Pack[] = [
     id: 'pack.silver',
     name: 'Silver Pack',
     blurb: 'Five cards, and one of them is a Silver at worst.',
-    price: 300,
+    price: 420,
     size: 5,
     odds: { icon: 0.02, gold: 0.1, silver: 0.42, bronze: 0.46 },
     floor: 'silver',
@@ -505,12 +505,16 @@ export function bestOwned(have: ReadonlySet<CardId>, n: number): Card[] {
  * returned more in sale value than it cost, the loop is open and every
  * other number in the game stops meaning anything.
  *
- * So the scale is set well under the packs. A Bronze Pack costs 120 and
- * the three cards in it are worth about forty five all together. An Icon
- * Pack costs four and a half thousand and returns about three hundred,
- * even to somebody who already owns every card in the game and gets
- * nothing but duplicates. There is no way round it and a check measures
- * it across ten thousand opens rather than trusting the arithmetic here.
+ * The shape of it is steep rather than flat, because the whole appeal of
+ * an Icon is that he is an Icon: a ninety five rated Henry is worth
+ * fifteen hundred and a squad player is worth six. What that costs is
+ * that the cheap packs then sit closer to breaking even, so the cheap
+ * packs went up to pay for it.
+ *
+ * The result is measured rather than reasoned about, twice over: once
+ * for somebody with an empty album and once for somebody who owns every
+ * card in the game and so gets nothing back but duplicates. No pack ever
+ * returns more than about half of what it cost.
  *
  * The other half of the guard is elsewhere and just as important: a set
  * or a milestone pays out once and is recorded as paid, so finishing a
@@ -520,13 +524,13 @@ export function bestOwned(have: ReadonlySet<CardId>, n: number): Card[] {
 export function cardValue(card: Card): number {
   switch (card.rarity) {
     case 'icon':
-      return 180 + Math.max(0, card.rtg - 90) * 40;
+      return 400 + Math.max(0, card.rtg - 90) * 220;
     case 'gold':
-      return 60 + Math.max(0, card.rtg - 85) * 12;
+      return 90 + Math.max(0, card.rtg - 85) * 26;
     case 'silver':
-      return 20 + Math.max(0, card.rtg - 78) * 3;
+      return 18 + Math.max(0, card.rtg - 78) * 3;
     default:
-      return 8;
+      return 6;
   }
 }
 

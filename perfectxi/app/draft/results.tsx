@@ -7,7 +7,8 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import Svg, { Defs, Ellipse, Path, RadialGradient, Stop } from 'react-native-svg';
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
+import { go, home } from '../../src/game/nav';
 import * as Clipboard from 'expo-clipboard';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
@@ -28,6 +29,7 @@ import {
   ShareCard,
   CARD_W,
   CARD_H,
+  commas,
 } from '../../src/ui/components';
 import { color, space, radius, line, gradient, positionColor } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
@@ -605,7 +607,7 @@ ${challenge}
               <View style={styles.awardTop}>
                 <View style={styles.awardCell}>
                   <Text style={styles.awardValue} allowFontScaling={false}>
-                    +{award.xp}
+                    +{commas(award.xp)}
                   </Text>
                   <Text style={styles.awardLabel}>experience</Text>
                 </View>
@@ -614,7 +616,7 @@ ${challenge}
                     style={[styles.awardValue, { color: color.gold }]}
                     allowFontScaling={false}
                   >
-                    +{award.coins}
+                    +{commas(award.coins)}
                   </Text>
                   <Text style={styles.awardLabel}>coins</Text>
                 </View>
@@ -899,8 +901,8 @@ ${challenge}
           <Press
             onPress={() => {
               haptic('medium');
-              router.dismissAll();
-              router.push(againTo);
+              home();
+              go(againTo);
               clearRun();
             }}
             feel="none"
@@ -912,7 +914,7 @@ ${challenge}
           <Press
             onPress={() => {
               haptic('light');
-              router.dismissAll();
+              home();
               clearRun();
             }}
             feel="none"
@@ -966,8 +968,8 @@ ${challenge}
           // draft screen underneath reacts to, and this path does not need
           // it cleared: starting another draft overwrites it anyway. The
           // eleven have already been copied into the career by now.
-          router.dismissAll();
-          router.push('/dynasty');
+          home();
+          go('/dynasty');
         }}
       />
 
@@ -979,7 +981,7 @@ ${challenge}
         onCancel={() => setLeaving(false)}
         onConfirm={() => {
           setLeaving(false);
-          router.dismissAll();
+          home();
           clearRun();
         }}
       />

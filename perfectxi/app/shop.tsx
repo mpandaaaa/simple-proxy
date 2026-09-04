@@ -1,7 +1,17 @@
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
-import { ModeScreen, Press, Rise, Shine, PackOpen, LookTile } from '../src/ui/components';
+import { useFocusEffect } from 'expo-router';
+import { back } from '../src/game/nav';
+import {
+  ModeScreen,
+  Press,
+  Rise,
+  Shine,
+  PackOpen,
+  LookTile,
+  Coin,
+  commas,
+} from '../src/ui/components';
 import { color, space, radius, line, hue, alpha } from '../src/ui/tokens';
 import { font, text } from '../src/ui/type';
 import { haptic } from '../src/ui/feel';
@@ -68,7 +78,7 @@ export default function Shop() {
         haptic('warning');
         setSaid(
           got.why === 'coins'
-            ? `${pack.price - p.coins} coins short of that one.`
+            ? `${commas(pack.price - p.coins)} coins short of that one.`
             : 'That pack has gone.',
         );
         return;
@@ -88,11 +98,12 @@ export default function Shop() {
         overline="Your game"
         title="Shop"
         scroll={false}
-        onBack={() => router.back()}
+        onBack={() => back()}
         right={
           <View style={styles.purse}>
+            <Coin size={13} />
             <Text style={styles.purseText} allowFontScaling={false}>
-              {p.coins}
+              {commas(p.coins)}
             </Text>
           </View>
         }
@@ -231,8 +242,11 @@ export default function Shop() {
                             : styles.buyOff,
                         ]}
                       >
+                        {can ? <Coin size={15} /> : null}
                         <Text style={[styles.buyText, can ? { color: tint } : null]}>
-                          {can ? `Open for ${pack.price}` : `${pack.price - p.coins} coins short`}
+                          {can
+                            ? `Open for ${commas(pack.price)}`
+                            : `${commas(pack.price - p.coins)} coins short`}
                         </Text>
                       </Press>
                     </View>
@@ -306,7 +320,7 @@ export default function Shop() {
                       const got = buyCosmetic(c.id);
                       if (!got.ok) {
                         haptic('warning');
-                        setSaid(`${c.price - p.coins} coins short of ${c.name}.`);
+                        setSaid(`${commas(c.price - p.coins)} coins short of ${c.name}.`);
                         return;
                       }
                       haptic('success');
@@ -365,7 +379,9 @@ function rarityColour(r: Rarity): string {
 const styles = StyleSheet.create({
   page: { flex: 1 },
   purse: {
-    minWidth: 60,
+    flexDirection: 'row',
+    gap: 5,
+    minWidth: 66,
     height: 34,
     paddingHorizontal: space.s2,
     alignItems: 'center',
@@ -476,6 +492,8 @@ const styles = StyleSheet.create({
   oddsText: { ...text.key, fontSize: 7 },
 
   buy: {
+    flexDirection: 'row',
+    gap: space.s2,
     minHeight: 50,
     alignItems: 'center',
     justifyContent: 'center',

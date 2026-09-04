@@ -41,3 +41,4 @@ export { PackOpen } from './PackOpen';
 export { CardFace, rarityTint, RARITY_TINT } from './CardFace';
 export { LookTile } from './LookTile';
 export { AlbumCard } from './AlbumCard';
+export { Coin, commas } from './Coin';

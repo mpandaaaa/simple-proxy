@@ -1,13 +1,24 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { ModeScreen, Press, Rise, ClubDisc, Sheet, Confirm, CardFace } from '../src/ui/components';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { back } from '../src/game/nav';
+import {
+  ModeScreen,
+  Press,
+  Rise,
+  ClubDisc,
+  Sheet,
+  Confirm,
+  CardFace,
+  Coin,
+  commas,
+} from '../src/ui/components';
 import { color, space, radius, line, hue, alpha, positionColor } from '../src/ui/tokens';
 import { font, text } from '../src/ui/type';
 import { haptic } from '../src/ui/feel';
 import { sfx } from '../src/ui/sound';
 import { sellCard } from '../src/game/progress';
-import { albumFor, cardValue, cosmeticById, type Card } from '../src/engine';
+import { albumFor, cardById, cardId, cardValue, cosmeticById, type Card } from '../src/engine';
 import { collectionStore, looksStore, owned } from '../src/save';
 import { rarityColour } from './collection';
 
@@ -24,7 +35,11 @@ import { rarityColour } from './collection';
  * you are closest to finishing is the one you came here about.
  */
 export default function Album() {
-  const { club } = useLocalSearchParams<{ club?: string }>();
+  const { club, year, who } = useLocalSearchParams<{
+    club?: string;
+    year?: string;
+    who?: string;
+  }>();
   const [coll, setColl] = useState(() => collectionStore.read());
   const [look, setLook] = useState(() => looksStore.read());
   const [open, setOpen] = useState<Card | null>(null);
@@ -41,6 +56,24 @@ export default function Album() {
 
   const have = useMemo(() => owned(coll), [coll]);
   const name = typeof club === 'string' ? club : '';
+
+  /* Arriving with a footballer named opens straight onto him. Tapping a
+     card and landing on a list of thirty five seasons to hunt through is
+     not what tapping a card should do.
+     
+     The three parts are passed separately rather than as the card's own
+     id, because that id has pipes and spaces in it and does not survive
+     being a parameter in a URL. */
+  const asked = useRef(false);
+  useEffect(() => {
+    if (asked.current) return;
+    if (typeof club !== 'string' || typeof year !== 'string' || typeof who !== 'string') return;
+    const found = cardById(cardId(club, Number(year), who));
+    if (found) {
+      asked.current = true;
+      setOpen(found);
+    }
+  }, [club, year, who]);
   const seasons = useMemo(() => (name ? albumFor(name, have) : []), [name, have]);
   const frame = cosmeticById(look.frame);
 
@@ -64,7 +97,7 @@ export default function Album() {
         overline="The album"
         title={name || 'Club'}
         scroll={false}
-        onBack={() => router.back()}
+        onBack={() => back()}
         right={
           <View style={styles.chip}>
             <Text style={styles.chipText} allowFontScaling={false}>
@@ -192,7 +225,7 @@ export default function Album() {
             {have.has(open.id) ? (
               <>
                 <Text style={styles.sheetState}>
-                  In your album. Worth {cardValue(open)} coins if you let him go.
+                  In your album. Worth {commas(cardValue(open))} coins if you let him go.
                 </Text>
                 <Press
                   onPress={() => {
@@ -203,7 +236,8 @@ export default function Album() {
                   scaleTo={0.98}
                   style={styles.sell}
                 >
-                  <Text style={styles.sellText}>Sell for {cardValue(open)} coins</Text>
+                  <Coin size={15} />
+                  <Text style={styles.sellText}>Sell for {commas(cardValue(open))}</Text>
                 </Press>
               </>
             ) : (
@@ -220,7 +254,7 @@ export default function Album() {
         title={selling ? `Sell ${selling.n}?` : ''}
         body={
           selling
-            ? `He leaves the album for ${cardValue(selling)} coins. You can find him again, but only by drafting him or opening a pack.`
+            ? `He leaves the album for ${commas(cardValue(selling))} coins. You can find him again, but only by drafting him or opening a pack.`
             : ''
         }
         confirmLabel="Sell"
@@ -234,7 +268,7 @@ export default function Album() {
           if (got.ok) {
             haptic('success');
             sfx('tick');
-            setSaid(`${got.coins} coins.`);
+            setSaid(`${commas(got.coins)} coins.`);
             setColl(collectionStore.read());
           }
         }}
@@ -357,6 +391,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   sell: {
+    flexDirection: 'row',
+    gap: space.s2,
     minHeight: 52,
     alignItems: 'center',
     justifyContent: 'center',

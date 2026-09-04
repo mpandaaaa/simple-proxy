@@ -1,5 +1,5 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { go } from '../../game/nav';
 import { color, line, radius, space } from '../tokens';
 import { font, text } from '../type';
 import { GRAIN_URI } from '../grain';
@@ -28,7 +28,7 @@ export function AchievementPanel({ career }: { career: Career }) {
     <Press
       onPress={() => {
         haptic('light');
-        router.push('/cabinet');
+        go('/cabinet');
       }}
       feel="none"
       scaleTo={0.99}

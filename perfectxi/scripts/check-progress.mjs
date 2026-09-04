@@ -454,8 +454,11 @@ const cards = allCards();
   must('a Gold is worth more than a Silver', cardValue(gold) > cardValue(silver), '');
   must('a Silver is worth more than a Bronze', cardValue(silver) > cardValue(bronze), '');
   band('what a Bronze fetches', cardValue(bronze), 2, 30, '');
+  band('what a 95 rated Icon fetches',
+    cardValue(cards.filter((c) => c.rtg === 95)[0] ?? cards[0]), 1200, 1800,
+    'a name worth having, and still under an Icon Pack');
   band('what the best Icon fetches', Math.max(...cards.filter((c) => c.rarity === 'icon').map(cardValue)),
-    180, 900, 'a lot, and still less than an Icon Pack costs');
+    400, 4000, 'and always less than the pack that could produce him');
   must('nothing is worth nothing', cards.every((c) => cardValue(c) > 0), '');
 
   /* Selling a whole XI must be worth less than the season that produced

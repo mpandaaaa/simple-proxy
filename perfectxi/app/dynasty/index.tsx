@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
-import { router } from 'expo-router';
+import { go, back } from '../../src/game/nav';
 import {
   ModeScreen,
   Press,
@@ -284,7 +284,7 @@ export default function DynastyHub() {
           <Press
             onPress={() => {
               haptic('medium');
-              router.push('/dynasty/start');
+              go('/dynasty/start');
             }}
             feel="none"
             style={styles.cta}
@@ -311,7 +311,7 @@ export default function DynastyHub() {
       <ModeScreen
         overline={`Season ${career.year}`}
         title={career.club}
-        onBack={() => router.back()}
+        onBack={() => back()}
       >
         {/* ---- the club ---- */}
         <View
@@ -598,7 +598,7 @@ export default function DynastyHub() {
             <Press
               onPress={() => {
                 haptic('medium');
-                router.push('/dynasty/market');
+                go('/dynasty/market');
               }}
               feel="none"
               style={styles.warnCta}
@@ -611,7 +611,7 @@ export default function DynastyHub() {
           <Press
             onPress={() => {
               haptic('medium');
-              router.push('/dynasty/summer');
+              go('/dynasty/summer');
             }}
             feel="none"
             style={styles.advance}
@@ -626,7 +626,7 @@ export default function DynastyHub() {
           <Press
             onPress={() => {
               haptic('medium');
-              router.push('/dynasty/season');
+              go('/dynasty/season');
             }}
             feel="none"
             style={styles.play}
@@ -643,7 +643,7 @@ export default function DynastyHub() {
               key={t.href}
               onPress={() => {
                 haptic('light');
-                router.push(t.href);
+                go(t.href);
               }}
               feel="none"
               style={[

@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { back } from '../../src/game/nav';
 import { ModeScreen, Press, Shine } from '../../src/ui/components';
 import { color, gradient, line, radius, space, hue, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
@@ -58,7 +58,7 @@ export default function Staff() {
   const wages = staffWages(career);
 
   return (
-    <ModeScreen overline={career.club} title="Staff" onBack={() => router.back()}>
+    <ModeScreen overline={career.club} title="Staff" onBack={() => back()}>
       <View style={styles.summary}>
         <Shine radius={radius.lg} group="panel" />
         <View style={styles.sumRow}>

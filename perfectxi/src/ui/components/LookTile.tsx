@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { Press } from './Press';
+import { Coin, commas } from './Coin';
 import { color, hue, radius, space, alpha } from '../tokens';
 import { font, text } from '../type';
 import type { Cosmetic } from '../../engine';
@@ -69,6 +70,7 @@ export function LookTile({
               : null,
         ]}
       >
+        {state === 'buy' ? <Coin size={12} /> : null}
         <Text
           style={[
             styles.tagText,
@@ -85,7 +87,7 @@ export function LookTile({
             : state === 'owned'
               ? 'TAP TO WEAR'
               : state === 'buy'
-                ? `${item.price} COINS`
+                ? commas(item.price)
                 : `LEVEL ${item.level}`}
         </Text>
       </View>
@@ -240,6 +242,8 @@ const styles = StyleSheet.create({
   blurb: { ...text.small, fontSize: 10.5, lineHeight: 14, color: color.text3, minHeight: 28 },
 
   tag: {
+    flexDirection: 'row',
+    gap: 4,
     marginTop: 2,
     minHeight: 26,
     alignItems: 'center',

@@ -7,7 +7,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
+import { swap, home } from '../../src/game/nav';
 import {
   ModeScreen,
   Press,
@@ -167,7 +168,7 @@ export default function Season() {
     /* A duel is a comparison rather than a report, so it has its own
        page at the end. */
     const to = run?.h2h ? '/h2hreview' : '/draft/results';
-    const t = setTimeout(() => router.replace(to), FINAL_HOLD);
+    const t = setTimeout(() => swap(to), FINAL_HOLD);
     return () => clearTimeout(t);
   }, [done, watching, stopAuto]);
 
@@ -364,7 +365,7 @@ export default function Season() {
         onConfirm={() => {
           setLeaving(false);
           clearRun();
-          router.dismissAll();
+          home();
         }}
       />
     </>

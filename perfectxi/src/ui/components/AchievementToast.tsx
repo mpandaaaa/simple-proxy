@@ -9,7 +9,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { go } from '../../game/nav';
 import { color, line, radius, space } from '../tokens';
 import { font, text } from '../type';
 import { GRAIN_URI } from '../grain';
@@ -101,7 +101,7 @@ export function AchievementToast() {
             if (timer.current) clearTimeout(timer.current);
             shiftUnlock();
             setShown(null);
-            router.push('/cabinet');
+            go('/cabinet');
           }}
           feel="light"
           scaleTo={0.98}

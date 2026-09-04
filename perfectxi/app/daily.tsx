@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Share, StyleSheet, Text, View } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
+import { go, back } from '../src/game/nav';
 import {
   ModeScreen,
   Press,
@@ -71,7 +72,7 @@ export default function Daily() {
     haptic('medium');
     sfx('pick');
     startRun(puzzle.config, puzzle.seed, { daily: puzzle.n });
-    router.push('/draft/board');
+    go('/draft/board');
   }, [puzzle]);
 
   const share = useCallback(async () => {
@@ -93,7 +94,7 @@ export default function Daily() {
     <ModeScreen
       overline="Play today"
       title={dailyTitle(n)}
-      onBack={() => router.back()}
+      onBack={() => back()}
     >
       {/* ---- what today is ---- */}
       <View style={styles.today}>

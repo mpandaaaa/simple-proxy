@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { Press } from './Press';
 import { Shine } from './Shine';
+import { Coin, commas } from './Coin';
 import { color, hue, radius, space, alpha } from '../tokens';
 import { font, text } from '../type';
 import { haptic } from '../feel';
@@ -71,13 +72,13 @@ export function AlbumCard({
             <Text style={styles.title}>THE ALBUM</Text>
             <Text style={styles.sub}>
               {owned
-                ? `${owned} of ${total.toLocaleString('en-GB')} footballers kept`
+                ? `${commas(owned)} of ${commas(total)} footballers kept`
                 : 'Every XI you finish is yours to keep'}
             </Text>
           </View>
           <View style={styles.countBox}>
             <Text style={styles.count} allowFontScaling={false}>
-              {owned}
+              {commas(owned)}
             </Text>
             <Text style={styles.countWord}>cards</Text>
           </View>
@@ -112,8 +113,9 @@ export function AlbumCard({
               : `${packsWaiting} packs are waiting`
             : 'Open packs'}
         </Text>
+        <Coin size={15} />
         <Text style={styles.packsCoins} allowFontScaling={false}>
-          {coins}
+          {commas(coins)}
         </Text>
       </Press>
     </View>
@@ -126,6 +128,10 @@ function Shirt({ card }: { card: Card }) {
   const id = `a${card.id.replace(/[^A-Za-z0-9]/g, '')}`;
   return (
     <View style={[styles.slot, { borderColor: alpha(tint, 0.55) }]}>
+      {/* The art is a flex child with the text below it, never a layer on
+          top of it. Absolutely positioning the shirt and guessing how much
+          room the two lines under it needed put a ninety five straight
+          through the middle of a red shirt. */}
       <View style={styles.slotArt}>
         <Svg width="100%" height="100%" viewBox="0 0 100 100">
           <Defs>
@@ -142,12 +148,14 @@ function Shirt({ card }: { card: Card }) {
           <Path d={SHIRT} fill={`url(#${id}k)`} stroke={lift(kit, 0.45)} strokeWidth={1.4} />
         </Svg>
       </View>
-      <Text style={[styles.slotRtg, { color: tint }]} allowFontScaling={false}>
-        {card.rtg}
-      </Text>
-      <Text style={styles.slotName} numberOfLines={1}>
-        {lastName(card.n)}
-      </Text>
+      <View style={styles.slotFoot}>
+        <Text style={[styles.slotRtg, { color: tint }]} allowFontScaling={false}>
+          {card.rtg}
+        </Text>
+        <Text style={styles.slotName} numberOfLines={1}>
+          {lastName(card.n)}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -231,8 +239,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     backgroundColor: 'rgba(255,255,255,0.04)',
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingBottom: 5,
+    paddingVertical: 4,
+    paddingHorizontal: 3,
     overflow: 'hidden',
   },
   slotEmpty: {
@@ -240,7 +248,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.14)',
     justifyContent: 'center',
   },
-  slotArt: { position: 'absolute', top: 2, left: 2, right: 2, bottom: 20 },
+  slotArt: { flex: 1, alignSelf: 'stretch' },
+  slotFoot: { alignItems: 'center' },
   slotRtg: {
     fontFamily: font.displayBlack,
     fontSize: 15,
@@ -253,6 +262,7 @@ const styles = StyleSheet.create({
   packs: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
     minHeight: 52,
     paddingHorizontal: space.s4,
     borderRadius: radius.md,

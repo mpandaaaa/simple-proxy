@@ -9,7 +9,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
+import { go, home } from '../../src/game/nav';
 import {
   ModeScreen,
   Button,
@@ -285,7 +286,7 @@ export default function SquadComplete() {
         <Button
           label="Simulate the season"
           style={styles.cta}
-          onPress={() => router.push('/draft/season')}
+          onPress={() => go('/draft/season')}
         />
       </Rise>
 
@@ -299,7 +300,7 @@ export default function SquadComplete() {
         onConfirm={() => {
           setLeaving(false);
           clearRun();
-          router.dismissAll();
+          home();
         }}
       />
     </ModeScreen>

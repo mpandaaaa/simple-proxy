@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { back } from '../../src/game/nav';
 import { ModeScreen, Press, Shine, ClubDisc } from '../../src/ui/components';
 import { color, gradient, line, radius, space, hue, alpha, wear, vivid } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
@@ -90,7 +90,7 @@ export default function Club() {
   const kit = wear(clubColour(career.club));
 
   return (
-    <ModeScreen overline={career.club} title="The club" onBack={() => router.back()}>
+    <ModeScreen overline={career.club} title="The club" onBack={() => back()}>
       {/* ---- the ground ---- */}
       <View style={[styles.ground, { borderColor: kit.lineSoft, experimental_backgroundImage: kit.grad }]}>
         <Shine radius={radius.xl} group="feature" bevel={false} clip={false} />

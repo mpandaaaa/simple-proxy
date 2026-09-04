@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { back } from '../../src/game/nav';
 import Svg, { Circle, Line as SvgLine, Path, Rect } from 'react-native-svg';
 import { ModeScreen, Press, Shine, Trophy, ClubDisc } from '../../src/ui/components';
 import {
@@ -81,7 +81,7 @@ export default function History() {
     Object.values(career.honours ?? {}).reduce((a, n) => a + (n as number), 0);
 
   return (
-    <ModeScreen overline={career.club} title="History" onBack={() => router.back()}>
+    <ModeScreen overline={career.club} title="History" onBack={() => back()}>
       {/* ---- the cabinet ---- */}
       <View style={styles.honours}>
         <Shine radius={radius.xl} group="feature" bevel={false} clip={false} />

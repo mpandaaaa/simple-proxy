@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { swap, back } from '../../game/nav';
 import { color, space, radius, line, gradient } from '../tokens';
 import { font, text } from '../type';
 import { IconBack } from '../icons';
@@ -15,8 +16,8 @@ import { Press } from './Press';
  * is the honest destination when there is nowhere to return to.
  */
 function goBack() {
-  if (router.canGoBack()) router.back();
-  else router.replace('/');
+  if (router.canGoBack()) back();
+  else swap('/');
 }
 
 const BAR = 56;

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { swap, home } from '../src/game/nav';
 import { ModeScreen, Press, Pitch, Shine, Confirm, Sheet } from '../src/ui/components';
 import { color, space, radius, line, hue, alpha, positionColor } from '../src/ui/tokens';
 import { font, text } from '../src/ui/type';
@@ -32,7 +32,7 @@ function handOver() {
   const m = getH2H();
   if (!m) return;
   startRunWithSquad(m.config, m.seed, squadOf(m.state, m.me).squad);
-  router.replace('/draft/season');
+  swap('/draft/season');
 }
 
 /**
@@ -61,7 +61,7 @@ export default function HeadToHead() {
   }, []);
 
   useEffect(() => {
-    if (!m) router.replace('/duel');
+    if (!m) swap('/duel');
   }, [m]);
 
   const mine = m ? squadOf(m.state, m.me) : null;
@@ -310,8 +310,8 @@ export default function HeadToHead() {
         confirmLabel="Leave"
         onConfirm={() => {
           clearH2H();
-          router.dismissAll();
-          router.replace('/duel');
+          home();
+          swap('/duel');
         }}
         onCancel={() => setLeaving(false)}
       />

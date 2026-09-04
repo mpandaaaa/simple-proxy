@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { back } from '../../src/game/nav';
 import { ModeScreen, Press, Shine, PlayerSheet } from '../../src/ui/components';
 import { color, gradient, line, positionColor, radius, space } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
@@ -66,7 +66,7 @@ export default function Squad() {
 
   return (
     <>
-      <ModeScreen overline={career.club} title="Contracts" onBack={() => router.back()}>
+      <ModeScreen overline={career.club} title="Contracts" onBack={() => back()}>
         <View style={styles.bill}>
           <Shine radius={radius.lg} group="panel" />
           <View style={styles.billHead}>
