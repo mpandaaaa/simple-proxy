@@ -1,18 +1,66 @@
 {
-  "01-home":     { "line": "Draft football's greatest XI",
-                   "seal": { "eyebrow": "The game", "big": "7", "small": "Ways to play" } },
-  "02-xi":       { "line": "Build your dream team",
-                   "seal": { "eyebrow": "1992 to 2026", "big": "3,003", "small": "Real players" } },
-  "03-reel":     { "line": "Spin. Draft. Repeat.",
-                   "seal": { "eyebrow": "The draft", "big": "11", "small": "Picks, one XI" } },
-  "04-season":   { "line": "Play a full 38 game season",
-                   "seal": { "eyebrow": "Every season", "big": "38", "small": "Games played out" } },
-  "05-daily":    { "line": "The same draft for everyone",
-                   "seal": { "eyebrow": "The Daily", "big": "1", "small": "Draft a day" } },
-  "06-dynasty":  { "line": "Run a club for decades",
-                   "seal": { "eyebrow": "Decades deep", "big": "Dynasty", "small": "Career mode" } },
-  "07-machine":  { "line": "Outdraft the Machine",
-                   "seal": { "eyebrow": "Head to head", "big": "1v1", "small": "Draft against it" } },
-  "08-database": { "line": "35 years. 712 squads.",
-                   "seal": { "eyebrow": "The database", "big": "712", "small": "Club seasons" } }
+  "01-home": {
+    "line": "Draft football's greatest XI",
+    "seal": {
+      "eyebrow": "The game",
+      "big": "7",
+      "small": "Ways to play"
+    }
+  },
+  "02-xi": {
+    "line": "Build your dream team",
+    "seal": {
+      "eyebrow": "1992 to 2026",
+      "big": "3,003",
+      "small": "Real players"
+    }
+  },
+  "03-reel": {
+    "line": "Spin. Draft. Repeat.",
+    "seal": {
+      "eyebrow": "The draft",
+      "big": "11",
+      "small": "Picks, one XI"
+    }
+  },
+  "04-season": {
+    "line": "Play a full 38 game season",
+    "seal": {
+      "eyebrow": "Every season",
+      "big": "38",
+      "small": "Games played out"
+    }
+  },
+  "05-daily": {
+    "line": "The same draft for everyone",
+    "seal": {
+      "eyebrow": "The Daily",
+      "big": "1",
+      "small": "Draft a day"
+    }
+  },
+  "06-dynasty": {
+    "line": "Run a club for decades",
+    "seal": {
+      "eyebrow": "Decades deep",
+      "big": "Dynasty",
+      "small": "Career mode"
+    }
+  },
+  "07-machine": {
+    "line": "Outdraft the Machine",
+    "seal": {
+      "eyebrow": "Head to head",
+      "big": "1v1",
+      "small": "Draft against it"
+    }
+  },
+  "08-database": {
+    "line": "35 years. 712 squads.",
+    "seal": {
+      "eyebrow": "The database",
+      "big": "712",
+      "small": "Club seasons"
+    }
+  }
 }
