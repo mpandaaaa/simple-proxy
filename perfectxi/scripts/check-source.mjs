@@ -149,6 +149,37 @@ if (!store.includes('version: 13')) {
   }
 }
 
+/* ---- 9. anything left behind that should not ship ---- */
+{
+  for (const f of files) {
+    const src = readFileSync(f, 'utf8');
+    const lines = src.split(/\r?\n/);
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      if (/\bconsole\.(log|warn|error|debug)\s*\(/.test(l)) {
+        fail(`${f}:${i + 1} logs to the console. Nothing in the app should.`);
+      }
+      if (/\b(TODO|FIXME|HACK)\b/.test(l) && !/placeholder=/.test(l)) {
+        fail(`${f}:${i + 1} has a ${l.match(/\b(TODO|FIXME|HACK)\b/)[1]} in it.`);
+      }
+    }
+  }
+}
+
+/* ---- 10. a mode you cannot get out of ---- */
+{
+  /* Back out of a hub reaches Home, because a hub is the front door of
+     its mode. Going back to the screen that picked the side instead is
+     how you end up looking at two of the same page. */
+  for (const f of files) {
+    if (!/hub\.tsx$/.test(f)) continue;
+    const src = readFileSync(f, 'utf8');
+    if (/onBack=\{\(\) => back\(\)\}/.test(src)) {
+      fail(`${f} goes back rather than home. A hub is the front door of its mode.`);
+    }
+  }
+}
+
 console.log(
   failures ? `\n${failures} problems.\n` : '\nEvery source rule holds.\n',
 );

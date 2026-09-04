@@ -55,6 +55,13 @@ export default function Privacy() {
           server at all.
         </Section>
 
+        <Section title="Where that goes">
+          To a database hosted by Supabase, in Europe. It holds a queue of
+          people waiting for a duel and the result of one, and nothing else.
+          There is no other server, no analytics service and no third party
+          that sees anything.
+        </Section>
+
         <Section title="What there is not">
           No analytics. No crash reporting. No advertising, no advertising
           identifiers and no tracking of any kind. No third party software
@@ -72,7 +79,8 @@ export default function Privacy() {
           Perfect XI is an unofficial fan game. Player names, club names and
           seasons are matters of public record, used to describe real football
           history. It is not affiliated with, endorsed by or connected to the
-          Premier League, any football club, or any player.
+          Premier League, FIFA, UEFA, any football club, any competition or
+          any player.
         </Section>
 
         <View style={{ height: space.s6 }} />

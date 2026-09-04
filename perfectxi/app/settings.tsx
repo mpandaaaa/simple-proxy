@@ -208,10 +208,17 @@ export default function SettingsScreen() {
               setName(displayName());
               haptic('light');
             }}
+            onSubmitEditing={() => {
+              rename(name.trim().slice(0, 18));
+              setName(displayName());
+              haptic('light');
+            }}
             placeholder="Your name"
             placeholderTextColor={color.text3}
             maxLength={18}
             autoCorrect={false}
+            autoCapitalize="words"
+            returnKeyType="done"
             style={styles.input}
           />
         </View>

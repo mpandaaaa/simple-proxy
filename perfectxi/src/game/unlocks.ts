@@ -27,9 +27,25 @@ export function peekUnlock(): string | null {
   return queue[0] ?? null;
 }
 
+/**
+ * How many will ever be shown at once.
+ *
+ * Each one holds the screen for three and a half seconds, so twenty of
+ * them is over a minute of banners with nothing else to do. That happens
+ * for real: the first time an existing player opens a build with a new
+ * shelf in the cabinet, everything they already qualified for is earned
+ * at once.
+ *
+ * Anything past the cap is still earned and still in the cabinet. It just
+ * does not queue up to be announced.
+ */
+const SHOW_AT_MOST = 4;
+
 export function pushUnlocks(keys: readonly string[]): void {
   if (!keys.length) return;
-  queue = [...queue, ...keys];
+  const room = Math.max(0, SHOW_AT_MOST - queue.length);
+  if (!room) return;
+  queue = [...queue, ...keys.slice(0, room)];
   emit();
 }
 
