@@ -42,6 +42,8 @@ import {
 import {
   STAGE_NAME,
   wcTeam,
+  nameIn,
+  flagIn,
   bestOwned,
   bestThisWeek,
   levelProgress,
@@ -118,7 +120,7 @@ function readWeek() {
 function readWorldCup() {
   const run = worldCupStore.read();
   if (!run) return null;
-  const team = wcTeam(run.you);
+  const team = { n: nameIn(run, run.you), f: flagIn(run, run.you) };
   return {
     name: team?.n ?? '',
     flag: team?.f ?? '',

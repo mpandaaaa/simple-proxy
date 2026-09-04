@@ -27,7 +27,11 @@ export type EventKind =
   | 'offside'
   | 'woodwork'
   | 'yellow'
-  | 'run';
+  | 'run'
+  /* Only a knockout ever needs these three. */
+  | 'et'
+  | 'shootout'
+  | 'pen';
 
 export type MatchEvent = {
   id: string;
@@ -40,6 +44,8 @@ export type MatchEvent = {
   /** the score as it stood once this had happened */
   me: number;
   opp: number;
+  /** a penalty that went in, so a shootout can be read at a glance */
+  good?: boolean;
 };
 
 export type MatchStats = {
@@ -57,6 +63,10 @@ export type LiveMatch = {
   stats: MatchStats;
   /** where the pressure sat, one value a minute, -1 to 1 */
   momentum: number[];
+  /** the last minute on the clock. Ninety, unless a knockout went past it. */
+  full?: number;
+  /** the shootout tally, when it came to one */
+  pens?: { a: number; b: number } | null;
 };
 
 function pick<T>(list: readonly T[], rnd: Rng): T {
@@ -346,13 +356,13 @@ function buildStats(m: MatchResult, rnd: Rng): MatchStats {
  * decays back towards the balance of the tie, so a spell of pressure looks
  * like a spell rather than a spike.
  */
-function buildMomentum(events: MatchEvent[], share: number): number[] {
+function buildMomentum(events: MatchEvent[], share: number, full = 90): number[] {
   const base = (share - 0.5) * 1.2;
   const out: number[] = [];
   let v = base;
   let ei = 0;
 
-  for (let min = 0; min <= 90; min++) {
+  for (let min = 0; min <= full; min++) {
     while (ei < events.length && events[ei].min <= min) {
       const e = events[ei++];
       if (!e.side) continue;

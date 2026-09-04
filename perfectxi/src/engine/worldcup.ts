@@ -51,6 +51,11 @@ export type WcMatch = {
   gb: number;
   /** filled when a knockout went to penalties */
   pens: { a: number; b: number } | null;
+  /** the score after ninety minutes, missing on runs saved before commentary */
+  ga90?: number;
+  gb90?: number;
+  /** true when it needed extra time */
+  et?: boolean;
   /** true once it has been played */
   played: boolean;
   /** the group letter, for a group match */
@@ -69,6 +74,21 @@ export type WcRow = {
 };
 
 export type WcScorer = { n: string; g: number; a: number };
+
+/**
+ * A side you drafted rather than one that qualified.
+ *
+ * It still takes a real nation's place in the draw, because the groups and
+ * the bracket are the tournament and there is no forty ninth slot. What it
+ * replaces is the squad, the rating and the name on the scoreboard, so a
+ * World XI plays the same seven matches under its own colours.
+ */
+export type WcCustom = {
+  name: string;
+  flag: string;
+  rating: number;
+  squad: WcPlayer[];
+};
 
 export type WcRun = {
   seed: number;
@@ -94,6 +114,8 @@ export type WcRun = {
   won: boolean;
   /** every other nation's tournament, for the awards */
   world: WcWorldScorer[];
+  /** the XI you drafted, when you drafted one rather than taking a nation */
+  custom?: WcCustom | null;
 };
 
 export type WcWorldScorer = {
@@ -130,6 +152,29 @@ export function groupOf(letter: string): string[] {
   return Object.keys(WC_TEAMS).filter((c) => WC_TEAMS[c].g === letter);
 }
 
+/** Your rating, which is your XI's when you drafted one. */
+export function ratingIn(run: WcRun, code: string): number {
+  if (code === run.you && run.custom) return run.custom.rating;
+  return WC_TEAMS[code]?.r ?? 70;
+}
+
+/** Your squad, which is your eleven when you drafted them. */
+export function squadIn(run: WcRun, code: string): WcPlayer[] {
+  if (code === run.you && run.custom) return run.custom.squad;
+  return wcSquad(code);
+}
+
+/** What goes on the scoreboard. */
+export function nameIn(run: WcRun, code: string): string {
+  if (code === run.you && run.custom) return run.custom.name;
+  return WC_TEAMS[code]?.n ?? code;
+}
+
+export function flagIn(run: WcRun, code: string): string {
+  if (code === run.you && run.custom) return run.custom.flag;
+  return WC_TEAMS[code]?.f ?? '';
+}
+
 /* ---------- one match ---------- */
 
 /**
@@ -145,14 +190,29 @@ export function playMatch(
   b: string,
   knockout: boolean,
   rnd: Rng,
-): { ga: number; gb: number; pens: { a: number; b: number } | null } {
-  const sa = strFromAvg(WC_TEAMS[a]?.r ?? 70);
-  const sb = strFromAvg(WC_TEAMS[b]?.r ?? 70);
+  /** overrides, for a side that was drafted rather than drawn */
+  ra?: number,
+  rb?: number,
+): {
+  ga: number;
+  gb: number;
+  pens: { a: number; b: number } | null;
+  /** the score at ninety minutes, which is where the commentary changes gear */
+  ga90: number;
+  gb90: number;
+  et: boolean;
+} {
+  const sa = strFromAvg(typeof ra === 'number' ? ra : (WC_TEAMS[a]?.r ?? 70));
+  const sb = strFromAvg(typeof rb === 'number' ? rb : (WC_TEAMS[b]?.r ?? 70));
   const { lam, mu } = dcExpected(sa, sb, false, null);
   let ga = poissonR(lam, rnd);
   let gb = poissonR(mu, rnd);
+  const ga90 = ga;
+  const gb90 = gb;
 
-  if (!knockout || ga !== gb) return { ga, gb, pens: null };
+  if (!knockout || ga !== gb) {
+    return { ga, gb, pens: null, ga90, gb90, et: false };
+  }
 
   /* Extra time. Thirty minutes is a third of a match, and it settles it
      about a third of the time, which is roughly what happens. */
@@ -160,7 +220,7 @@ export function playMatch(
   const eb = poissonR(mu / 3, rnd);
   ga += ea;
   gb += eb;
-  if (ga !== gb) return { ga, gb, pens: null };
+  if (ga !== gb) return { ga, gb, pens: null, ga90, gb90, et: true };
 
   /* Penalties. Close to a coin toss, tilted a little by who is better,
      because that is about as far as anybody has ever shown it goes. */
@@ -179,7 +239,7 @@ export function playMatch(
     if (hb) pb++;
   }
   if (pa === pb) pa++;
-  return { ga, gb, pens: { a: pa, b: pb } };
+  return { ga, gb, pens: { a: pa, b: pb }, ga90, gb90, et: true };
 }
 
 /* ---------- who scored ---------- */
@@ -327,7 +387,7 @@ function yourGroupGames(you: string): WcMatch[] {
   return out;
 }
 
-export function wcStart(you: string, seed: number): WcRun {
+export function wcStart(you: string, seed: number, custom?: WcCustom | null): WcRun {
   const letter = WC_TEAMS[you]?.g ?? 'A';
   return {
     seed: seed >>> 0,
@@ -343,6 +403,7 @@ export function wcStart(you: string, seed: number): WcRun {
     outAt: null,
     won: false,
     world: [],
+    custom: custom ?? null,
   };
 }
 
@@ -381,10 +442,26 @@ export function wcPlayNext(run: WcRun): WcPlayed | null {
   const fixture = run.ahead[0];
   const rnd = rngFor(run, run.played.length);
   const knockout = fixture.stage !== 'group';
-  const r = playMatch(fixture.a, fixture.b, knockout, rnd);
+  const r = playMatch(
+    fixture.a,
+    fixture.b,
+    knockout,
+    rnd,
+    ratingIn(run, fixture.a),
+    ratingIn(run, fixture.b),
+  );
 
-  const match: WcMatch = { ...fixture, ga: r.ga, gb: r.gb, pens: r.pens, played: true };
-  const scorers = shareGoals(wcSquad(run.you), r.ga, rnd);
+  const match: WcMatch = {
+    ...fixture,
+    ga: r.ga,
+    gb: r.gb,
+    pens: r.pens,
+    ga90: r.ga90,
+    gb90: r.gb90,
+    et: r.et,
+    played: true,
+  };
+  const scorers = shareGoals(squadIn(run, run.you), r.ga, rnd);
 
   const squad = { ...run.squad };
   for (const s of scorers) {
@@ -640,7 +717,7 @@ export function goldenBoot(run: WcRun): { n: string; code: string; goals: number
 }
 
 export function goldenGlove(run: WcRun): { n: string; code: string; cleanSheets: number } {
-  const keeper = wcSquad(run.you)
+  const keeper = squadIn(run, run.you)
     .filter((p) => (p.pos[0] ?? '') === 'GK')
     .sort((a, b) => b.rtg - a.rtg)[0];
   const mine = keeper
@@ -679,7 +756,7 @@ const ORDER: WcStage[] = ['group', 'r32', 'r16', 'qf', 'sf', 'final'];
 
 /** Better, level or worse than a nation that good should have managed. */
 export function wcVerdict(run: WcRun): 'over' | 'met' | 'under' {
-  const want = ORDER.indexOf(wcExpected(WC_TEAMS[run.you]?.r ?? 70));
+  const want = ORDER.indexOf(wcExpected(ratingIn(run, run.you)));
   const got = run.won ? ORDER.length : ORDER.indexOf(run.outAt ?? 'group');
   if (got > want) return 'over';
   if (got < want) return 'under';

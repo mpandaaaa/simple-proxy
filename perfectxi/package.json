@@ -67,6 +67,8 @@
     "extract-tournaments": "node scripts/extract-tournaments.mjs",
     "import-tournaments": "node scripts/import-tournaments.mjs",
     "worldcup": "tsc -p tsconfig.headless.json && node scripts/check-worldcup.mjs",
+    "tourney": "tsc -p tsconfig.headless.json && node scripts/check-tournament-match.mjs",
+    "wcdraft": "tsc -p tsconfig.headless.json && node scripts/check-wc-draft.mjs",
     "extract-db": "node scripts/extract-db.mjs",
     "build-engine": "tsc -p tsconfig.headless.json",
     "sim": "tsc -p tsconfig.headless.json && node scripts/sim-season.mjs",
@@ -89,7 +91,7 @@
     "progress": "tsc -p tsconfig.headless.json && node scripts/check-progress.mjs",
     "online": "node scripts/check-online.mjs",
     "source": "node scripts/check-source.mjs",
-    "verify": "npm run typecheck && npm run source && npm run golden && npm run dynasty && npm run realism && npm run scout && npm run pyramid && npm run cups && npm run people && npm run screens && npm run daily && npm run playtoday && npm run h2h && npm run progress && npm run worldcup && npm run career && npm run save"
+    "verify": "npm run typecheck && npm run source && npm run golden && npm run dynasty && npm run realism && npm run scout && npm run pyramid && npm run cups && npm run people && npm run screens && npm run daily && npm run playtoday && npm run h2h && npm run progress && npm run worldcup && npm run tourney && npm run wcdraft && npm run career && npm run save"
   },
   "private": true
 }

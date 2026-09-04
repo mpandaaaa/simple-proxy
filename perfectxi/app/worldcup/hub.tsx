@@ -12,6 +12,9 @@ import {
   wcScorers,
   wcSummary,
   wcTeam,
+  nameIn,
+  flagIn,
+  ratingIn,
   type WcMatch,
   type WcStage,
 } from '../../src/engine';
@@ -43,7 +46,16 @@ export default function WorldCupHub() {
     if (!run) swap('/worldcup');
   }, [run]);
 
-  const me = run ? wcTeam(run.you) : null;
+  const me = run
+    ? {
+        n: nameIn(run, run.you),
+        f: flagIn(run, run.you),
+        r: ratingIn(run, run.you),
+        /* The group is the place in the draw, which a drafted XI takes from
+           the nation whose flag it carries. */
+        g: wcTeam(run.you)?.g ?? '',
+      }
+    : null;
   const summary = useMemo(() => (run ? wcSummary(run) : null), [run]);
   const scorers = useMemo(() => (run ? wcScorers(run).slice(0, 4) : []), [run]);
 
@@ -216,8 +228,10 @@ export default function WorldCupHub() {
             <Text style={[styles.th, styles.tPts]}>Pts</Text>
           </View>
           {run.table.map((r, i) => {
-            const t = wcTeam(r.code);
             const you = r.code === run.you;
+            /* Your row carries your name, which for a drafted run is your
+               XI rather than the nation whose place it took. */
+            const t = { f: flagIn(run, r.code), n: nameIn(run, r.code) };
             return (
               <View
                 key={r.code}

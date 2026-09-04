@@ -51,6 +51,9 @@ const ICON: Record<string, string> = {
   woodwork: '💥',
   yellow: '🟨',
   run: '⚡',
+  et: '⏱',
+  shootout: '🎯',
+  pen: '◎',
 };
 
 /**
@@ -73,6 +76,10 @@ export function MatchLive({
   live,
   visible,
   onDone,
+  tape,
+  comp,
+  sides,
+  doneLabel,
 }: {
   match: MatchResult | null;
   /** the run's seed, so a match watched twice plays out the same */
@@ -81,6 +88,21 @@ export function MatchLive({
   live: boolean;
   visible: boolean;
   onDone: () => void;
+  /**
+   * A match built somewhere else.
+   *
+   * A league fixture is turned into ninety minutes right here. A knockout
+   * has extra time and penalties in it, so it arrives already built, and
+   * the broadcast plays whichever it is given without knowing which
+   * competition it came from.
+   */
+  tape?: LiveMatch | null;
+  /** the line above the scoreline. Defaults to the league's own. */
+  comp?: string;
+  /** the two sides, when they are nations rather than clubs */
+  sides?: { me: { name: string; flag?: string }; opp: { name: string; flag?: string } } | null;
+  /** what the button at the end says */
+  doneLabel?: string;
 }) {
   const reduce = useReduceMotion();
   const insets = useSafeAreaInsets();
@@ -102,9 +124,13 @@ export function MatchLive({
   const statsIn = useSharedValue(0);
 
   const built: LiveMatch | null = useMemo(
-    () => (match ? buildMatch(match, seed) : null),
-    [match, seed],
+    () => tape ?? (match ? buildMatch(match, seed) : null),
+    [tape, match, seed],
   );
+
+  /* Ninety, unless a knockout ran past it. Every clock, bar and notch below
+     is measured against this rather than against ninety. */
+  const full = built?.full ?? 90;
 
   const drop = useCallback(() => setMounted(false), []);
 
@@ -154,12 +180,12 @@ export function MatchLive({
     stop();
     setShown(built.events.slice().reverse());
     cursor.current = built.events.length;
-    clock.current = 90;
-    setMinute(90);
+    clock.current = full;
+    setMinute(full);
     clockBar.value = withTiming(1, { duration: 200 });
-    swing.value = withTiming(built.momentum[90] ?? 0, { duration: 260 });
+    swing.value = withTiming(built.momentum[full] ?? 0, { duration: 260 });
     finish();
-  }, [built, stop, finish, clockBar, swing]);
+  }, [built, full, stop, finish, clockBar, swing]);
 
   useEffect(() => {
     if (!visible || !built) return;
@@ -186,14 +212,14 @@ export function MatchLive({
       clock.current += 1;
       const m = clock.current;
       setMinute(m);
-      clockBar.value = withTiming(m / 90, { duration: MINUTE_MS, easing: Easing.linear });
+      clockBar.value = withTiming(m / full, { duration: MINUTE_MS, easing: Easing.linear });
       swing.value = withTiming(built.momentum[m] ?? 0, { duration: 260 });
 
       let paused = false;
       const landed: MatchEvent[] = [];
       while (cursor.current < built.events.length && built.events[cursor.current].min <= m) {
         const e = built.events[cursor.current++];
-        if (e.kind === 'ft' && m < 90) {
+        if (e.kind === 'ft' && m < full) {
           cursor.current--;
           break;
         }
@@ -210,7 +236,7 @@ export function MatchLive({
             withSpring(0, { stiffness: 260, damping: 20, mass: 1 }),
           );
         }
-        if (e.kind === 'ht') {
+        if (e.kind === 'ht' || e.kind === 'et' || e.kind === 'shootout') {
           haptic('select');
           paused = true;
         }
@@ -219,7 +245,7 @@ export function MatchLive({
         setShown((prev) => landed.slice().reverse().concat(prev));
       }
 
-      if (m >= 90) {
+      if (m >= full) {
         // Anything left with a minute past ninety still belongs to the game.
         const rest = built.events.slice(cursor.current);
         cursor.current = built.events.length;
@@ -235,6 +261,7 @@ export function MatchLive({
   }, [
     visible,
     built,
+    full,
     reduce,
     rush,
     stop,
@@ -321,8 +348,8 @@ export function MatchLive({
             <View style={styles.topEdge} pointerEvents="none" />
 
             <Text style={styles.comp}>
-              Premier League {'·'} Matchday {match.n} {'·'}{' '}
-              {match.home ? 'Home' : 'Away'}
+              {comp ??
+                `Premier League · Matchday ${match.n} · ${match.home ? 'Home' : 'Away'}`}
             </Text>
 
             {/* the one place sound actually plays is the one place to stop it */}
@@ -340,9 +367,15 @@ export function MatchLive({
 
             <View style={styles.scoreline}>
               <View style={styles.side}>
-                <ClubDisc club={null} code="XI" size={46} />
+                {sides ? (
+                  <Text style={styles.crest} allowFontScaling={false}>
+                    {sides.me.flag}
+                  </Text>
+                ) : (
+                  <ClubDisc club={null} code="XI" size={46} />
+                )}
                 <Text style={styles.team} numberOfLines={1}>
-                  Your XI
+                  {sides ? sides.me.name : 'Your XI'}
                 </Text>
               </View>
 
@@ -362,14 +395,33 @@ export function MatchLive({
                   style={[styles.clock, ended && { color: tone }]}
                   allowFontScaling={false}
                 >
-                  {ended ? 'FULL TIME' : minute === 45 ? 'HALF TIME' : `${minute}'`}
+                  {ended
+                    ? full > 90
+                      ? 'AFTER EXTRA TIME'
+                      : 'FULL TIME'
+                    : minute === 45
+                      ? 'HALF TIME'
+                      : minute === 90 && full > 90
+                        ? 'EXTRA TIME'
+                        : `${minute}'`}
                 </Text>
+                {ended && built.pens ? (
+                  <Text style={styles.penLine} allowFontScaling={false}>
+                    {built.pens.a} {'–'} {built.pens.b} ON PENALTIES
+                  </Text>
+                ) : null}
               </View>
 
               <View style={styles.side}>
-                <ClubDisc club={match.opp} size={46} />
+                {sides ? (
+                  <Text style={styles.crest} allowFontScaling={false}>
+                    {sides.opp.flag}
+                  </Text>
+                ) : (
+                  <ClubDisc club={match.opp} size={46} />
+                )}
                 <Text style={styles.team} numberOfLines={1}>
-                  {match.opp}
+                  {sides ? sides.opp.name : match.opp}
                 </Text>
               </View>
             </View>
@@ -377,7 +429,7 @@ export function MatchLive({
             {/* the ninety, with the break marked */}
             <View style={styles.clockTrack}>
               <Animated.View style={[styles.clockFill, barStyle]} />
-              <View style={styles.halfNotch} />
+              <View style={[styles.halfNotch, { left: `${(45 / full) * 100}%` }]} />
             </View>
 
             {/* who is on top, right now */}
@@ -444,7 +496,9 @@ export function MatchLive({
           <View style={styles.actions}>
             {ended ? (
               <Press onPress={onDone} feel="medium" style={styles.primary} scaleTo={0.98}>
-                <Text style={styles.primaryText}>{live ? 'Continue' : 'Close'}</Text>
+                <Text style={styles.primaryText}>
+                  {doneLabel ?? (live ? 'Continue' : 'Close')}
+                </Text>
               </Press>
             ) : (
               <Press onPress={rush} feel="light" style={styles.secondary} scaleTo={0.98}>
@@ -485,7 +539,12 @@ const EventRow = memo(function EventRow({
   }));
 
   const goal = event.kind === 'goal';
-  const whistle = event.kind === 'ht' || event.kind === 'ft' || event.kind === 'ko';
+  const whistle =
+    event.kind === 'ht' ||
+    event.kind === 'ft' ||
+    event.kind === 'ko' ||
+    event.kind === 'et' ||
+    event.kind === 'shootout';
 
   return (
     <Animated.View
@@ -493,6 +552,7 @@ const EventRow = memo(function EventRow({
         styles.ev,
         style,
         goal && (event.side === 'me' ? styles.evMe : styles.evOpp),
+        event.kind === 'pen' && (event.good ? styles.evMe : styles.evOpp),
       ]}
     >
       <Text style={styles.evMin} allowFontScaling={false}>
@@ -502,7 +562,11 @@ const EventRow = memo(function EventRow({
             ? 'HT'
             : event.kind === 'ft'
               ? 'FT'
-              : `${event.min}'`}
+              : event.kind === 'et'
+                ? 'ET'
+                : event.kind === 'pen' || event.kind === 'shootout'
+                  ? 'P'
+                  : `${event.min}'`}
       </Text>
       <Text style={styles.evIcon} allowFontScaling={false}>
         {ICON[event.kind] ?? '•'}
@@ -690,6 +754,17 @@ const styles = StyleSheet.create({
     transformOrigin: 'left',
     backgroundColor: NIGHT.hot,
     boxShadow: `0px 0px 8px ${NIGHT.hot}`,
+  },
+  /* A nation has a flag rather than a badge, and it sits where the badge
+     would have sat so the two sides stay level. */
+  crest: { fontSize: 40, lineHeight: 48, height: 48, textAlign: 'center' },
+  penLine: {
+    fontFamily: font.displayBold,
+    fontSize: 9,
+    letterSpacing: 1,
+    color: 'rgba(255,255,255,0.72)',
+    marginTop: 2,
+    fontVariant: ['tabular-nums'],
   },
   halfNotch: {
     position: 'absolute',

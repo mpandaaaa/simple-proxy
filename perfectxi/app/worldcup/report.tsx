@@ -14,6 +14,10 @@ import {
   wcSquad,
   wcSummary,
   wcTeam,
+  nameIn,
+  flagIn,
+  ratingIn,
+  squadIn,
   wcVerdict,
   type WcMatch,
 } from '../../src/engine';
@@ -45,7 +49,7 @@ export default function WorldCupReport() {
 
   if (!run || !summary) return null;
 
-  const me = wcTeam(run.you);
+  const me = { n: nameIn(run, run.you), f: flagIn(run, run.you), r: ratingIn(run, run.you) };
   const verdict = wcVerdict(run);
   const expect = wcExpected(me?.r ?? 70);
   const tint = run.won ? hue.gold : verdict === 'over' ? hue.emerald : verdict === 'met' ? hue.sky : hue.crimson;
@@ -56,7 +60,7 @@ export default function WorldCupReport() {
   const top = scorers[0];
   const maker = [...scorers].sort((a, b) => b.a - a.a || b.g - a.g)[0];
   const potm = [...scorers].sort((a, b) => b.g * 2 + b.a - (a.g * 2 + a.a))[0];
-  const keeper = wcSquad(run.you)
+  const keeper = squadIn(run, run.you)
     .filter((p) => (p.pos[0] ?? '') === 'GK')
     .sort((a, b) => b.rtg - a.rtg)[0];
 

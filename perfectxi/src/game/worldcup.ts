@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { worldCupStore } from '../save';
-import { wcPlayNext, wcStart, type WcPlayed, type WcRun } from '../engine';
+import { wcPlayNext, wcStart, type WcCustom, type WcPlayed, type WcRun } from '../engine';
 
 /**
  * The World Cup in progress, shared by its screens.
@@ -44,9 +44,15 @@ export function setWorldCup(run: WcRun | null): void {
   emit();
 }
 
-/** Begin one. Replaces whatever was there, which the screen confirms first. */
-export function startWorldCup(nation: string): WcRun {
-  const run = wcStart(nation, Math.floor(Math.random() * 0x100000000) >>> 0);
+/**
+ * Begin one. Replaces whatever was there, which the screen confirms first.
+ *
+ * With a custom side, the nation is the place in the draw you take and the
+ * flag you carry; everything that decides a match comes from the XI you
+ * drafted instead.
+ */
+export function startWorldCup(nation: string, custom?: WcCustom | null): WcRun {
+  const run = wcStart(nation, Math.floor(Math.random() * 0x100000000) >>> 0, custom ?? null);
   setWorldCup(run);
   return run;
 }

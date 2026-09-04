@@ -376,5 +376,28 @@ export {
   wcVerdict,
   wcSummary,
   wcScorers,
+  ratingIn,
+  squadIn,
+  nameIn,
+  flagIn,
 } from './worldcup';
-export type { WcStage, WcMatch, WcRow, WcRun, WcScorer, WcPlayed } from './worldcup';
+export type { WcStage, WcMatch, WcRow, WcRun, WcScorer, WcPlayed, WcCustom } from './worldcup';
+
+export {
+  WC_BOARD,
+  WC_ROUNDS,
+  wcPool,
+  wcDraftStart,
+  wcBoard,
+  wcCanPlay,
+  wcSlotsFor,
+  wcPlace,
+  wcAutoPick,
+  wcDraftDone,
+  wcXi,
+  wcXiRating,
+  wcSpread,
+  wcCustomSquad,
+  wcNationOf,
+} from './worldcupDraft';
+export type { WcPick, WcDraftState, WcDraftSlot } from './worldcupDraft';
