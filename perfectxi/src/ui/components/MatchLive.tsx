@@ -137,7 +137,13 @@ export function MatchLive({
   tape?: LiveMatch | null;
   /** the line above the scoreline. Defaults to the league's own. */
   comp?: string;
-  /** the two sides, when they are nations rather than clubs */
+  /**
+   * The two sides, when they are not the league's own.
+   *
+   * A flag if the competition has one. Without a flag, the name is drawn
+   * as a badge, which is what the Champions League wants: a club has a
+   * crest and a nation has a flag, and an empty box has neither.
+   */
   sides?: { me: { name: string; flag?: string }; opp: { name: string; flag?: string } } | null;
   /** what the button at the end says */
   doneLabel?: string;
@@ -424,12 +430,16 @@ export function MatchLive({
 
             <View style={styles.scoreline}>
               <View style={styles.side}>
-                {sides ? (
+                {sides?.me.flag ? (
                   <Text style={styles.crest} allowFontScaling={false}>
                     {sides.me.flag}
                   </Text>
                 ) : (
-                  <ClubDisc club={null} code="XI" size={46} />
+                  <ClubDisc
+                    club={sides ? sides.me.name : null}
+                    code={sides ? undefined : 'XI'}
+                    size={46}
+                  />
                 )}
                 <Text style={styles.team} numberOfLines={1}>
                   {sides ? sides.me.name : 'Your XI'}
@@ -470,12 +480,12 @@ export function MatchLive({
               </View>
 
               <View style={styles.side}>
-                {sides ? (
+                {sides?.opp.flag ? (
                   <Text style={styles.crest} allowFontScaling={false}>
                     {sides.opp.flag}
                   </Text>
                 ) : (
-                  <ClubDisc club={match.opp} size={46} />
+                  <ClubDisc club={sides ? sides.opp.name : match.opp} size={46} />
                 )}
                 <Text style={styles.team} numberOfLines={1}>
                   {sides ? sides.opp.name : match.opp}

@@ -9,8 +9,14 @@ import { haptic } from '../src/ui/feel';
 import { sfx } from '../src/ui/sound';
 import { ENGINE_VERSION } from '../src/engine';
 import {
+  wipeCollection,
+  wipeDynasty,
+  wipeEverything,
+  wipeUcl,
+  wipeWorldCup,
+} from '../src/game/reset';
+import {
   careerStore,
-  clearAllSaves,
   collectionStore,
   displayName,
   dynastyStore,
@@ -113,14 +119,11 @@ export default function SettingsScreen() {
     if (!what) return;
     haptic('warning');
     try {
-      if (what === 'worldcup') worldCupStore.write(null);
-      else if (what === 'ucl') uclStore.write(null);
-      else if (what === 'dynasty') dynastyStore.write(null);
-      else if (what === 'collection') {
-        collectionStore.write({ cards: [], bought: [], claimed: [], owed: [] });
-      } else if (what === 'everything') {
-        clearAllSaves();
-      }
+      if (what === 'worldcup') wipeWorldCup();
+      else if (what === 'ucl') wipeUcl();
+      else if (what === 'dynasty') wipeDynasty();
+      else if (what === 'collection') wipeCollection();
+      else if (what === 'everything') wipeEverything();
     } catch {
       /* A failed delete must never take the screen down. */
     }

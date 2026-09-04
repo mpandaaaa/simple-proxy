@@ -68,9 +68,10 @@ export default function WorldCupHub() {
 
   const next = run.ahead[0] ?? null;
   const at = RAIL.findIndex((r) => r.stage === run.stage);
-  const reached = run.over
-    ? RAIL.findIndex((r) => r.stage === run.outAt) + (run.won ? 1 : 0)
-    : at;
+  /* A tournament that ended at a round still reached that round, so the
+     rail lights it. Going out in the group used to light nothing at all,
+     which read as never having played. */
+  const reached = run.over ? RAIL.findIndex((r) => r.stage === run.outAt) + 1 : at;
 
   return (
     <ModeScreen

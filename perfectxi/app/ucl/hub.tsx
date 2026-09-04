@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
-import { ModeScreen, Press, Rise, Shine, Confirm } from '../../src/ui/components';
+import { ClubDisc, ModeScreen, Press, Rise, Shine, Confirm } from '../../src/ui/components';
 import { go, home, swap } from '../../src/game/nav';
 import { color, space, radius, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
@@ -115,7 +115,9 @@ export default function UclHub() {
           <Rail run={run} />
 
           {/* ================= the tie you are in ================= */}
-          {!league && run.agg && (run.agg.a > 0 || run.agg.b > 0) && !run.over ? (
+          {/* Between the legs of a tie, whatever the aggregate is. Nil
+              nil after the first leg is a state worth seeing. */}
+          {next && next.n === 2 && next.stage !== 'league' && next.stage !== 'final' && run.agg ? (
             <View style={styles.agg}>
               <Text style={styles.aggKey}>AGGREGATE</Text>
               <Text style={styles.aggScore} allowFontScaling={false}>
@@ -155,13 +157,18 @@ export default function UclHub() {
                     {next.neutral ? 'Neutral' : next.home ? 'Home' : 'Away'}
                   </Text>
                 </View>
-                <Text style={styles.nextName} numberOfLines={1}>
-                  {next.b}
-                </Text>
-                <Text style={styles.nextMeta} numberOfLines={1}>
-                  Rated {Math.round(uclRatingOf(run, next.b))} {'·'}{' '}
-                  {uclClub(next.b)?.country ?? ''}
-                </Text>
+                <View style={styles.nextWho}>
+                  <ClubDisc club={next.b} size={40} />
+                  <View style={styles.nextBody}>
+                    <Text style={styles.nextName} numberOfLines={1}>
+                      {next.b}
+                    </Text>
+                    <Text style={styles.nextMeta} numberOfLines={1}>
+                      Rated {Math.round(uclRatingOf(run, next.b))} {'·'}{' '}
+                      {uclClub(next.b)?.country ?? ''}
+                    </Text>
+                  </View>
+                </View>
                 <View style={styles.play}>
                   <Text style={styles.playText}>Play it</Text>
                 </View>
@@ -296,8 +303,10 @@ function Rail({ run }: { run: UclRun }) {
   return (
     <View style={styles.rail}>
       {steps.map((s, i) => {
-        const done = i < at || (run.won && i <= at);
-        const now = i === at && !run.over;
+        /* A campaign that ended at a round still reached that round, so
+           when it is over everything up to and including it is lit. */
+        const done = run.over ? i <= at : i < at;
+        const now = !run.over && i === at;
         return (
           <View key={s.key} style={styles.railStep}>
             <View
@@ -441,7 +450,9 @@ const styles = StyleSheet.create({
   nextTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   nextKey: { ...text.key, fontSize: 8, color: sky.blue },
   nextWhere: { ...text.key, fontSize: 8, color: color.text3 },
-  nextName: { fontFamily: font.displayBlack, fontSize: 24, lineHeight: 31, color: color.text1 },
+  nextWho: { flexDirection: 'row', alignItems: 'center', gap: space.s3, marginTop: space.s2 },
+  nextBody: { flex: 1, minWidth: 0, gap: 1 },
+  nextName: { fontFamily: font.displayBlack, fontSize: 22, lineHeight: 29, color: color.text1 },
   nextMeta: { ...text.small, fontSize: 12, lineHeight: 17, color: color.text2 },
   play: {
     marginTop: space.s3,

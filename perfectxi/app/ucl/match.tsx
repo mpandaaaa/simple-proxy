@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
-import { ModeScreen, MatchLive, Shine } from '../../src/ui/components';
+import { ClubDisc, ModeScreen, MatchLive, Shine } from '../../src/ui/components';
 import { swap, upTo } from '../../src/game/nav';
 import { color, space, radius } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
@@ -153,6 +153,7 @@ export default function UclMatch() {
 
         <View style={styles.sides}>
           <View style={styles.side}>
+            <ClubDisc club={me.n} size={44} />
             <Text style={styles.name} numberOfLines={2}>
               {me.n}
             </Text>
@@ -160,6 +161,7 @@ export default function UclMatch() {
           </View>
           <Text style={styles.versus}>v</Text>
           <View style={styles.side}>
+            <ClubDisc club={them.n} size={44} />
             <Text style={styles.name} numberOfLines={2}>
               {them.n}
             </Text>
@@ -200,7 +202,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   sides: { flexDirection: 'row', alignItems: 'center' },
-  side: { flex: 1, alignItems: 'center', gap: 3 },
+  side: { flex: 1, alignItems: 'center', gap: 5 },
   name: {
     fontFamily: font.displayBold,
     fontSize: 17,
