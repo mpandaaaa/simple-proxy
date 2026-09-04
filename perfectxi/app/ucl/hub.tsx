@@ -100,7 +100,7 @@ export default function UclHub() {
             <Text style={styles.crestMeta}>
               Rated {Math.round(uclRatingOf(run, run.you))}
               {run.custom ? '' : ` · Pot ${uclClub(run.you)?.pot ?? ''}`}
-              {league ? ` · ${ordinalOf(pos)} of 36` : ''}
+              {` · ${ordinalOf(pos)} of 36`}
             </Text>
             <Text style={[styles.now, run.over ? { color: sky.out } : null]}>
               {run.over
