@@ -1,0 +1,361 @@
+<title>Perfect XI Privacy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+  /*
+   * The same palette the app is built from, so that somebody who taps
+   * through from the App Store listing lands somewhere that looks like
+   * the thing they were about to install.
+   *
+   * Perfect XI is a dark app and this page commits to that rather than
+   * trying to be both, so every colour is stated outright.
+   */
+  :root {
+    --bg: #0A0F0C;
+    --line: rgba(230, 237, 233, 0.08);
+    --text-1: #E6EDE9;
+    --text-2: #A9B7AF;
+    --text-3: #6E7E74;
+    --emerald: #1FC57E;
+    --gold: #D6B25E;
+    --measure: 34rem;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text-2);
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: var(--measure);
+    margin: 0 auto;
+    padding: clamp(2.5rem, 7vw, 5rem) 1.5rem 6rem;
+  }
+
+  /* ---- masthead ---- */
+
+  .overline {
+    font-family: "Barlow Condensed", Inter, sans-serif;
+    font-weight: 600;
+    font-size: 0.8125rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--emerald);
+    margin: 0 0 0.35rem;
+  }
+
+  h1 {
+    font-family: Anton, "Barlow Condensed", Impact, sans-serif;
+    font-weight: 400;
+    font-size: clamp(2.75rem, 11vw, 4rem);
+    line-height: 0.95;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: var(--text-1);
+    margin: 0 0 1.75rem;
+    text-wrap: balance;
+  }
+
+  .lede {
+    background: rgba(31, 197, 126, 0.08);
+    border: 1px solid rgba(31, 197, 126, 0.4);
+    border-radius: 14px;
+    padding: 1.15rem 1.25rem;
+    margin: 0 0 2.75rem;
+    font-family: "Barlow Condensed", Inter, sans-serif;
+    font-weight: 700;
+    font-size: 1.3125rem;
+    line-height: 1.35;
+    color: var(--text-1);
+  }
+
+  /* ---- the sections ---- */
+
+  section {
+    border-top: 1px solid var(--line);
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+  }
+
+  h2 {
+    font-family: "Barlow Condensed", Inter, sans-serif;
+    font-weight: 600;
+    font-size: 0.8125rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-2);
+    margin: 0 0 0.6rem;
+  }
+
+  p { margin: 0 0 0.9rem; color: var(--text-3); }
+  p:last-child { margin-bottom: 0; }
+  strong { color: var(--text-2); font-weight: 600; }
+
+  /* ---- the table of what the adverts see ---- */
+
+  .scroll { overflow-x: auto; margin: 0 0 0.9rem; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 26rem;
+    font-size: 0.875rem;
+  }
+
+  th {
+    font-family: "Barlow Condensed", Inter, sans-serif;
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-2);
+    text-align: left;
+    padding: 0 0.85rem 0.5rem 0;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 0.6rem 0.85rem 0.6rem 0;
+    border-bottom: 1px solid var(--line);
+    color: var(--text-3);
+    vertical-align: top;
+  }
+
+  td:first-child { color: var(--text-2); font-weight: 500; }
+  tr:last-child td { border-bottom: none; }
+
+  .yes { color: var(--gold); font-weight: 600; }
+  .no  { color: var(--text-3); }
+
+  /* ---- footer ---- */
+
+  footer {
+    border-top: 1px solid var(--line);
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    font-size: 0.8125rem;
+  }
+
+  footer p { color: var(--text-3); }
+
+  a { color: var(--emerald); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible { outline: 2px solid var(--emerald); outline-offset: 3px; border-radius: 2px; }
+</style>
+
+<div class="wrap">
+  <p class="overline">Perfect XI</p>
+  <h1>Privacy</h1>
+
+  <p class="lede">
+    No account, no email, and nothing about you sold to anybody. There are
+    adverts, and this page says exactly what they see.
+  </p>
+
+  <section>
+    <h2>What stays on this phone</h2>
+    <p>
+      Everything you play. Your drafts, your seasons, your Dynasty, your album,
+      your coins and your level are stored on the device and nowhere else.
+      Deleting the app deletes all of it, and there is no way to get it back,
+      because there is no copy anywhere.
+    </p>
+  </section>
+
+  <section>
+    <h2>What leaves it</h2>
+    <p>
+      Only what a live duel needs, and only when you start one. Three things go
+      up: a random id made on this phone the first time it was needed, the
+      handle shown to your opponent, and the seed, the picks and the score of
+      that duel.
+    </p>
+  </section>
+
+  <section>
+    <h2>What that id is</h2>
+    <p>
+      Sixteen bytes of random numbers, made on the device. It is not your
+      phone's identifier, it is not linked to your Apple account, and it
+      identifies nobody: it exists so that two people in the same duel can tell
+      each other apart.
+    </p>
+  </section>
+
+  <section>
+    <h2>How long it is kept</h2>
+    <p>
+      A duel that nobody joins is deleted after two minutes. A duel that was
+      played is deleted after six hours. Nothing else is stored on the server
+      at all.
+    </p>
+  </section>
+
+  <section>
+    <h2>Where that goes</h2>
+    <p>
+      To a database hosted by Supabase, in Europe. It holds a queue of people
+      waiting for a duel and the result of one, and nothing else. It is the
+      only server the game itself ever sends anything to, and there is no
+      analytics service of any kind. The adverts are the one other thing that
+      reaches out, and the rest of this page is about exactly what they see.
+    </p>
+  </section>
+
+  <section>
+    <h2>The adverts</h2>
+    <p>
+      There are two kinds and no more. One you choose to watch, in the shop, in
+      exchange for a pack or some coins. And one full screen advert at a break
+      in play, after a season or a tournament has finished, at most once every
+      few minutes. There are none during a match, none in the Daily, the Weekly
+      or a duel, and no banners anywhere.
+    </p>
+  </section>
+
+  <section>
+    <h2>Who shows them</h2>
+    <p>
+      Google, through AdMob. When an advert is requested Google receives what
+      any advert needs: the kind of device, roughly where in the world the
+      request came from, worked out from the internet address rather than from
+      your position, and an advertising identifier if you allowed one. Google
+      then records how that advert did: whether it appeared, whether it was
+      watched to the end, whether it was tapped. Google's own software also
+      keeps its own crash logs, which is how they find faults in it.
+    </p>
+  </section>
+
+  <section>
+    <h2>That list in full</h2>
+    <p>
+      In Apple's own categories, which is how it is written on the App Store
+      listing:
+    </p>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">What</th>
+            <th scope="col">What for</th>
+            <th scope="col">Tracking</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Device ID</td>
+            <td>Advertising, analytics</td>
+            <td class="yes">Yes</td>
+          </tr>
+          <tr>
+            <td>Advertising data</td>
+            <td>Advertising, analytics</td>
+            <td class="yes">Yes</td>
+          </tr>
+          <tr>
+            <td>Product interaction</td>
+            <td>Advertising, analytics</td>
+            <td class="no">No</td>
+          </tr>
+          <tr>
+            <td>Performance data</td>
+            <td>Analytics, app functionality</td>
+            <td class="no">No</td>
+          </tr>
+          <tr>
+            <td>Crash data</td>
+            <td>App functionality, analytics</td>
+            <td class="no">No</td>
+          </tr>
+          <tr>
+            <td>Coarse location</td>
+            <td>Advertising</td>
+            <td class="no">No</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Why coarse location is on that list</h2>
+    <p>
+      Google works out roughly which country an advert request came from by
+      looking at the internet address it arrived from, the same way any website
+      can. The game never asks for your position and your phone will never show
+      you a location prompt for it.
+    </p>
+  </section>
+
+  <section>
+    <h2>What Google is never sent</h2>
+    <p>
+      Anything about the football. Your drafts, your seasons, your Dynasty,
+      your squads, your album, your coins, your level and your duel results are
+      never part of an advert request and never leave the phone for Google. The
+      game sends Google nothing it did not have to send to fetch an advert.
+    </p>
+  </section>
+
+  <section>
+    <h2>The tracking question</h2>
+    <p>
+      The first time you open the game your phone asks whether Perfect XI may
+      track you across other apps and websites. That question is Apple's and
+      the answer is yours. Say yes and the adverts are chosen using an
+      identifier your phone gives out. Say no and they are not, and nothing
+      else changes: the same number of adverts, the same rewards, the same
+      game. You can change your mind at any time in the phone's Settings, under
+      Privacy and Security, then Tracking.
+    </p>
+  </section>
+
+  <section>
+    <h2>What there is not</h2>
+    <p>
+      No analytics of our own, no crash reporting of our own, and no third
+      party in here except the one that shows the adverts. No banners. No
+      account and nothing to sign in to. We do not sell anything about you to
+      anybody, and there is nothing to sell, because nothing about what you
+      play ever reaches us either.
+    </p>
+  </section>
+
+  <section>
+    <h2>Children</h2>
+    <p>
+      The game asks for nothing and stores nothing personal, so there is
+      nothing here that a child could give away.
+    </p>
+  </section>
+
+  <section>
+    <h2>The football</h2>
+    <p>
+      Perfect XI is an unofficial fan game. Player names, club names and
+      seasons are matters of public record, used to describe real football
+      history. It is not affiliated with, endorsed by or connected to the
+      Premier League, FIFA, UEFA, any football club, any competition or any
+      player. The adverts pay for it being free rather than for anything else.
+    </p>
+  </section>
+
+  <footer>
+    <p>
+      This page is the same policy shown inside the app, under Settings, then
+      Privacy. If the two ever disagree, the app is the one that is wrong,
+      because the app is what actually runs.
+    </p>
+    <p>Last updated September 2026.</p>
+    <!-- Put a contact address here before this goes live. Apple asks for
+         somewhere a player can reach you. -->
+  </footer>
+</div>

@@ -164,8 +164,11 @@ power priced a 70 rated squad player at £22m. Both agree at the top.
 Play today is built: the Daily in `app/daily.tsx`, the Weekly Event in
 `app/weekly.tsx` and Duels in `app/duel.tsx`, with their rules in
 `src/engine/daily.ts`, `weekly.ts` and `duel.ts` so they can be checked
-headlessly. A duel is a fourteen character code carrying the seed, the
-rules and the score to beat. Nothing is uploaded.
+headlessly. A duel can be played two ways: a fourteen character code
+carrying the seed, the rules and the score to beat, which uploads nothing,
+or a live opponent found through `src/net/lobby.ts`. `src/net` is the only
+thing that talks to Supabase, and every call in it returns null rather
+than throwing, so the game still works with the connection dead.
 
 Both tournaments are built. The World Cup is the real 2026 format, forty
 eight nations in twelve groups with the eight best thirds going through.
@@ -226,6 +229,7 @@ npm run tourney                        # the minute by minute broadcast
 npm run wcdraft                        # what a drafted World XI is worth
 npm run ucl                            # the league phase and the format
 npm run ucldraft                       # what a drafted Champions XI is worth
+npm run privacy                        # manifest and both privacy pages agree
 npm run source                         # the mistakes that reached a phone once
 npm run cabinet                        # every achievement can be earned
 npm run tscreens                       # every field a tournament screen reads

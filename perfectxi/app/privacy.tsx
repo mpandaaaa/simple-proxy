@@ -59,8 +59,10 @@ export default function Privacy() {
         <Section title="Where that goes">
           To a database hosted by Supabase, in Europe. It holds a queue of
           people waiting for a duel and the result of one, and nothing else.
-          There is no other server, no analytics service and no third party
-          that sees anything.
+          It is the only server the game itself ever sends anything to, and
+          there is no analytics service of any kind. The adverts are the one
+          other thing that reaches out, and the rest of this page is about
+          exactly what they see.
         </Section>
 
         <Section title="The adverts">
@@ -74,11 +76,45 @@ export default function Privacy() {
 
         <Section title="Who shows them">
           Google, through AdMob. When an advert is requested Google receives
-          what any advert needs: roughly where in the world the request came
-          from, the kind of device, and an advertising identifier if you
-          allowed one. The game does not send Google anything about what you
-          play. Your seasons, your squads and your album are never part of an
-          advert request.
+          what any advert needs: the kind of device, roughly where in the
+          world the request came from, worked out from the internet address
+          rather than from your position, and an advertising identifier if
+          you allowed one. Google then records how that advert did: whether
+          it appeared, whether it was watched to the end, whether it was
+          tapped. Google's own software also keeps its own crash logs, which
+          is how they find faults in it.
+        </Section>
+
+        <Section title="That list in full">
+          In Apple's own categories, which is how it is written on the App
+          Store listing:
+        </Section>
+
+        <View style={styles.table}>
+          {COLLECTED.map((row) => (
+            <View key={row.what} style={styles.row}>
+              <View style={styles.rowText}>
+                <Text style={styles.what}>{row.what}</Text>
+                <Text style={styles.why}>{row.why}</Text>
+              </View>
+              {row.tracking ? <Text style={styles.tracks}>Tracking</Text> : null}
+            </View>
+          ))}
+        </View>
+
+        <Section title="Why coarse location is on that list">
+          Google works out roughly which country an advert request came from
+          by looking at the internet address it arrived from, the same way any
+          website can. The game never asks for your position and your phone
+          will never show you a location prompt for it.
+        </Section>
+
+        <Section title="What Google is never sent">
+          Anything about the football. Your drafts, your seasons, your
+          Dynasty, your squads, your album, your coins, your level and your
+          duel results are never part of an advert request and never leave
+          the phone for Google. The game sends Google nothing it did not
+          have to send to fetch an advert.
         </Section>
 
         <Section title="The tracking question">
@@ -92,10 +128,11 @@ export default function Privacy() {
         </Section>
 
         <Section title="What there is not">
-          No analytics of our own. No crash reporting. No banners. No account
-          and nothing to sign in to. Nothing you do in the game is shared with
-          anybody, and nothing about you is sold to anybody, by us or by
-          anyone else.
+          No analytics of our own, no crash reporting of our own, and no
+          third party in here except the one that shows the adverts. No
+          banners. No account and nothing to sign in to. We do not sell
+          anything about you to anybody, and there is nothing to sell,
+          because nothing about what you play ever reaches us either.
         </Section>
 
         <Section title="Children">
@@ -117,6 +154,23 @@ export default function Privacy() {
     </ModeScreen>
   );
 }
+
+/*
+ * What the adverts collect, in Apple's words.
+ *
+ * The same list as the privacy manifest in app.config.js and the same
+ * list as the table on web/privacy.html, and check-privacy.mjs refuses to
+ * let the three drift apart. Every line is Google's, taken from the table
+ * they publish for exactly this purpose. None of it is the game.
+ */
+const COLLECTED: { what: string; why: string; tracking: boolean }[] = [
+  { what: 'Device ID', why: 'Advertising, analytics', tracking: true },
+  { what: 'Advertising data', why: 'Advertising, analytics', tracking: true },
+  { what: 'Product interaction', why: 'Advertising, analytics', tracking: false },
+  { what: 'Performance data', why: 'Analytics, app functionality', tracking: false },
+  { what: 'Crash data', why: 'App functionality, analytics', tracking: false },
+  { what: 'Coarse location', why: 'Advertising', tracking: false },
+];
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -151,5 +205,34 @@ const styles = StyleSheet.create({
     gap: space.s2,
   },
   title: { ...text.label, fontSize: 12, color: color.text2 },
+  table: {
+    marginTop: -space.s2,
+    marginBottom: space.s4,
+    paddingBottom: space.s4,
+    borderBottomWidth: 1,
+    borderBottomColor: line.card,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s3,
+    paddingVertical: space.s2,
+    borderTopWidth: 1,
+    borderTopColor: line.card,
+  },
+  rowText: { flex: 1, gap: 2 },
+  what: { ...text.small, fontSize: 13.5, color: color.text2 },
+  why: { ...text.small, fontSize: 12, color: color.text3 },
+  tracks: {
+    ...text.label,
+    fontSize: 10,
+    color: hue.gold,
+    borderWidth: 1,
+    borderColor: alpha(hue.gold, 0.4),
+    borderRadius: radius.sm,
+    paddingHorizontal: space.s2,
+    paddingVertical: 2,
+    overflow: 'hidden',
+  },
   body: { ...text.small, fontSize: 13.5, lineHeight: 21, color: color.text3 },
 });

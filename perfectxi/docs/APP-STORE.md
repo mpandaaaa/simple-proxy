@@ -34,10 +34,22 @@ Create the app at appstoreconnect.apple.com with bundle
 **This is a hard blocker.** Apple requires a URL anybody can open without
 installing the app. The page inside the app does not count.
 
-The text is already written: `app/privacy.tsx` is the whole policy in
-plain English. Put the same words on a page at perfectxi.app/privacy and
-give App Store Connect that URL. If the two ever disagree, the app is
-the one that is wrong, because the app is what actually runs.
+The page is already built. `web/privacy.html` is one file with nothing
+outside it: no images, no scripts, no build step, and the app's own
+colours and fonts so it does not look like a legal document bolted on
+the side. Upload it to perfectxi.app as `/privacy` and give App Store
+Connect that address.
+
+Two things before it goes up. There is a comment at the bottom of the
+file asking for a contact address, because Apple wants somewhere a
+player can reach you and no address has been put in. And if you would
+rather host it somewhere else, anywhere a browser can open without
+signing in will do.
+
+`npm run privacy` checks that this page, the page inside the app and the
+privacy manifest in the binary all still say the same thing, and it runs
+as part of `npm run verify`. They drifted apart once, which is why it
+exists.
 
 ### 3. Screenshots
 Six point seven inch, which is an iPhone 15 or 16 Pro Max. Apple takes
@@ -63,15 +75,35 @@ Answer the questionnaire honestly. The answers that matter:
 That should come out at 4+.
 
 ### 5. App privacy, the nutrition label
-Under Data Types, declare exactly this and nothing else:
+None of this is the game. Every line is the Google advert SDK, and every
+line is taken from the table Google publishes for exactly this purpose at
+developers.google.com/admob/ios/privacy/data-disclosure. Answer it in
+this order and it takes about five minutes.
 
-- **Identifiers → Device ID**: collected, **used for Third-Party
-  Advertising**, **not linked** to identity, **used for tracking**
-- **Diagnostics → Crash Data**: collected, App Functionality, not linked,
-  not used for tracking
+| Apple category | Data type | Purpose | Linked to you | Tracking |
+| --- | --- | --- | --- | --- |
+| Identifiers | Device ID | Third-Party Advertising, Analytics | Yes | **Yes** |
+| Usage Data | Advertising Data | Third-Party Advertising, Analytics | Yes | **Yes** |
+| Usage Data | Product Interaction | Third-Party Advertising, Analytics | Yes | No |
+| Diagnostics | Performance Data | Analytics, App Functionality | Yes | No |
+| Diagnostics | Crash Data | App Functionality, Analytics | No | No |
+| Location | Coarse Location | Third-Party Advertising | No | No |
 
-Do not declare anything else. The game sends no name, no email, no
-location and nothing about what you play.
+Two of those look alarming and are worth understanding before you tick
+them, because you will be asked about them:
+
+**Coarse Location.** The game never asks for your position and there is
+no location prompt. Google works out roughly which country an advert
+request came from by looking at the internet address it arrived from,
+the same way any website can. Apple counts that as coarse location, so
+it gets declared.
+
+**Linked to you.** There is no account, so nothing is linked to a person
+by anything the game does. Google's own table says linked, because they
+join it up on their side. Declaring it their way is the honest answer.
+
+Declare nothing beyond the table. The game itself sends no name, no
+email, no position, and nothing about what you play.
 
 ### 6. Ads and the tracking prompt
 Apple checks the prompt appears and behaves. It does, on first launch,

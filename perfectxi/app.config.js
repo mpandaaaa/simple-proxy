@@ -165,24 +165,91 @@ module.exports = () => ({
         'google-analytics.com',
         'app-measurement.com',
       ],
+      /*
+       * What the adverts collect.
+       *
+       * The game itself collects none of this. Every line below is the
+       * Google Mobile Ads SDK, and every line is taken from the table
+       * Google publishes at developers.google.com/admob/ios/privacy/
+       * data-disclosure rather than from what seemed likely. Google's
+       * own words for each are in the comments.
+       *
+       * Declared as a superset on purpose. Apple does not reject an app
+       * for declaring something it does not collect. It does reject one
+       * for collecting something it did not declare, and the app cannot
+       * see inside somebody else's SDK to know when that list grows.
+       */
       NSPrivacyCollectedDataTypes: [
         {
+          /* "the device's advertising identifier or other app or
+             developer bounded device identifiers", for third party
+             advertising and analytics. This is the one the tracking
+             question is about. */
           NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeDeviceID',
-          NSPrivacyCollectedDataTypeLinked: false,
+          NSPrivacyCollectedDataTypeLinked: true,
           NSPrivacyCollectedDataTypeTracking: true,
-          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeThirdPartyAdvertising'],
+          NSPrivacyCollectedDataTypePurposes: [
+            'NSPrivacyCollectedDataTypePurposeThirdPartyAdvertising',
+            'NSPrivacyCollectedDataTypePurposeAnalytics',
+          ],
         },
         {
+          /* "power analytics and advertising features". Which advert was
+             shown, whether it was watched, whether it was tapped. */
           NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeAdvertisingData',
-          NSPrivacyCollectedDataTypeLinked: false,
+          NSPrivacyCollectedDataTypeLinked: true,
           NSPrivacyCollectedDataTypeTracking: true,
-          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeThirdPartyAdvertising'],
+          NSPrivacyCollectedDataTypePurposes: [
+            'NSPrivacyCollectedDataTypePurposeThirdPartyAdvertising',
+            'NSPrivacyCollectedDataTypePurposeAnalytics',
+          ],
         },
         {
+          /* "app launch taps and video views", to "improve advertising
+             performance". Taps on the advert, not taps in the game. */
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeProductInteraction',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: [
+            'NSPrivacyCollectedDataTypePurposeThirdPartyAdvertising',
+            'NSPrivacyCollectedDataTypePurposeAnalytics',
+          ],
+        },
+        {
+          /* "understand the effectiveness of existing product features",
+             and whether an advert managed to display. */
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypePerformanceData',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: [
+            'NSPrivacyCollectedDataTypePurposeAnalytics',
+            'NSPrivacyCollectedDataTypePurposeAppFunctionality',
+          ],
+        },
+        {
+          /* "non user related crash logs", to "diagnose problems and
+             improve the SDK". The game has no crash reporting of its
+             own: this is Google's, inside their own SDK. */
           NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeCrashData',
           NSPrivacyCollectedDataTypeLinked: false,
           NSPrivacyCollectedDataTypeTracking: false,
-          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+          NSPrivacyCollectedDataTypePurposes: [
+            'NSPrivacyCollectedDataTypePurposeAppFunctionality',
+            'NSPrivacyCollectedDataTypePurposeAnalytics',
+          ],
+        },
+        {
+          /* Google uses the IP address of an advert request to "estimate
+             the general location of a device". Apple counts a location
+             worked out that way as coarse location, so it is declared,
+             even though nothing in the game ever asks for a position and
+             there is no location permission prompt. */
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeCoarseLocation',
+          NSPrivacyCollectedDataTypeLinked: false,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: [
+            'NSPrivacyCollectedDataTypePurposeThirdPartyAdvertising',
+          ],
         },
       ],
       NSPrivacyAccessedAPITypes: [
