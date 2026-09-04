@@ -1,10 +1,10 @@
 {
-  "01-home":     { "line": "Draft football's greatest XI" },
-  "02-xi":       { "line": "Build your dream team" },
-  "03-reel":     { "line": "Spin. Draft. Repeat." },
-  "04-season":   { "line": "Play a full 38 game season" },
-  "05-daily":    { "line": "The same draft for everyone" },
-  "06-dynasty":  { "line": "Run a club for decades" },
-  "07-machine":  { "line": "Outdraft the Machine" },
-  "08-database": { "line": "35 years. 712 squads." }
+  "01-home":     { "badge": "Seven ways to play",     "line": "Draft football's greatest XI" },
+  "02-xi":       { "badge": "1992 to 2026",           "line": "Build your dream team" },
+  "03-reel":     { "badge": "The draft",              "line": "Spin. Draft. Repeat." },
+  "04-season":   { "badge": "Match by match",         "line": "Play a full 38 game season" },
+  "05-daily":    { "badge": "One a day",              "line": "The same draft for everyone" },
+  "06-dynasty":  { "badge": "Immersive career",       "line": "Run a club for decades" },
+  "07-machine":  { "badge": "Head to head",           "line": "Outdraft the Machine" },
+  "08-database": { "badge": "3,003 real players",     "line": "35 years. 712 squads." }
 }
