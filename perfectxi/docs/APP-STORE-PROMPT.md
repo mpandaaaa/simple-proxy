@@ -29,7 +29,6 @@ How I would like you to work with me:
 - It works offline apart from one optional head to head duel feature.
 - Built with Expo and React Native. Builds are made with EAS.
 - My Apple Developer account and my Expo account are already set up.
-- My website is perfectxi.app and it is hosted on Netlify. I update it by dragging a folder onto the Netlify page.
 
 ## Where I am up to
 
@@ -39,25 +38,15 @@ There are two jobs left and I would like your help with both, in this order.
 
 ---
 
-# Job one: check the privacy page is live
+# The privacy policy, already done
 
-Apple will not accept the app without a privacy policy at a web address anybody can open without installing the app.
-
-Somebody else is putting that page up for me. When it is done it will be at:
+Apple will not accept the app without a privacy policy at a web address anybody can open. Mine is live and checked:
 
 ```
 https://perfectxi.app/app-privacy
 ```
 
-Note that this is **not** the same as `https://perfectxi.app/privacy`, which already exists and is the website's own policy about cookies and AdSense in the browser. That one does not mention the iPhone app at all, so it is the wrong page to give Apple.
-
-Before we start on the listing, please have me open `https://perfectxi.app/app-privacy` on my phone and confirm three things:
-
-1. It opens, and it is dark with PRIVACY across the top
-2. It has a table listing six things the adverts collect, two of them marked Tracking
-3. `https://perfectxi.app` still opens the game
-
-If that address does not work yet, tell me, and we will do everything in job two that does not need it and come back.
+Use that exact address. Do **not** use `https://perfectxi.app/privacy`, which also exists but is my website's own policy about cookies and AdSense in the browser. It does not describe the iPhone app.
 
 ---
 

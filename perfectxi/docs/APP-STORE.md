@@ -31,8 +31,12 @@ Create the app at appstoreconnect.apple.com with bundle
 `app.perfectxi.game`, name **Perfect XI**, primary language English (UK).
 
 ### 2. A privacy policy on the open web
-**This is a hard blocker.** Apple requires a URL anybody can open without
-installing the app. The page inside the app does not count.
+**Done.** Live at `https://perfectxi.app/app-privacy`, and checked against
+the page in the app: same fifteen sections in the same order, all six
+data types, every load bearing promise, and nothing injected into it.
+
+The website's own policy at `/privacy` is a different page about browser
+cookies and AdSense. It is untouched and it is not the one to give Apple.
 
 **perfectxi.app/privacy already exists and is not the right page.** It is
 the website's own policy, about AdSense and cookies in the browser, and
