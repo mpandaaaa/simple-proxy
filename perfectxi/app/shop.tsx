@@ -18,6 +18,7 @@ import { haptic } from '../src/ui/feel';
 import { sfx } from '../src/ui/sound';
 import {
   PACKS,
+  type Pack,
   cosmeticsOfKind,
   packById,
   type Card,
@@ -53,6 +54,19 @@ import {
  */
 
 type Tab = 'packs' | 'looks';
+
+/**
+ * A pack's chances, per card, as a line.
+ *
+ * The guaranteed card is said separately, because "one of them is a Gold
+ * at worst" and "each card has a twenty four percent chance of being
+ * Gold" are two different promises and a player is owed both.
+ */
+function odds(pack: Pack): string {
+  const pc = (n: number) => (n >= 0.1 ? `${Math.round(n * 100)}%` : `${(n * 100).toFixed(1)}%`);
+  const floor = pack.floor ? ` · 1 ${pack.floor} or better guaranteed` : '';
+  return `Per card: icon ${pc(pack.odds.icon)} · gold ${pc(pack.odds.gold)} · silver ${pc(pack.odds.silver)} · bronze ${pc(pack.odds.bronze)}${floor}`;
+}
 
 export default function Shop() {
   const [p, setP] = useState(() => progressStore.read());
@@ -321,6 +335,14 @@ export default function Shop() {
                         <View style={styles.packBody}>
                           <Text style={styles.packName}>{pack.name}</Text>
                           <Text style={styles.packBlurb}>{pack.blurb}</Text>
+                          {/* What is actually in it, per card. Apple asks
+                              for this on anything with a random reward,
+                              and it is the honest thing to print anyway:
+                              a pack that will not say its odds is asking
+                              to be trusted rather than read. */}
+                          <Text style={styles.packOdds} numberOfLines={1}>
+                            {odds(pack)}
+                          </Text>
                           <Text style={[styles.packFloor, { color: tint }]}>
                             Guaranteed {word(pack.floor)} or better
                           </Text>
@@ -622,6 +644,7 @@ const styles = StyleSheet.create({
   packBody: { flex: 1, minWidth: 0, gap: 1 },
   packName: { fontFamily: font.displayBold, fontSize: 17, lineHeight: 22, color: color.text1 },
   packBlurb: { ...text.small, fontSize: 11.5, lineHeight: 16, color: color.text3 },
+  packOdds: { ...text.key, fontSize: 7, lineHeight: 12, color: color.text3, marginTop: 3 },
   packFloor: { ...text.key, fontSize: 7.5, marginTop: 2 },
 
   oddsBar: {

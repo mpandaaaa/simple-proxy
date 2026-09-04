@@ -113,7 +113,11 @@ export function PackOpen({
           {/* Kept off the card on purpose. It used to sit inside the foot
               and land on top of the club and the season. */}
           <View style={styles.banner}>
-            {done && best ? (
+            {shown === 0 && best ? (
+              <Text style={[styles.bannerText, { color: RARITY_TINT[best.rarity] }]}>
+                {TELL[best.rarity]}
+              </Text>
+            ) : done && best ? (
               <Text style={[styles.bannerText, { color: RARITY_TINT[best.rarity] }]}>
                 Best of the pack {'·'} {best.n}
               </Text>
@@ -132,19 +136,102 @@ export function PackOpen({
                 <Reveal key={c.id} card={c} front={i === shown - 1} reduce={reduce} />
               ) : null,
             )}
-            {shown === 0 ? (
-              <View style={styles.wrapper}>
-                <Text style={styles.wrapperText}>Tap to open</Text>
-              </View>
-            ) : null}
+            {shown === 0 ? <Wrapper best={best} reduce={reduce} /> : null}
           </View>
 
           <Text style={styles.hint}>
-            {done ? 'Tap to put them in the collection' : 'Tap for the next one'}
+            {done
+              ? 'Tap to put them in the collection'
+              : shown === 0
+                ? 'Tap to open'
+                : 'Tap for the next one'}
           </Text>
         </View>
       </Pressable>
     </Modal>
+  );
+}
+
+/*
+ * What the wrapper is allowed to say.
+ *
+ * The single strongest thing in a reveal is knowing something good is
+ * coming before you can see what it is. It is also the easiest thing to
+ * cheat at, and cheating at it is the difference between a game and a
+ * fruit machine: a wrapper that glows gold and hands over a bronze has
+ * lied to somebody to make them tap again.
+ *
+ * So this is read off the best card actually in the pack. It never
+ * promises anything the pack does not contain, and it never hides one
+ * either. The tension is real because the card is real.
+ */
+const TELL: Record<Rarity, string> = {
+  icon: 'Something in here is rated ninety or more',
+  gold: 'There is a Gold in this one',
+  silver: 'There is a Silver in this one',
+  bronze: 'Three squad players',
+};
+
+/**
+ * The pack, before it is open.
+ *
+ * It breathes in the colour of the best thing inside it, and the better
+ * that is the harder it breathes. A Bronze pack sits still. An Icon pack
+ * will not keep still, and by the time the first card comes out the
+ * person holding the phone already knows.
+ */
+function Wrapper({ best, reduce }: { best: Card | null; reduce: boolean }) {
+  const rarity: Rarity = best?.rarity ?? 'bronze';
+  const tint = RARITY_TINT[rarity];
+  const loud = rarity === 'icon' || rarity === 'gold';
+
+  const pulse = useSharedValue(0);
+  const tilt = useSharedValue(0);
+
+  useEffect(() => {
+    if (reduce) return;
+    pulse.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: loud ? 620 : 1100, easing: Easing.inOut(Easing.quad) }),
+        withTiming(0, { duration: loud ? 620 : 1100, easing: Easing.inOut(Easing.quad) }),
+      ),
+      -1,
+      false,
+    );
+    if (rarity === 'icon') {
+      /* An Icon will not sit still. Small, because a wrapper that thrashes
+         reads as a bug rather than as a promise. */
+      tilt.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 90, easing: Easing.linear }),
+          withTiming(-1, { duration: 180, easing: Easing.linear }),
+          withTiming(0, { duration: 90, easing: Easing.linear }),
+          withTiming(0, { duration: 1400, easing: Easing.linear }),
+        ),
+        -1,
+        false,
+      );
+    }
+  }, [reduce, loud, rarity, pulse, tilt]);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [
+      { scale: 1 + pulse.value * (loud ? 0.05 : 0.02) },
+      { rotate: `${tilt.value * 1.4}deg` },
+    ],
+    boxShadow: `0px 0px ${18 + pulse.value * (loud ? 46 : 16)}px ${alpha(
+      tint,
+      0.3 + pulse.value * (loud ? 0.45 : 0.2),
+    )}`,
+  }));
+
+  return (
+    <Animated.View style={[styles.wrapper, style, { borderColor: alpha(tint, 0.65) }]}>
+      <Text style={[styles.wrapperMark, { color: tint }]} allowFontScaling={false}>
+        {rarity === 'icon' ? '\u2605' : rarity === 'gold' ? '\u25c6' : '\u25cf'}
+      </Text>
+      <Text style={[styles.wrapperText, { color: tint }]}>Tap to open</Text>
+    </Animated.View>
   );
 }
 
@@ -251,11 +338,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.xl,
-    borderWidth: 1,
-    borderStyle: 'dashed',
+    borderWidth: 1.5,
     borderColor: 'rgba(255,255,255,0.2)',
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    gap: space.s2,
   },
+  wrapperMark: { fontSize: 34, lineHeight: 42 },
   wrapperText: { ...text.key, fontSize: 11, color: color.text2 },
 
   holder: {
