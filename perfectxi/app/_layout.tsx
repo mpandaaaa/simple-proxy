@@ -19,6 +19,7 @@ import { Anton_400Regular } from '@expo-google-fonts/anton/400Regular';
 import { color } from '../src/ui/tokens';
 import { AchievementToast } from '../src/ui/components';
 import { useReduceMotion } from '../src/ui/feel';
+import { syncReminder } from '../src/game/remind';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -48,6 +49,14 @@ export default function RootLayout() {
     // show the app rather than hanging on the splash forever.
     if (ready || error) SplashScreen.hideAsync();
   }, [ready, error]);
+
+  // What is scheduled has to match what the settings say. A reminder can
+  // be lost to a restore, a system cleanup, or notifications being turned
+  // off in the phone and back on again, so it is put right on every start
+  // rather than trusted to have survived.
+  useEffect(() => {
+    void syncReminder();
+  }, []);
 
   if (!ready && !error) return null;
 

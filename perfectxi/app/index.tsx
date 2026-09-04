@@ -71,7 +71,7 @@ import {
 } from '../src/engine';
 import { haptic, useReduceMotion } from '../src/ui/feel';
 import { ACHIEVEMENTS, type Career } from '../src/game/achievements';
-import { getCareer, reloadCareer } from '../src/game/career';
+import { getCareer, reloadCareer, slotSummaries } from '../src/game/career';
 import type { Progress, DynastySummary } from '../src/save';
 
 /**
@@ -305,7 +305,13 @@ export default function Home() {
           subtitle="A career across seasons · ages, transfers, the board"
           status={dynastyStatus(dynasty)}
           icon={IconBank}
-          onPress={() => go(dynasty ? '/dynasty' : '/dynasty/start')}
+          onPress={() => {
+            haptic('light');
+            /* Straight into the career you were playing. If there is not
+               one but there are others, the list. If there is nothing at
+               all, start one, because three empty slots is not a choice. */
+            go(dynasty ? '/dynasty' : anyCareer() ? '/dynasty/slots' : '/dynasty/start');
+          }}
         />
       </Rise>
 
@@ -530,6 +536,11 @@ function Cog() {
       </Animated.View>
     </Press>
   );
+}
+
+/** Whether any of the three slots has a career in it. */
+function anyCareer(): boolean {
+  return slotSummaries().some((s) => s.career !== null);
 }
 
 /** No career yet is a real state, so the card keeps its description. */

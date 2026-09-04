@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import * as Application from 'expo-application';
 import { ModeScreen, Press, Rise, Toggle, Confirm } from '../src/ui/components';
@@ -8,6 +8,9 @@ import { font, text } from '../src/ui/type';
 import { haptic } from '../src/ui/feel';
 import { sfx } from '../src/ui/sound';
 import { ENGINE_VERSION } from '../src/engine';
+import { exportSave, importSave } from '../src/game/backup';
+import { slotSummaries } from '../src/game/career';
+import { ask, clearReminder, permission, scheduleReminder } from '../src/game/remind';
 import {
   wipeCollection,
   wipeDynasty,
@@ -19,7 +22,6 @@ import {
   careerStore,
   collectionStore,
   displayName,
-  dynastyStore,
   historyStore,
   owned,
   progressStore,
@@ -49,6 +51,19 @@ const SPEEDS: { id: MatchSpeed; label: string; note: string }[] = [
   { id: 'fast', label: 'Fast', note: 'Half the time, same commentary' },
   { id: 'instant', label: 'Instant', note: 'Straight to full time' },
 ];
+
+/*
+ * When it fires.
+ *
+ * Five times rather than a clock, because a clock is another native
+ * picker to install and nobody has ever needed 07:42. These are the hours
+ * people actually pick.
+ */
+const HOURS = [9, 12, 17, 19, 21];
+
+function clock(h: number): string {
+  return `${String(h).padStart(2, '0')}:00`;
+}
 
 const VOICES: { id: Voice; label: string; note: string }[] = [
   { id: 'classic', label: 'Television', note: 'Loud, and a goal is an event' },
@@ -90,6 +105,20 @@ export default function SettingsScreen() {
   const [name, setName] = useState(() => displayName());
   const [wipe, setWipe] = useState<Wipe>(null);
   const [tick, setTick] = useState(0);
+  const [perm, setPerm] = useState<'granted' | 'denied' | 'undetermined'>('undetermined');
+  const [said, setSaid] = useState<string | null>(null);
+  const [restoring, setRestoring] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    void permission().then((p) => {
+      if (alive) setPerm(p);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const set = useCallback(<K extends keyof typeof s>(key: K, value: (typeof s)[K]) => {
     haptic('light');
@@ -97,13 +126,76 @@ export default function SettingsScreen() {
     setS(next);
   }, []);
 
+  /*
+   * Turning the reminder on asks first.
+   *
+   * If the answer is no, the switch goes back off rather than sitting
+   * there on with nothing behind it, and the screen says where to change
+   * it, because after the first refusal only the phone's own settings can.
+   */
+  const setRemind = useCallback(async (want: boolean) => {
+    haptic('light');
+    if (!want) {
+      setS(settingsStore.update((cur) => ({ ...cur, remind: false })));
+      await clearReminder();
+      return;
+    }
+    let state = await permission();
+    if (state === 'undetermined') state = await ask();
+    setPerm(state);
+    if (state !== 'granted') {
+      setS(settingsStore.update((cur) => ({ ...cur, remind: false })));
+      return;
+    }
+    const next = settingsStore.update((cur) => ({ ...cur, remind: true }));
+    setS(next);
+    await scheduleReminder(next.remindAt);
+  }, []);
+
+  const setHour = useCallback(async (hour: number) => {
+    haptic('light');
+    const next = settingsStore.update((cur) => ({ ...cur, remindAt: hour }));
+    setS(next);
+    if (next.remind && perm === 'granted') await scheduleReminder(hour);
+  }, [perm]);
+
+  /* Writing a save out, and reading one back. */
+  const save = useCallback(async () => {
+    if (busy) return;
+    setBusy(true);
+    haptic('light');
+    const out = await exportSave();
+    setSaid(out.ok ? `Saved as ${out.where}` : out.why);
+    setBusy(false);
+  }, [busy]);
+
+  const restore = useCallback(async () => {
+    setRestoring(false);
+    if (busy) return;
+    setBusy(true);
+    const out = await importSave();
+    if (out.ok) {
+      haptic('success');
+      setSaid(
+        `Restored ${out.restored} records from ${new Date(out.at).toLocaleDateString('en-GB')}. Close and reopen the app.`,
+      );
+      setTick((n) => n + 1);
+      setS(settingsStore.read());
+      setName(displayName());
+    } else if (out.why) {
+      haptic('warning');
+      setSaid(out.why);
+    }
+    setBusy(false);
+  }, [busy]);
+
   /* What is actually on the phone, so the delete buttons are not abstract. */
   const held = useMemo(() => {
     void tick;
     const history = historyStore.read();
     const cards = owned(collectionStore.read()).size;
     const career = careerStore.read();
-    const dyn = dynastyStore.read();
+    const careers = slotSummaries().filter((x) => x.career !== null);
     const wc = worldCupStore.read();
     const ucl = uclStore.read();
     const prog = progressStore.read();
@@ -111,7 +203,10 @@ export default function SettingsScreen() {
       seasons: history.runs?.length ?? 0,
       cards,
       earned: career.earned.length,
-      dynasty: dyn ? `${dyn.club}, season ${dyn.year}` : null,
+      dynasty: careers.length
+        ? careers.map((x) => `${x.career?.club}, season ${x.career?.season}`).join(' · ')
+        : null,
+      careers: careers.length,
       worldCup: wc ? (wc.over ? 'finished' : `${wc.played.length} played`) : null,
       ucl: ucl ? (ucl.over ? 'finished' : `${ucl.played.length} played`) : null,
       level: prog.lvl,
@@ -256,6 +351,77 @@ export default function SettingsScreen() {
           score and a random id that identifies nobody.
         </Text>
 
+        {/* ================= the one notification ================= */}
+        <Text style={[text.label, styles.sect]}>Daily reminder</Text>
+        <View style={styles.card}>
+          <Toggle
+            label="Remind me about the Daily"
+            hint="One a day. The only notification this app sends."
+            value={s.remind}
+            onChange={(v) => void setRemind(v)}
+          />
+        </View>
+        {s.remind ? (
+          <>
+            <View style={[styles.speeds, { marginTop: space.s2 }]}>
+              {HOURS.map((h) => {
+                const on = s.remindAt === h;
+                return (
+                  <Press
+                    key={h}
+                    onPress={() => void setHour(h)}
+                    feel="none"
+                    scaleTo={0.98}
+                    style={[styles.speed, on ? styles.speedOn : null]}
+                  >
+                    <Text style={[styles.speedLabel, on ? styles.speedLabelOn : null]}>
+                      {clock(h)}
+                    </Text>
+                  </Press>
+                );
+              })}
+            </View>
+            <Text style={styles.note}>
+              Every day at {clock(s.remindAt)}. No marketing, no badges, and
+              nothing else will ever be sent.
+            </Text>
+          </>
+        ) : perm === 'denied' ? (
+          <Text style={styles.note}>
+            Notifications are turned off for Perfect XI. Turn them on in the
+            phone's own Settings, under Notifications, and this switch will
+            work.
+          </Text>
+        ) : (
+          <Text style={styles.note}>
+            One a day, at a time you pick, and nothing else. Off unless you
+            turn it on.
+          </Text>
+        )}
+
+        {/* ================= carrying it off the phone ================= */}
+        <Text style={[text.label, styles.sect]}>Back it up</Text>
+        <View style={styles.speeds}>
+          <Press onPress={() => void save()} feel="medium" scaleTo={0.98} style={styles.backup}>
+            <Text style={styles.backupText}>Save to a file</Text>
+          </Press>
+          <Press
+            onPress={() => {
+              haptic('light');
+              setRestoring(true);
+            }}
+            feel="medium"
+            scaleTo={0.98}
+            style={styles.backup}
+          >
+            <Text style={styles.backupText}>Restore</Text>
+          </Press>
+        </View>
+        <Text style={styles.note}>
+          {said ??
+            'Everything on this phone, written to one file you can keep in Files or send to yourself. Deleting the app throws away everything, and there is no account to get it back from, so this is the only way back.'}
+        </Text>
+
         {/* ================= what is saved ================= */}
         <Text style={[text.label, styles.sect]}>What is saved here</Text>
         <View style={styles.grid}>
@@ -281,7 +447,7 @@ export default function SettingsScreen() {
           />
           <View style={styles.rule} />
           <Wipes
-            label="Dynasty career"
+            label={held.careers === 1 ? 'Dynasty career' : 'Dynasty careers'}
             what={held.dynasty ?? 'No career'}
             can={held.dynasty !== null}
             onPress={() => setWipe('dynasty')}
@@ -344,6 +510,16 @@ export default function SettingsScreen() {
 
         <View style={{ height: space.s6 }} />
       </ModeScreen>
+
+      <Confirm
+        visible={restoring}
+        title="Restore from a file?"
+        body="Everything on this phone is replaced by what is in the file. Whatever is here now is gone."
+        confirmLabel="Choose a file"
+        cancelLabel="Keep what is here"
+        onCancel={() => setRestoring(false)}
+        onConfirm={() => void restore()}
+      />
 
       <Confirm
         visible={wipe !== null}
@@ -446,6 +622,18 @@ const styles = StyleSheet.create({
   speedOn: { borderColor: alpha(hue.emerald, 0.5), backgroundColor: alpha(hue.emerald, 0.13) },
   speedLabel: { ...text.key, fontSize: 8.5, color: color.text3 },
   speedLabelOn: { color: hue.emerald },
+
+  backup: {
+    flex: 1,
+    minHeight: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: alpha(hue.emerald, 0.45),
+    backgroundColor: alpha(hue.emerald, 0.12),
+  },
+  backupText: { ...text.button, fontSize: 14, color: hue.emerald },
 
   input: {
     minHeight: 52,

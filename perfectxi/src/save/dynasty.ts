@@ -259,8 +259,21 @@ function migrateToFour(v: unknown): Dynasty | null {
   };
 }
 
-export const dynastyStore = defineStore<Dynasty | null>({
-  key: 'dynasty',
+/**
+ * One career, in one slot.
+ *
+ * Three slots exist, and every one of them is this same definition under
+ * a different key: the same validator, the same thirteen migrations, the
+ * same everything. A slot is where a career is kept and not a different
+ * kind of career, so there is one definition rather than three that could
+ * drift apart.
+ *
+ * The first slot keeps the original key, so a career that existed before
+ * slots did is simply the first one and nothing has to be moved.
+ */
+function makeSlot(key: string) {
+  return defineStore<Dynasty | null>({
+  key,
   version: 13,
   fallback: null,
   validate: isDynasty,
@@ -381,7 +394,20 @@ export const dynastyStore = defineStore<Dynasty | null>({
       };
     },
   },
-});
+  });
+}
+
+/** How many careers can be on the go at once. */
+export const DYNASTY_SLOTS = 3;
+
+export const dynastySlots = [
+  makeSlot('dynasty'),
+  makeSlot('dynasty-2'),
+  makeSlot('dynasty-3'),
+] as const;
+
+/** The first slot, which is where every career lived before there were three. */
+export const dynastyStore = dynastySlots[0];
 
 export function dynastySummary(d: Dynasty | null): DynastySummary | null {
   if (!d) return null;

@@ -77,7 +77,10 @@ app/dynasty/         the career. start hub season summer market tactics
 app/ucl/            the Champions League. index draft hub match report
 app/hall.tsx         every season kept, ranked
 app/cabinet.tsx      silverware and the achievement catalogue, ten shelves
-app/settings.tsx     sound, match speed, your name, what is saved
+app/settings.tsx     sound, speed, voice, reminder, backup, what is saved
+app/welcome.tsx      the three cards a new player sees, once
+app/stats.tsx        every mode's totals, in one place
+app/dynasty/slots.tsx  three careers, and which one you are playing
 app/soon.tsx         holding screen for a mode not built yet
 src/engine/          the game, free of React. sim, draft, formations, rng
 src/data/squads.ts   GENERATED. 712 club-seasons, do not hand edit
@@ -94,6 +97,8 @@ src/ui/components/   Screen ModeScreen Surface Pill NumberSlot Button
                      Toggle Press Row Hero Choice Pitch
 src/game/award.ts    handing out achievements, in one place
 src/game/reset.ts    throwing a save away, memory as well as disk
+src/game/backup.ts   the whole save to a file, and back again
+src/game/remind.ts   the one notification, off unless asked for
 src/save/            versioned storage, migration chain, settings slice
 scripts/             extract-db, sim-season, golden
 vendor/index.html    the web build, not committed. Reference only now
@@ -208,6 +213,7 @@ npm run ucldraft                       # what a drafted Champions XI is worth
 npm run source                         # the mistakes that reached a phone once
 npm run cabinet                        # every achievement can be earned
 npm run tscreens                       # every field a tournament screen reads
+npm run slots                          # no career can write over another
 npm run verify                         # all of the above
 ```
 

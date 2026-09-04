@@ -21,6 +21,7 @@
     "expo-crypto": "~57.0.2",
     "expo-dev-client": "~57.0.18",
     "expo-device": "~57.0.1",
+    "expo-document-picker": "~57.0.1",
     "expo-file-system": "~57.0.6",
     "expo-font": "~57.0.2",
     "expo-haptics": "~57.0.2",
@@ -73,6 +74,7 @@
     "ucldraft": "tsc -p tsconfig.headless.json && node scripts/check-ucl-draft.mjs",
     "cabinet": "tsc -p tsconfig.headless.json && node scripts/check-achievements.mjs",
     "tscreens": "tsc -p tsconfig.headless.json && node scripts/check-tourney-screens.mjs",
+    "slots": "node scripts/check-slots.mjs",
     "extract-db": "node scripts/extract-db.mjs",
     "build-engine": "tsc -p tsconfig.headless.json",
     "sim": "tsc -p tsconfig.headless.json && node scripts/sim-season.mjs",
@@ -95,7 +97,7 @@
     "progress": "tsc -p tsconfig.headless.json && node scripts/check-progress.mjs",
     "online": "node scripts/check-online.mjs",
     "source": "node scripts/check-source.mjs",
-    "verify": "npm run typecheck && npm run source && npm run golden && npm run dynasty && npm run realism && npm run scout && npm run pyramid && npm run cups && npm run people && npm run screens && npm run daily && npm run playtoday && npm run h2h && npm run progress && npm run worldcup && npm run tourney && npm run wcdraft && npm run ucl && npm run ucldraft && npm run cabinet && npm run tscreens && npm run career && npm run save"
+    "verify": "npm run typecheck && npm run source && npm run golden && npm run dynasty && npm run realism && npm run scout && npm run pyramid && npm run cups && npm run people && npm run screens && npm run daily && npm run playtoday && npm run h2h && npm run progress && npm run worldcup && npm run tourney && npm run wcdraft && npm run ucl && npm run ucldraft && npm run cabinet && npm run tscreens && npm run slots && npm run career && npm run save"
   },
   "private": true
 }

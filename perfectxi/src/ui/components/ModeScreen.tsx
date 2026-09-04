@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { swap, back } from '../../game/nav';
-import { color, space, radius, line, gradient } from '../tokens';
+import { READABLE, color, space, radius, line, gradient } from '../tokens';
 import { font, text } from '../type';
 import { IconBack } from '../icons';
 import { Press } from './Press';
@@ -102,29 +102,34 @@ export function ModeScreen({
         pointerEvents="none"
       />
 
+      {/* The bar spans the screen so the blur behind it does. What is in
+          it lines up with the column underneath, which on an iPad is not
+          the same thing. */}
       <View style={[styles.bar, { paddingTop: insets.top, height: headerHeight }]}>
-        <Press
-          onPress={onBack ?? goBack}
-          feel="light"
-          scaleTo={0.9}
-          style={styles.backHit}
-          accessibilityLabel="Back"
-        >
-          <View style={styles.back}>
-            <IconBack color={color.text1} size={20} />
+        <View style={styles.barInner}>
+          <Press
+            onPress={onBack ?? goBack}
+            feel="light"
+            scaleTo={0.9}
+            style={styles.backHit}
+            accessibilityLabel="Back"
+          >
+            <View style={styles.back}>
+              <IconBack color={color.text1} size={20} />
+            </View>
+          </Press>
+
+          <View style={styles.heading}>
+            <Text style={styles.overline} numberOfLines={1}>
+              {overline}
+            </Text>
+            <Text style={styles.title} numberOfLines={1}>
+              {title}
+            </Text>
           </View>
-        </Press>
 
-        <View style={styles.heading}>
-          <Text style={styles.overline} numberOfLines={1}>
-            {overline}
-          </Text>
-          <Text style={styles.title} numberOfLines={1}>
-            {title}
-          </Text>
+          <View style={styles.right}>{right}</View>
         </View>
-
-        <View style={styles.right}>{right}</View>
       </View>
     </View>
   );
@@ -132,7 +137,7 @@ export function ModeScreen({
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: color.bg },
-  pad: { paddingHorizontal: space.s4 },
+  pad: { paddingHorizontal: space.s4, width: '100%', maxWidth: READABLE, alignSelf: 'center' },
   padFill: { flex: 1 },
 
   bar: {
@@ -145,6 +150,15 @@ const styles = StyleSheet.create({
     gap: space.s3,
     paddingHorizontal: space.s4,
     backgroundColor: color.bg,
+  },
+  barInner: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s3,
+    width: '100%',
+    maxWidth: READABLE,
+    alignSelf: 'center',
   },
   /*
    * The falloff was almost opaque where it met the bar, which is fine

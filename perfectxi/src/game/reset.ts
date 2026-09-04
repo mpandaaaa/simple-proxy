@@ -1,4 +1,11 @@
-import { clearAllSaves, collectionStore, dynastyStore, uclStore, worldCupStore } from '../save';
+import {
+  clearAllSaves,
+  collectionStore,
+  dynastySlots,
+  slotStore,
+  uclStore,
+  worldCupStore,
+} from '../save';
 import { setCareer } from './career';
 import { clearRun } from './run';
 import { setUcl } from './ucl';
@@ -34,9 +41,11 @@ export function wipeUcl(): void {
   clearUclDraft();
 }
 
+/** All three careers, not just the one being played. */
 export function wipeDynasty(): void {
   setCareer(null);
-  dynastyStore.write(null);
+  for (const s of dynastySlots) s.write(null);
+  slotStore.write({ active: 0 });
 }
 
 export function wipeCollection(): void {
@@ -58,10 +67,12 @@ export function wipeEverything(): void {
   clearWcDraft();
   clearUclDraft();
   setCareer(null);
+  for (const s of dynastySlots) s.write(null);
   clearAllSaves();
   /* Written after the wipe so the stores hold a valid empty record rather
      than nothing at all, which is what a fresh install looks like. */
   worldCupStore.write(null);
   uclStore.write(null);
-  dynastyStore.write(null);
+  for (const s of dynastySlots) s.write(null);
+  slotStore.write({ active: 0 });
 }

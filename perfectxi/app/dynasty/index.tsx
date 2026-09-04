@@ -43,7 +43,7 @@ import {
   type Position,
   saleBlock,
 } from '../../src/engine';
-import { useCareer, getCareer, setCareer, updateCareer } from '../../src/game/career';
+import { useCareer, getCareer, setCareer, slotSummaries, updateCareer } from '../../src/game/career';
 
 /**
  * The Dynasty hub.
@@ -65,7 +65,8 @@ type Href =
   | '/dynasty/staff'
   | '/dynasty/club'
   | '/dynasty/finances'
-  | '/dynasty/history';
+  | '/dynasty/history'
+  | '/dynasty/slots';
 
 /**
  * Every door, always.
@@ -134,6 +135,16 @@ const DOORS: {
     mark: '💷',
     title: 'Finances',
     note: (d) => (d.ledger ? `£${d.ledger.profit}m last year` : 'no accounts yet'),
+  },
+  {
+    href: '/dynasty/slots',
+    tint: 'rose',
+    mark: '🗂',
+    title: 'Careers',
+    note: () => {
+      const used = slotSummaries().filter((s) => s.career !== null).length;
+      return used === 1 ? 'one of three in use' : `${used} of three in use`;
+    },
   },
   {
     href: '/dynasty/history',

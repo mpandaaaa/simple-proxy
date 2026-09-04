@@ -52,7 +52,9 @@ module.exports = () => ({
   backgroundColor: '#0A0F0C',
   icon: './assets/icon.png',
   ios: {
-    supportsTablet: false,
+    /* An iPad runs this perfectly well and it is the same portrait layout
+       on a bigger screen. Locked to portrait, like the phone. */
+    supportsTablet: true,
     bundleIdentifier: 'app.perfectxi.game',
     buildNumber: '1',
     infoPlist: {
@@ -84,6 +86,21 @@ module.exports = () => ({
     ],
     'expo-audio',
     'expo-sharing',
+    'expo-document-picker',
+    [
+      /*
+       * The daily reminder.
+       *
+       * Off unless somebody turns it on, and it is the only notification
+       * this app will ever send. The icon is the monochrome one, which is
+       * what iOS wants for a badge.
+       */
+      'expo-notifications',
+      {
+        icon: './assets/android-icon-monochrome.png',
+        color: '#1FC57E',
+      },
+    ],
     'expo-asset',
     'expo-secure-store',
     'expo-web-browser',

@@ -23,6 +23,10 @@ export type Settings = {
   reducedMotion: boolean;
   matchSpeed: MatchSpeed;
   voice: Voice;
+  /** one reminder a day that the Daily is up, off unless asked for */
+  remind: boolean;
+  /** the hour it fires, 0 to 23 */
+  remindAt: number;
 };
 
 const fallback: Settings = {
@@ -31,6 +35,8 @@ const fallback: Settings = {
   reducedMotion: false,
   matchSpeed: 'normal',
   voice: 'classic',
+  remind: false,
+  remindAt: 19,
 };
 
 const SPEEDS: readonly MatchSpeed[] = ['slow', 'normal', 'fast', 'instant'];
@@ -43,13 +49,17 @@ function isSettings(v: unknown): v is Settings {
     typeof s.haptics === 'boolean' &&
     typeof s.reducedMotion === 'boolean' &&
     SPEEDS.indexOf(s.matchSpeed as MatchSpeed) > -1 &&
-    (s.voice === 'classic' || s.voice === 'dry')
+    (s.voice === 'classic' || s.voice === 'dry') &&
+    typeof s.remind === 'boolean' &&
+    typeof s.remindAt === 'number' &&
+    s.remindAt >= 0 &&
+    s.remindAt <= 23
   );
 }
 
 export const settingsStore = defineStore<Settings>({
   key: 'settings',
-  version: 3,
+  version: 4,
   fallback,
   validate: isSettings,
   migrations: {
@@ -71,6 +81,8 @@ export const settingsStore = defineStore<Settings>({
         reducedMotion: s.reducedMotion === true,
         matchSpeed: 'normal' as MatchSpeed,
         voice: 'classic' as Voice,
+        remind: false,
+        remindAt: 19,
       };
     },
     /* Three adds the second commentator. Everybody keeps the one they
@@ -78,6 +90,11 @@ export const settingsStore = defineStore<Settings>({
     3: (v: unknown) => {
       if (typeof v !== 'object' || v === null) return null;
       return { ...(v as Settings), voice: 'classic' as Voice };
+    },
+    /* Four adds the daily reminder. Off, because nobody asked for it. */
+    4: (v: unknown) => {
+      if (typeof v !== 'object' || v === null) return null;
+      return { ...(v as Settings), remind: false, remindAt: 19 };
     },
   },
 });

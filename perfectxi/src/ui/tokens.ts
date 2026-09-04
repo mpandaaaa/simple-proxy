@@ -95,6 +95,16 @@ export const gradient = {
   blue: 'linear-gradient(140deg, #12224E 0%, #0B1733 60%, #070F22 100%)',
 } as const;
 
+/**
+ * The widest the content ever gets.
+ *
+ * A phone is never this wide, so on a phone this changes nothing. An iPad
+ * is nearly three times as wide, and a line of body text that long is
+ * genuinely harder to read than the same text in a column. Everything
+ * stays in a column and the column stays in the middle.
+ */
+export const READABLE = 560;
+
 export const shadow = {
   hero: '0px 12px 30px rgba(0, 0, 0, 0.45)',
   lift: '0px 8px 22px rgba(0, 0, 0, 0.35)',

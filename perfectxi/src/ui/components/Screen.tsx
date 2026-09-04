@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { color, space, gap } from '../tokens';
+import { READABLE, color, space, gap } from '../tokens';
 import { text } from '../type';
 
 /**
@@ -26,6 +26,9 @@ export function Screen({
           paddingTop: insets.top + contentTop,
           paddingBottom: insets.bottom + space.s7,
           paddingHorizontal: space.s4,
+          width: '100%',
+          maxWidth: READABLE,
+          alignSelf: 'center',
         }}
         showsVerticalScrollIndicator={false}
           bounces={false}
