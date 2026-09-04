@@ -212,7 +212,20 @@ match by match, and see how far it goes. Free, offline, no subscriptions.`
 > UEFA, or any club, competition or player.
 
 ### Keywords, 100 characters
-`football,soccer,draft,manager,premier,league,cards,squad,ultimate,team,xi,fantasy,dynasty,career`
+Four words came out of this list and it is worth knowing why, because the
+temptation to put them back will be strong.
+
+`premier` and `league` sat next to each other, and `ultimate` and `team`
+sat next to each other. Apple matches across the field, so those pairs
+encode "Premier League" and EA's "Ultimate Team". Guideline 2.3.7 forbids
+trademarked terms in the name, the subtitle and the keywords, and it is
+an automated check rather than a human judgement. For an app that is
+already built on real club and player names, the keyword field is the
+last place to also borrow somebody's mark.
+
+`manager` stays. It is a generic word for what the game is, every
+management game on the store uses it, and it is not a mark on its own.
+`football,soccer,draft,manager,cards,squad,xi,fantasy,dynasty,career,tactics,legends,retro,eleven`
 
 ### Category
 Primary **Games → Sports**, secondary **Games → Simulation**.

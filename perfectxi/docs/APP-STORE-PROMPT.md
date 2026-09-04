@@ -119,7 +119,7 @@ Unofficial and unaffiliated. Not connected to the Premier League, FIFA, UEFA, or
 ## Keywords
 
 ```
-football,soccer,draft,manager,premier,league,cards,squad,ultimate,team,xi,fantasy,dynasty,career
+football,soccer,draft,manager,cards,squad,xi,fantasy,dynasty,career,tactics,legends,retro,eleven
 ```
 
 ## Support URL
