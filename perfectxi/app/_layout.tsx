@@ -125,30 +125,41 @@ export default function RootLayout() {
           screenOptions={{
             headerShown: false,
             contentStyle: { backgroundColor: color.bg },
+            /* The strip the screens sit on. Uncovered by a gesture that
+               drags a screen without popping it, and light grey unless it
+               is told otherwise. */
+            navigationBarColor: color.bg,
             // Reduce Motion turns the slide into a cross fade. The gesture
             // stays: taking someone's back swipe away is not an
             // accessibility win, it just makes the app harder to leave.
             animation: reduceMotion ? 'fade' : 'slide_from_right',
             gestureEnabled: true,
             /*
-             * The edge swipe, not the full screen one.
-             *
-             * A full screen back gesture is not the system's own. It is
-             * drawn by react-native-screens, which lifts the screen you
-             * are leaving onto a card with rounded corners and slides it,
-             * and the corners of that card showed a light frame around
-             * the whole app for as long as the swipe lasted. The window
-             * behind it is already the app's own black, so there was
-             * nothing to recolour: the card itself was the problem.
-             *
-             * The left edge swipe is UIKit's own. It reveals the screen
-             * underneath rather than drawing a card, there is nothing
-             * behind it to see, and it is the gesture every other app on
-             * the phone uses.
+             * The edge swipe, not the full screen one, which is why
+             * fullScreenGestureEnabled is deliberately absent. A full
+             * screen gesture is drawn by react-native-screens rather than
+             * by UIKit, and it can be started from the middle of a screen
+             * where a scroll or a card tap was meant instead.
              */
-            navigationBarColor: color.bg,
           }}
-        />
+        >
+          {/*
+           * Home has nothing behind it.
+           *
+           * The back gesture was still enabled on it, and a back gesture
+           * with nothing to pop rubber bands the screen a few points to
+           * the right instead of doing nothing. That uncovers the strip
+           * of container the screens sit on, which is a light grey none
+           * of the app's own colours reach, and it read as a white border
+           * down the side of the app.
+           *
+           * Measured rather than guessed: of eight screenshots, the only
+           * two showing it were both Home, the light was only ever on the
+           * left, and the width of it differed between them, which is a
+           * drag in progress rather than a border.
+           */}
+          <Stack.Screen name="index" options={{ gestureEnabled: false }} />
+        </Stack>
         {/* above every screen, so an achievement finds you wherever you are */}
         <AchievementToast />
       </SafeAreaProvider>
