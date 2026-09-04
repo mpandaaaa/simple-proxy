@@ -45,26 +45,31 @@ const RUNTIME = '1.0.0';
 /**
  * The advert account.
  *
- * Google's own test identifiers until the real ones are put in. They
- * serve genuine test adverts, so every placement can be seen and clicked
- * on a real phone, and they earn nothing, so a development build can
- * never pollute the live account's numbers or get it banned for invalid
- * traffic.
+ * The application id is the real one and has to be here, because it goes
+ * into the app's own Info.plist and the SDK will not start without it.
  *
- * Replacing them is this block and one build. The unit ids live beside
- * them so there is one place to change rather than five.
+ * The unit ids are what decide whether a real advert is served, and they
+ * are deliberately still empty. An empty unit falls back to Google's own
+ * test unit, which serves a genuine test advert that can be watched and
+ * clicked on a phone and earns nothing. That is what a build in
+ * development should do: pointing a development build at live units is
+ * how an AdMob account gets suspended for invalid traffic, and it is the
+ * developer who pays for that, not Google.
+ *
+ * Filling the two ids in below and building once is all that is left.
  */
 const ADMOB = {
-  iosAppId: 'ca-app-pub-3940256099942544~1458002511',
+  /* Perfect XI, iOS. */
+  iosAppId: 'ca-app-pub-4069943095077854~1082884431',
+  /* Google's test application, until there is an Android app to point at. */
   androidAppId: 'ca-app-pub-3940256099942544~3347511713',
-  /** true while the test ids above are in use */
-  test: true,
   units: {
-    /* Google's published test units, one per format. */
-    iosInterstitial: 'ca-app-pub-3940256099942544/4411468910',
-    iosRewarded: 'ca-app-pub-3940256099942544/1712485313',
-    androidInterstitial: 'ca-app-pub-3940256099942544/1033173712',
-    androidRewarded: 'ca-app-pub-3940256099942544/5224354917',
+    /* Perfect XI, iOS. Anything left empty serves a test advert instead
+       of a real one, which is what Android does until there is one. */
+    iosInterstitial: 'ca-app-pub-4069943095077854/9348387268',
+    iosRewarded: 'ca-app-pub-4069943095077854/2204394414',
+    androidInterstitial: '',
+    androidRewarded: '',
   },
 };
 

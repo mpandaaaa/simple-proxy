@@ -27,7 +27,6 @@ import { getTrackingPermissionsAsync, requestTrackingPermissionsAsync } from 'ex
  */
 
 type AdMobConfig = {
-  test: boolean;
   units: {
     iosInterstitial: string;
     iosRewarded: string;
@@ -44,18 +43,32 @@ function config(): AdMobConfig | null {
 /**
  * Which unit to ask for.
  *
- * The library's own test ids while the account is in test, so a build in
- * development can never send traffic to the live account and get it
- * banned for it.
+ * A unit that has not been filled in falls back to Google's own test
+ * unit, one at a time rather than all or nothing. Half a configured
+ * account is the dangerous state: pointing anything at a live unit before
+ * it is meant to be live is how an AdMob account is suspended for invalid
+ * traffic, and there is no appeal worth having.
+ *
+ * There is also no debug build in the world that should serve a real
+ * advert, so development never does whatever is configured.
  */
 function unitFor(kind: 'interstitial' | 'rewarded'): string {
+  const test = kind === 'rewarded' ? TestIds.REWARDED : TestIds.INTERSTITIAL;
+  if (__DEV__) return test;
+
   const cfg = config();
-  if (!cfg || cfg.test) {
-    return kind === 'rewarded' ? TestIds.REWARDED : TestIds.INTERSTITIAL;
-  }
-  const ios = kind === 'rewarded' ? cfg.units.iosRewarded : cfg.units.iosInterstitial;
-  const android = kind === 'rewarded' ? cfg.units.androidRewarded : cfg.units.androidInterstitial;
-  return Platform.OS === 'ios' ? ios : android;
+  if (!cfg) return test;
+
+  const live =
+    Platform.OS === 'ios'
+      ? kind === 'rewarded'
+        ? cfg.units.iosRewarded
+        : cfg.units.iosInterstitial
+      : kind === 'rewarded'
+        ? cfg.units.androidRewarded
+        : cfg.units.androidInterstitial;
+
+  return live && live.trim() ? live.trim() : test;
 }
 
 /* ---------- starting up ---------- */
