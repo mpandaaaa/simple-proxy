@@ -45,12 +45,18 @@ const RUNTIME = '1.0.0';
 /**
  * Which build this is.
  *
- * EAS sets this while it builds. Running locally there is no profile, and
- * a development server is only ever feeding a development build, so that
- * is the sensible default.
+ * Read from a variable eas.json sets on the development profile, not from
+ * EAS_BUILD_PROFILE. That one only exists on the build server, and the
+ * command line reads this file on the machine first, to work out which
+ * credentials the build needs. Defaulting to development there sent it
+ * looking for a provisioning profile for an identifier that did not exist
+ * yet, and the build failed before it started.
+ *
+ * Nothing set means the real app. That is the safe default: the worst
+ * case is a development build that shares an identifier, rather than a
+ * release build that quietly does not.
  */
-const PROFILE = process.env.EAS_BUILD_PROFILE ?? 'development';
-const IS_DEV_BUILD = PROFILE === 'development';
+const IS_DEV_BUILD = process.env.APP_VARIANT === 'development';
 
 /**
  * The bundle identifier, and why the development one is different.
@@ -131,7 +137,6 @@ module.exports = () => ({
      */
     requireFullScreen: true,
     bundleIdentifier: BUNDLE,
-    buildNumber: '1',
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },
