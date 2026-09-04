@@ -9,11 +9,20 @@ import { defineStore } from './storage';
  */
 export type MatchSpeed = 'slow' | 'normal' | 'fast' | 'instant';
 
+/**
+ * Which commentator.
+ *
+ * The television one, or the radio one on a wet Tuesday. A hundred
+ * matches in one voice starts to repeat itself.
+ */
+export type Voice = 'classic' | 'dry';
+
 export type Settings = {
   sound: boolean;
   haptics: boolean;
   reducedMotion: boolean;
   matchSpeed: MatchSpeed;
+  voice: Voice;
 };
 
 const fallback: Settings = {
@@ -21,6 +30,7 @@ const fallback: Settings = {
   haptics: true,
   reducedMotion: false,
   matchSpeed: 'normal',
+  voice: 'classic',
 };
 
 const SPEEDS: readonly MatchSpeed[] = ['slow', 'normal', 'fast', 'instant'];
@@ -32,13 +42,14 @@ function isSettings(v: unknown): v is Settings {
     typeof s.sound === 'boolean' &&
     typeof s.haptics === 'boolean' &&
     typeof s.reducedMotion === 'boolean' &&
-    SPEEDS.indexOf(s.matchSpeed as MatchSpeed) > -1
+    SPEEDS.indexOf(s.matchSpeed as MatchSpeed) > -1 &&
+    (s.voice === 'classic' || s.voice === 'dry')
   );
 }
 
 export const settingsStore = defineStore<Settings>({
   key: 'settings',
-  version: 2,
+  version: 3,
   fallback,
   validate: isSettings,
   migrations: {
@@ -59,7 +70,14 @@ export const settingsStore = defineStore<Settings>({
         haptics: s.haptics !== false,
         reducedMotion: s.reducedMotion === true,
         matchSpeed: 'normal' as MatchSpeed,
+        voice: 'classic' as Voice,
       };
+    },
+    /* Three adds the second commentator. Everybody keeps the one they
+       have been listening to. */
+    3: (v: unknown) => {
+      if (typeof v !== 'object' || v === null) return null;
+      return { ...(v as Settings), voice: 'classic' as Voice };
     },
   },
 });

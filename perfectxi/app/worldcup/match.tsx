@@ -17,6 +17,7 @@ import {
   type WcPlayed,
 } from '../../src/engine';
 import { buildTournament } from '../../src/game/tournamentMatch';
+import { settingsStore } from '../../src/save';
 import { playNextMatch, useWorldCup } from '../../src/game/worldcup';
 
 /**
@@ -117,6 +118,7 @@ export default function WorldCupMatch() {
       et: Boolean(m.et),
       pens: m.pens,
       scorers: step.scorers,
+      voice: settingsStore.read().voice,
     });
   }, [step, me, them]);
 

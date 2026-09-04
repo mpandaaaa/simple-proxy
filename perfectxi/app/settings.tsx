@@ -28,6 +28,7 @@ import {
   uclStore,
   worldCupStore,
   type MatchSpeed,
+  type Voice,
 } from '../src/save';
 
 /**
@@ -47,6 +48,11 @@ const SPEEDS: { id: MatchSpeed; label: string; note: string }[] = [
   { id: 'normal', label: 'Normal', note: 'Ninety minutes in about eight seconds' },
   { id: 'fast', label: 'Fast', note: 'Half the time, same commentary' },
   { id: 'instant', label: 'Instant', note: 'Straight to full time' },
+];
+
+const VOICES: { id: Voice; label: string; note: string }[] = [
+  { id: 'classic', label: 'Television', note: 'Loud, and a goal is an event' },
+  { id: 'dry', label: 'Radio', note: 'Understated, on a wet Tuesday' },
 ];
 
 type Wipe = 'worldcup' | 'ucl' | 'dynasty' | 'collection' | 'everything' | null;
@@ -195,6 +201,28 @@ export default function SettingsScreen() {
         <Text style={styles.note}>
           {SPEEDS.find((x) => x.id === s.matchSpeed)?.note}
         </Text>
+
+        {/* ================= who is talking ================= */}
+        <Text style={[text.label, styles.sect]}>Commentary</Text>
+        <View style={styles.speeds}>
+          {VOICES.map((v) => {
+            const on = s.voice === v.id;
+            return (
+              <Press
+                key={v.id}
+                onPress={() => set('voice', v.id)}
+                feel="none"
+                scaleTo={0.98}
+                style={[styles.speed, on ? styles.speedOn : null]}
+              >
+                <Text style={[styles.speedLabel, on ? styles.speedLabelOn : null]}>
+                  {v.label}
+                </Text>
+              </Press>
+            );
+          })}
+        </View>
+        <Text style={styles.note}>{VOICES.find((x) => x.id === s.voice)?.note}</Text>
 
         {/* ================= who this phone is ================= */}
         <Text style={[text.label, styles.sect]}>Your name</Text>

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Animated, {
   Easing,
@@ -8,7 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
 import { awardSweep } from '../src/game/award';
-import { go } from '../src/game/nav';
+import { go, swap } from '../src/game/nav';
 import {
   commas,
   AlbumCard,
@@ -36,6 +36,7 @@ import {
 import { alpha, color, space, radius } from '../src/ui/tokens';
 import { font, text } from '../src/ui/type';
 import {
+  flagsStore,
   progressStore,
   dynastySummary,
   historyStore,
@@ -215,6 +216,20 @@ export default function Home() {
       awardSweep();
     }, []),
   );
+
+  /*
+   * The first thing anybody sees, once.
+   *
+   * Replaced rather than pushed, so there is nothing behind the three
+   * cards to swipe back to, and guarded by a ref because a focus effect
+   * runs again every time Home comes back to the front.
+   */
+  const greeted = useRef(false);
+  useEffect(() => {
+    if (greeted.current) return;
+    greeted.current = true;
+    if (!flagsStore.read().intro) swap('/welcome');
+  }, []);
 
   const lvl = levelProgress(progress.xp);
 
@@ -407,7 +422,7 @@ export default function Home() {
 
         <Collapse
           label="Records"
-          count={3}
+          count={4}
           tone="gold"
           hint={`${record.cabinet} · ${record.hall}`}
         >
@@ -424,6 +439,16 @@ export default function Home() {
             title="Hall of Fame"
             subtitle={record.hall}
             onPress={() => go('/hall')}
+          />
+          <Row
+            icon={IconCpu}
+            tone="accent"
+            title="Your record"
+            subtitle="Every mode you have played, added up"
+            onPress={() => {
+              haptic('light');
+              go('/stats');
+            }}
           />
           <Row
             icon={IconYou}

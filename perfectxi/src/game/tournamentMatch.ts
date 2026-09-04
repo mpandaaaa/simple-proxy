@@ -38,6 +38,8 @@ export type TourneyInput = {
   pens: { a: number; b: number } | null;
   /** your scorers, in the order the engine drew them */
   scorers: { scorer: string; assist: string | null }[];
+  /** which commentator. The television one unless somebody chose otherwise. */
+  voice?: Voice;
 };
 
 /* ---------- the words ---------- */
@@ -85,6 +87,65 @@ const FLAVOUR = {
 } as const;
 
 const FLAVOUR_KEYS = ['save', 'chance', 'corner', 'foul', 'offside', 'woodwork', 'yellow', 'run'] as const;
+
+/**
+ * The second voice.
+ *
+ * The bank above is a television commentator: everything is enormous and
+ * a goal is an event. This one is the radio, on a wet Tuesday, describing
+ * what happened and moving on. A hundred matches in one voice starts to
+ * repeat itself, and the difference between the two is not the words so
+ * much as how excited they are.
+ */
+const DRY_GOAL_ME = [
+  'Goal. {p} puts it away.',
+  'Goal. {p}, low, past the keeper.',
+  'Goal for us. {p} again.',
+  'Goal. {p} takes it early and it goes in.',
+  'Goal. {p} finishes it off.',
+];
+
+const DRY_GOAL_ME_MADE = [
+  'Goal. {a} to {p}, and in.',
+  'Goal. {a} does the work, {p} applies the finish.',
+  'Goal. {a} to the far post, {p} heads it in.',
+  'Goal. Worked well. {a} to {p}.',
+];
+
+const DRY_GOAL_OPP = [
+  'Goal to {s}. {p} scores.',
+  'Goal to {s}, and it was coming. {p}.',
+  '{p} scores for {s}.',
+  'And there it is. {p}, for {s}.',
+  '{s} have one back. {p}.',
+];
+
+const DRY_FLAVOUR = {
+  save: [
+    'Saved. Comfortable enough for the keeper.',
+    'Held. {p} will feel he should have done better.',
+    'Turned behind. A decent stop.',
+  ],
+  chance: [
+    'Wide. {p} had time there.',
+    'Over the top. {p} leant back.',
+    'Half a chance for {s}. It comes to nothing.',
+  ],
+  corner: ['Corner to {s}.', 'Another corner. {s} keep coming.'],
+  foul: ['Free kick to {s}.', 'Foul, and {s} have it in a useful spot.'],
+  offside: ['Offside against {s}.', 'The flag goes up. {s} are denied.'],
+  woodwork: ['Off the post, and away. {p}.', 'The bar. Nothing in it.'],
+  yellow: ['Booked. {p}.', 'Yellow card. {p} knew.'],
+  run: ['{s} keep the ball.', '{s} moving it around the back.', 'Quiet spell, {s} in possession.'],
+} as const;
+
+export type Voice = 'classic' | 'dry';
+
+function banks(voice: Voice) {
+  return voice === 'dry'
+    ? { me: DRY_GOAL_ME, made: DRY_GOAL_ME_MADE, opp: DRY_GOAL_OPP, flavour: DRY_FLAVOUR }
+    : { me: GOAL_ME, made: GOAL_ME_MADE, opp: GOAL_OPP, flavour: FLAVOUR };
+}
 
 /* ---------- helpers ---------- */
 
@@ -181,6 +242,7 @@ function spread(made: number, n: number, rnd: Rng): boolean[] {
 
 export function buildTournament(input: TourneyInput): LiveMatch {
   const rnd = mulberry32(seedOf(input.seed, input.n));
+  const bank = banks(input.voice ?? 'classic');
   const full = input.et ? 120 : 90;
   const myKeeper = keeperOf(input.me.squad);
   const oppKeeper = keeperOf(input.opp.squad);
@@ -300,9 +362,9 @@ export function buildTournament(input: TourneyInput): LiveMatch {
     if (e.kind === 'goal') {
       if (e.side === 'me') me++;
       else them++;
-      const bank =
-        e.side === 'me' ? (e.assist ? GOAL_ME_MADE : GOAL_ME) : GOAL_OPP;
-      const text = pick(bank, rnd)
+      const lines =
+        e.side === 'me' ? (e.assist ? bank.made : bank.me) : bank.opp;
+      const text = pick(lines, rnd)
         .replace('{p}', player || 'a scrambled finish')
         .replace('{a}', e.assist ? lastName(e.assist) : 'the winger')
         .replace('{s}', label);
@@ -310,10 +372,10 @@ export function buildTournament(input: TourneyInput): LiveMatch {
       continue;
     }
 
-    const bank = FLAVOUR[e.kind as keyof typeof FLAVOUR];
-    if (!bank) continue;
+    const lines = bank.flavour[e.kind as keyof typeof FLAVOUR];
+    if (!lines) continue;
     const keeper = e.side === 'me' ? oppKeeper : myKeeper;
-    const text = pick(bank, rnd)
+    const text = pick(lines, rnd)
       .replace('{p}', e.kind === 'save' ? player || lastName(keeper) : player || label)
       .replace('{s}', label);
     say(`e${i}`, e.min, e.kind, e.side, text);

@@ -18,6 +18,7 @@ import {
   type UclPlayed,
 } from '../../src/engine';
 import { buildTournament } from '../../src/game/tournamentMatch';
+import { settingsStore } from '../../src/save';
 import { playNextUcl, useUcl } from '../../src/game/ucl';
 
 /**
@@ -82,6 +83,7 @@ export default function UclMatch() {
       et: Boolean(m.et),
       pens: m.pens,
       scorers: step.scorers,
+      voice: settingsStore.read().voice,
     });
   }, [step, me, them]);
 

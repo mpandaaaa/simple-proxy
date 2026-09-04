@@ -1,7 +1,9 @@
 export { defineStore, clearAllSaves } from './storage';
 export type { Envelope, Migration, Migrations, StoreDef } from './schema';
 export { settingsStore } from './settings';
-export type { Settings, MatchSpeed } from './settings';
+export { flagsStore } from './flags';
+export type { Flags } from './flags';
+export type { Settings, MatchSpeed, Voice } from './settings';
 export { progressStore } from './progress';
 export type { Progress } from './progress';
 export { dynastyStore, dynastySummary } from './dynasty';

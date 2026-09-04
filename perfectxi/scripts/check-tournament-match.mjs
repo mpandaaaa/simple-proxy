@@ -25,7 +25,7 @@ const fail = (m) => {
 
 const PLACEHOLDER = /\{[psa]\}/;
 
-function tapeFor(step) {
+function tapeFor(step, voice) {
   const m = step.match;
   const a = wcTeam(m.a);
   const b = wcTeam(m.b);
@@ -42,6 +42,7 @@ function tapeFor(step) {
     et: Boolean(m.et),
     pens: m.pens,
     scorers: step.scorers,
+    voice,
   });
 }
 
@@ -63,8 +64,11 @@ for (let i = 0; i < nations.length; i++) {
       matches++;
 
       const m = step.match;
-      const t = tapeFor(step);
-      const again = tapeFor(step);
+      /* Both commentators, so a second voice cannot quietly disagree with
+         the scoreline the first one told. */
+      const voice = matches % 2 ? 'dry' : 'classic';
+      const t = tapeFor(step, voice);
+      const again = tapeFor(step, voice);
 
       if (JSON.stringify(t) !== JSON.stringify(again)) {
         fail(`not deterministic: ${m.a} v ${m.b} ${STAGE_NAME[m.stage]}`);
