@@ -43,6 +43,17 @@ import {
   useRequireRun,
 } from '../../src/game/run';
 
+function ReadyBit({ n, word }: { n: string; word: string }) {
+  return (
+    <View style={styles.readyBit}>
+      <Text style={styles.readyNum} allowFontScaling={false}>
+        {n}
+      </Text>
+      <Text style={styles.readyWord}>{word}</Text>
+    </View>
+  );
+}
+
 /** A player, or the rule that separates the ones you can use from the rest. */
 type Row =
   | { kind: 'player'; player: Pick; playable: boolean }
@@ -291,6 +302,22 @@ export default function DraftBoard() {
         </View>
       ) : null}
 
+      {!board && !pending ? (
+        <View style={styles.ready}>
+          <Text style={styles.readyKey}>How it works</Text>
+          <Text style={styles.readyText}>
+            Every spin lands on one real club-season. Take one footballer off
+            it, then spin again. Eleven spins, eleven decisions, and the XI
+            you are left with plays a full season.
+          </Text>
+          <View style={styles.readyRow}>
+            <ReadyBit n={String(state.total)} word="to pick" />
+            <ReadyBit n={String(state.rerollsMax)} word="rerolls" />
+            <ReadyBit n="38" word="games" />
+          </View>
+        </View>
+      ) : null}
+
       {!board ? (
         <Button
           label={pending ? 'Spinning' : 'Start spinning'}
@@ -302,17 +329,19 @@ export default function DraftBoard() {
       {/* Testing only. __DEV__ is false in any build that ships, so this
           cannot reach the App Store even if everyone forgets it is here. */}
       {__DEV__ && !pending ? (
-        <Press
-          onPress={() => {
-            haptic('medium');
-            autoFill();
-          }}
-          feel="none"
-          scaleTo={0.96}
-          style={styles.autoFill}
-        >
-          <Text style={styles.autoFillText}>Auto fill the XI · testing</Text>
-        </Press>
+        <View style={styles.autoFillRow}>
+          <Press
+            onPress={() => {
+              haptic('medium');
+              autoFill();
+            }}
+            feel="none"
+            scaleTo={0.96}
+            style={styles.autoFill}
+          >
+            <Text style={styles.autoFillText}>Auto fill the XI · testing</Text>
+          </Press>
+        </View>
       ) : null}
 
       {board ? (
@@ -652,19 +681,59 @@ const styles = StyleSheet.create({
   },
 
   spinBtn: { marginTop: space.s2 },
+  /*
+   * In its own row with a height of its own. Left to itself it was a
+   * bare child of a growing scroll view and stretched to whatever was
+   * left of the page, which with a pill radius drew an enormous dashed
+   * arch down the bottom half of the screen.
+   */
+  autoFillRow: { alignItems: 'center', marginTop: space.s4 },
   autoFill: {
-    alignSelf: 'center',
-    marginTop: space.s3,
+    height: 34,
     paddingHorizontal: space.s4,
-    paddingVertical: space.s2,
-    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: 'rgba(255,255,255,0.22)',
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   autoFillText: { ...text.key, fontSize: 9.5, color: color.text3 },
 
-  rerollRow: { flexDirection: 'row', alignItems: 'center', gap: space.s3 },
+  ready: {
+    marginTop: space.s3,
+    padding: space.s4,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: 'rgba(255,255,255,0.035)',
+    gap: space.s2,
+  },
+  readyKey: { ...text.key, fontSize: 9, color: color.accent },
+  readyText: { ...text.small, fontSize: 13, lineHeight: 19, color: color.text2 },
+  readyRow: { flexDirection: 'row', marginTop: space.s2 },
+  readyBit: { flex: 1, alignItems: 'center', gap: 1 },
+  readyNum: {
+    fontFamily: font.displayBlack,
+    fontSize: 22,
+    lineHeight: 28,
+    color: color.text1,
+    fontVariant: ['tabular-nums'],
+  },
+  readyWord: { ...text.key, fontSize: 7.5, color: color.text3 },
+
+  rerollRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s3,
+    marginTop: space.s3,
+    paddingVertical: space.s2,
+    paddingHorizontal: space.s3,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: line.card,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
   rerollBtn: {
     paddingHorizontal: space.s5,
     paddingVertical: space.s3,

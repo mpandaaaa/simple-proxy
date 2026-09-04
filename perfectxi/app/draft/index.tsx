@@ -100,13 +100,14 @@ export default function DraftSetup() {
 
         {/* The multipliers are real engine inputs, so this is not
             decoration: 4-2-4 really does score more and concede more. */}
-        <View style={styles.traits}>
-          <Trait label="Attack" value={fm?.att ?? 1} good />
-          <Trait label="Defence" value={fm?.def ?? 1} />
-        </View>
-
-        <View style={styles.preview}>
-          <Pitch squad={empty} formation={config.formation} preview />
+        <View style={styles.shape}>
+          <View style={styles.preview}>
+            <Pitch squad={empty} formation={config.formation} preview />
+          </View>
+          <View style={styles.traits}>
+            <Trait label="Attack" value={fm?.att ?? 1} good />
+            <Trait label="Defence" value={fm?.def ?? 1} />
+          </View>
         </View>
       </Rise>
 
@@ -191,12 +192,31 @@ export default function DraftSetup() {
         {/* Everything chosen, in one line, so the last thing before the
             button is a summary rather than a scroll back up. */}
         <View style={styles.summary}>
-          <Text style={styles.summaryText}>
-            {config.formation} · {config.mode === 'alltime' ? 'All Time XI' : 'Squad draft'} ·{' '}
-            {rerolls} reroll{rerolls === 1 ? '' : 's'} · {config.rtype === 'prime' ? 'prime' : 'season'} ratings
-            {hidden ? ' · hidden' : ''}
-            {config.blitz ? ' · blitz' : ''}
-          </Text>
+          <Shine radius={radius.lg} group="panel" />
+          <Text style={styles.summaryKey}>The run you are about to play</Text>
+          <View style={styles.summaryGrid}>
+            <Bit label="Shape" value={config.formation} />
+            <Bit
+              label="Mode"
+              value={config.mode === 'alltime' ? 'All Time XI' : 'Squad draft'}
+            />
+            <Bit
+              label="Era"
+              value={
+                config.mode === 'alltime'
+                  ? 'All eras'
+                  : `${seasonStr(config.eraFrom)} to ${seasonStr(config.eraTo)}`
+              }
+            />
+            <Bit label="Difficulty" value={DIFF_WORD[config.diff]} />
+            <Bit label="Rerolls" value={String(rerolls)} />
+            <Bit label="Ratings" value={hidden ? 'Hidden' : config.rtype === 'prime' ? 'Prime' : 'Season'} />
+          </View>
+          {config.blitz ? (
+            <Text style={styles.summaryBlitz}>
+              Blitz: only the top three of every board are offered.
+            </Text>
+          ) : null}
         </View>
 
         <Button
@@ -209,6 +229,24 @@ export default function DraftSetup() {
         />
       </Rise>
     </ModeScreen>
+  );
+}
+
+const DIFF_WORD: Record<string, string> = {
+  easy: 'Easy',
+  normal: 'Normal',
+  hard: 'Hard',
+};
+
+/** One line of the summary, so six of them line up rather than run on. */
+function Bit({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.bit}>
+      <Text style={styles.bitLabel}>{label}</Text>
+      <Text style={styles.bitValue} numberOfLines={1}>
+        {value}
+      </Text>
+    </View>
   );
 }
 
@@ -285,7 +323,11 @@ const styles = StyleSheet.create({
   },
   fmDesc: { marginTop: -space.s3, marginBottom: space.s3 },
 
-  traits: { flexDirection: 'row', gap: space.s3, marginBottom: space.s4 },
+  /* The pitch and what the shape costs, together, because they are the
+     same decision. They used to be two full width blocks stacked, which
+     pushed everything else a screen further down. */
+  shape: { marginBottom: space.s5, gap: space.s3 },
+  traits: { flexDirection: 'row', gap: space.s3 },
   trait: {
     boxShadow:
       'inset 0px 1px 0px rgba(255,255,255,0.06), inset 0px 0px 0px 1px rgba(255,255,255,0.035)',
@@ -321,7 +363,7 @@ const styles = StyleSheet.create({
   },
   traitHint: { fontFamily: font.body, fontSize: 11, color: color.text3 },
 
-  preview: { marginBottom: space.s5 },
+  preview: {},
 
   eraPanel: {
     marginTop: space.s2,
@@ -372,21 +414,26 @@ const styles = StyleSheet.create({
   },
 
   summary: {
-    alignItems: 'center',
-    paddingVertical: space.s3,
+    paddingVertical: space.s4,
     paddingHorizontal: space.s4,
     marginBottom: space.s3,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: line.card,
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderColor: line.accent,
+    backgroundColor: 'rgba(31,197,126,0.06)',
+    overflow: 'hidden',
+    gap: space.s3,
   },
-  summaryText: {
-    ...text.key,
-    fontSize: 9.5,
-    color: color.text2,
-    textAlign: 'center',
-    lineHeight: 15,
+  summaryKey: { ...text.key, fontSize: 9, color: color.accent },
+  summaryGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: space.s3 },
+  bit: { width: '33.33%', gap: 1, paddingRight: space.s2 },
+  bitLabel: { ...text.key, fontSize: 7.5, color: color.text3 },
+  bitValue: {
+    fontFamily: font.displayBold,
+    fontSize: 14,
+    lineHeight: 19,
+    color: color.text1,
   },
+  summaryBlitz: { ...text.small, fontSize: 11.5, lineHeight: 16, color: color.text3 },
   go: { marginBottom: space.s5 },
 });
