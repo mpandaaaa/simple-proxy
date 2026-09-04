@@ -55,6 +55,10 @@ module.exports = () => ({
     /* An iPad runs this perfectly well and it is the same portrait layout
        on a bigger screen. Locked to portrait, like the phone. */
     supportsTablet: true,
+    /* The window behind the screens. Without it the back gesture, which
+       slides the top screen off whatever is underneath, framed the whole
+       app in white for the length of the swipe. */
+    backgroundColor: '#0A0F0C',
     bundleIdentifier: 'app.perfectxi.game',
     buildNumber: '1',
     infoPlist: {

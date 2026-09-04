@@ -75,6 +75,7 @@
     "cabinet": "tsc -p tsconfig.headless.json && node scripts/check-achievements.mjs",
     "tscreens": "tsc -p tsconfig.headless.json && node scripts/check-tourney-screens.mjs",
     "slots": "node scripts/check-slots.mjs",
+    "nav": "node scripts/check-nav.mjs",
     "dyneurope": "tsc -p tsconfig.headless.json && node scripts/check-dynasty-europe.mjs",
     "cup": "tsc -p tsconfig.headless.json && node scripts/check-cup.mjs",
     "extract-db": "node scripts/extract-db.mjs",
@@ -99,7 +100,7 @@
     "progress": "tsc -p tsconfig.headless.json && node scripts/check-progress.mjs",
     "online": "node scripts/check-online.mjs",
     "source": "node scripts/check-source.mjs",
-    "verify": "npm run typecheck && npm run source && npm run golden && npm run dynasty && npm run realism && npm run scout && npm run pyramid && npm run cups && npm run people && npm run screens && npm run daily && npm run playtoday && npm run h2h && npm run progress && npm run worldcup && npm run tourney && npm run wcdraft && npm run ucl && npm run ucldraft && npm run cabinet && npm run tscreens && npm run slots && npm run dyneurope && npm run cup && npm run career && npm run save"
+    "verify": "npm run typecheck && npm run source && npm run golden && npm run dynasty && npm run realism && npm run scout && npm run pyramid && npm run cups && npm run people && npm run screens && npm run daily && npm run playtoday && npm run h2h && npm run progress && npm run worldcup && npm run tourney && npm run wcdraft && npm run ucl && npm run ucldraft && npm run cabinet && npm run tscreens && npm run slots && npm run nav && npm run dyneurope && npm run cup && npm run career && npm run save"
   },
   "private": true
 }

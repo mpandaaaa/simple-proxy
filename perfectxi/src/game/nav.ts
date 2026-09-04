@@ -22,16 +22,53 @@ import { router } from 'expo-router';
 type Href = Parameters<typeof router.push>[0];
 
 /** How long the same destination is refused for. */
-const GAP_MS = 900;
+const GAP_MS = 1200;
 
 let lastKey = '';
 let lastAt = 0;
+
+/**
+ * The screen that is actually on top.
+ *
+ * The time window on its own is not enough. It catches a double tap, and
+ * it misses the far more common thing: tapping once, waiting because
+ * nothing seems to have happened, and tapping again a second later. Both
+ * pushes go through and going back lands on an identical copy of the
+ * page.
+ *
+ * So the rule is not "not twice quickly", it is "never the page you are
+ * already on". The root layout reports every route change here, which
+ * also covers backing out with the edge swipe: that changes the route
+ * without going through anything in this file.
+ */
+let here = '';
+
+/** Called by the root layout whenever the route changes. */
+export function noteHere(path: string): void {
+  here = path;
+  /* Arriving somewhere clears the window, because the window exists to
+     stop a second request for a journey already under way and that
+     journey has now finished. */
+  lastKey = '';
+  lastAt = 0;
+}
 
 function keyOf(href: Href): string {
   return typeof href === 'string' ? href : JSON.stringify(href);
 }
 
+/** The path part, so a query string does not look like somewhere else. */
+function pathOf(href: Href): string {
+  const key = keyOf(href);
+  if (typeof href === 'string') return key.split('?')[0].split('#')[0];
+  const obj = href as { pathname?: string };
+  return typeof obj.pathname === 'string' ? obj.pathname : key;
+}
+
 export function go(href: Href): void {
+  /* Already there. Nothing to do, however the request arrived. */
+  if (here && pathOf(href) === here) return;
+
   const key = keyOf(href);
   const now = Date.now();
   if (key === lastKey && now - lastAt < GAP_MS) return;

@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as SplashScreen from 'expo-splash-screen';
+import * as SystemUI from 'expo-system-ui';
 import { useFonts } from 'expo-font';
 // Imported per weight, not from the package root. Importing the root pulls
 // every weight the family ships into the bundle: Inter alone is 18 faces and
@@ -22,6 +23,7 @@ import { AchievementToast } from '../src/ui/components';
 import { useReduceMotion } from '../src/ui/feel';
 import { syncReminder } from '../src/game/remind';
 import { autoBackup } from '../src/game/backup';
+import { noteHere } from '../src/game/nav';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -45,6 +47,14 @@ export default function RootLayout() {
     Inter_700Bold,
   });
   const reduceMotion = useReduceMotion();
+  const path = usePathname();
+
+  /* Where we actually are, so nothing can push the page it is already on.
+     This covers the edge swipe too, which changes the route without going
+     through anything in nav.ts. */
+  useEffect(() => {
+    noteHere(path);
+  }, [path]);
 
   useEffect(() => {
     // Show the app once the faces are in. If a font fails outright we still
@@ -56,6 +66,19 @@ export default function RootLayout() {
   // be lost to a restore, a system cleanup, or notifications being turned
   // off in the phone and back on again, so it is put right on every start
   // rather than trusted to have survived.
+  /*
+   * The colour behind everything.
+   *
+   * A native stack slides the screen you are leaving off the top of
+   * whatever the root view is, and during the swipe back that root view
+   * is visible around the edges. Left as it comes it is white, so the
+   * whole app was framed in white for the length of every back gesture.
+   * It is the app's own ground now.
+   */
+  useEffect(() => {
+    void SystemUI.setBackgroundColorAsync(color.bg).catch(() => {});
+  }, []);
+
   useEffect(() => {
     void syncReminder();
   }, []);
@@ -82,8 +105,8 @@ export default function RootLayout() {
     // Gesture handler wants to own the root view. It is not used yet, but
     // it has to be the outermost view from the moment it is installed or
     // the first gesture added later silently does nothing.
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: color.bg }}>
+      <SafeAreaProvider style={{ backgroundColor: color.bg }}>
         <StatusBar style="light" />
         <Stack
           screenOptions={{
@@ -95,6 +118,10 @@ export default function RootLayout() {
             animation: reduceMotion ? 'fade' : 'slide_from_right',
             gestureEnabled: true,
             fullScreenGestureEnabled: true,
+            /* The screen being dragged sits on this, and the screen
+               underneath shows through it. Both have to be the app's own
+               ground or the gesture reveals a white frame. */
+            navigationBarColor: color.bg,
           }}
         />
         {/* above every screen, so an achievement finds you wherever you are */}
