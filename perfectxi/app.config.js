@@ -161,6 +161,23 @@ module.exports = () => ({
       },
     ],
     [
+      /*
+       * Saving a share card to Photos.
+       *
+       * Adding only, never reading. The game has no reason to look at
+       * somebody's photo library and asking for that would be a worse
+       * permission prompt for no benefit.
+       */
+      'expo-media-library',
+      {
+        savePhotosPermission:
+          'Perfect XI asks so it can save a share card to your photos. It only ever adds one, and only when you tap save.',
+        photosPermission:
+          'Perfect XI does not read your photos. It only adds a share card when you ask it to.',
+        isAccessMediaLocationEnabled: false,
+      },
+    ],
+    [
       'expo-tracking-transparency',
       {
         userTrackingPermission:
