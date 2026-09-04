@@ -1,5 +1,11 @@
 import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
 import { awardSweep } from '../src/game/award';
 import { go } from '../src/game/nav';
@@ -27,7 +33,7 @@ import {
   IconMedal,
   IconYou,
 } from '../src/ui/icons';
-import { color, space, radius, gradient, shadow, line } from '../src/ui/tokens';
+import { alpha, color, space, radius } from '../src/ui/tokens';
 import { font, text } from '../src/ui/type';
 import {
   progressStore,
@@ -62,7 +68,7 @@ import {
   weekNumber,
   today as todaysPuzzle,
 } from '../src/engine';
-import { haptic } from '../src/ui/feel';
+import { haptic, useReduceMotion } from '../src/ui/feel';
 import { ACHIEVEMENTS, type Career } from '../src/game/achievements';
 import { getCareer, reloadCareer } from '../src/game/career';
 import type { Progress, DynastySummary } from '../src/save';
@@ -220,8 +226,11 @@ export default function Home() {
             <Text style={styles.wordmark}>
               PERFECT <Text style={styles.wordmarkXI}>XI</Text>
             </Text>
-            <View style={styles.seasonChip}>
-              <Text style={styles.seasonChipText}>Season 26/27</Text>
+            <View style={styles.brandRight}>
+              <View style={styles.seasonChip}>
+                <Text style={styles.seasonChipText}>Season 26/27</Text>
+              </View>
+              <Cog />
             </View>
           </View>
           <Text style={styles.tagline}>
@@ -398,7 +407,7 @@ export default function Home() {
 
         <Collapse
           label="Records"
-          count={4}
+          count={3}
           tone="gold"
           hint={`${record.cabinet} · ${record.hall}`}
         >
@@ -426,16 +435,6 @@ export default function Home() {
               go('/players');
             }}
           />
-          <Row
-            icon={IconGear}
-            tone="gold"
-            title="Settings"
-            subtitle="Sound, match speed, your name, what is saved"
-            onPress={() => {
-              haptic('light');
-              go('/settings');
-            }}
-          />
         </Collapse>
       </Rise>
 
@@ -444,34 +443,9 @@ export default function Home() {
           51 clubs · 712 squad-seasons · 1992 to 2026
         </Text>
 
-        <View style={styles.footer}>
-          <Press
-            onPress={() => {
-              haptic('light');
-              go('/settings');
-            }}
-            feel="select"
-            scaleTo={0.94}
-            style={styles.footerChip}
-          >
-            <Text style={styles.footerText}>Settings</Text>
-          </Press>
-          <Press
-            onPress={() => {
-              haptic('light');
-              go('/privacy');
-            }}
-            feel="select"
-            scaleTo={0.94}
-            style={styles.footerChip}
-          >
-            <Text style={styles.footerText}>Privacy</Text>
-          </Press>
-        </View>
-
         <Text style={styles.legal}>
           Perfect XI is an unofficial fan game. Not affiliated with the Premier
-          League, any football club, or any player.
+          League, FIFA, UEFA, any football club, any competition or any player.
         </Text>
       </Rise>
     </Screen>
@@ -493,6 +467,46 @@ const FOOTER = [
   { label: 'Contact', blurb: 'Feedback, bug reports, or an argument about a rating.' },
 ];
 
+/**
+ * The way into Settings.
+ *
+ * Top right of the front door, which is where everybody looks for it,
+ * rather than a word in the footer under the small print. It turns a
+ * third of a turn when it is pressed, which lands while the screen is
+ * still sliding in, and it does not turn at all under Reduce Motion.
+ */
+function Cog() {
+  const reduce = useReduceMotion();
+  const turn = useSharedValue(0);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${turn.value}deg` }],
+  }));
+
+  return (
+    <Press
+      onPress={() => {
+        haptic('light');
+        if (!reduce) {
+          turn.value = withTiming(turn.value + 120, {
+            duration: 460,
+            easing: Easing.out(Easing.cubic),
+          });
+        }
+        go('/settings');
+      }}
+      feel="none"
+      scaleTo={0.88}
+      style={styles.cog}
+      accessibilityLabel="Settings"
+    >
+      <Animated.View style={style}>
+        <IconGear color={color.accent} size={21} />
+      </Animated.View>
+    </Press>
+  );
+}
+
 /** No career yet is a real state, so the card keeps its description. */
 function dynastyStatus(d: DynastySummary | null): string | null {
   if (!d) return null;
@@ -507,6 +521,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: space.s3,
+  },
+  brandRight: { flexDirection: 'row', alignItems: 'center', gap: space.s2 },
+  cog: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: alpha(color.accent, 0.4),
+    backgroundColor: alpha(color.accent, 0.1),
+    boxShadow: `0px 0px 14px ${alpha(color.accent, 0.22)}`,
   },
   wordmark: {
     fontFamily: font.displayBlack,
@@ -545,28 +571,6 @@ const styles = StyleSheet.create({
     color: color.text3,
     textAlign: 'center',
     marginTop: space.s6,
-  },
-  footer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: space.s2,
-    marginTop: space.s4,
-  },
-  footerChip: {
-    paddingHorizontal: space.s4,
-    paddingVertical: space.s2 + 1,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: line.card,
-    backgroundColor: '#101A14',
-    experimental_backgroundImage: gradient.card,
-    boxShadow: shadow.card,
-  },
-  footerText: {
-    fontFamily: font.bodySemi,
-    fontSize: 12.5,
-    color: color.text2,
   },
   legal: {
     ...text.small,
