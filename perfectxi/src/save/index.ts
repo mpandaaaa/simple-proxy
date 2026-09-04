@@ -15,3 +15,4 @@ export type { Career } from './career';
 export { me, rename, displayName, type Me } from './me';
 export { collectionStore, addCards, owned, EMPTY_COLLECTION, type Collection } from './collection';
 export { looksStore, EMPTY_LOOKS, type Looks } from './looks';
+export { worldCupStore } from './worldcup';

@@ -37,8 +37,11 @@ import {
   weeklyStore,
   duelStore,
   collectionStore,
+  worldCupStore,
 } from '../src/save';
 import {
+  STAGE_NAME,
+  wcTeam,
   bestOwned,
   bestThisWeek,
   levelProgress,
@@ -112,6 +115,22 @@ function readWeek() {
   return { week: thisWeek(), best: bestThisWeek(weeklyStore.read(), n) };
 }
 
+function readWorldCup() {
+  const run = worldCupStore.read();
+  if (!run) return null;
+  const team = wcTeam(run.you);
+  return {
+    name: team?.n ?? '',
+    flag: team?.f ?? '',
+    over: run.over,
+    where: run.over
+      ? run.won
+        ? 'champions of the world'
+        : `out at the ${STAGE_NAME[run.outAt ?? 'group'].toLowerCase()}`
+      : `${STAGE_NAME[run.stage].toLowerCase()}, ${run.played.length} played`,
+  };
+}
+
 function readAlbum() {
   const coll = collectionStore.read();
   return {
@@ -142,6 +161,9 @@ export default function Home() {
   /* The album, as the front door needs it: how far along it is, the four
      best footballers in it, and whether a pack is waiting. */
   const [album, setAlbum] = useState(() => readAlbum());
+  /* The World Cup on the go, if there is one, so the card says where you
+     are in it rather than what the mode is. */
+  const [worldCup, setWorldCup] = useState(() => readWorldCup());
 
   // Saves change while you are inside a mode, so the status lines are read
   // again every time Home comes back to the front rather than once on mount.
@@ -156,6 +178,7 @@ export default function Home() {
       setWeekly(readWeek());
       setDuels(duelStore.read());
       setAlbum(readAlbum());
+      setWorldCup(readWorldCup());
     }, []),
   );
 
@@ -195,15 +218,16 @@ export default function Home() {
           tone="gold"
           kicker="Tournament"
           title="World Cup 2026"
-          subtitle="Pick a nation or build a World XI · win the cup"
-          icon={IconTrophy}
-          onPress={() =>
-            soon(
-              'World Cup',
-              'World Cup 2026',
-              'Pick one of the qualified nations and draft its real squad, or build a World XI, then play the group stage and the knockouts.',
-            )
+          subtitle={
+            worldCup
+              ? `${worldCup.flag} ${worldCup.name} · ${worldCup.where}`
+              : '48 nations · one match at a time · win the cup'
           }
+          icon={IconTrophy}
+          onPress={() => {
+            haptic('light');
+            go(worldCup && !worldCup.over ? '/worldcup/hub' : '/worldcup');
+          }}
         />
       </Rise>
 
