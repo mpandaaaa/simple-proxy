@@ -26,6 +26,7 @@ export { Ticker } from './Ticker';
 export { Confirm } from './Confirm';
 export { RangeSlider } from './RangeSlider';
 export { MatchLive } from './MatchLive';
+export type { MatchNight } from './MatchLive';
 export { Shine } from './Shine';
 export type { ShineGroup } from './Shine';
 export { Confetti } from './Confetti';

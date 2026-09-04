@@ -6,7 +6,7 @@ import { font, text } from '../type';
 import { IconChevron } from '../icons';
 import { Press } from './Press';
 
-export type ModeTone = 'accent' | 'gold' | 'purple';
+export type ModeTone = 'accent' | 'gold' | 'purple' | 'blue';
 
 const TONES = {
   accent: {
@@ -31,6 +31,18 @@ const TONES = {
     ring: 'rgba(214, 178, 94, 0.10)',
     badge: 'rgba(214, 178, 94, 0.13)',
     badgeLine: line.gold,
+    shade: shadow.lift,
+  },
+  blue: {
+    grad: gradient.blue,
+    solid: '#0B1733',
+    border: line.blue,
+    ink: color.text1,
+    dim: color.text2,
+    faint: '#4FC3FF',
+    ring: 'rgba(79, 195, 255, 0.12)',
+    badge: 'rgba(79, 195, 255, 0.14)',
+    badgeLine: line.blue,
     shade: shadow.lift,
   },
   purple: {

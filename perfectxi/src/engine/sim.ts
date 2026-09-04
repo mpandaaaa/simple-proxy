@@ -214,13 +214,22 @@ function dcDraw(lam: number, mu: number, rho: number, rnd: Rng): { gf: number; g
 export function dcExpected(
   myStr: number,
   oppStr: number,
-  isHome: boolean,
+  /**
+   * True at home, false away, and 'neutral' when the ground belongs to
+   * neither of them.
+   *
+   * A league match always has a home side, so the original two states gave
+   * the advantage to one or the other. A World Cup group game and a
+   * European final do not, and passing false for those quietly handed the
+   * opponent a home edge in every one of them.
+   */
+  isHome: boolean | 'neutral',
   fmod: Formation | null,
 ): { lam: number; mu: number } {
   const me = dcParams(myStr, fmod);
   const op = dcParams(oppStr, null);
-  const lam = Math.exp(DC.BASE + me.att + op.def + (isHome ? DC.GAMMA : 0));
-  const mu = Math.exp(DC.BASE + op.att + me.def + (isHome ? 0 : DC.GAMMA));
+  const lam = Math.exp(DC.BASE + me.att + op.def + (isHome === true ? DC.GAMMA : 0));
+  const mu = Math.exp(DC.BASE + op.att + me.def + (isHome === false ? DC.GAMMA : 0));
   return {
     lam: Math.max(0.12, Math.min(6, lam)),
     mu: Math.max(0.12, Math.min(6, mu)),

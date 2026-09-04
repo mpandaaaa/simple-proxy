@@ -189,7 +189,7 @@ export function buildTournament(input: TourneyInput): LiveMatch {
      full time panel agrees with the football that produced it. */
   const sa = strFromAvg(input.me.rating);
   const sb = strFromAvg(input.opp.rating);
-  const { lam, mu } = dcExpected(sa, sb, false, null);
+  const { lam, mu } = dcExpected(sa, sb, 'neutral', null);
   const share = lam + mu > 0 ? lam / (lam + mu) : 0.5;
 
   /* ----- who scored, and when ----- */
@@ -408,7 +408,7 @@ export function buildTournament(input: TourneyInput): LiveMatch {
 function buildStats(input: TourneyInput, share: number, rnd: Rng): LiveMatch['stats'] {
   const sa = strFromAvg(input.me.rating);
   const sb = strFromAvg(input.opp.rating);
-  const { lam, mu } = dcExpected(sa, sb, false, null);
+  const { lam, mu } = dcExpected(sa, sb, 'neutral', null);
   const stretch = input.et ? 1.33 : 1;
   const xgF = lam * stretch;
   const xgA = mu * stretch;

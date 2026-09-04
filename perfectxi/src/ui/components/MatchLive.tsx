@@ -28,14 +28,39 @@ const MINUTE_MS = 90;
 /** The break, so half time is a moment rather than a line in a list. */
 const HALF_TIME_MS = 750;
 
-/* Match night. The one place in the app that is not green, exactly as it is
-   on the site: a floodlit purple with the league's magenta on the edges. */
-const NIGHT = {
+/**
+ * Match night.
+ *
+ * The one place in the app that is not green, exactly as it is on the
+ * site: a floodlit purple with the league's magenta on the edges.
+ *
+ * A competition can bring its own. The Champions League is blue and
+ * silver and would look wrong in the Premier League's colours, so the
+ * whole palette is a prop with this as the default rather than four
+ * screens agreeing to look the same by accident.
+ */
+export type MatchNight = {
+  /** the gradient behind the scoreline */
+  top: string;
+  /** the hairline around the card and under the broadcast */
+  edge: string;
+  /** the competition's own colour, used for the clock and the headings */
+  hot: string;
+  /** you */
+  me: string;
+  /** them */
+  opp: string;
+  /** the ground under the whole card */
+  base: string;
+};
+
+const NIGHT: MatchNight = {
   top: 'linear-gradient(160deg, #2E0B43 0%, #37003C 52%, #180620 100%)',
   edge: 'rgba(233,0,82,0.34)',
   hot: '#FF2D78',
   me: '#00FF85',
   opp: '#FF5C7A',
+  base: '#0B0E10',
 };
 
 const ICON: Record<string, string> = {
@@ -80,6 +105,7 @@ export function MatchLive({
   comp,
   sides,
   doneLabel,
+  night,
 }: {
   match: MatchResult | null;
   /** the run's seed, so a match watched twice plays out the same */
@@ -103,7 +129,10 @@ export function MatchLive({
   sides?: { me: { name: string; flag?: string }; opp: { name: string; flag?: string } } | null;
   /** what the button at the end says */
   doneLabel?: string;
+  /** the competition's colours. The league's own if nothing is handed in. */
+  night?: MatchNight;
 }) {
+  const sky = night ?? NIGHT;
   const reduce = useReduceMotion();
   const insets = useSafeAreaInsets();
   const [mounted, setMounted] = useState(visible);
@@ -312,7 +341,7 @@ export function MatchLive({
   const me = ended ? match.gf : (head?.me ?? 0);
   const them = ended ? match.ga : (head?.opp ?? 0);
   const tone =
-    match.oc === 'win' ? NIGHT.me : match.oc === 'loss' ? NIGHT.opp : color.gold;
+    match.oc === 'win' ? sky.me : match.oc === 'loss' ? sky.opp : color.gold;
 
   return (
     <Modal visible transparent animationType="none" onRequestClose={onDone}>
@@ -323,15 +352,22 @@ export function MatchLive({
           { paddingTop: insets.top + space.s3, paddingBottom: insets.bottom + space.s3 },
         ]}
       >
-        <Animated.View style={[styles.card, cardStyle]}>
+        <Animated.View
+          style={[styles.card, cardStyle, { borderColor: sky.edge, backgroundColor: sky.base }]}
+        >
           {/* ---- the broadcast ---- */}
-          <View style={styles.top}>
+          <View
+            style={[
+              styles.top,
+              { experimental_backgroundImage: sky.top, borderBottomColor: sky.edge },
+            ]}
+          >
             <View style={styles.bloom} pointerEvents="none">
               <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
                 <Defs>
                   <RadialGradient id="mlBloom" cx="50%" cy="50%" r="50%">
-                    <Stop offset="0" stopColor={NIGHT.hot} stopOpacity={0.34} />
-                    <Stop offset="1" stopColor={NIGHT.hot} stopOpacity={0} />
+                    <Stop offset="0" stopColor={sky.hot} stopOpacity={0.34} />
+                    <Stop offset="1" stopColor={sky.hot} stopOpacity={0} />
                   </RadialGradient>
                 </Defs>
                 <Ellipse cx="50" cy="0" rx="66" ry="52" fill="url(#mlBloom)" />
@@ -347,7 +383,7 @@ export function MatchLive({
             <Shine radius={0} group="feature" bevel={false} clip={false} />
             <View style={styles.topEdge} pointerEvents="none" />
 
-            <Text style={styles.comp}>
+            <Text style={[styles.comp, { color: sky.hot }]}>
               {comp ??
                 `Premier League · Matchday ${match.n} · ${match.home ? 'Home' : 'Away'}`}
             </Text>
@@ -392,7 +428,7 @@ export function MatchLive({
                   </Text>
                 </Animated.View>
                 <Text
-                  style={[styles.clock, ended && { color: tone }]}
+                  style={[styles.clock, { color: sky.me }, ended && { color: tone }]}
                   allowFontScaling={false}
                 >
                   {ended
@@ -428,7 +464,13 @@ export function MatchLive({
 
             {/* the ninety, with the break marked */}
             <View style={styles.clockTrack}>
-              <Animated.View style={[styles.clockFill, barStyle]} />
+              <Animated.View
+                style={[
+                  styles.clockFill,
+                  barStyle,
+                  { backgroundColor: sky.hot, boxShadow: `0px 0px 8px ${sky.hot}` },
+                ]}
+              />
               <View style={[styles.halfNotch, { left: `${(45 / full) * 100}%` }]} />
             </View>
 
@@ -436,16 +478,23 @@ export function MatchLive({
             <View style={styles.swingHead}>
               <Text style={styles.swingKey}>Momentum</Text>
             </View>
+            {/* Your side is drawn on the left of the scoreline, so your
+                pressure grows to the left. */}
             <View style={styles.swingTrack}>
               <View style={styles.swingHalf}>
                 <Animated.View
-                  style={[styles.swingFill, styles.swingLeft, oppSwing]}
+                  style={[styles.swingFill, styles.swingLeft, meSwing, { backgroundColor: sky.me }]}
                 />
               </View>
               <View style={styles.swingSpine} />
               <View style={styles.swingHalf}>
                 <Animated.View
-                  style={[styles.swingFill, styles.swingRight, meSwing]}
+                  style={[
+                    styles.swingFill,
+                    styles.swingRight,
+                    oppSwing,
+                    { backgroundColor: sky.opp },
+                  ]}
                 />
               </View>
             </View>
@@ -459,31 +508,37 @@ export function MatchLive({
           >
             {ended ? (
               <Animated.View style={[styles.stats, statsStyle]}>
-                <Text style={styles.statsTitle}>Full time</Text>
+                <Text style={[styles.statsTitle, { color: sky.hot }]}>
+                  {full > 90 ? 'After extra time' : 'Full time'}
+                </Text>
                 <StatBar
+                  tone={sky.me}
                   label="Possession"
                   a={built.stats.possession}
                   b={100 - built.stats.possession}
                   suffix="%"
                 />
-                <StatBar label="Shots" a={built.stats.shots[0]} b={built.stats.shots[1]} />
+                <StatBar tone={sky.me} label="Shots" a={built.stats.shots[0]} b={built.stats.shots[1]} />
                 <StatBar
+                  tone={sky.me}
                   label="On target"
                   a={built.stats.onTarget[0]}
                   b={built.stats.onTarget[1]}
                 />
                 <StatBar
+                  tone={sky.me}
                   label="Expected goals"
                   a={built.stats.xg[0]}
                   b={built.stats.xg[1]}
                   decimals={2}
                 />
                 <StatBar
+                  tone={sky.me}
                   label="Corners"
                   a={built.stats.corners[0]}
                   b={built.stats.corners[1]}
                 />
-                <StatBar label="Fouls" a={built.stats.fouls[0]} b={built.stats.fouls[1]} />
+                <StatBar tone={sky.me} label="Fouls" a={built.stats.fouls[0]} b={built.stats.fouls[1]} />
               </Animated.View>
             ) : null}
 
@@ -597,12 +652,15 @@ function StatBar({
   b,
   suffix = '',
   decimals = 0,
+  tone,
 }: {
   label: string;
   a: number;
   b: number;
   suffix?: string;
   decimals?: number;
+  /** your side's colour, which the competition decides */
+  tone?: string;
 }) {
   const total = a + b;
   const share = total > 0 ? a / total : 0.5;
@@ -611,7 +669,7 @@ function StatBar({
   return (
     <View style={styles.sb}>
       <View style={styles.sbHead}>
-        <Text style={[styles.sbVal, { color: NIGHT.me }]} allowFontScaling={false}>
+        <Text style={[styles.sbVal, { color: tone ?? NIGHT.me }]} allowFontScaling={false}>
           {fmt(a)}
         </Text>
         <Text style={styles.sbLabel}>{label}</Text>
@@ -620,7 +678,9 @@ function StatBar({
         </Text>
       </View>
       <View style={styles.sbTrack}>
-        <View style={[styles.sbFill, { flex: Math.max(0.02, share), backgroundColor: NIGHT.me }]} />
+        <View
+          style={[styles.sbFill, { flex: Math.max(0.02, share), backgroundColor: tone ?? NIGHT.me }]}
+        />
         <View style={styles.sbGap} />
         <View
           style={[
@@ -788,12 +848,12 @@ const styles = StyleSheet.create({
   swingLeft: {
     alignSelf: 'flex-end',
     transformOrigin: 'right',
-    backgroundColor: NIGHT.opp,
+    backgroundColor: NIGHT.me,
   },
   swingRight: {
     alignSelf: 'flex-start',
     transformOrigin: 'left',
-    backgroundColor: NIGHT.me,
+    backgroundColor: NIGHT.opp,
   },
   swingSpine: { width: 2, height: 10, backgroundColor: 'rgba(255,255,255,0.28)' },
 

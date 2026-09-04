@@ -401,3 +401,56 @@ export {
   wcNationOf,
 } from './worldcupDraft';
 export type { WcPick, WcDraftState, WcDraftSlot } from './worldcupDraft';
+
+export {
+  UCL_STAGE_NAME,
+  UCL_ROUNDS,
+  UCL_MATCHDAYS,
+  uclClub,
+  uclClubs,
+  potOf,
+  uclSquad,
+  ratingOf as uclRatingOf,
+  squadOf as uclSquadOf,
+  nameOf as uclNameOf,
+  leagueFixtures,
+  uclPlay,
+  shareUclGoals,
+  sortUclRows,
+  uclStart,
+  uclPlayNext,
+  uclSkipLeague,
+  uclGoldenBoot,
+  uclExpected,
+  uclVerdict,
+  uclSummary,
+  uclScorers,
+  uclPosition,
+} from './ucl';
+export type {
+  UclStage,
+  UclMatch,
+  UclRow,
+  UclRun,
+  UclPlayed,
+  UclCustom,
+  UclWorldScorer,
+} from './ucl';
+
+export {
+  UCL_DRAFT_BOARD,
+  UCL_DRAFT_ROUNDS,
+  uclPool,
+  uclDraftStart,
+  uclBoard,
+  uclCanPlay,
+  uclSlotsFor,
+  uclDraftPlace,
+  uclAutoPick,
+  uclDraftDone,
+  uclDraftXi,
+  uclXiRating,
+  uclDraftSpread,
+  uclDraftSquad,
+} from './uclDraft';
+export type { UclPick, UclDraftState, UclDraftSlot } from './uclDraft';

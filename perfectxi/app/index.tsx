@@ -38,9 +38,12 @@ import {
   duelStore,
   collectionStore,
   worldCupStore,
+  uclStore,
 } from '../src/save';
 import {
   STAGE_NAME,
+  UCL_STAGE_NAME,
+  uclNameOf,
   wcTeam,
   nameIn,
   flagIn,
@@ -117,6 +120,20 @@ function readWeek() {
   return { week: thisWeek(), best: bestThisWeek(weeklyStore.read(), n) };
 }
 
+function readUcl() {
+  const run = uclStore.read();
+  if (!run) return null;
+  return {
+    name: uclNameOf(run, run.you),
+    over: run.over,
+    where: run.over
+      ? run.won
+        ? 'champions of Europe'
+        : `out at the ${UCL_STAGE_NAME[run.outAt ?? 'league'].toLowerCase()}`
+      : `${UCL_STAGE_NAME[run.stage].toLowerCase()}, ${run.played.length} played`,
+  };
+}
+
 function readWorldCup() {
   const run = worldCupStore.read();
   if (!run) return null;
@@ -166,6 +183,8 @@ export default function Home() {
   /* The World Cup on the go, if there is one, so the card says where you
      are in it rather than what the mode is. */
   const [worldCup, setWorldCup] = useState(() => readWorldCup());
+  /* The same for Europe, so the card says where you are in it. */
+  const [ucl, setUcl] = useState(() => readUcl());
 
   // Saves change while you are inside a mode, so the status lines are read
   // again every time Home comes back to the front rather than once on mount.
@@ -181,6 +200,7 @@ export default function Home() {
       setDuels(duelStore.read());
       setAlbum(readAlbum());
       setWorldCup(readWorldCup());
+      setUcl(readUcl());
     }, []),
   );
 
@@ -235,6 +255,20 @@ export default function Home() {
 
       <Rise delay={3}>
         <ModeCard
+          tone="blue"
+          kicker="Tournament"
+          title="Champions League"
+          subtitle={ucl ? `${ucl.name} · ${ucl.where}` : '36 clubs · a league phase · then the knockout'}
+          icon={IconStar}
+          onPress={() => {
+            haptic('light');
+            go(ucl && !ucl.over ? '/ucl/hub' : '/ucl');
+          }}
+        />
+      </Rise>
+
+      <Rise delay={4}>
+        <ModeCard
           tone="purple"
           kicker="Career"
           title="Dynasty"
@@ -245,7 +279,7 @@ export default function Home() {
         />
       </Rise>
 
-      <Rise delay={4}>
+      <Rise delay={5}>
         <AlbumCard
           owned={album.owned}
           total={album.total}
@@ -257,13 +291,13 @@ export default function Home() {
         />
       </Rise>
 
-      <Rise delay={5}>
+      <Rise delay={6}>
         <View style={styles.achievements}>
           <AchievementPanel career={career} />
         </View>
       </Rise>
 
-      <Rise delay={4} style={styles.groups}>
+      <Rise delay={5} style={styles.groups}>
         <Collapse
           label="Play today"
           count={4}
@@ -389,7 +423,7 @@ export default function Home() {
         </Collapse>
       </Rise>
 
-      <Rise delay={5}>
+      <Rise delay={6}>
         <Text style={styles.dbLine}>
           51 clubs · 712 squad-seasons · 1992 to 2026
         </Text>

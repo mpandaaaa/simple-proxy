@@ -91,6 +91,8 @@ export const gradient = {
   cardLift: 'linear-gradient(180deg, #16281F 0%, #101D15 100%)',
   gold: 'linear-gradient(140deg, #1E2A1E 0%, #141d15 60%, #10170F 100%)',
   purple: 'linear-gradient(140deg, #1B1A2B 0%, #14141F 60%, #101017 100%)',
+  /* The Champions League, which is navy everywhere it has ever been. */
+  blue: 'linear-gradient(140deg, #12224E 0%, #0B1733 60%, #070F22 100%)',
 } as const;
 
 export const shadow = {
@@ -108,7 +110,7 @@ export const line = {
   cardHot: '#2F4C3A',
   gold: 'rgba(214, 178, 94, 0.40)',
   purple: 'rgba(185, 140, 242, 0.40)',
-  blue: 'rgba(76, 160, 255, 0.40)',
+  blue: 'rgba(79, 195, 255, 0.40)',
   danger: 'rgba(229, 72, 77, 0.40)',
   accent: 'rgba(31, 197, 126, 0.40)',
 } as const;

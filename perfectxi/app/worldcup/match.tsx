@@ -51,15 +51,54 @@ export default function WorldCupMatch() {
   }, []);
 
   /* Your side is whoever you took charge of, which for a drafted run is
-     your own eleven wearing somebody else's flag. */
-  const me = step
-    ? {
-        n: nameIn(step.run, step.match.a),
-        f: flagIn(step.run, step.match.a),
-        r: ratingIn(step.run, step.match.a),
-      }
-    : null;
+     your own eleven wearing somebody else's flag. Held, not rebuilt: a new
+     object every render would restart the broadcast every render. */
+  const me = useMemo(
+    () =>
+      step
+        ? {
+            n: nameIn(step.run, step.match.a),
+            f: flagIn(step.run, step.match.a),
+            r: ratingIn(step.run, step.match.a),
+          }
+        : null,
+    [step],
+  );
   const them = step ? wcTeam(step.match.b) : null;
+
+  /*
+   * The broadcast wants a league fixture. This is the same match wearing
+   * that shape: the score, and who it went to.
+   *
+   * Held rather than rebuilt, because the broadcast restarts itself
+   * whenever the match it was handed is a different object, and a new one
+   * every render restarts it every render.
+   */
+  const shaped: MatchResult | null = useMemo(() => {
+    if (!step || !them) return null;
+    const x = step.match;
+    const won = x.pens ? x.pens.a > x.pens.b : x.ga > x.gb;
+    const lost = x.pens ? x.pens.a < x.pens.b : x.ga < x.gb;
+    return {
+      n: step.run.played.length,
+      opp: them.n,
+      home: true,
+      gf: x.ga,
+      ga: x.gb,
+      oc: won ? 'win' : lost ? 'loss' : 'draw',
+      scorers: [],
+      xgF: 0,
+      xgA: 0,
+    };
+  }, [step, them]);
+
+  const sides = useMemo(
+    () =>
+      me && them
+        ? { me: { name: me.n, flag: me.f }, opp: { name: them.n, flag: them.f } }
+        : null,
+    [me, them],
+  );
 
   /* The ninety minutes, with whatever a knockout added on top. */
   const tape = useMemo(() => {
@@ -81,7 +120,7 @@ export default function WorldCupMatch() {
     });
   }, [step, me, them]);
 
-  if (!run || !step || !me || !them || !tape) {
+  if (!run || !step || !me || !them || !tape || !shaped || !sides) {
     return (
       <ModeScreen overline="World Cup 2026" title="Kick off" scroll={false} onBack={() => back()}>
         <View />
@@ -90,23 +129,6 @@ export default function WorldCupMatch() {
   }
 
   const m = step.match;
-  const won = m.pens ? m.pens.a > m.pens.b : m.ga > m.gb;
-  const lost = m.pens ? m.pens.a < m.pens.b : m.ga < m.gb;
-
-  /* The broadcast wants a league fixture. This is the same match wearing
-     that shape: the score, and who it went to. */
-  const shaped: MatchResult = {
-    n: step.run.played.length,
-    opp: them.n,
-    home: true,
-    gf: m.ga,
-    ga: m.gb,
-    oc: won ? 'win' : lost ? 'loss' : 'draw',
-    scorers: [],
-    xgF: 0,
-    xgA: 0,
-  };
-
   const after = step.run;
 
   return (
@@ -162,7 +184,7 @@ export default function WorldCupMatch() {
         live
         visible
         comp={`World Cup 2026 · ${STAGE_NAME[m.stage]}${m.group ? ` · Group ${m.group}` : ''}`}
-        sides={{ me: { name: me.n, flag: me.f }, opp: { name: them.n, flag: them.f } }}
+        sides={sides}
         doneLabel={after.over ? 'The tournament report' : 'Back to the tournament'}
         onDone={() => {
           haptic('light');

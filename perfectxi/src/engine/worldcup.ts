@@ -204,7 +204,7 @@ export function playMatch(
 } {
   const sa = strFromAvg(typeof ra === 'number' ? ra : (WC_TEAMS[a]?.r ?? 70));
   const sb = strFromAvg(typeof rb === 'number' ? rb : (WC_TEAMS[b]?.r ?? 70));
-  const { lam, mu } = dcExpected(sa, sb, false, null);
+  const { lam, mu } = dcExpected(sa, sb, 'neutral', null);
   let ga = poissonR(lam, rnd);
   let gb = poissonR(mu, rnd);
   const ga90 = ga;

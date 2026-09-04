@@ -74,6 +74,7 @@ app/index.tsx        Home, the only hub
 app/draft/           setup, board, season
 app/dynasty/         the career. start hub season summer market tactics
                      squad academy staff club finances history
+app/ucl/            the Champions League. index draft hub match report
 app/hall.tsx         every season kept, ranked
 app/cabinet.tsx      silverware and the achievement catalogue
 app/soon.tsx         holding screen for a mode not built yet
@@ -83,6 +84,7 @@ src/data/dynasty.ts  GENERATED. birth years, ageing curves, capacities
 data/perfectxi-database.json  the source of truth, committed
 src/game/run.ts      the run in progress, held outside React
 src/ui/tokens.ts     pine emerald palette, spacing, radii, tap targets
+src/ui/ucl.ts        the Champions League blue, and its match night
 src/ui/type.ts       Anton, Barlow Condensed, Inter across three roles
 src/ui/feel.ts       reduce motion and haptics, both gated in one place
 src/ui/sound.ts      the cues, gated on the sound setting, loaded once
@@ -141,9 +143,27 @@ Play today is built: the Daily in `app/daily.tsx`, the Weekly Event in
 headlessly. A duel is a fourteen character code carrying the seed, the
 rules and the score to beat. Nothing is uploaded.
 
-**Still to build elsewhere**: World Cup, the player index, and a
-settings screen. Those rows push `app/soon.tsx`, which
-carries the mode's real description from the site.
+Both tournaments are built. The World Cup is the real 2026 format, forty
+eight nations in twelve groups with the eight best thirds going through.
+The Champions League is the real post-2024 format: one table of thirty
+six, eight matchdays against eight different opponents, the top eight
+straight to the last sixteen, ninth to twenty fourth into a two legged
+play-off, and everybody below that finished. Its league phase can be
+skipped; from the play-off on it is one match at a time.
+
+Both can be entered two ways: take a nation or a club, or draft an XI
+from every squad in the competition and take somebody's place in the draw
+with it.
+
+Every match in both is watched through `MatchLive`, the same broadcast
+the league season uses, fed by `src/game/tournamentMatch.ts` which adds
+the three things a knockout needs and a league never does: extra time,
+penalties kick by kick, and named scorers for the other side. The
+Champions League passes its own blue palette in.
+
+**Still to build elsewhere**: the player index and a settings screen.
+Those rows push `app/soon.tsx`, which carries the mode's real description
+from the site.
 
 ### The native libraries are in
 
@@ -177,6 +197,11 @@ npm run career                         # every club can field an XI
 npm run career-run                     # a hundred seasons of Dynasty, end to end
 npm run save                           # old careers still load
 npm run playtoday                      # the week, and every duel code
+npm run worldcup                       # the tournament, and every bracket
+npm run tourney                        # the minute by minute broadcast
+npm run wcdraft                        # what a drafted World XI is worth
+npm run ucl                            # the league phase and the format
+npm run ucldraft                       # what a drafted Champions XI is worth
 npm run source                         # the mistakes that reached a phone once
 npm run verify                         # all of the above
 ```
