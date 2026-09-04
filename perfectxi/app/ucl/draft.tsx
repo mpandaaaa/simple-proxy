@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
-import { ModeScreen, Press, Rise, Shine } from '../../src/ui/components';
-import { back, go } from '../../src/game/nav';
+import { ModeScreen, Press, Rise, Shine, Confirm } from '../../src/ui/components';
+import { back, swap } from '../../src/game/nav';
 import { color, space, radius } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { ucl as sky } from '../../src/ui/ucl';
@@ -16,13 +16,16 @@ import {
   uclBoard,
   uclDraftDone,
   uclDraftSpread,
+  uclDraftSquad,
   uclDraftXi,
   uclSlotsFor,
+  uclWeakest,
   uclXiRating,
   type UclDraftSlot,
   type UclPick,
 } from '../../src/engine';
 import { beginUclDraft, clearUclDraft, pickUclPlayer, useUclDraft } from '../../src/game/uclDraft';
+import { getUcl, startUcl } from '../../src/game/ucl';
 
 /**
  * Drafting a Champions League XI.
@@ -42,6 +45,34 @@ const SHAPES = ['4-3-3', '4-4-2', '4-2-3-1', '3-5-2', '5-3-2', '4-2-4'];
 export default function UclDraft() {
   const draft = useUclDraft();
   const [shape, setShape] = useState('4-3-3');
+  const [asking, setAsking] = useState(false);
+
+  /*
+   * The XI has to take somebody's place, because there are thirty six
+   * clubs and no thirty seventh. It takes the weakest, which is not a
+   * choice anybody should be asked to make: choosing the seat rather than
+   * the side is how you hand yourself a pot one seeding.
+   */
+  const enter = useCallback(() => {
+    if (!draft) return;
+    setAsking(false);
+    haptic('success');
+    sfx('whistle');
+    startUcl(uclWeakest(), {
+      name: 'Your Champions XI',
+      rating: uclXiRating(draft),
+      squad: uclDraftSquad(draft),
+    });
+    clearUclDraft();
+    swap('/ucl/hub');
+  }, [draft]);
+
+  const begin = useCallback(() => {
+    haptic('medium');
+    const on = getUcl();
+    if (on && !on.over) setAsking(true);
+    else enter();
+  }, [enter]);
 
   const board = useMemo(() => (draft && !uclDraftDone(draft) ? uclBoard(draft) : []), [draft]);
 
@@ -154,16 +185,13 @@ export default function UclDraft() {
           </Rise>
         ))}
 
-        <Press
-          onPress={() => {
-            haptic('medium');
-            go('/ucl?carry=1');
-          }}
-          feel="medium"
-          scaleTo={0.98}
-          style={styles.go}
-        >
-          <Text style={styles.goText}>Choose whose place they take</Text>
+        <Text style={styles.entering}>
+          They take the place of {uclWeakest()}, the weakest club in the
+          competition, and start the league phase out of pot four.
+        </Text>
+
+        <Press onPress={begin} feel="medium" scaleTo={0.98} style={styles.go}>
+          <Text style={styles.goText}>Enter the Champions League</Text>
         </Press>
 
         <Press
@@ -178,6 +206,16 @@ export default function UclDraft() {
           <Text style={styles.againText}>Draft a different XI</Text>
         </Press>
         <View style={{ height: space.s6 }} />
+
+        <Confirm
+          visible={asking}
+          title="Start again?"
+          body="You have a campaign on the go. Entering with this XI throws it away."
+          confirmLabel="Start again"
+          cancelLabel="Keep it"
+          onCancel={() => setAsking(false)}
+          onConfirm={enter}
+        />
       </ModeScreen>
     );
   }
@@ -459,6 +497,13 @@ const styles = StyleSheet.create({
     backgroundColor: sky.panelOn,
   },
   goText: { ...text.button, fontSize: 15, color: sky.blue },
+  entering: {
+    ...text.small,
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: color.text3,
+    marginTop: space.s5,
+  },
   again: {
     marginTop: space.s2,
     minHeight: 50,

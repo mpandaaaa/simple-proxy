@@ -23,6 +23,7 @@ import {
   uclSkipLeague,
   uclSlotsFor,
   uclStart,
+  uclWeakest,
   uclXiRating,
 } from '../.headless/engine/index.js';
 
@@ -109,8 +110,8 @@ let titles = 0;
 for (let s = 0; s < 40; s++) {
   const st = draft(2500 + s, 'best');
   if (!st) continue;
-  const seat = clubs[s % clubs.length];
-  let run = uclStart(seat.name, 900 + s, {
+  /* The same seat the game gives it: the weakest club in the field. */
+  let run = uclStart(uclWeakest(), 900 + s, {
     name: 'Your Champions XI',
     rating: uclXiRating(st),
     squad: uclDraftSquad(st),

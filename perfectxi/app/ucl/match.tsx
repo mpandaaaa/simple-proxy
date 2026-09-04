@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { ModeScreen, MatchLive, Shine } from '../../src/ui/components';
-import { back, swap } from '../../src/game/nav';
+import { swap, upTo } from '../../src/game/nav';
 import { color, space, radius } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { ucl as sky, uclNight } from '../../src/ui/ucl';
@@ -110,7 +110,7 @@ export default function UclMatch() {
 
   if (!run || !step || !me || !them || !tape || !shaped || !sides) {
     return (
-      <ModeScreen overline="Champions League" title="Kick off" scroll={false} onBack={() => back()}>
+      <ModeScreen overline="Champions League" title="Kick off" scroll={false} onBack={() => upTo('/ucl/hub')}>
         <View />
       </ModeScreen>
     );
@@ -133,7 +133,7 @@ export default function UclMatch() {
       overline={UCL_STAGE_NAME[m.stage]}
       title="Kick off"
       scroll={false}
-      onBack={() => back()}
+      onBack={() => upTo('/ucl/hub')}
     >
       {/* What sits behind the broadcast, and what you come back to if it is
           closed before it has finished. */}
@@ -182,7 +182,7 @@ export default function UclMatch() {
         doneLabel={after.over ? 'The campaign report' : 'Back to the campaign'}
         onDone={() => {
           haptic('light');
-          swap('/ucl/hub');
+          upTo('/ucl/hub');
         }}
       />
     </ModeScreen>

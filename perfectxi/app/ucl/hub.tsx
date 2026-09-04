@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { ModeScreen, Press, Rise, Shine, Confirm } from '../../src/ui/components';
-import { back, go, swap } from '../../src/game/nav';
+import { go, home, swap } from '../../src/game/nav';
 import { color, space, radius, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { ucl as sky } from '../../src/ui/ucl';
@@ -45,7 +45,7 @@ export default function UclHub() {
 
   if (!run) {
     return (
-      <ModeScreen overline="Europe" title="Champions League" onBack={() => back()}>
+      <ModeScreen overline="Europe" title="Champions League" onBack={() => home()}>
         <Text style={styles.none}>No campaign on the go.</Text>
         <Press
           onPress={() => {
@@ -73,7 +73,7 @@ export default function UclHub() {
         overline={UCL_STAGE_NAME[run.stage]}
         title={me}
         scroll={false}
-        onBack={() => back()}
+        onBack={() => home()}
       >
         <ScrollView style={styles.page} showsVerticalScrollIndicator={false}>
           {/* ================= where you are ================= */}

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { ModeScreen, MatchLive, Shine } from '../../src/ui/components';
-import { back, swap } from '../../src/game/nav';
+import { swap, upTo } from '../../src/game/nav';
 import { color, space, radius, hue, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic } from '../../src/ui/feel';
@@ -122,7 +122,7 @@ export default function WorldCupMatch() {
 
   if (!run || !step || !me || !them || !tape || !shaped || !sides) {
     return (
-      <ModeScreen overline="World Cup 2026" title="Kick off" scroll={false} onBack={() => back()}>
+      <ModeScreen overline="World Cup 2026" title="Kick off" scroll={false} onBack={() => upTo('/worldcup/hub')}>
         <View />
       </ModeScreen>
     );
@@ -136,7 +136,7 @@ export default function WorldCupMatch() {
       overline={STAGE_NAME[m.stage]}
       title="Kick off"
       scroll={false}
-      onBack={() => back()}
+      onBack={() => upTo('/worldcup/hub')}
     >
       {/* What sits behind the broadcast, and what you come back to if it
           is closed before it has finished. */}
@@ -188,7 +188,7 @@ export default function WorldCupMatch() {
         doneLabel={after.over ? 'The tournament report' : 'Back to the tournament'}
         onDone={() => {
           haptic('light');
-          swap('/worldcup/hub');
+          upTo('/worldcup/hub');
         }}
       />
     </ModeScreen>

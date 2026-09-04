@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { ModeScreen, Press, Rise, Shine, Confirm } from '../../src/ui/components';
 import { back, go, swap } from '../../src/game/nav';
 import { color, space, radius, alpha } from '../../src/ui/tokens';
@@ -14,14 +14,9 @@ import {
   potOf,
   uclClub,
   uclClubs,
-  uclDraftDone,
-  uclDraftSpread,
-  uclDraftSquad,
   uclExpected,
-  uclXiRating,
 } from '../../src/engine';
 import { getUcl, startUcl, useUcl } from '../../src/game/ucl';
-import { clearUclDraft, useUclDraft } from '../../src/game/uclDraft';
 
 /**
  * Choosing who to take into Europe.
@@ -67,16 +62,11 @@ type View_ = 'pots' | 'ranked';
 
 export default function UclPick() {
   const run = useUcl();
-  const draft = useUclDraft();
-  const params = useLocalSearchParams<{ carry?: string }>();
   const [q, setQ] = useState('');
   const [view, setView] = useState<View_>('pots');
   const [taking, setTaking] = useState<string | null>(null);
 
   useFocusEffect(useCallback(() => setQ(''), []));
-
-  /* Arriving from a finished draft, to choose whose place the XI takes. */
-  const carry = params.carry === '1' && draft !== null && uclDraftDone(draft);
 
   const term = q.trim().toLowerCase();
   const ranked = useMemo(() => {
@@ -84,24 +74,12 @@ export default function UclPick() {
     return term ? all.filter((c) => c.name.toLowerCase().includes(term)) : all;
   }, [term]);
 
-  const begin = useCallback(
-    (name: string) => {
-      haptic('success');
-      sfx('pick');
-      if (carry && draft) {
-        startUcl(name, {
-          name: 'Your Champions XI',
-          rating: uclXiRating(draft),
-          squad: uclDraftSquad(draft),
-        });
-        clearUclDraft();
-      } else {
-        startUcl(name);
-      }
-      swap('/ucl/hub');
-    },
-    [carry, draft],
-  );
+  const begin = useCallback((name: string) => {
+    haptic('success');
+    sfx('pick');
+    startUcl(name);
+    swap('/ucl/hub');
+  }, []);
 
   const tap = useCallback(
     (name: string) => {
@@ -155,7 +133,7 @@ export default function UclPick() {
           </View>
 
           {/* ================= carry on ================= */}
-          {!carry && resume ? (
+          {resume ? (
             <Rise delay={0}>
               <Press
                 onPress={() => {
@@ -183,51 +161,36 @@ export default function UclPick() {
             </Rise>
           ) : null}
 
-          {carry && draft ? (
-            <View style={styles.carry}>
-              <Text style={styles.carryKey}>YOUR CHAMPIONS XI IS READY</Text>
-              <Text style={styles.carryName}>
-                Rated {uclXiRating(draft)} {'·'} {uclDraftSpread(draft)} clubs
-              </Text>
-              <Text style={styles.carryNote}>
-                Choose whose place in the league phase they take. The seeding is
-                theirs, the eleven are yours.
+          <Press
+            onPress={() => {
+              haptic('light');
+              go('/ucl/draft');
+            }}
+            feel="none"
+            scaleTo={0.98}
+            style={styles.door}
+          >
+            <Text style={styles.doorIcon} allowFontScaling={false}>
+              ⚡
+            </Text>
+            <View style={styles.doorBody}>
+              <Text style={styles.doorKey}>THE OTHER WAY IN</Text>
+              <Text style={styles.doorName}>Draft a Champions XI</Text>
+              <Text style={styles.doorNote} numberOfLines={2}>
+                Eleven rounds, five players a round, from all thirty six
+                squads. Then they enter the competition.
               </Text>
             </View>
-          ) : (
-            <>
-              <Press
-                onPress={() => {
-                  haptic('light');
-                  go('/ucl/draft');
-                }}
-                feel="none"
-                scaleTo={0.98}
-                style={styles.door}
-              >
-                <Text style={styles.doorIcon} allowFontScaling={false}>
-                  ⚡
-                </Text>
-                <View style={styles.doorBody}>
-                  <Text style={styles.doorKey}>THE OTHER WAY IN</Text>
-                  <Text style={styles.doorName}>Draft a Champions XI</Text>
-                  <Text style={styles.doorNote} numberOfLines={2}>
-                    Eleven rounds, five players a round, from all thirty six
-                    squads. Then they enter the competition.
-                  </Text>
-                </View>
-                <Text style={styles.chev}>{'›'}</Text>
-              </Press>
+            <Text style={styles.chev}>{'›'}</Text>
+          </Press>
 
-              <Text style={styles.lead}>
-                Or take a club through it. One table of thirty six, eight
-                matchdays against eight different opponents, four at home and
-                four away. The top eight go straight to the last sixteen, ninth
-                to twenty fourth play off for the rest, and below that you are
-                finished.
-              </Text>
-            </>
-          )}
+          <Text style={styles.lead}>
+            Or take a club through it. One table of thirty six, eight
+            matchdays against eight different opponents, four at home and four
+            away. The top eight go straight to the last sixteen, ninth to
+            twenty fourth play off for the rest, and below that you are
+            finished.
+          </Text>
 
           {/* ================= how to look at them ================= */}
           <View style={styles.tabs}>
@@ -450,19 +413,6 @@ const styles = StyleSheet.create({
   doorKey: { ...text.key, fontSize: 8, color: sky.blue },
   doorName: { fontFamily: font.displayBold, fontSize: 18, lineHeight: 24, color: color.text1 },
   doorNote: { ...text.small, fontSize: 11.5, lineHeight: 16, color: color.text2 },
-
-  carry: {
-    marginTop: space.s4,
-    padding: space.s3,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: sky.edgeHi,
-    backgroundColor: sky.panelOn,
-    gap: 2,
-  },
-  carryKey: { ...text.key, fontSize: 8, color: sky.blue },
-  carryName: { fontFamily: font.displayBold, fontSize: 18, lineHeight: 24, color: color.text1 },
-  carryNote: { ...text.small, fontSize: 12, lineHeight: 17, color: color.text2 },
 
   lead: {
     ...text.small,

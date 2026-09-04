@@ -147,6 +147,20 @@ export function wcNations(): { code: string; name: string; flag: string; rating:
     .sort((a, b) => b.rating - a.rating || a.name.localeCompare(b.name));
 }
 
+/**
+ * The weakest nation at the tournament.
+ *
+ * A drafted XI has to take somebody's place, because there are forty eight
+ * and there is no forty ninth. It takes the weakest one, so the draft
+ * never turns into a second decision about which nation to displace and
+ * never lets a player quietly hand themselves an easy group by picking a
+ * seat rather than a side.
+ */
+export function wcWeakest(): string {
+  const all = wcNations();
+  return all[all.length - 1]?.code ?? Object.keys(WC_TEAMS)[0];
+}
+
 /** The four in a group, in the order the draw put them. */
 export function groupOf(letter: string): string[] {
   return Object.keys(WC_TEAMS).filter((c) => WC_TEAMS[c].g === letter);

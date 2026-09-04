@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { ModeScreen, Press, Rise, Shine } from '../../src/ui/components';
-import { back, go, swap } from '../../src/game/nav';
+import { go, home, swap } from '../../src/game/nav';
 import { color, space, radius, line, hue, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic } from '../../src/ui/feel';
@@ -77,7 +77,7 @@ export default function WorldCupHub() {
       overline="World Cup 2026"
       title={me.n}
       scroll={false}
-      onBack={() => back()}
+      onBack={() => home()}
       right={
         <View style={styles.chip}>
           <Text style={styles.chipText} allowFontScaling={false}>

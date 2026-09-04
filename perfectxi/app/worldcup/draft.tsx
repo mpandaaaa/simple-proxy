@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
-import { ModeScreen, Press, Rise, Shine } from '../../src/ui/components';
-import { back, go } from '../../src/game/nav';
+import { ModeScreen, Press, Rise, Shine, Confirm } from '../../src/ui/components';
+import { back, swap } from '../../src/game/nav';
 import { color, space, radius, line, hue, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic } from '../../src/ui/feel';
@@ -14,15 +14,19 @@ import {
   lastName,
   wcBoard,
   wcDraftDone,
+  wcCustomSquad,
   wcNationOf,
   wcSlotsFor,
   wcSpread,
   wcXi,
+  wcTeam,
+  wcWeakest,
   wcXiRating,
   type WcDraftSlot,
   type WcPick,
 } from '../../src/engine';
 import { beginWcDraft, clearWcDraft, pickWcPlayer, useWcDraft } from '../../src/game/worldcupDraft';
+import { getWorldCup, startWorldCup } from '../../src/game/worldcup';
 
 /**
  * Drafting a World XI.
@@ -42,6 +46,35 @@ const SHAPES = ['4-3-3', '4-4-2', '4-2-3-1', '3-5-2', '5-3-2', '4-2-4'];
 export default function WorldCupDraft() {
   const draft = useWcDraft();
   const [shape, setShape] = useState('4-3-3');
+  const [asking, setAsking] = useState(false);
+
+  /*
+   * The XI has to take somebody's place, because there are forty eight
+   * nations and no forty ninth. It takes the weakest, which is not a
+   * choice anybody should be asked to make: choosing the seat rather than
+   * the side is how you hand yourself the easiest group in the draw.
+   */
+  const enter = useCallback(() => {
+    if (!draft) return;
+    setAsking(false);
+    haptic('success');
+    sfx('whistle');
+    startWorldCup(wcWeakest(), {
+      name: 'Your World XI',
+      flag: '\u{1F30D}',
+      rating: wcXiRating(draft),
+      squad: wcCustomSquad(draft),
+    });
+    clearWcDraft();
+    swap('/worldcup/hub');
+  }, [draft]);
+
+  const begin = useCallback(() => {
+    haptic('medium');
+    const on = getWorldCup();
+    if (on && !on.over) setAsking(true);
+    else enter();
+  }, [enter]);
 
   const board = useMemo(() => (draft && !wcDraftDone(draft) ? wcBoard(draft) : []), [draft]);
 
@@ -158,16 +191,14 @@ export default function WorldCupDraft() {
           </Rise>
         ))}
 
-        <Press
-          onPress={() => {
-            haptic('medium');
-            go('/worldcup?carry=1');
-          }}
-          feel="medium"
-          scaleTo={0.98}
-          style={styles.go}
-        >
-          <Text style={styles.goText}>Choose the flag they carry</Text>
+        <Text style={styles.entering}>
+          They take the place of {wcTeam(wcWeakest())?.n ?? 'the weakest nation'},
+          the weakest side in the draw, and play the whole tournament out of
+          Group {wcTeam(wcWeakest())?.g ?? ''}.
+        </Text>
+
+        <Press onPress={begin} feel="medium" scaleTo={0.98} style={styles.go}>
+          <Text style={styles.goText}>Enter the World Cup</Text>
         </Press>
 
         <Press
@@ -182,6 +213,16 @@ export default function WorldCupDraft() {
           <Text style={styles.againText}>Draft a different XI</Text>
         </Press>
         <View style={{ height: space.s6 }} />
+
+        <Confirm
+          visible={asking}
+          title="Start again?"
+          body="You have a World Cup on the go. Entering with this XI throws it away."
+          confirmLabel="Start again"
+          cancelLabel="Keep it"
+          onCancel={() => setAsking(false)}
+          onConfirm={enter}
+        />
       </ModeScreen>
     );
   }
@@ -456,6 +497,13 @@ const styles = StyleSheet.create({
     backgroundColor: alpha(hue.gold, 0.14),
   },
   goText: { ...text.button, fontSize: 15, color: hue.gold },
+  entering: {
+    ...text.small,
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: color.text3,
+    marginTop: space.s5,
+  },
   again: {
     marginTop: space.s2,
     minHeight: 50,

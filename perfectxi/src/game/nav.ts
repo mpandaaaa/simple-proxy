@@ -56,6 +56,29 @@ export function swap(href: Href): void {
 }
 
 /**
+ * Back to a screen already underneath you, rather than a new copy of it.
+ *
+ * `swap` replaces what is on top, which is right for a screen that has
+ * finished but wrong for coming home from a match: the hub is already on
+ * the stack, and replacing the match with a second hub leaves two of
+ * them, so going back from a tournament lands on an identical copy of
+ * itself. This pops back to the one that is already there.
+ *
+ * Falls back to a plain back if that route is not on the stack, which is
+ * what the router would have done anyway.
+ */
+export function upTo(href: Href): void {
+  lastKey = '';
+  lastAt = 0;
+  try {
+    router.dismissTo(href);
+  } catch {
+    if (router.canGoBack()) router.back();
+    else router.replace(href);
+  }
+}
+
+/**
  * Going back.
  *
  * Clears the guard, because leaving a screen and coming straight back to

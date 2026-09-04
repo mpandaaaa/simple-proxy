@@ -152,6 +152,20 @@ export function uclClubs(): {
     .sort((a, b) => b.tier - a.tier || a.name.localeCompare(b.name));
 }
 
+/**
+ * The weakest club in the competition.
+ *
+ * A drafted XI has to take somebody's place, because there are thirty six
+ * and there is no thirty seventh. It takes the weakest one, so the draft
+ * never turns into a second decision about which club to displace and
+ * never lets a player hand themselves a pot one seeding by choosing a seat
+ * rather than a side.
+ */
+export function uclWeakest(): string {
+  const all = uclClubs();
+  return all[all.length - 1]?.name ?? Object.keys(UCL_CLUBS)[0];
+}
+
 /** The nine in a pot, best coefficient first. */
 export function potOf(pot: number): string[] {
   return Object.keys(UCL_CLUBS)

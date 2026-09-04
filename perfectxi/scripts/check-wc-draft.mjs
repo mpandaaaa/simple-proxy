@@ -20,6 +20,7 @@ import {
   wcSlotsFor,
   wcSpread,
   wcStart,
+  wcWeakest,
   wcXi,
   wcXiRating,
   WC_ROUNDS,
@@ -121,10 +122,10 @@ let titles = 0;
 for (let s = 0; s < 60; s++) {
   const st = draft(1500 + s, 'best');
   if (!st) continue;
-  const host = nations[s % nations.length];
-  let run = wcStart(host.code, 500 + s, {
+  /* The same seat the game gives it: the weakest nation in the draw. */
+  let run = wcStart(wcWeakest(), 500 + s, {
     name: 'Your World XI',
-    flag: host.flag,
+    flag: '\u{1F30D}',
     rating: wcXiRating(st),
     squad: wcCustomSquad(st),
   });

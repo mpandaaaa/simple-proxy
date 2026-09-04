@@ -1,28 +1,16 @@
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { ModeScreen, Press, Rise, Shine, Confirm } from '../../src/ui/components';
 import { back, go, swap } from '../../src/game/nav';
 import { color, space, radius, line, hue, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { haptic } from '../../src/ui/feel';
 import { sfx } from '../../src/ui/sound';
-import {
-  STAGE_NAME,
-  groupOf,
-  wcCustomSquad,
-  wcDraftDone,
-  wcExpected,
-  wcNations,
-  wcSpread,
-  wcSquad,
-  wcTeam,
-  wcXiRating,
-} from '../../src/engine';
+import { STAGE_NAME, groupOf, wcExpected, wcNations, wcSquad, wcTeam } from '../../src/engine';
 import { WC_GROUPS } from '../../src/data/worldcup';
 import { getWorldCup, startWorldCup, useWorldCup } from '../../src/game/worldcup';
-import { clearWcDraft, useWcDraft } from '../../src/game/worldcupDraft';
 
 /**
  * Choosing who to take.
@@ -43,11 +31,6 @@ type View_ = 'groups' | 'ranked';
 
 export default function WorldCupPick() {
   const run = useWorldCup();
-  const draft = useWcDraft();
-  const params = useLocalSearchParams<{ carry?: string }>();
-
-  /* Arriving from a finished draft, to choose the flag the XI carries. */
-  const carry = params.carry === '1' && draft !== null && wcDraftDone(draft);
   const [q, setQ] = useState('');
   const [view, setView] = useState<View_>('groups');
   const [taking, setTaking] = useState<string | null>(null);
@@ -60,26 +43,12 @@ export default function WorldCupPick() {
     return term ? all.filter((n) => n.name.toLowerCase().includes(term)) : all;
   }, [term]);
 
-  const begin = useCallback(
-    (code: string) => {
-      haptic('success');
-      sfx('pick');
-      if (carry && draft) {
-        const nation = wcTeam(code);
-        startWorldCup(code, {
-          name: 'Your World XI',
-          flag: nation?.f ?? '',
-          rating: wcXiRating(draft),
-          squad: wcCustomSquad(draft),
-        });
-        clearWcDraft();
-      } else {
-        startWorldCup(code);
-      }
-      swap('/worldcup/hub');
-    },
-    [carry, draft],
-  );
+  const begin = useCallback((code: string) => {
+    haptic('success');
+    sfx('pick');
+    startWorldCup(code);
+    swap('/worldcup/hub');
+  }, []);
 
   const tap = useCallback(
     (code: string) => {
@@ -130,7 +99,7 @@ export default function WorldCupPick() {
           </View>
 
           {/* ================= carry on ================= */}
-          {!carry && resume ? (
+          {resume ? (
             <Rise delay={0}>
               <Press
                 onPress={() => {
@@ -158,49 +127,34 @@ export default function WorldCupPick() {
             </Rise>
           ) : null}
 
-          {carry && draft ? (
-            <View style={styles.carry}>
-              <Text style={styles.carryKey}>YOUR WORLD XI IS READY</Text>
-              <Text style={styles.carryName}>
-                Rated {wcXiRating(draft)} {'·'} {wcSpread(draft)} nations
-              </Text>
-              <Text style={styles.carryNote}>
-                Choose whose place in the draw they take. The flag is theirs,
-                the eleven are yours.
+          <Press
+            onPress={() => {
+              haptic('light');
+              go('/worldcup/draft');
+            }}
+            feel="none"
+            scaleTo={0.98}
+            style={styles.door}
+          >
+            <Text style={styles.doorIcon} allowFontScaling={false}>
+              {'\u{1F30D}'}
+            </Text>
+            <View style={styles.doorBody}>
+              <Text style={styles.doorKey}>THE OTHER WAY IN</Text>
+              <Text style={styles.doorName}>Draft a World XI</Text>
+              <Text style={styles.doorNote} numberOfLines={2}>
+                Eleven rounds, five players a round, from all forty eight
+                squads. Then they play the tournament.
               </Text>
             </View>
-          ) : (
-            <>
-              <Press
-                onPress={() => {
-                  haptic('light');
-                  go('/worldcup/draft');
-                }}
-                feel="none"
-                scaleTo={0.98}
-                style={styles.door}
-              >
-                <Text style={styles.doorIcon} allowFontScaling={false}>
-                  {'\u{1F30D}'}
-                </Text>
-                <View style={styles.doorBody}>
-                  <Text style={styles.doorKey}>THE OTHER WAY IN</Text>
-                  <Text style={styles.doorName}>Draft a World XI</Text>
-                  <Text style={styles.doorNote} numberOfLines={2}>
-                    Eleven rounds, five players a round, from all forty eight
-                    squads. Then they play the tournament.
-                  </Text>
-                </View>
-                <Text style={styles.chev}>{'›'}</Text>
-              </Press>
+            <Text style={styles.chev}>{'›'}</Text>
+          </Press>
 
-              <Text style={styles.lead}>
-                Or take a nation through the whole thing. Twelve groups of four,
-                the top two and the eight best thirds go through, and from the
-                round of thirty two it is one match at a time.
-              </Text>
-            </>
-          )}
+          <Text style={styles.lead}>
+            Or take a nation through the whole thing. Twelve groups of four,
+            the top two and the eight best thirds go through, and from the
+            round of thirty two it is one match at a time.
+          </Text>
 
           {/* ================= how to look at them ================= */}
           <View style={styles.tabs}>
@@ -442,19 +396,6 @@ const styles = StyleSheet.create({
   doorKey: { ...text.key, fontSize: 8, color: hue.emerald },
   doorName: { fontFamily: font.displayBold, fontSize: 18, lineHeight: 24, color: color.text1 },
   doorNote: { ...text.small, fontSize: 11.5, lineHeight: 16, color: color.text2 },
-
-  carry: {
-    marginTop: space.s4,
-    padding: space.s3,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: alpha(hue.gold, 0.45),
-    backgroundColor: alpha(hue.gold, 0.1),
-    gap: 2,
-  },
-  carryKey: { ...text.key, fontSize: 8, color: hue.gold },
-  carryName: { fontFamily: font.displayBold, fontSize: 18, lineHeight: 24, color: color.text1 },
-  carryNote: { ...text.small, fontSize: 12, lineHeight: 17, color: color.text2 },
 
   lead: {
     ...text.small,
