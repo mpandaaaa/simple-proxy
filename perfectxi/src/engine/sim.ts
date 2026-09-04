@@ -227,8 +227,15 @@ export function dcExpected(
   };
 }
 
-/** A Poisson draw. Used for the rest of the league, not for your own XI. */
-function poissonR(l: number, rnd: Rng): number {
+/**
+ * A Poisson draw. Used for the rest of the league, not for your own XI.
+ *
+ * Exported so the tournaments draw their goals from the same place the
+ * league does. Two Poisson draws in one codebase is two sets of numbers
+ * that can drift, and the whole point of the tuned maths is that it does
+ * not.
+ */
+export function poissonR(l: number, rnd: Rng): number {
   if (l <= 0) return 0;
   const L = Math.exp(-Math.min(l, 20));
   let p = 1;

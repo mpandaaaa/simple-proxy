@@ -1,0 +1,5301 @@
+{
+ "_meta": {
+  "generated": "2026-09-02",
+  "competition": "UEFA Champions League 2026/27 league phase",
+  "drawDate": "2026-08-27",
+  "leaguePhaseStart": "2026-09-08",
+  "final": "2027-06-05, Estadio Metropolitano, Madrid",
+  "format": "36 clubs, one league table, 8 games each. Top 8 straight to the last 16; 9th-24th play knockout play-offs; 25th-36th out.",
+  "clubs": 36,
+  "squadsIncluded": 31,
+  "players": 332,
+  "fullSquads": [
+   "Atletico Madrid",
+   "Barcelona",
+   "Bayern Munich",
+   "Club Brugge",
+   "Feyenoord",
+   "Galatasaray",
+   "Inter",
+   "Napoli",
+   "PSV",
+   "Paris Saint-Germain",
+   "Porto",
+   "Real Madrid"
+  ],
+  "keyPlayersOnly": [
+   "AEK Athens",
+   "Arsenal",
+   "Aston Villa",
+   "Bodo/Glimt",
+   "Borussia Dortmund",
+   "Como",
+   "Fenerbahce",
+   "LASK",
+   "Lens",
+   "Lille",
+   "Liverpool",
+   "Man City",
+   "Man United",
+   "RB Leipzig",
+   "Real Betis",
+   "Roma",
+   "Sabah",
+   "Shakhtar Donetsk",
+   "Slavia Prague",
+   "Slovan Bratislava",
+   "Sporting CP",
+   "Stuttgart",
+   "Viking",
+   "Villarreal"
+  ],
+  "notQualified": [
+   "Juventus",
+   "AC Milan",
+   "Ajax",
+   "Benfica",
+   "Monaco",
+   "Marseille",
+   "Celtic",
+   "Rangers",
+   "RB Salzburg",
+   "Olympiacos",
+   "Copenhagen",
+   "Union Saint-Gilloise",
+   "Qarabag",
+   "Kairat Almaty",
+   "Pafos"
+  ],
+  "ratingSources": {
+   "namedExplicitly": 205,
+   "reusedFromPremierLeagueDatabase": 46,
+   "estimated": 106
+  },
+  "sameNameDifferentPlayer": [
+   "Pepe at Porto: Brazilian winger (b.1997), not the Portuguese defender",
+   "Luis Suarez at Sporting CP: Colombian striker (b.1997), not the Uruguayan",
+   "Ederson at Fenerbahce: Brazilian midfielder, not the Manchester City goalkeeper"
+  ],
+  "englishClubs": {
+   "clubs": [
+    "Arsenal",
+    "Aston Villa",
+    "Liverpool",
+    "Man City",
+    "Man United"
+   ],
+   "note": "Qualified, but their squads are NOT here. They already exist in perfectxi-database.json under the same keys with full squads. Including them would overwrite good data."
+  },
+  "note": "12 clubs have full squads; the other 24 carry verified key players only (partial:true). Ratings: well-known players are set explicitly, players already in the Premier League database reuse that rating, everyone else is estimated from club strength and flagged est:1."
+ },
+ "mergeInstructions": [
+  "1. Load perfectxi-database.json as the base.",
+  "2. Merge this file's SQUADS into base.SQUADS. No keys collide.",
+  "3. Merge PXDOB into base.PXDOB, keeping any existing entry.",
+  "4. Keep CLUBS as a separate lookup for pot, coefficient, odds, tier and qualification route.",
+  "5. Players carrying est:1 have an estimated rating. Correct those first if ratings matter."
+ ],
+ "schema": {
+  "SQUADS": "key is \"Club|2026\", same format as the Premier League database",
+  "player": "n name, nat nationality, pos array of GK/DEF/MID/ATT, rtg, prime, est:1 if estimated, note if a same-name clash was resolved manually",
+  "CLUBS": "country, pot, coeff (UEFA five-year rank), route, odds (decimal), tier (derived strength), partial",
+  "PXDOB": "name -> [birthYear, bornAfterAug1, peakSeasonYear, disputed]"
+ },
+ "CLUBS": {
+  "Real Madrid": {
+   "country": "Spain",
+   "pot": 1,
+   "coeff": 2,
+   "route": "2nd LaLiga",
+   "odds": 9,
+   "tier": 85.3,
+   "partial": false
+  },
+  "Barcelona": {
+   "country": "Spain",
+   "pot": 1,
+   "coeff": 8,
+   "route": "LaLiga champions",
+   "odds": 8,
+   "tier": 82.8,
+   "partial": false
+  },
+  "Atletico Madrid": {
+   "country": "Spain",
+   "pot": 1,
+   "coeff": 10,
+   "route": "4th LaLiga",
+   "odds": 40,
+   "tier": 81.6,
+   "partial": false
+  },
+  "Villarreal": {
+   "country": "Spain",
+   "pot": 3,
+   "coeff": 39,
+   "route": "3rd LaLiga",
+   "odds": 215,
+   "tier": 76.2,
+   "partial": true
+  },
+  "Real Betis": {
+   "country": "Spain",
+   "pot": 2,
+   "coeff": 24,
+   "route": "5th LaLiga, performance spot",
+   "odds": 293,
+   "tier": 77.2,
+   "partial": true
+  },
+  "Arsenal": {
+   "country": "England",
+   "pot": 1,
+   "coeff": 7,
+   "route": "Premier League champions",
+   "odds": 7,
+   "tier": 84,
+   "partial": true,
+   "squadSource": "already in perfectxi-database.json"
+  },
+  "Man City": {
+   "country": "England",
+   "pot": 1,
+   "coeff": 6,
+   "route": "2nd Premier League",
+   "odds": 8,
+   "tier": 83.4,
+   "partial": true,
+   "squadSource": "already in perfectxi-database.json"
+  },
+  "Man United": {
+   "country": "England",
+   "pot": 2,
+   "coeff": 21,
+   "route": "3rd Premier League",
+   "odds": 32,
+   "tier": 81,
+   "partial": true,
+   "squadSource": "already in perfectxi-database.json"
+  },
+  "Aston Villa": {
+   "country": "England",
+   "pot": 2,
+   "coeff": 17,
+   "route": "4th PL, Europa League winners",
+   "odds": 48,
+   "tier": 80.4,
+   "partial": true,
+   "squadSource": "already in perfectxi-database.json"
+  },
+  "Liverpool": {
+   "country": "England",
+   "pot": 1,
+   "coeff": 4,
+   "route": "5th PL, performance spot",
+   "odds": 11,
+   "tier": 84.6,
+   "partial": true,
+   "squadSource": "already in perfectxi-database.json"
+  },
+  "Inter": {
+   "country": "Italy",
+   "pot": 1,
+   "coeff": 5,
+   "route": "Serie A champions",
+   "odds": 29,
+   "tier": 82.2,
+   "partial": false
+  },
+  "Napoli": {
+   "country": "Italy",
+   "pot": 3,
+   "coeff": 34,
+   "route": "2nd Serie A",
+   "odds": 156,
+   "tier": 78.3,
+   "partial": false
+  },
+  "Roma": {
+   "country": "Italy",
+   "pot": 2,
+   "coeff": 13,
+   "route": "3rd Serie A",
+   "odds": 125,
+   "tier": 79.4,
+   "partial": true
+  },
+  "Como": {
+   "country": "Italy",
+   "pot": 4,
+   "coeff": 999,
+   "route": "4th Serie A, debutants",
+   "odds": 175,
+   "tier": 68.5,
+   "partial": true
+  },
+  "Bayern Munich": {
+   "country": "Germany",
+   "pot": 1,
+   "coeff": 1,
+   "route": "Bundesliga champions",
+   "odds": 7,
+   "tier": 87,
+   "partial": false
+  },
+  "Borussia Dortmund": {
+   "country": "Germany",
+   "pot": 2,
+   "coeff": 11,
+   "route": "2nd Bundesliga",
+   "odds": 126,
+   "tier": 79.9,
+   "partial": true
+  },
+  "RB Leipzig": {
+   "country": "Germany",
+   "pot": 3,
+   "coeff": 37,
+   "route": "3rd Bundesliga",
+   "odds": 283,
+   "tier": 74.7,
+   "partial": true
+  },
+  "Stuttgart": {
+   "country": "Germany",
+   "pot": 4,
+   "coeff": 80,
+   "route": "4th Bundesliga",
+   "odds": 322,
+   "tier": 71.8,
+   "partial": true
+  },
+  "Paris Saint-Germain": {
+   "country": "France",
+   "pot": 1,
+   "coeff": 3,
+   "route": "Holders, Ligue 1 champions",
+   "odds": 6,
+   "tier": 86.1,
+   "partial": false
+  },
+  "Lille": {
+   "country": "France",
+   "pot": 3,
+   "coeff": 29,
+   "route": "3rd Ligue 1",
+   "odds": 430,
+   "tier": 74.2,
+   "partial": true
+  },
+  "Lens": {
+   "country": "France",
+   "pot": 4,
+   "coeff": 120,
+   "route": "2nd Ligue 1",
+   "odds": 489,
+   "tier": 70.8,
+   "partial": true
+  },
+  "Porto": {
+   "country": "Portugal",
+   "pot": 2,
+   "coeff": 20,
+   "route": "Primeira Liga champions",
+   "odds": 362,
+   "tier": 76.7,
+   "partial": false
+  },
+  "Sporting CP": {
+   "country": "Portugal",
+   "pot": 2,
+   "coeff": 15,
+   "route": "2nd Primeira Liga",
+   "odds": 234,
+   "tier": 78.8,
+   "partial": true
+  },
+  "PSV": {
+   "country": "Netherlands",
+   "pot": 2,
+   "coeff": 26,
+   "route": "Eredivisie champions",
+   "odds": 352,
+   "tier": 75.7,
+   "partial": false
+  },
+  "Feyenoord": {
+   "country": "Netherlands",
+   "pot": 3,
+   "coeff": 27,
+   "route": "2nd Eredivisie",
+   "odds": 250,
+   "tier": 77.8,
+   "partial": false
+  },
+  "Galatasaray": {
+   "country": "Turkiye",
+   "pot": 3,
+   "coeff": 49,
+   "route": "Super Lig champions",
+   "odds": 303,
+   "tier": 73.7,
+   "partial": false
+  },
+  "Fenerbahce": {
+   "country": "Turkiye",
+   "pot": 3,
+   "coeff": 42,
+   "route": "Play-off winners",
+   "odds": 250,
+   "tier": 75.2,
+   "partial": true
+  },
+  "Bodo/Glimt": {
+   "country": "Norway",
+   "pot": 3,
+   "coeff": 32,
+   "route": "Play-off winners",
+   "odds": 500,
+   "tier": 73.2,
+   "partial": true
+  },
+  "Viking": {
+   "country": "Norway",
+   "pot": 4,
+   "coeff": 202,
+   "route": "Play-off winners, debutants",
+   "odds": 500,
+   "tier": 69.4,
+   "partial": true
+  },
+  "Club Brugge": {
+   "country": "Belgium",
+   "pot": 2,
+   "coeff": 23,
+   "route": "Belgian champions",
+   "odds": 734,
+   "tier": 72.7,
+   "partial": false
+  },
+  "Slavia Prague": {
+   "country": "Czechia",
+   "pot": 4,
+   "coeff": 59,
+   "route": "Czech champions",
+   "odds": 979,
+   "tier": 70.3,
+   "partial": true
+  },
+  "AEK Athens": {
+   "country": "Greece",
+   "pot": 4,
+   "coeff": 84,
+   "route": "Play-off winners",
+   "odds": 500,
+   "tier": 71.3,
+   "partial": true
+  },
+  "LASK": {
+   "country": "Austria",
+   "pot": 4,
+   "coeff": 99,
+   "route": "Play-off winners, debutants",
+   "odds": 1000,
+   "tier": 68.9,
+   "partial": true
+  },
+  "Slovan Bratislava": {
+   "country": "Slovakia",
+   "pot": 4,
+   "coeff": 65,
+   "route": "Play-off winners",
+   "odds": 1000,
+   "tier": 69.9,
+   "partial": true
+  },
+  "Sabah": {
+   "country": "Azerbaijan",
+   "pot": 4,
+   "coeff": 244,
+   "route": "Play-off winners, debutants",
+   "odds": 2500,
+   "tier": 68,
+   "partial": true
+  },
+  "Shakhtar Donetsk": {
+   "country": "Ukraine",
+   "pot": 3,
+   "coeff": 45,
+   "route": "League Path",
+   "odds": 500,
+   "tier": 72.2,
+   "partial": true
+  }
+ },
+ "SQUADS": {
+  "Real Madrid|2026": [
+   {
+    "n": "Kylian Mbappe",
+    "nat": "France",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 94,
+    "prime": 96
+   },
+   {
+    "n": "Jude Bellingham",
+    "nat": "England",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 91,
+    "prime": 93
+   },
+   {
+    "n": "Vinicius Junior",
+    "nat": "Brazil",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 91,
+    "prime": 93
+   },
+   {
+    "n": "Thibaut Courtois",
+    "nat": "Belgium",
+    "pos": [
+     "GK"
+    ],
+    "rtg": 90,
+    "prime": 92
+   },
+   {
+    "n": "Trent Alexander-Arnold",
+    "nat": "England",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 89,
+    "prime": 91
+   },
+   {
+    "n": "Ibrahima Konate",
+    "nat": "France",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 88,
+    "prime": 90
+   },
+   {
+    "n": "Federico Valverde",
+    "nat": "Uruguay",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 88,
+    "prime": 90
+   },
+   {
+    "n": "Bernardo Silva",
+    "nat": "Portugal",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 87,
+    "prime": 89
+   },
+   {
+    "n": "Rodrygo",
+    "nat": "Brazil",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 86,
+    "prime": 88
+   },
+   {
+    "n": "Eder Militao",
+    "nat": "Brazil",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 85,
+    "prime": 87
+   },
+   {
+    "n": "Marc Cucurella",
+    "nat": "Spain",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 85,
+    "prime": 87
+   },
+   {
+    "n": "Aurelien Tchouameni",
+    "nat": "France",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 85,
+    "prime": 87
+   },
+   {
+    "n": "Antonio Rudiger",
+    "nat": "Germany",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 84,
+    "prime": 86
+   },
+   {
+    "n": "Eduardo Camavinga",
+    "nat": "France",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 84,
+    "prime": 86
+   },
+   {
+    "n": "Arda Guler",
+    "nat": "Turkiye",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 83,
+    "prime": 85
+   },
+   {
+    "n": "Dean Huijsen",
+    "nat": "Spain",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "Brahim Diaz",
+    "nat": "Spain",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "Alvaro Carreras",
+    "nat": "Spain",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 81,
+    "prime": 83
+   },
+   {
+    "n": "Denzel Dumfries",
+    "nat": "Netherlands",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 81,
+    "prime": 83
+   },
+   {
+    "n": "Ferland Mendy",
+    "nat": "France",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 80,
+    "prime": 82
+   },
+   {
+    "n": "Endrick",
+    "nat": "Brazil",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 80,
+    "prime": 82
+   },
+   {
+    "n": "Andriy Lunin",
+    "nat": "Ukraine",
+    "pos": [
+     "GK"
+    ],
+    "rtg": 78,
+    "prime": 80
+   },
+   {
+    "n": "Raul Asencio",
+    "nat": "Spain",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 78,
+    "prime": 80
+   },
+   {
+    "n": "Franco Mastantuono",
+    "nat": "Argentina",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 78,
+    "prime": 80
+   },
+   {
+    "n": "Yan Diomande",
+    "nat": "Ivory Coast",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 75,
+    "prime": 77
+   }
+  ],
+  "Barcelona|2026": [
+   {
+    "n": "Lamine Yamal",
+    "nat": "Spain",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 93,
+    "prime": 95
+   },
+   {
+    "n": "Rodri",
+    "nat": "Spain",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 91,
+    "prime": 93
+   },
+   {
+    "n": "Pedri",
+    "nat": "Spain",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 90,
+    "prime": 92
+   },
+   {
+    "n": "Raphinha",
+    "nat": "Brazil",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 89,
+    "prime": 91
+   },
+   {
+    "n": "Joao Cancelo",
+    "nat": "Portugal",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 88,
+    "prime": 90
+   },
+   {
+    "n": "Anthony Gordon",
+    "nat": "England",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 86,
+    "prime": 88
+   },
+   {
+    "n": "Pau Cubarsi",
+    "nat": "Spain",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 85,
+    "prime": 87
+   },
+   {
+    "n": "Jules Kounde",
+    "nat": "France",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 85,
+    "prime": 87
+   },
+   {
+    "n": "Dani Olmo",
+    "nat": "Spain",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 85,
+    "prime": 87
+   },
+   {
+    "n": "Frenkie de Jong",
+    "nat": "Netherlands",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 85,
+    "prime": 87
+   },
+   {
+    "n": "Wojciech Szczesny",
+    "nat": "Poland",
+    "pos": [
+     "GK"
+    ],
+    "rtg": 84,
+    "prime": 86
+   },
+   {
+    "n": "Gavi",
+    "nat": "Spain",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 83,
+    "prime": 85
+   },
+   {
+    "n": "Fermin Lopez",
+    "nat": "Spain",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 83,
+    "prime": 85
+   },
+   {
+    "n": "Joan Garcia",
+    "nat": "Spain",
+    "pos": [
+     "GK"
+    ],
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "Alejandro Balde",
+    "nat": "Spain",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "Karim Adeyemi",
+    "nat": "Germany",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "Gabriel Jesus",
+    "nat": "Brazil",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 81,
+    "prime": 83
+   },
+   {
+    "n": "Andreas Christensen",
+    "nat": "Denmark",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 80,
+    "prime": 82
+   },
+   {
+    "n": "Eric Garcia",
+    "nat": "Spain",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 79,
+    "prime": 81
+   },
+   {
+    "n": "Gerard Martin",
+    "nat": "Spain",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 75,
+    "prime": 77
+   },
+   {
+    "n": "Marc Bernal",
+    "nat": "Spain",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 74,
+    "prime": 76
+   }
+  ],
+  "Atletico Madrid|2026": [
+   {
+    "n": "Julian Alvarez",
+    "nat": "Argentina",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 89,
+    "prime": 91
+   },
+   {
+    "n": "Jan Oblak",
+    "nat": "Slovenia",
+    "pos": [
+     "GK"
+    ],
+    "rtg": 86,
+    "prime": 88
+   },
+   {
+    "n": "Ademola Lookman",
+    "nat": "Nigeria",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 84,
+    "prime": 86
+   },
+   {
+    "n": "Robin Le Normand",
+    "nat": "Spain",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 83,
+    "prime": 85
+   },
+   {
+    "n": "Alexander Sorloth",
+    "nat": "Norway",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 83,
+    "prime": 85
+   },
+   {
+    "n": "Alex Grimaldo",
+    "nat": "Spain",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "Alex Baena",
+    "nat": "Spain",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "Jonathan David",
+    "nat": "Canada",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "David Hancko",
+    "nat": "Slovakia",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 81,
+    "prime": 83
+   },
+   {
+    "n": "Marcos Llorente",
+    "nat": "Spain",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 81,
+    "prime": 83
+   },
+   {
+    "n": "Koke",
+    "nat": "Spain",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 80,
+    "prime": 82
+   },
+   {
+    "n": "Pablo Barrios",
+    "nat": "Spain",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 80,
+    "prime": 82
+   },
+   {
+    "n": "Morten Hjulmand",
+    "nat": "Denmark",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 80,
+    "prime": 82
+   },
+   {
+    "n": "Giuliano Simeone",
+    "nat": "Argentina",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 78,
+    "prime": 80
+   },
+   {
+    "n": "Johnny Cardoso",
+    "nat": "USA",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 77,
+    "prime": 79
+   },
+   {
+    "n": "Juan Musso",
+    "nat": "Argentina",
+    "pos": [
+     "GK"
+    ],
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Marc Pubill",
+    "nat": "Spain",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 75,
+    "prime": 77
+   },
+   {
+    "n": "Rodrigo Mendoza",
+    "nat": "Spain",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 72,
+    "prime": 74
+   }
+  ],
+  "Villarreal|2026": [
+   {
+    "n": "Georges Mikautadze",
+    "nat": "Georgia",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 72,
+    "prime": 74
+   },
+   {
+    "n": "Alberto Moleiro",
+    "nat": "Spain",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 72,
+    "prime": 74
+   },
+   {
+    "n": "Santiago Mourino",
+    "nat": "Uruguay",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 72,
+    "prime": 74
+   },
+   {
+    "n": "Nathan Saliba",
+    "nat": "Canada",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 72,
+    "prime": 74
+   },
+   {
+    "n": "Luiz Junior",
+    "nat": "Brazil",
+    "pos": [
+     "GK"
+    ],
+    "est": 1,
+    "rtg": 71,
+    "prime": 73
+   }
+  ],
+  "Real Betis|2026": [
+   {
+    "n": "Antony",
+    "nat": "Brazil",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 79,
+    "prime": 81
+   },
+   {
+    "n": "Abde Ezzalzouli",
+    "nat": "Morocco",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 73,
+    "prime": 75
+   },
+   {
+    "n": "Fran Garcia",
+    "nat": "Spain",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 73,
+    "prime": 75
+   },
+   {
+    "n": "Isco",
+    "nat": "Spain",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 71,
+    "prime": 73
+   },
+   {
+    "n": "Marc Bartra",
+    "nat": "Spain",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 71,
+    "prime": 73
+   }
+  ],
+  "Inter|2026": [
+   {
+    "n": "Lautaro Martinez",
+    "nat": "Argentina",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 89,
+    "prime": 91
+   },
+   {
+    "n": "Nicolo Barella",
+    "nat": "Italy",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 87,
+    "prime": 89
+   },
+   {
+    "n": "Alessandro Bastoni",
+    "nat": "Italy",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 86,
+    "prime": 88
+   },
+   {
+    "n": "Hakan Calhanoglu",
+    "nat": "Turkiye",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 86,
+    "prime": 88
+   },
+   {
+    "n": "Marcus Thuram",
+    "nat": "France",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 85,
+    "prime": 87
+   },
+   {
+    "n": "Federico Dimarco",
+    "nat": "Italy",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 84,
+    "prime": 86
+   },
+   {
+    "n": "John Stones",
+    "nat": "England",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 84,
+    "prime": 86
+   },
+   {
+    "n": "Davide Frattesi",
+    "nat": "Italy",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 80,
+    "prime": 82
+   },
+   {
+    "n": "Curtis Jones",
+    "nat": "England",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 80,
+    "prime": 82
+   },
+   {
+    "n": "Yann Bisseck",
+    "nat": "Germany",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 79,
+    "prime": 81
+   },
+   {
+    "n": "Djed Spence",
+    "nat": "England",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 79,
+    "prime": 81
+   },
+   {
+    "n": "Piotr Zielinski",
+    "nat": "Poland",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 79,
+    "prime": 81
+   },
+   {
+    "n": "Carlos Augusto",
+    "nat": "Brazil",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 78,
+    "prime": 80
+   },
+   {
+    "n": "Henrikh Mkhitaryan",
+    "nat": "Armenia",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 78,
+    "prime": 80
+   },
+   {
+    "n": "Raffaele Di Gennaro",
+    "nat": "Italy",
+    "pos": [
+     "GK"
+    ],
+    "est": 1,
+    "rtg": 77,
+    "prime": 79
+   },
+   {
+    "n": "Luis Henrique",
+    "nat": "Brazil",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 77,
+    "prime": 79
+   },
+   {
+    "n": "Josep Martinez",
+    "nat": "Spain",
+    "pos": [
+     "GK"
+    ],
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Petar Sucic",
+    "nat": "Croatia",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Ange-Yoan Bonny",
+    "nat": "France",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Andy Diouf",
+    "nat": "France",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 74,
+    "prime": 76
+   },
+   {
+    "n": "Pio Esposito",
+    "nat": "Italy",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 74,
+    "prime": 76
+   }
+  ],
+  "Napoli|2026": [
+   {
+    "n": "Kevin De Bruyne",
+    "nat": "Belgium",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 93,
+    "prime": 95
+   },
+   {
+    "n": "Romelu Lukaku",
+    "nat": "Belgium",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 87,
+    "prime": 89
+   },
+   {
+    "n": "Scott McTominay",
+    "nat": "Scotland",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 85,
+    "prime": 87
+   },
+   {
+    "n": "Giovanni Di Lorenzo",
+    "nat": "Italy",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "Alessandro Buongiorno",
+    "nat": "Italy",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "Frank Anguissa",
+    "nat": "Cameroon",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "Stanislav Lobotka",
+    "nat": "Slovakia",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "Rasmus Hojlund",
+    "nat": "Denmark",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "David Neres",
+    "nat": "Brazil",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 81,
+    "prime": 83
+   },
+   {
+    "n": "Amir Rrahmani",
+    "nat": "Kosovo",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 80,
+    "prime": 82
+   },
+   {
+    "n": "Alex Meret",
+    "nat": "Italy",
+    "pos": [
+     "GK"
+    ],
+    "rtg": 79,
+    "prime": 81
+   },
+   {
+    "n": "Matteo Politano",
+    "nat": "Italy",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 78,
+    "prime": 80
+   },
+   {
+    "n": "Vanja Milinkovic-Savic",
+    "nat": "Serbia",
+    "pos": [
+     "GK"
+    ],
+    "rtg": 77,
+    "prime": 79
+   },
+   {
+    "n": "Sam Beukema",
+    "nat": "Netherlands",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 77,
+    "prime": 79
+   },
+   {
+    "n": "Benoit Badiashile",
+    "nat": "France",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 77,
+    "prime": 79
+   },
+   {
+    "n": "Miguel Gutierrez",
+    "nat": "Spain",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 77,
+    "prime": 79
+   },
+   {
+    "n": "Mathias Olivera",
+    "nat": "Uruguay",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 77,
+    "prime": 79
+   },
+   {
+    "n": "Noa Lang",
+    "nat": "Netherlands",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 77,
+    "prime": 79
+   },
+   {
+    "n": "Leonardo Spinazzola",
+    "nat": "Italy",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Billy Gilmour",
+    "nat": "Scotland",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Lorenzo Lucca",
+    "nat": "Italy",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Antonio Vergara",
+    "nat": "Italy",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 71,
+    "prime": 73
+   }
+  ],
+  "Roma|2026": [
+   {
+    "n": "Donyell Malen",
+    "nat": "Netherlands",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 83,
+    "prime": 85
+   },
+   {
+    "n": "Manu Kone",
+    "nat": "France",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 75,
+    "prime": 77
+   },
+   {
+    "n": "Evan Ndicka",
+    "nat": "Ivory Coast",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 75,
+    "prime": 77
+   },
+   {
+    "n": "Paulo Dybala",
+    "nat": "Argentina",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 75,
+    "prime": 77
+   },
+   {
+    "n": "Mile Svilar",
+    "nat": "Serbia",
+    "pos": [
+     "GK"
+    ],
+    "est": 1,
+    "rtg": 74,
+    "prime": 76
+   }
+  ],
+  "Como|2026": [
+   {
+    "n": "Trevoh Chalobah",
+    "nat": "England",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 79,
+    "prime": 81
+   },
+   {
+    "n": "Alberto Moreno",
+    "nat": "Spain",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 79,
+    "prime": 81
+   },
+   {
+    "n": "Nico Paz",
+    "nat": "Argentina",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 64,
+    "prime": 66
+   },
+   {
+    "n": "Jacobo Ramon",
+    "nat": "Spain",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 62,
+    "prime": 64
+   },
+   {
+    "n": "Assane Diao",
+    "nat": "Senegal",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 62,
+    "prime": 64
+   }
+  ],
+  "Bayern Munich|2026": [
+   {
+    "n": "Jamal Musiala",
+    "nat": "Germany",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 91,
+    "prime": 93
+   },
+   {
+    "n": "Harry Kane",
+    "nat": "England",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 90,
+    "prime": 92
+   },
+   {
+    "n": "Joshua Kimmich",
+    "nat": "Germany",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 89,
+    "prime": 91
+   },
+   {
+    "n": "Michael Olise",
+    "nat": "France",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 88,
+    "prime": 90
+   },
+   {
+    "n": "Manuel Neuer",
+    "nat": "Germany",
+    "pos": [
+     "GK"
+    ],
+    "rtg": 86,
+    "prime": 88
+   },
+   {
+    "n": "Alphonso Davies",
+    "nat": "Canada",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 86,
+    "prime": 88
+   },
+   {
+    "n": "Dayot Upamecano",
+    "nat": "France",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 85,
+    "prime": 87
+   },
+   {
+    "n": "Kim Min-jae",
+    "nat": "South Korea",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 84,
+    "prime": 86
+   },
+   {
+    "n": "Jonathan Tah",
+    "nat": "Germany",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 84,
+    "prime": 86
+   },
+   {
+    "n": "Hiroki Ito",
+    "nat": "Japan",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 83,
+    "prime": 85
+   },
+   {
+    "n": "Sacha Boey",
+    "nat": "France",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 83,
+    "prime": 85
+   },
+   {
+    "n": "Josip Stanisic",
+    "nat": "Croatia",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 83,
+    "prime": 85
+   },
+   {
+    "n": "Ismael Saibari",
+    "nat": "Morocco",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 83,
+    "prime": 85
+   },
+   {
+    "n": "Serge Gnabry",
+    "nat": "Germany",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 83,
+    "prime": 85
+   },
+   {
+    "n": "Jonas Urbig",
+    "nat": "Germany",
+    "pos": [
+     "GK"
+    ],
+    "est": 1,
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "Tom Bischof",
+    "nat": "Germany",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 81,
+    "prime": 83
+   },
+   {
+    "n": "Aleksandar Pavlovic",
+    "nat": "Germany",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 81,
+    "prime": 83
+   },
+   {
+    "n": "Konrad Laimer",
+    "nat": "Austria",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 80,
+    "prime": 82
+   },
+   {
+    "n": "Lennart Karl",
+    "nat": "Germany",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 79,
+    "prime": 81
+   }
+  ],
+  "Borussia Dortmund|2026": [
+   {
+    "n": "Serhou Guirassy",
+    "nat": "Guinea",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Waldemar Anton",
+    "nat": "Germany",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Julian Brandt",
+    "nat": "Germany",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Gregor Kobel",
+    "nat": "Switzerland",
+    "pos": [
+     "GK"
+    ],
+    "est": 1,
+    "rtg": 75,
+    "prime": 77
+   },
+   {
+    "n": "Jobe Bellingham",
+    "nat": "England",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 74,
+    "prime": 76
+   }
+  ],
+  "RB Leipzig|2026": [
+   {
+    "n": "Maxime Esteve",
+    "nat": "France",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 78,
+    "prime": 80
+   },
+   {
+    "n": "Christoph Baumgartner",
+    "nat": "Austria",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 71,
+    "prime": 73
+   },
+   {
+    "n": "Castello Lukeba",
+    "nat": "France",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 71,
+    "prime": 73
+   },
+   {
+    "n": "Antonio Nusa",
+    "nat": "Norway",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 69,
+    "prime": 71
+   },
+   {
+    "n": "Peter Gulacsi",
+    "nat": "Hungary",
+    "pos": [
+     "GK"
+    ],
+    "est": 1,
+    "rtg": 68,
+    "prime": 70
+   }
+  ],
+  "Stuttgart|2026": [
+   {
+    "n": "Deniz Undav",
+    "nat": "Germany",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 68,
+    "prime": 70
+   },
+   {
+    "n": "Angelo Stiller",
+    "nat": "Germany",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 68,
+    "prime": 70
+   },
+   {
+    "n": "Bilal El Khannouss",
+    "nat": "Morocco",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 68,
+    "prime": 70
+   },
+   {
+    "n": "Alexander Nubel",
+    "nat": "Germany",
+    "pos": [
+     "GK"
+    ],
+    "est": 1,
+    "rtg": 67,
+    "prime": 69
+   },
+   {
+    "n": "Finn Jeltsch",
+    "nat": "Germany",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 66,
+    "prime": 68
+   }
+  ],
+  "Paris Saint-Germain|2026": [
+   {
+    "n": "Ousmane Dembele",
+    "nat": "France",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 91,
+    "prime": 93
+   },
+   {
+    "n": "Khvicha Kvaratskhelia",
+    "nat": "Georgia",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 89,
+    "prime": 91
+   },
+   {
+    "n": "Vitinha",
+    "nat": "Portugal",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 88,
+    "prime": 90
+   },
+   {
+    "n": "Achraf Hakimi",
+    "nat": "Morocco",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 87,
+    "prime": 89
+   },
+   {
+    "n": "Nuno Mendes",
+    "nat": "Portugal",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 86,
+    "prime": 88
+   },
+   {
+    "n": "Marquinhos",
+    "nat": "Brazil",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 85,
+    "prime": 87
+   },
+   {
+    "n": "Joao Neves",
+    "nat": "Portugal",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 85,
+    "prime": 87
+   },
+   {
+    "n": "Willian Pacho",
+    "nat": "Ecuador",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 84,
+    "prime": 86
+   },
+   {
+    "n": "Fabian Ruiz",
+    "nat": "Spain",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 84,
+    "prime": 86
+   },
+   {
+    "n": "Desire Doue",
+    "nat": "France",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 84,
+    "prime": 86
+   },
+   {
+    "n": "Lucas Chevalier",
+    "nat": "France",
+    "pos": [
+     "GK"
+    ],
+    "rtg": 83,
+    "prime": 85
+   },
+   {
+    "n": "Goncalo Ramos",
+    "nat": "Portugal",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 83,
+    "prime": 85
+   },
+   {
+    "n": "Lucas Beraldo",
+    "nat": "Brazil",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "Illya Zabarnyi",
+    "nat": "Ukraine",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "Lucas Hernandez",
+    "nat": "France",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "Maghnes Akliouche",
+    "nat": "France",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "Warren Zaire-Emery",
+    "nat": "France",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "Kang-in Lee",
+    "nat": "South Korea",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "Ferran Torres",
+    "nat": "Spain",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "Matvey Safonov",
+    "nat": "Russia",
+    "pos": [
+     "GK"
+    ],
+    "est": 1,
+    "rtg": 81,
+    "prime": 83
+   },
+   {
+    "n": "Senny Mayulu",
+    "nat": "France",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 80,
+    "prime": 82
+   }
+  ],
+  "Lille|2026": [
+   {
+    "n": "Nathan Ngoy",
+    "nat": "Belgium",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 70,
+    "prime": 72
+   },
+   {
+    "n": "Ayase Ueda",
+    "nat": "Japan",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 70,
+    "prime": 72
+   },
+   {
+    "n": "Hakon Haraldsson",
+    "nat": "Iceland",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 70,
+    "prime": 72
+   },
+   {
+    "n": "Berke Ozer",
+    "nat": "Turkiye",
+    "pos": [
+     "GK"
+    ],
+    "est": 1,
+    "rtg": 69,
+    "prime": 71
+   },
+   {
+    "n": "Benjamin Andre",
+    "nat": "France",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 68,
+    "prime": 70
+   }
+  ],
+  "Lens|2026": [
+   {
+    "n": "Florian Thauvin",
+    "nat": "France",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 78,
+    "prime": 80
+   },
+   {
+    "n": "Thorgan Hazard",
+    "nat": "Belgium",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 67,
+    "prime": 69
+   },
+   {
+    "n": "Malang Sarr",
+    "nat": "France",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 67,
+    "prime": 69
+   },
+   {
+    "n": "Adrien Thomasson",
+    "nat": "France",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 67,
+    "prime": 69
+   },
+   {
+    "n": "Robin Risser",
+    "nat": "France",
+    "pos": [
+     "GK"
+    ],
+    "est": 1,
+    "rtg": 66,
+    "prime": 68
+   }
+  ],
+  "Porto|2026": [
+   {
+    "n": "Diogo Costa",
+    "nat": "Portugal",
+    "pos": [
+     "GK"
+    ],
+    "rtg": 84,
+    "prime": 86
+   },
+   {
+    "n": "Samu Aghehowa",
+    "nat": "Spain",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 80,
+    "prime": 82
+   },
+   {
+    "n": "Gabri Veiga",
+    "nat": "Spain",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 79,
+    "prime": 81
+   },
+   {
+    "n": "Alan Varela",
+    "nat": "Argentina",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 79,
+    "prime": 81
+   },
+   {
+    "n": "Pepe",
+    "nat": "Brazil",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "note": "Brazilian winger (b.1997), not the Portuguese defender",
+    "rtg": 78,
+    "prime": 80
+   },
+   {
+    "n": "Jakub Kiwior",
+    "nat": "Poland",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 77,
+    "prime": 79
+   },
+   {
+    "n": "Borja Sainz",
+    "nat": "Spain",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 77,
+    "prime": 79
+   },
+   {
+    "n": "Andre Silva",
+    "nat": "Portugal",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 77,
+    "prime": 79
+   },
+   {
+    "n": "Jan Bednarek",
+    "nat": "Poland",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Nehuen Perez",
+    "nat": "Argentina",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Hwang In-beom",
+    "nat": "South Korea",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Rodrigo Mora",
+    "nat": "Portugal",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Pablo Rosario",
+    "nat": "Netherlands",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 75,
+    "prime": 77
+   },
+   {
+    "n": "Zaidu Sanusi",
+    "nat": "Nigeria",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 74,
+    "prime": 76
+   },
+   {
+    "n": "Alberto Costa",
+    "nat": "Portugal",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 74,
+    "prime": 76
+   },
+   {
+    "n": "Martim Fernandes",
+    "nat": "Portugal",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 74,
+    "prime": 76
+   },
+   {
+    "n": "Francisco Moura",
+    "nat": "Portugal",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 74,
+    "prime": 76
+   },
+   {
+    "n": "Victor Froholdt",
+    "nat": "Denmark",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 74,
+    "prime": 76
+   },
+   {
+    "n": "William Gomes",
+    "nat": "Brazil",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 73,
+    "prime": 75
+   },
+   {
+    "n": "Claudio Ramos",
+    "nat": "Portugal",
+    "pos": [
+     "GK"
+    ],
+    "rtg": 71,
+    "prime": 73
+   },
+   {
+    "n": "Dominik Prpic",
+    "nat": "Croatia",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 70,
+    "prime": 72
+   },
+   {
+    "n": "Deniz Gul",
+    "nat": "Turkiye",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 70,
+    "prime": 72
+   }
+  ],
+  "Sporting CP|2026": [
+   {
+    "n": "Luis Suarez",
+    "nat": "Colombia",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "note": "Colombian striker (b.1997), not the Uruguayan",
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "Goncalo Inacio",
+    "nat": "Portugal",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 75,
+    "prime": 77
+   },
+   {
+    "n": "Rodrigo Zalazar",
+    "nat": "Uruguay",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 75,
+    "prime": 77
+   },
+   {
+    "n": "Geny Catamo",
+    "nat": "Mozambique",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 75,
+    "prime": 77
+   },
+   {
+    "n": "Rui Silva",
+    "nat": "Portugal",
+    "pos": [
+     "GK"
+    ],
+    "est": 1,
+    "rtg": 74,
+    "prime": 76
+   }
+  ],
+  "PSV|2026": [
+   {
+    "n": "Ivan Perisic",
+    "nat": "Croatia",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 79,
+    "prime": 81
+   },
+   {
+    "n": "Jerdy Schouten",
+    "nat": "Netherlands",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 79,
+    "prime": 81
+   },
+   {
+    "n": "Joey Veerman",
+    "nat": "Netherlands",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 79,
+    "prime": 81
+   },
+   {
+    "n": "Ricardo Pepi",
+    "nat": "USA",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 78,
+    "prime": 80
+   },
+   {
+    "n": "Sergino Dest",
+    "nat": "USA",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 77,
+    "prime": 79
+   },
+   {
+    "n": "Paul Wanner",
+    "nat": "Austria",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Guus Til",
+    "nat": "Netherlands",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Sven Mijnans",
+    "nat": "Netherlands",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Dennis Man",
+    "nat": "Romania",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Alassane Plea",
+    "nat": "France",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 75,
+    "prime": 77
+   },
+   {
+    "n": "Matej Kovar",
+    "nat": "Czechia",
+    "pos": [
+     "GK"
+    ],
+    "rtg": 74,
+    "prime": 76
+   },
+   {
+    "n": "Ryan Flamingo",
+    "nat": "Netherlands",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 74,
+    "prime": 76
+   },
+   {
+    "n": "Ruben van Bommel",
+    "nat": "Netherlands",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 74,
+    "prime": 76
+   },
+   {
+    "n": "Nick Olij",
+    "nat": "Netherlands",
+    "pos": [
+     "GK"
+    ],
+    "rtg": 73,
+    "prime": 75
+   },
+   {
+    "n": "Armando Obispo",
+    "nat": "Netherlands",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 73,
+    "prime": 75
+   },
+   {
+    "n": "Kiliann Sildillia",
+    "nat": "France",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 73,
+    "prime": 75
+   },
+   {
+    "n": "Yarek Gasiorowski",
+    "nat": "Spain",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 72,
+    "prime": 74
+   },
+   {
+    "n": "Mauro Junior",
+    "nat": "Brazil",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 72,
+    "prime": 74
+   },
+   {
+    "n": "Couhaib Driouech",
+    "nat": "Morocco",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 72,
+    "prime": 74
+   }
+  ],
+  "Feyenoord|2026": [
+   {
+    "n": "Sem Steijn",
+    "nat": "Netherlands",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 78,
+    "prime": 80
+   },
+   {
+    "n": "Anel Ahmedhodzic",
+    "nat": "Bosnia",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Luciano Valente",
+    "nat": "Netherlands",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Timon Wellenreuther",
+    "nat": "Germany",
+    "pos": [
+     "GK"
+    ],
+    "rtg": 75,
+    "prime": 77
+   },
+   {
+    "n": "Gernot Trauner",
+    "nat": "Austria",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 75,
+    "prime": 77
+   },
+   {
+    "n": "Casper Tengstedt",
+    "nat": "Denmark",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 74,
+    "prime": 76
+   },
+   {
+    "n": "Anis Hadj Moussa",
+    "nat": "Algeria",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 74,
+    "prime": 76
+   },
+   {
+    "n": "Thomas Beelen",
+    "nat": "Netherlands",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 73,
+    "prime": 75
+   },
+   {
+    "n": "Tsuyoshi Watanabe",
+    "nat": "Japan",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 73,
+    "prime": 75
+   },
+   {
+    "n": "Jordan Bos",
+    "nat": "Australia",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 73,
+    "prime": 75
+   },
+   {
+    "n": "Givairo Read",
+    "nat": "Netherlands",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 73,
+    "prime": 75
+   },
+   {
+    "n": "Jeremiah St. Juste",
+    "nat": "Netherlands",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 73,
+    "prime": 75
+   },
+   {
+    "n": "Gijs Smal",
+    "nat": "Netherlands",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 72,
+    "prime": 74
+   },
+   {
+    "n": "Oussama Targhalline",
+    "nat": "Morocco",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 72,
+    "prime": 74
+   },
+   {
+    "n": "Charles Vanhoutte",
+    "nat": "Belgium",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 72,
+    "prime": 74
+   },
+   {
+    "n": "Goncalo Borges",
+    "nat": "Portugal",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 72,
+    "prime": 74
+   },
+   {
+    "n": "Bart Nieuwkoop",
+    "nat": "Netherlands",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 71,
+    "prime": 73
+   },
+   {
+    "n": "Nacho Ferri",
+    "nat": "Spain",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 70,
+    "prime": 72
+   }
+  ],
+  "Galatasaray|2026": [
+   {
+    "n": "Victor Osimhen",
+    "nat": "Nigeria",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 88,
+    "prime": 90
+   },
+   {
+    "n": "Leroy Sane",
+    "nat": "Germany",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 84,
+    "prime": 86
+   },
+   {
+    "n": "Ilkay Gundogan",
+    "nat": "Germany",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 82,
+    "prime": 84
+   },
+   {
+    "n": "Mauro Icardi",
+    "nat": "Argentina",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 80,
+    "prime": 82
+   },
+   {
+    "n": "Wilfried Singo",
+    "nat": "Ivory Coast",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 79,
+    "prime": 81
+   },
+   {
+    "n": "Lucas Torreira",
+    "nat": "Uruguay",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 79,
+    "prime": 81
+   },
+   {
+    "n": "Davinson Sanchez",
+    "nat": "Colombia",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 78,
+    "prime": 80
+   },
+   {
+    "n": "Gabriel Sara",
+    "nat": "Brazil",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 78,
+    "prime": 80
+   },
+   {
+    "n": "Baris Alper Yilmaz",
+    "nat": "Turkiye",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 77,
+    "prime": 79
+   },
+   {
+    "n": "Mario Lemina",
+    "nat": "Gabon",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Roland Sallai",
+    "nat": "Hungary",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Ismail Jakobs",
+    "nat": "Senegal",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 75,
+    "prime": 77
+   },
+   {
+    "n": "Yunus Akgun",
+    "nat": "Turkiye",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 75,
+    "prime": 77
+   },
+   {
+    "n": "Kaan Ayhan",
+    "nat": "Turkiye",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 74,
+    "prime": 76
+   },
+   {
+    "n": "Eren Elmali",
+    "nat": "Turkiye",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 74,
+    "prime": 76
+   },
+   {
+    "n": "Lesley Ugochukwu",
+    "nat": "France",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 73,
+    "prime": 75
+   },
+   {
+    "n": "Gunay Guvenc",
+    "nat": "Turkiye",
+    "pos": [
+     "GK"
+    ],
+    "rtg": 70,
+    "prime": 72
+   }
+  ],
+  "Fenerbahce|2026": [
+   {
+    "n": "Ederson",
+    "nat": "Brazil",
+    "pos": [
+     "GK"
+    ],
+    "est": 1,
+    "note": "Brazilian midfielder, not the Manchester City goalkeeper",
+    "rtg": 79,
+    "prime": 81
+   },
+   {
+    "n": "Talisca",
+    "nat": "Brazil",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 71,
+    "prime": 73
+   },
+   {
+    "n": "Dorgeles Nene",
+    "nat": "Mali",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 71,
+    "prime": 73
+   },
+   {
+    "n": "Irfan Can Kahveci",
+    "nat": "Turkiye",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 71,
+    "prime": 73
+   },
+   {
+    "n": "Milan Skriniar",
+    "nat": "Slovakia",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 71,
+    "prime": 73
+   }
+  ],
+  "Bodo/Glimt|2026": [
+   {
+    "n": "Patrick Berg",
+    "nat": "Norway",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 69,
+    "prime": 71
+   },
+   {
+    "n": "Andreas Helmersen",
+    "nat": "Norway",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 69,
+    "prime": 71
+   },
+   {
+    "n": "Odin Bjortuft",
+    "nat": "Norway",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 69,
+    "prime": 71
+   },
+   {
+    "n": "Jens Petter Hauge",
+    "nat": "Norway",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 69,
+    "prime": 71
+   },
+   {
+    "n": "Nikita Haikin",
+    "nat": "Norway",
+    "pos": [
+     "GK"
+    ],
+    "est": 1,
+    "rtg": 68,
+    "prime": 70
+   }
+  ],
+  "Viking|2026": [
+   {
+    "n": "Henrik Falchener",
+    "nat": "Norway",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 65,
+    "prime": 67
+   },
+   {
+    "n": "Erik Botheim",
+    "nat": "Norway",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 65,
+    "prime": 67
+   },
+   {
+    "n": "Sander Svendsen",
+    "nat": "Norway",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 65,
+    "prime": 67
+   },
+   {
+    "n": "Patrik Gunnarsson",
+    "nat": "Iceland",
+    "pos": [
+     "GK"
+    ],
+    "est": 1,
+    "rtg": 64,
+    "prime": 66
+   },
+   {
+    "n": "Zlatko Tripic",
+    "nat": "Norway",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 63,
+    "prime": 65
+   }
+  ],
+  "Club Brugge|2026": [
+   {
+    "n": "Yann Sommer",
+    "nat": "Switzerland",
+    "pos": [
+     "GK"
+    ],
+    "rtg": 80,
+    "prime": 82
+   },
+   {
+    "n": "Hans Vanaken",
+    "nat": "Belgium",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 77,
+    "prime": 79
+   },
+   {
+    "n": "Raphael Onyedika",
+    "nat": "Nigeria",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 76,
+    "prime": 78
+   },
+   {
+    "n": "Joel Ordonez",
+    "nat": "Ecuador",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 75,
+    "prime": 77
+   },
+   {
+    "n": "Nicolo Tresoldi",
+    "nat": "Germany",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 75,
+    "prime": 77
+   },
+   {
+    "n": "Simon Mignolet",
+    "nat": "Belgium",
+    "pos": [
+     "GK"
+    ],
+    "rtg": 74,
+    "prime": 76
+   },
+   {
+    "n": "Ludovit Reis",
+    "nat": "Netherlands",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 73,
+    "prime": 75
+   },
+   {
+    "n": "Hugo Vetlesen",
+    "nat": "Norway",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 73,
+    "prime": 75
+   },
+   {
+    "n": "Carlos Forbs",
+    "nat": "Portugal",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 73,
+    "prime": 75
+   },
+   {
+    "n": "Brandon Mechele",
+    "nat": "Belgium",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 72,
+    "prime": 74
+   },
+   {
+    "n": "Gustaf Nilsson",
+    "nat": "Sweden",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 72,
+    "prime": 74
+   },
+   {
+    "n": "Joaquin Seys",
+    "nat": "Belgium",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 71,
+    "prime": 73
+   },
+   {
+    "n": "Bjorn Meijer",
+    "nat": "Netherlands",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 71,
+    "prime": 73
+   },
+   {
+    "n": "Romeo Vermant",
+    "nat": "Belgium",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 70,
+    "prime": 72
+   }
+  ],
+  "Slavia Prague|2026": [
+   {
+    "n": "Lukas Provod",
+    "nat": "Czechia",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 66,
+    "prime": 68
+   },
+   {
+    "n": "Tomas Chory",
+    "nat": "Czechia",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 66,
+    "prime": 68
+   },
+   {
+    "n": "David Zima",
+    "nat": "Czechia",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 66,
+    "prime": 68
+   },
+   {
+    "n": "Christos Zafeiris",
+    "nat": "Greece",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 66,
+    "prime": 68
+   },
+   {
+    "n": "Jindrich Stanek",
+    "nat": "Czechia",
+    "pos": [
+     "GK"
+    ],
+    "est": 1,
+    "rtg": 65,
+    "prime": 67
+   }
+  ],
+  "AEK Athens|2026": [
+   {
+    "n": "Erik Lamela",
+    "nat": "Argentina",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 81,
+    "prime": 83
+   },
+   {
+    "n": "Luka Jovic",
+    "nat": "Serbia",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 67,
+    "prime": 69
+   },
+   {
+    "n": "Zini",
+    "nat": "Angola",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 67,
+    "prime": 69
+   },
+   {
+    "n": "Oleksandr Zubkov",
+    "nat": "Ukraine",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 67,
+    "prime": 69
+   },
+   {
+    "n": "Domagoj Vida",
+    "nat": "Croatia",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 65,
+    "prime": 67
+   }
+  ],
+  "LASK|2026": [
+   {
+    "n": "Samuel Adeniran",
+    "nat": "USA",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 65,
+    "prime": 67
+   },
+   {
+    "n": "Moses Usor",
+    "nat": "Nigeria",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 65,
+    "prime": 67
+   },
+   {
+    "n": "Philipp Ziereis",
+    "nat": "Germany",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 65,
+    "prime": 67
+   },
+   {
+    "n": "Robert Ljubicic",
+    "nat": "Croatia",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 65,
+    "prime": 67
+   },
+   {
+    "n": "Tobias Lawal",
+    "nat": "Austria",
+    "pos": [
+     "GK"
+    ],
+    "est": 1,
+    "rtg": 64,
+    "prime": 66
+   }
+  ],
+  "Slovan Bratislava|2026": [
+   {
+    "n": "Andraz Sporar",
+    "nat": "Slovenia",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 66,
+    "prime": 68
+   },
+   {
+    "n": "Nino Marcelli",
+    "nat": "Slovakia",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 66,
+    "prime": 68
+   },
+   {
+    "n": "Tigran Barseghyan",
+    "nat": "Armenia",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 66,
+    "prime": 68
+   },
+   {
+    "n": "Dominik Takac",
+    "nat": "Slovakia",
+    "pos": [
+     "GK"
+    ],
+    "est": 1,
+    "rtg": 65,
+    "prime": 67
+   },
+   {
+    "n": "Guram Kashia",
+    "nat": "Georgia",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 64,
+    "prime": 66
+   }
+  ],
+  "Sabah|2026": [
+   {
+    "n": "Veljko Simic",
+    "nat": "Serbia",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 64,
+    "prime": 66
+   },
+   {
+    "n": "Joy-Lance Mickels",
+    "nat": "Rwanda",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 64,
+    "prime": 66
+   },
+   {
+    "n": "Tymoteusz Puchacz",
+    "nat": "Poland",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 64,
+    "prime": 66
+   },
+   {
+    "n": "Elvin Jafarguliyev",
+    "nat": "Azerbaijan",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 64,
+    "prime": 66
+   },
+   {
+    "n": "Emin Makhmudov",
+    "nat": "Azerbaijan",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 62,
+    "prime": 64
+   }
+  ],
+  "Shakhtar Donetsk|2026": [
+   {
+    "n": "Pedrinho",
+    "nat": "Brazil",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 68,
+    "prime": 70
+   },
+   {
+    "n": "Yukhym Konoplia",
+    "nat": "Ukraine",
+    "pos": [
+     "DEF"
+    ],
+    "est": 1,
+    "rtg": 68,
+    "prime": 70
+   },
+   {
+    "n": "Dmytro Riznyk",
+    "nat": "Ukraine",
+    "pos": [
+     "GK"
+    ],
+    "est": 1,
+    "rtg": 67,
+    "prime": 69
+   },
+   {
+    "n": "Kaua Elias",
+    "nat": "Brazil",
+    "pos": [
+     "ATT"
+    ],
+    "est": 1,
+    "rtg": 66,
+    "prime": 68
+   },
+   {
+    "n": "Bruninho",
+    "nat": "Brazil",
+    "pos": [
+     "MID"
+    ],
+    "est": 1,
+    "rtg": 64,
+    "prime": 66
+   }
+  ]
+ },
+ "PXDOB": {
+  "Andriy Lunin": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Raul Asencio": [
+   2003,
+   0,
+   2029,
+   0
+  ],
+  "Eder Militao": [
+   1998,
+   0,
+   2026,
+   0
+  ],
+  "Alvaro Carreras": [
+   2003,
+   0,
+   2029,
+   0
+  ],
+  "Ferland Mendy": [
+   1995,
+   0,
+   2026,
+   0
+  ],
+  "Denzel Dumfries": [
+   1996,
+   0,
+   2026,
+   0
+  ],
+  "Jude Bellingham": [
+   2003,
+   0,
+   2029,
+   0
+  ],
+  "Eduardo Camavinga": [
+   2003,
+   0,
+   2029,
+   0
+  ],
+  "Federico Valverde": [
+   1998,
+   0,
+   2026,
+   0
+  ],
+  "Aurelien Tchouameni": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Arda Guler": [
+   2005,
+   0,
+   2031,
+   0
+  ],
+  "Vinicius Junior": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Endrick": [
+   2006,
+   0,
+   2032,
+   0
+  ],
+  "Kylian Mbappe": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Rodrygo": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Brahim Diaz": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Yan Diomande": [
+   2007,
+   0,
+   2033,
+   0
+  ],
+  "Franco Mastantuono": [
+   2007,
+   0,
+   2033,
+   0
+  ],
+  "Joan Garcia": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Alejandro Balde": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Pau Cubarsi": [
+   2007,
+   0,
+   2033,
+   0
+  ],
+  "Gerard Martin": [
+   2002,
+   0,
+   2028,
+   0
+  ],
+  "Jules Kounde": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Eric Garcia": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Gavi": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Fermin Lopez": [
+   2003,
+   0,
+   2029,
+   0
+  ],
+  "Pedri": [
+   2003,
+   0,
+   2029,
+   0
+  ],
+  "Dani Olmo": [
+   1998,
+   0,
+   2026,
+   0
+  ],
+  "Frenkie de Jong": [
+   1997,
+   0,
+   2026,
+   0
+  ],
+  "Marc Bernal": [
+   2007,
+   0,
+   2033,
+   0
+  ],
+  "Lamine Yamal": [
+   2007,
+   0,
+   2033,
+   0
+  ],
+  "Karim Adeyemi": [
+   2002,
+   0,
+   2028,
+   0
+  ],
+  "Juan Musso": [
+   1994,
+   0,
+   2026,
+   0
+  ],
+  "Jan Oblak": [
+   1993,
+   0,
+   2026,
+   0
+  ],
+  "David Hancko": [
+   1998,
+   0,
+   2026,
+   0
+  ],
+  "Marc Pubill": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Robin Le Normand": [
+   1997,
+   0,
+   2026,
+   0
+  ],
+  "Alex Grimaldo": [
+   1996,
+   0,
+   2026,
+   0
+  ],
+  "Koke": [
+   1992,
+   0,
+   2026,
+   0
+  ],
+  "Pablo Barrios": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Alex Baena": [
+   2002,
+   0,
+   2028,
+   0
+  ],
+  "Marcos Llorente": [
+   1995,
+   0,
+   2026,
+   0
+  ],
+  "Johnny Cardoso": [
+   2002,
+   0,
+   2028,
+   0
+  ],
+  "Rodrigo Mendoza": [
+   2005,
+   0,
+   2031,
+   0
+  ],
+  "Morten Hjulmand": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Giuliano Simeone": [
+   2003,
+   0,
+   2029,
+   0
+  ],
+  "Ademola Lookman": [
+   1998,
+   0,
+   2026,
+   0
+  ],
+  "Jonathan David": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Georges Mikautadze": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Alberto Moleiro": [
+   2003,
+   0,
+   2029,
+   0
+  ],
+  "Luiz Junior": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Santiago Mourino": [
+   2002,
+   0,
+   2028,
+   0
+  ],
+  "Nathan Saliba": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Abde Ezzalzouli": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Isco": [
+   1992,
+   0,
+   2026,
+   0
+  ],
+  "Marc Bartra": [
+   1991,
+   0,
+   2026,
+   0
+  ],
+  "Fran Garcia": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Josep Martinez": [
+   1998,
+   0,
+   2026,
+   0
+  ],
+  "Raffaele Di Gennaro": [
+   1994,
+   0,
+   2026,
+   0
+  ],
+  "Alessandro Bastoni": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Yann Bisseck": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Carlos Augusto": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Federico Dimarco": [
+   1998,
+   0,
+   2026,
+   0
+  ],
+  "Piotr Zielinski": [
+   1994,
+   0,
+   2026,
+   0
+  ],
+  "Petar Sucic": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Davide Frattesi": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Andy Diouf": [
+   2003,
+   0,
+   2029,
+   0
+  ],
+  "Hakan Calhanoglu": [
+   1994,
+   0,
+   2026,
+   0
+  ],
+  "Nicolo Barella": [
+   1997,
+   0,
+   2026,
+   0
+  ],
+  "Luis Henrique": [
+   2002,
+   0,
+   2028,
+   0
+  ],
+  "Marcus Thuram": [
+   1998,
+   0,
+   2026,
+   0
+  ],
+  "Lautaro Martinez": [
+   1998,
+   0,
+   2026,
+   0
+  ],
+  "Ange-Yoan Bonny": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Pio Esposito": [
+   2006,
+   0,
+   2032,
+   0
+  ],
+  "Alex Meret": [
+   1997,
+   0,
+   2026,
+   0
+  ],
+  "Vanja Milinkovic-Savic": [
+   1997,
+   0,
+   2026,
+   0
+  ],
+  "Giovanni Di Lorenzo": [
+   1993,
+   0,
+   2026,
+   0
+  ],
+  "Alessandro Buongiorno": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Amir Rrahmani": [
+   1994,
+   0,
+   2026,
+   0
+  ],
+  "Sam Beukema": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Benoit Badiashile": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Miguel Gutierrez": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Mathias Olivera": [
+   1998,
+   0,
+   2026,
+   0
+  ],
+  "Leonardo Spinazzola": [
+   1993,
+   0,
+   2026,
+   0
+  ],
+  "Frank Anguissa": [
+   1996,
+   0,
+   2026,
+   0
+  ],
+  "Stanislav Lobotka": [
+   1995,
+   0,
+   2026,
+   0
+  ],
+  "Antonio Vergara": [
+   2005,
+   0,
+   2031,
+   0
+  ],
+  "David Neres": [
+   1997,
+   0,
+   2026,
+   0
+  ],
+  "Matteo Politano": [
+   1993,
+   0,
+   2026,
+   0
+  ],
+  "Lorenzo Lucca": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Noa Lang": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Manu Kone": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Evan Ndicka": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Paulo Dybala": [
+   1994,
+   0,
+   2026,
+   0
+  ],
+  "Mile Svilar": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Nico Paz": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Jacobo Ramon": [
+   2005,
+   0,
+   2031,
+   0
+  ],
+  "Assane Diao": [
+   2005,
+   0,
+   2031,
+   0
+  ],
+  "Manuel Neuer": [
+   1986,
+   0,
+   2026,
+   0
+  ],
+  "Jonas Urbig": [
+   2003,
+   0,
+   2029,
+   0
+  ],
+  "Dayot Upamecano": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Kim Min-jae": [
+   1997,
+   0,
+   2026,
+   0
+  ],
+  "Jonathan Tah": [
+   1996,
+   0,
+   2026,
+   0
+  ],
+  "Alphonso Davies": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Hiroki Ito": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Sacha Boey": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Josip Stanisic": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Joshua Kimmich": [
+   1995,
+   0,
+   2026,
+   0
+  ],
+  "Tom Bischof": [
+   2005,
+   0,
+   2031,
+   0
+  ],
+  "Jamal Musiala": [
+   2003,
+   0,
+   2029,
+   0
+  ],
+  "Konrad Laimer": [
+   1997,
+   0,
+   2026,
+   0
+  ],
+  "Ismael Saibari": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Aleksandar Pavlovic": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Serge Gnabry": [
+   1995,
+   0,
+   2026,
+   0
+  ],
+  "Lennart Karl": [
+   2008,
+   0,
+   2034,
+   0
+  ],
+  "Serhou Guirassy": [
+   1996,
+   0,
+   2026,
+   0
+  ],
+  "Jobe Bellingham": [
+   2005,
+   0,
+   2031,
+   0
+  ],
+  "Waldemar Anton": [
+   1996,
+   0,
+   2026,
+   0
+  ],
+  "Gregor Kobel": [
+   1997,
+   0,
+   2026,
+   0
+  ],
+  "Julian Brandt": [
+   1996,
+   0,
+   2026,
+   0
+  ],
+  "Christoph Baumgartner": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Antonio Nusa": [
+   2005,
+   0,
+   2031,
+   0
+  ],
+  "Peter Gulacsi": [
+   1990,
+   0,
+   2026,
+   0
+  ],
+  "Castello Lukeba": [
+   2003,
+   0,
+   2029,
+   0
+  ],
+  "Deniz Undav": [
+   1996,
+   0,
+   2026,
+   0
+  ],
+  "Finn Jeltsch": [
+   2006,
+   0,
+   2032,
+   0
+  ],
+  "Alexander Nubel": [
+   1996,
+   0,
+   2026,
+   0
+  ],
+  "Angelo Stiller": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Bilal El Khannouss": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Lucas Chevalier": [
+   2002,
+   0,
+   2028,
+   0
+  ],
+  "Matvey Safonov": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Achraf Hakimi": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Lucas Beraldo": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Marquinhos": [
+   1994,
+   0,
+   2026,
+   0
+  ],
+  "Illya Zabarnyi": [
+   2002,
+   0,
+   2028,
+   0
+  ],
+  "Lucas Hernandez": [
+   1996,
+   0,
+   2026,
+   0
+  ],
+  "Nuno Mendes": [
+   2002,
+   0,
+   2028,
+   0
+  ],
+  "Willian Pacho": [
+   2002,
+   0,
+   2028,
+   0
+  ],
+  "Fabian Ruiz": [
+   1996,
+   0,
+   2026,
+   0
+  ],
+  "Maghnes Akliouche": [
+   2002,
+   0,
+   2028,
+   0
+  ],
+  "Vitinha": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Senny Mayulu": [
+   2006,
+   0,
+   2032,
+   0
+  ],
+  "Warren Zaire-Emery": [
+   2006,
+   0,
+   2032,
+   0
+  ],
+  "Joao Neves": [
+   2005,
+   0,
+   2031,
+   0
+  ],
+  "Kang-in Lee": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Khvicha Kvaratskhelia": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Goncalo Ramos": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Ousmane Dembele": [
+   1997,
+   0,
+   2026,
+   0
+  ],
+  "Desire Doue": [
+   2005,
+   0,
+   2031,
+   0
+  ],
+  "Ferran Torres": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Benjamin Andre": [
+   1990,
+   0,
+   2026,
+   0
+  ],
+  "Nathan Ngoy": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Ayase Ueda": [
+   1998,
+   0,
+   2026,
+   0
+  ],
+  "Berke Ozer": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Hakon Haraldsson": [
+   2003,
+   0,
+   2029,
+   0
+  ],
+  "Robin Risser": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Thorgan Hazard": [
+   1993,
+   0,
+   2026,
+   0
+  ],
+  "Malang Sarr": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Adrien Thomasson": [
+   1994,
+   0,
+   2026,
+   0
+  ],
+  "Diogo Costa": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Claudio Ramos": [
+   1992,
+   0,
+   2026,
+   0
+  ],
+  "Zaidu Sanusi": [
+   1998,
+   0,
+   2026,
+   0
+  ],
+  "Nehuen Perez": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Alberto Costa": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Dominik Prpic": [
+   2006,
+   0,
+   2032,
+   0
+  ],
+  "Martim Fernandes": [
+   2006,
+   0,
+   2032,
+   0
+  ],
+  "Francisco Moura": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Victor Froholdt": [
+   2007,
+   0,
+   2033,
+   0
+  ],
+  "Gabri Veiga": [
+   2002,
+   0,
+   2028,
+   0
+  ],
+  "Pablo Rosario": [
+   1997,
+   0,
+   2026,
+   0
+  ],
+  "Hwang In-beom": [
+   1996,
+   0,
+   2026,
+   0
+  ],
+  "Alan Varela": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Rodrigo Mora": [
+   2008,
+   0,
+   2034,
+   0
+  ],
+  "William Gomes": [
+   2007,
+   0,
+   2033,
+   0
+  ],
+  "Samu Aghehowa": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Pepe": [
+   1997,
+   0,
+   2026,
+   0
+  ],
+  "Borja Sainz": [
+   2002,
+   0,
+   2028,
+   0
+  ],
+  "Andre Silva": [
+   1996,
+   0,
+   2026,
+   0
+  ],
+  "Deniz Gul": [
+   2005,
+   0,
+   2031,
+   0
+  ],
+  "Goncalo Inacio": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Rui Silva": [
+   1994,
+   0,
+   2026,
+   0
+  ],
+  "Rodrigo Zalazar": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Geny Catamo": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Nick Olij": [
+   1996,
+   0,
+   2026,
+   0
+  ],
+  "Matej Kovar": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Yarek Gasiorowski": [
+   2005,
+   0,
+   2031,
+   0
+  ],
+  "Armando Obispo": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Ryan Flamingo": [
+   2003,
+   0,
+   2029,
+   0
+  ],
+  "Sergino Dest": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Mauro Junior": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Kiliann Sildillia": [
+   2002,
+   0,
+   2028,
+   0
+  ],
+  "Paul Wanner": [
+   2005,
+   0,
+   2031,
+   0
+  ],
+  "Guus Til": [
+   1998,
+   0,
+   2026,
+   0
+  ],
+  "Sven Mijnans": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Jerdy Schouten": [
+   1997,
+   0,
+   2026,
+   0
+  ],
+  "Joey Veerman": [
+   1998,
+   0,
+   2026,
+   0
+  ],
+  "Ruben van Bommel": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Ricardo Pepi": [
+   2003,
+   0,
+   2029,
+   0
+  ],
+  "Couhaib Driouech": [
+   2002,
+   0,
+   2028,
+   0
+  ],
+  "Alassane Plea": [
+   1993,
+   0,
+   2026,
+   0
+  ],
+  "Dennis Man": [
+   1998,
+   0,
+   2026,
+   0
+  ],
+  "Timon Wellenreuther": [
+   1996,
+   0,
+   2026,
+   0
+  ],
+  "Bart Nieuwkoop": [
+   1996,
+   0,
+   2026,
+   0
+  ],
+  "Thomas Beelen": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Tsuyoshi Watanabe": [
+   1997,
+   0,
+   2026,
+   0
+  ],
+  "Gijs Smal": [
+   1998,
+   0,
+   2026,
+   0
+  ],
+  "Jordan Bos": [
+   2003,
+   0,
+   2029,
+   0
+  ],
+  "Gernot Trauner": [
+   1992,
+   0,
+   2026,
+   0
+  ],
+  "Givairo Read": [
+   2006,
+   0,
+   2032,
+   0
+  ],
+  "Jeremiah St. Juste": [
+   1997,
+   0,
+   2026,
+   0
+  ],
+  "Luciano Valente": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Sem Steijn": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Oussama Targhalline": [
+   2002,
+   0,
+   2028,
+   0
+  ],
+  "Charles Vanhoutte": [
+   1998,
+   0,
+   2026,
+   0
+  ],
+  "Goncalo Borges": [
+   2002,
+   0,
+   2028,
+   0
+  ],
+  "Casper Tengstedt": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Nacho Ferri": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Anis Hadj Moussa": [
+   2002,
+   0,
+   2028,
+   0
+  ],
+  "Gunay Guvenc": [
+   1995,
+   0,
+   2026,
+   0
+  ],
+  "Wilfried Singo": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Ismail Jakobs": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Kaan Ayhan": [
+   1995,
+   0,
+   2026,
+   0
+  ],
+  "Eren Elmali": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Gabriel Sara": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Victor Osimhen": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Roland Sallai": [
+   1997,
+   0,
+   2026,
+   0
+  ],
+  "Yunus Akgun": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Baris Alper Yilmaz": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Mauro Icardi": [
+   1993,
+   0,
+   2026,
+   0
+  ],
+  "Talisca": [
+   1994,
+   0,
+   2026,
+   0
+  ],
+  "Dorgeles Nene": [
+   2003,
+   0,
+   2029,
+   0
+  ],
+  "Irfan Can Kahveci": [
+   1995,
+   0,
+   2026,
+   0
+  ],
+  "Milan Skriniar": [
+   1995,
+   0,
+   2026,
+   0
+  ],
+  "Patrick Berg": [
+   1997,
+   0,
+   2026,
+   0
+  ],
+  "Andreas Helmersen": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Nikita Haikin": [
+   1995,
+   0,
+   2026,
+   0
+  ],
+  "Odin Bjortuft": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Jens Petter Hauge": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Zlatko Tripic": [
+   1992,
+   0,
+   2026,
+   0
+  ],
+  "Henrik Falchener": [
+   2002,
+   0,
+   2028,
+   0
+  ],
+  "Patrik Gunnarsson": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Erik Botheim": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Sander Svendsen": [
+   1997,
+   0,
+   2026,
+   0
+  ],
+  "Yann Sommer": [
+   1989,
+   0,
+   2026,
+   0
+  ],
+  "Brandon Mechele": [
+   1993,
+   0,
+   2026,
+   0
+  ],
+  "Joel Ordonez": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Joaquin Seys": [
+   2005,
+   0,
+   2031,
+   0
+  ],
+  "Bjorn Meijer": [
+   2003,
+   0,
+   2029,
+   0
+  ],
+  "Raphael Onyedika": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Ludovit Reis": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Hans Vanaken": [
+   1992,
+   0,
+   2026,
+   0
+  ],
+  "Hugo Vetlesen": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Nicolo Tresoldi": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Gustaf Nilsson": [
+   1997,
+   0,
+   2026,
+   0
+  ],
+  "Romeo Vermant": [
+   2004,
+   0,
+   2030,
+   0
+  ],
+  "Lukas Provod": [
+   1996,
+   0,
+   2026,
+   0
+  ],
+  "Tomas Chory": [
+   1995,
+   0,
+   2026,
+   0
+  ],
+  "Jindrich Stanek": [
+   1996,
+   0,
+   2026,
+   0
+  ],
+  "David Zima": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Christos Zafeiris": [
+   2003,
+   0,
+   2029,
+   0
+  ],
+  "Luka Jovic": [
+   1997,
+   0,
+   2026,
+   0
+  ],
+  "Zini": [
+   2003,
+   0,
+   2029,
+   0
+  ],
+  "Domagoj Vida": [
+   1989,
+   0,
+   2026,
+   0
+  ],
+  "Oleksandr Zubkov": [
+   1996,
+   0,
+   2026,
+   0
+  ],
+  "Samuel Adeniran": [
+   1998,
+   0,
+   2026,
+   0
+  ],
+  "Moses Usor": [
+   2003,
+   0,
+   2029,
+   0
+  ],
+  "Tobias Lawal": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Philipp Ziereis": [
+   1993,
+   0,
+   2026,
+   0
+  ],
+  "Robert Ljubicic": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Andraz Sporar": [
+   1994,
+   0,
+   2026,
+   0
+  ],
+  "Nino Marcelli": [
+   2001,
+   0,
+   2027,
+   0
+  ],
+  "Dominik Takac": [
+   1998,
+   0,
+   2026,
+   0
+  ],
+  "Guram Kashia": [
+   1987,
+   0,
+   2026,
+   0
+  ],
+  "Tigran Barseghyan": [
+   1993,
+   0,
+   2026,
+   0
+  ],
+  "Veljko Simic": [
+   1996,
+   0,
+   2026,
+   0
+  ],
+  "Joy-Lance Mickels": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Tymoteusz Puchacz": [
+   1999,
+   0,
+   2026,
+   0
+  ],
+  "Elvin Jafarguliyev": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Emin Makhmudov": [
+   1992,
+   0,
+   2026,
+   0
+  ],
+  "Pedrinho": [
+   1998,
+   0,
+   2026,
+   0
+  ],
+  "Kaua Elias": [
+   2006,
+   0,
+   2032,
+   0
+  ],
+  "Dmytro Riznyk": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Yukhym Konoplia": [
+   2000,
+   0,
+   2026,
+   0
+  ],
+  "Bruninho": [
+   2008,
+   0,
+   2034,
+   0
+  ]
+ }
+}

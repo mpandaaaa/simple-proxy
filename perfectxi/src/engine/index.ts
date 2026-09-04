@@ -357,3 +357,24 @@ export {
   danglingRewards,
 } from './cosmetics';
 export type { Cosmetic, CosmeticKind } from './cosmetics';
+
+export {
+  STAGE_NAME,
+  KNOCKOUTS,
+  wcTeam,
+  wcSquad,
+  wcNations,
+  groupOf,
+  playMatch,
+  shareGoals,
+  sortRows,
+  wcStart,
+  wcPlayNext,
+  goldenBoot,
+  goldenGlove,
+  wcExpected,
+  wcVerdict,
+  wcSummary,
+  wcScorers,
+} from './worldcup';
+export type { WcStage, WcMatch, WcRow, WcRun, WcScorer, WcPlayed } from './worldcup';
