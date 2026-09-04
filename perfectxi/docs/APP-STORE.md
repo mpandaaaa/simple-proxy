@@ -40,11 +40,9 @@ colours and fonts so it does not look like a legal document bolted on
 the side. Upload it to perfectxi.app as `/privacy` and give App Store
 Connect that address.
 
-Two things before it goes up. There is a comment at the bottom of the
-file asking for a contact address, because Apple wants somewhere a
-player can reach you and no address has been put in. And if you would
-rather host it somewhere else, anywhere a browser can open without
-signing in will do.
+The contact address on it is perfectxigame@gmail.com, which is also the
+address to give App Store Connect as support. Nothing else in the file
+needs changing.
 
 `npm run privacy` checks that this page, the page inside the app and the
 privacy manifest in the binary all still say the same thing, and it runs
@@ -196,8 +194,12 @@ match by match, and see how far it goes. Free, offline, no subscriptions.`
 Primary **Games → Sports**, secondary **Games → Simulation**.
 
 ### Support URL
-perfectxi.app, or an email address on a page. Apple needs somewhere a
-player can reach you.
+`https://perfectxi.app`. Apple needs somewhere a player can reach you,
+and the privacy page carries perfectxigame@gmail.com, so that address is
+reachable from the site.
+
+App Store Connect asks separately for a contact email under App Review
+Information. Use perfectxigame@gmail.com there too.
 
 ---
 

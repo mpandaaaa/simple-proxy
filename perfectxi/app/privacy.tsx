@@ -149,6 +149,13 @@ export default function Privacy() {
           anything else.
         </Section>
 
+        <Section title="Getting in touch">
+          Anything at all, including asking what is held about you and asking
+          for it to be deleted: perfectxigame@gmail.com. There is no account
+          to look up, so if you write about a duel it helps to say roughly
+          when you played it.
+        </Section>
+
         <View style={{ height: space.s6 }} />
       </ScrollView>
     </ModeScreen>
