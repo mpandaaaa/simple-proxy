@@ -34,11 +34,16 @@ Create the app at appstoreconnect.apple.com with bundle
 **This is a hard blocker.** Apple requires a URL anybody can open without
 installing the app. The page inside the app does not count.
 
-The page is already built. `web/privacy.html` is one file with nothing
-outside it: no images, no scripts, no build step, and the app's own
-colours and fonts so it does not look like a legal document bolted on
-the side. Upload it to perfectxi.app as `/privacy` and give App Store
-Connect that address.
+**perfectxi.app/privacy already exists and is not the right page.** It is
+the website's own policy, about AdSense and cookies in the browser, and
+it does not mention the iPhone app once. Leave it alone. Pointing Apple
+at it would describe the wrong product.
+
+The app's page is already built. `web/app-privacy.html` is one file with
+nothing outside it: no images, no scripts, no build step, and the app's
+own colours and fonts. It goes up as a second page, at
+`perfectxi.app/app-privacy`, and that is the address App Store Connect
+gets. The two pages link to each other.
 
 The contact address on it is perfectxigame@gmail.com, which is also the
 address to give App Store Connect as support. Nothing else in the file

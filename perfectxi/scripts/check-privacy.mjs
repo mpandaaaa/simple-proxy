@@ -29,7 +29,7 @@ import { readFileSync } from 'node:fs';
 
 const config = readFileSync('app.config.js', 'utf8');
 const inApp = readFileSync('app/privacy.tsx', 'utf8');
-const onWeb = readFileSync('web/privacy.html', 'utf8');
+const onWeb = readFileSync('web/app-privacy.html', 'utf8');
 
 const problems = [];
 
@@ -94,7 +94,7 @@ for (const type of declared) {
     problems.push(`The manifest declares ${type} but app/privacy.tsx never mentions "${words}".`);
   }
   if (!webText.includes(words)) {
-    problems.push(`The manifest declares ${type} but web/privacy.html never mentions "${words}".`);
+    problems.push(`The manifest declares ${type} but web/app-privacy.html never mentions "${words}".`);
   }
 }
 
@@ -104,7 +104,7 @@ const appSections = [...inApp.matchAll(/<Section title="([^"]+)">/g)].map((m) =>
 const webSections = [...onWeb.matchAll(/<h2>([^<]+)<\/h2>/g)].map((m) => m[1].trim());
 
 if (appSections.length === 0) problems.push('No sections found in app/privacy.tsx.');
-if (webSections.length === 0) problems.push('No sections found in web/privacy.html.');
+if (webSections.length === 0) problems.push('No sections found in web/app-privacy.html.');
 
 const missingOnWeb = appSections.filter((t) => !webSections.includes(t));
 const missingInApp = webSections.filter((t) => !appSections.includes(t));
@@ -136,7 +136,7 @@ const PROMISES = [
 
 for (const { words, why } of PROMISES) {
   if (!appText.includes(words)) problems.push(`app/privacy.tsx no longer says "${words}", and ${why}.`);
-  if (!webText.includes(words)) problems.push(`web/privacy.html no longer says "${words}", and ${why}.`);
+  if (!webText.includes(words)) problems.push(`web/app-privacy.html no longer says "${words}", and ${why}.`);
 }
 
 /* ---------- 4. neither page may promise something the manifest denies ---------- */
@@ -148,7 +148,7 @@ for (const { words, why } of PROMISES) {
  * true version has to say whose crash reporting is absent.
  */
 const declaresCrash = declared.includes('CrashData');
-for (const [name, text] of [['app/privacy.tsx', appText], ['web/privacy.html', webText]]) {
+for (const [name, text] of [['app/privacy.tsx', appText], ['web/app-privacy.html', webText]]) {
   if (declaresCrash && /no crash reporting(?!\s+of our own)/.test(text)) {
     problems.push(
       `${name} says "no crash reporting" while the manifest declares crash data. Say whose: the game has none of its own, the advert SDK has its own.`,

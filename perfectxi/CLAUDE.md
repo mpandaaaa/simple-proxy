@@ -116,6 +116,9 @@ src/game/reset.ts    throwing a save away, memory as well as disk
 src/game/backup.ts   the whole save to a file, and back again
 src/game/remind.ts   the one notification, off unless asked for
 src/save/            versioned storage, migration chain, settings slice
+web/app-privacy.html the app's privacy policy as a page, for the App
+                     Store listing. the website has its own, different,
+                     already live at perfectxi.app/privacy
 scripts/             extract-db, sim-season, golden
 vendor/index.html    the web build, not committed. Reference only now
 ```

@@ -2,21 +2,40 @@
 
 Copy everything below the line into the chat that built the website.
 
+Do not paste the file path. That chat cannot read this computer. Paste the
+words themselves. The easy way, in PowerShell:
+
+```
+Get-Content C:\Users\44791\simple-proxy\perfectxi\docs\WEBSITE-PRIVACY-PROMPT.md -Raw | Set-Clipboard
+```
+
+Then paste into the chat.
+
 ---
 
-I need a privacy policy page added to perfectxi.app. It has to be live at:
+I need a **second** privacy policy page added to perfectxi.app, for my iPhone app. It has to be live at:
 
 ```
-https://perfectxi.app/privacy
+https://perfectxi.app/app-privacy
 ```
 
-This is blocking an App Store submission. Apple will not accept an iPhone app without a privacy policy at a web address anybody can open without installing the app, so this page existing at that exact address is the only thing standing between me and submitting.
+This is blocking an App Store submission. Apple will not accept an iPhone app without a privacy policy at a web address anybody can open without installing the app.
 
-## The most important rule
+## Please do not touch the page that is already there
 
-**Do not change any of the wording.** Not to tighten it, not to make it read better, and not to add the usual privacy policy boilerplate about cookies or legitimate interests or data controllers. The words below are the same words shown inside the iPhone app, and three things have to keep agreeing with each other:
+perfectxi.app/privacy already exists. You built it, it is the website's own policy, and it covers cookies and Google AdSense in the browser. **Leave it exactly as it is.**
 
-1. This web page
+I am not replacing it, because it is about a different product. It does not mention the iPhone app once, and the app collects different things through different software, so pointing Apple at it would describe the wrong thing.
+
+So: `/privacy` stays, and `/app-privacy` is new and additional. Please also do not remove or overwrite any other page on the site while you are in there.
+
+It would be good if the two pages linked to each other, one line each, something like "the iPhone app has its own policy" and back again. The page below already has that link in its footer.
+
+## The other important rule
+
+**Do not change any of the wording on the new page.** Not to tighten it, not to make it read better, and not to add the usual privacy policy boilerplate about data controllers or legitimate interests. The words below are the same words shown inside the iPhone app, and three things have to keep agreeing with each other:
+
+1. This new web page
 2. The privacy page inside the app
 3. The data collection declared inside the app binary, which is what Apple actually reads
 
@@ -26,41 +45,31 @@ You may change how it is built and how it is served. You may not change what it 
 
 ## The page
 
-It is one self contained HTML file. No images, no scripts, no build step, and no dependencies except Google Fonts. It already uses the game's own colours and typefaces so that somebody arriving from the App Store listing lands somewhere that looks like the app rather than on a legal document.
+It is one self contained HTML file. No images, no scripts, no build step, and no dependencies except Google Fonts. It already uses the game's own colours and typefaces so that somebody arriving from the App Store lands somewhere that looks like the app rather than on a legal document.
 
-On my machine it is at:
+Serve it however fits how the site is already built. In order of preference:
 
-```
-C:\Users\44791\simple-proxy\perfectxi\vendor\privacy.html
-```
-
-If you can read files on this machine, read that one and use it exactly as it is. If you cannot, the whole file is reproduced at the bottom of this message.
-
-## How to serve it
-
-Whatever fits how the site is already built. In order of preference:
-
-1. Drop the file in as a static page at `/privacy`, unchanged. This is the option with the least that can go wrong.
-2. If the site is built from components and a raw HTML file does not fit, rebuild the page using whatever the site uses, but keep every heading and every sentence identical, and keep the table of six data types as a table.
+1. Drop the file in as a static page at `/app-privacy`, unchanged. Least that can go wrong.
+2. If the site is built from components and a raw HTML file does not fit, rebuild it using whatever the site uses, but keep every heading and every sentence identical, and keep the table of six data types as a table.
 
 Either way:
 
 - It must work on a phone. Almost everybody reading it will have arrived from the App Store on an iPhone.
 - The table of what the adverts collect must not push the page sideways. It scrolls inside its own box in the version below.
-- Do not add analytics, tracking, cookies or a cookie banner to this page. The page states that the game has no analytics, and a privacy policy that tracks the reader while telling them it does not is the worst possible page to get wrong.
-- perfectxi.app must keep working exactly as it does now. The privacy page is an addition, not a replacement.
+- Do not add analytics, tracking, cookies or a cookie banner to this page. The page states that the game has no analytics, and a policy that tracks the reader while telling them it does not is the worst possible page to get wrong.
 
 ## When you are done
 
-Tell me the address to test. I need to confirm two things before I can submit:
+Tell me the address to test. I need to confirm three things before I can submit:
 
-- `https://perfectxi.app/privacy` opens the policy
+- `https://perfectxi.app/app-privacy` opens the new policy
+- `https://perfectxi.app/privacy` still opens the old website one, unchanged
 - `https://perfectxi.app` still opens the game
 
 ## The file
 
 ```html
-<title>Perfect XI Privacy</title>
+<title>Privacy Policy | Perfect XI for iPhone</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&display=swap">
@@ -214,7 +223,7 @@ Tell me the address to test. I need to confirm two things before I can submit:
 </style>
 
 <div class="wrap">
-  <p class="overline">Perfect XI</p>
+  <p class="overline">Perfect XI for iPhone</p>
   <h1>Privacy</h1>
 
   <p class="lede">
@@ -423,7 +432,12 @@ Tell me the address to test. I need to confirm two things before I can submit:
 
   <footer>
     <p>
-      This page is the same policy shown inside the app, under Settings, then
+      This is the policy for the iPhone app. The website at perfectxi.app is a
+      separate thing with its own adverts and its own cookies, and it has its
+      own policy at <a href="/privacy">perfectxi.app/privacy</a>.
+    </p>
+    <p>
+      These are the same words shown inside the app, under Settings, then
       Privacy. If the two ever disagree, the app is the one that is wrong,
       because the app is what actually runs.
     </p>

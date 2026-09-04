@@ -39,23 +39,25 @@ There are two jobs left and I would like your help with both, in this order.
 
 ---
 
-# Job one: put the privacy policy on my website
+# Job one: check the privacy page is live
 
-Apple will not accept the app without a privacy policy at a web address that anybody can open without installing the app.
+Apple will not accept the app without a privacy policy at a web address anybody can open without installing the app.
 
-The page is already written and saved on my computer. There is a folder at:
+Somebody else is putting that page up for me. When it is done it will be at:
 
 ```
-C:\Users\44791\simple-proxy\perfectxi\vendor
+https://perfectxi.app/app-privacy
 ```
 
-It contains two files. `index.html`, which is my website, and `privacy.html`, which is the new privacy page.
+Note that this is **not** the same as `https://perfectxi.app/privacy`, which already exists and is the website's own policy about cookies and AdSense in the browser. That one does not mention the iPhone app at all, so it is the wrong page to give Apple.
 
-What I need to do is drag that whole folder onto Netlify so the site republishes with the new page included. Netlify replaces the entire site with whatever is in the folder, so both files have to go up together.
+Before we start on the listing, please have me open `https://perfectxi.app/app-privacy` on my phone and confirm three things:
 
-When it is done, `https://perfectxi.app/privacy` should open the privacy page, and `https://perfectxi.app` should still open the game.
+1. It opens, and it is dark with PRIVACY across the top
+2. It has a table listing six things the adverts collect, two of them marked Tracking
+3. `https://perfectxi.app` still opens the game
 
-Please walk me through this on Netlify, one step at a time, and check with me that both addresses work before we move on.
+If that address does not work yet, tell me, and we will do everything in job two that does not need it and come back.
 
 ---
 
@@ -74,7 +76,7 @@ Take me through creating the listing at appstoreconnect.apple.com and submitting
 
 ## Privacy policy URL
 
-`https://perfectxi.app/privacy` once job one is finished.
+`https://perfectxi.app/app-privacy` once job one is finished. Not `/privacy`, which is the website's own separate policy.
 
 ## Category
 
