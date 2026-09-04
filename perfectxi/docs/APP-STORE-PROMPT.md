@@ -75,7 +75,7 @@ Take me through creating the listing at appstoreconnect.apple.com and submitting
 ## Subtitle, 30 characters
 
 ```
-Build the perfect football XI
+Build the Perfect Football XI
 ```
 
 ## Promotional text

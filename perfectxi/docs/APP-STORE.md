@@ -159,7 +159,7 @@ Paste this into App Review Notes:
 ## The listing
 
 ### Subtitle, 30 characters
-`Build the perfect football XI`
+`Build the Perfect Football XI`
 
 ### Promotional text, 170 characters
 `Draft an XI from thirty five seasons of the Premier League, play it out
