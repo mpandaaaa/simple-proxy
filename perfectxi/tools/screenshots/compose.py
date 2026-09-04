@@ -50,7 +50,10 @@ wrong first:
 """
 
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
-import argparse, json, os
+import argparse, json, os, sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from plaque import plaque
 
 W, H = 1320, 2868            # the 6.9 inch canvas, and nothing else is accepted
 STATUS_BAR_H = 185           # measured off a real capture at this size
@@ -61,14 +64,19 @@ BRIGHT = (64, 238, 162)
 MID    = (26, 190, 124)
 DEEP   = (8, 84, 55)
 
-BADGE_TOP  = 138
-CAP_TOP    = 268
-CAP_BUDGET = 640
+SEAL_TOP   = 74
+CAP_TOP    = 530
+CAP_BUDGET = 372
 CAP_LINES  = 2
 LEADING    = 0.88
 SHOT_W     = 1080
-SHOT_TOP   = 840
+SHOT_TOP   = 940
 CORNER     = 64
+
+# The wreath sits above the headline on clean ground. It was tried over
+# the screen first and disappeared into the app's own content, which is
+# what happens to any seal placed on a busy surface.
+SEAL_SIZE  = 410
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -180,7 +188,7 @@ def badge(im, text):
     return im
 
 
-def compose(path, caption_text, badge_text=None):
+def compose(path, caption_text, badge_text=None, seal=None):
     shot = Image.open(path).convert("RGB")
     if shot.size != (W, H):
         raise SystemExit(
@@ -195,8 +203,10 @@ def compose(path, caption_text, badge_text=None):
     im = Image.composite(Image.new("RGB", (W, H), (120, 252, 190)), im,
                          sash().point(lambda v: int(v * 0.26)))
 
-    if badge_text:
-        im = badge(im, badge_text)
+    if seal:
+        p = plaque(SEAL_SIZE, seal["big"], seal["small"], INK,
+                   eyebrow=seal.get("eyebrow"), thickness=1.18)
+        im.paste(p, ((W - SEAL_SIZE) // 2, SEAL_TOP), p)
 
     d = ImageDraw.Draw(im)
     f, lines, lh = fit(caption_text.upper(), W - 130, CAP_LINES, CAP_BUDGET)
@@ -216,6 +226,7 @@ def compose(path, caption_text, badge_text=None):
     sha = sha.filter(ImageFilter.GaussianBlur(52)).point(lambda v: int(v * 0.55))
     im = Image.composite(Image.new("RGB", (W, H), (0, 0, 0)), im, sha)
     im.paste(small, (x, SHOT_TOP), mask)
+
     return im
 
 
@@ -258,10 +269,11 @@ def main():
             print(f"  {stem}: no caption in captions.{args.lang}.json, skipped")
             continue
         entry = captions[stem]
-        im = compose(os.path.join(RAW, name), entry["line"], entry.get("badge"))
+        im = compose(os.path.join(RAW, name), entry["line"],
+                     entry.get("badge"), entry.get("seal"))
         im.convert("RGB").save(os.path.join(OUT, f"{stem}.png"))
         frames.append((stem, im))
-        print(f"  {stem:14} {entry.get('badge', ''):24} {entry['line']}")
+        print(f"  {stem:14} {entry['line']}")
 
     if frames:
         contact(frames, os.path.join(OUT, "contact-sheet.png"))
