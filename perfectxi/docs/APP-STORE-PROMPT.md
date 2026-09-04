@@ -57,7 +57,7 @@ Take me through creating the listing at appstoreconnect.apple.com and submitting
 ## Creating the app record
 
 - Platform: iOS
-- Name: `Perfect XI`
+- Listing name: `Perfect XI: Football Draft`. The name under the icon on the phone stays `Perfect XI` and comes from the build, not from App Store Connect.
 - Primary language: English (UK)
 - Bundle ID: choose `app.perfectxi.game` from the dropdown
 - SKU: `perfectxi`

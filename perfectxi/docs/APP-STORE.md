@@ -28,7 +28,22 @@ asks. Written so it can be worked through top to bottom.
 
 ### 1. The App Store Connect record
 Create the app at appstoreconnect.apple.com with bundle
-`app.perfectxi.game`, name **Perfect XI**, primary language English (UK).
+`app.perfectxi.game`, primary language English (UK), and the listing
+name:
+
+```
+Perfect XI: Football Draft
+```
+
+26 of the 30 characters allowed. The name under the icon on the phone is
+a different thing and stays `Perfect XI`: that comes from the build, not
+from App Store Connect.
+
+The suffix is there for search. Nothing owned by anybody else may go in
+it, which rules out Football Manager, Ultimate Team, Premier League,
+FIFA, UEFA and Champions League. That matters more here than for most
+apps, because the game already uses real club and player names, and the
+name is the most visible thing in the listing.
 
 ### 2. A privacy policy on the open web
 **Done.** Live at `https://perfectxi.app/app-privacy`, and checked against
