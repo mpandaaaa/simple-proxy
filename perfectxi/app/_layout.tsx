@@ -117,10 +117,22 @@ export default function RootLayout() {
             // accessibility win, it just makes the app harder to leave.
             animation: reduceMotion ? 'fade' : 'slide_from_right',
             gestureEnabled: true,
-            fullScreenGestureEnabled: true,
-            /* The screen being dragged sits on this, and the screen
-               underneath shows through it. Both have to be the app's own
-               ground or the gesture reveals a white frame. */
+            /*
+             * The edge swipe, not the full screen one.
+             *
+             * A full screen back gesture is not the system's own. It is
+             * drawn by react-native-screens, which lifts the screen you
+             * are leaving onto a card with rounded corners and slides it,
+             * and the corners of that card showed a light frame around
+             * the whole app for as long as the swipe lasted. The window
+             * behind it is already the app's own black, so there was
+             * nothing to recolour: the card itself was the problem.
+             *
+             * The left edge swipe is UIKit's own. It reveals the screen
+             * underneath rather than drawing a card, there is nothing
+             * behind it to see, and it is the gesture every other app on
+             * the phone uses.
+             */
             navigationBarColor: color.bg,
           }}
         />
