@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { showBreak } from './ads';
 import { uclStore } from '../save';
 import { awardUcl } from './award';
 import {
@@ -148,6 +149,7 @@ export function playNextUcl(): UclPlayed | null {
   if (step.run.over) {
     awardUcl(step.run);
     handBack(step.run);
+    void showBreak('tournament');
   }
   return step;
 }

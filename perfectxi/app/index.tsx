@@ -271,7 +271,7 @@ export default function Home() {
             </View>
           </View>
           <Text style={styles.tagline}>
-            Unofficial fan draft game · free to play
+            Unofficial fan draft game · free, paid for by adverts
           </Text>
         </View>
       </Rise>

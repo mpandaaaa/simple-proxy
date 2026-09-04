@@ -23,7 +23,8 @@ export default function Privacy() {
       <ScrollView style={styles.page} showsVerticalScrollIndicator={false}>
         <View style={styles.headline}>
           <Text style={styles.headlineText}>
-            No account, no email, no advertising, and nothing sold to anybody.
+            No account, no email, and nothing about you sold to anybody. There
+            are adverts, and this page says exactly what they see.
           </Text>
         </View>
 
@@ -62,12 +63,39 @@ export default function Privacy() {
           that sees anything.
         </Section>
 
+        <Section title="The adverts">
+          There are two kinds and no more. One you choose to watch, in the
+          shop, in exchange for a pack or some coins. And one full screen
+          advert at a break in play, after a season or a tournament has
+          finished, at most once every few minutes. There are none during a
+          match, none in the Daily, the Weekly or a duel, and no banners
+          anywhere.
+        </Section>
+
+        <Section title="Who shows them">
+          Google, through AdMob. When an advert is requested Google receives
+          what any advert needs: roughly where in the world the request came
+          from, the kind of device, and an advertising identifier if you
+          allowed one. The game does not send Google anything about what you
+          play. Your seasons, your squads and your album are never part of an
+          advert request.
+        </Section>
+
+        <Section title="The tracking question">
+          The first time you open the game your phone asks whether Perfect XI
+          may track you across other apps and websites. That question is
+          Apple's and the answer is yours. Say yes and the adverts are chosen
+          using an identifier your phone gives out. Say no and they are not,
+          and nothing else changes: the same number of adverts, the same
+          rewards, the same game. You can change your mind at any time in the
+          phone's Settings, under Privacy and Security, then Tracking.
+        </Section>
+
         <Section title="What there is not">
-          No analytics. No crash reporting. No advertising, no advertising
-          identifiers and no tracking of any kind. No third party software
-          development kits beyond the ones that draw the screen. Nothing is
-          shared with anybody, because there is nothing to share and nobody to
-          share it with.
+          No analytics of our own. No crash reporting. No banners. No account
+          and nothing to sign in to. Nothing you do in the game is shared with
+          anybody, and nothing about you is sold to anybody, by us or by
+          anyone else.
         </Section>
 
         <Section title="Children">
@@ -80,7 +108,8 @@ export default function Privacy() {
           seasons are matters of public record, used to describe real football
           history. It is not affiliated with, endorsed by or connected to the
           Premier League, FIFA, UEFA, any football club, any competition or
-          any player.
+          any player. The adverts pay for it being free rather than for
+          anything else.
         </Section>
 
         <View style={{ height: space.s6 }} />

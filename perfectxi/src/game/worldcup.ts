@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { showBreak } from './ads';
 import { worldCupStore } from '../save';
 import { awardWorldCup } from './award';
 import { wcPlayNext, wcStart, type WcCustom, type WcPlayed, type WcRun } from '../engine';
@@ -71,7 +72,12 @@ export function playNextMatch(): WcPlayed | null {
   setWorldCup(step.run);
   /* A tournament that has just ended is the moment the cabinet has to be
      told, because the run is thrown away when the next one starts. */
-  if (step.run.over) awardWorldCup(step.run);
+  if (step.run.over) {
+    awardWorldCup(step.run);
+    /* The tournament is finished, which is a break rather than an
+       interruption. The advert decides for itself whether it is too soon. */
+    void showBreak('tournament');
+  }
   return step;
 }
 

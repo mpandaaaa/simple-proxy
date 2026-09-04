@@ -1,7 +1,9 @@
 # Perfect XI, native iOS app
 
-Native React Native rebuild of the browser game at perfectxi.app. Free, no
-ads, no subscriptions, works offline. A collection of football games shaped
+Native React Native rebuild of the browser game at perfectxi.app. Free,
+no subscriptions, nothing to buy, and it works offline apart from duels.
+Paid for by adverts, which arrived late and are deliberately confined:
+see the hard constraint below. A collection of football games shaped
 like NYT Games: the front door is today, the games are the content.
 
 Full background, the source inventory, the decisions and the ten phase plan
@@ -26,6 +28,19 @@ new phase.
   not spend a build when a dev server reload would do.
 
 ## Hard constraints
+
+- **Adverts live in two places and nowhere else.** One rewarded advert
+  somebody chose to watch, in the shop, for a pack or coins. One full
+  screen advert at a break in play, after a season or a tournament has
+  finished, capped at one every four minutes. Never during a match. Never
+  in the Daily, the Weekly or a duel, because those are scored against
+  other people and an advert that buys an advantage is cheating. No
+  banners anywhere. `src/game/ads.ts` is the only file that talks to the
+  SDK.
+
+- **The privacy page is the truth.** It says what the adverts see and
+  what they do not. If the advert behaviour changes, that page changes in
+  the same commit or the App Store listing becomes a lie.
 
 - **No social studio.** The web build has a "Make social posts from this XI"
   feature. It is not coming to the app. Do not build it, do not link to it,

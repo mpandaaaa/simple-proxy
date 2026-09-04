@@ -514,11 +514,14 @@ export default function SettingsScreen() {
         </Rise>
 
         <Text style={styles.legal}>
-          Perfect XI is a free unofficial fan game. No ads, no subscriptions,
-          no in-app purchases, and it works with no connection at all. Not
-          affiliated with, endorsed by or connected to the Premier League,
-          FIFA, UEFA or any club or competition. Player names and ratings are
-          used for identification in a work of statistical fiction.
+          Perfect XI is a free unofficial fan game, paid for by adverts. No
+          subscriptions and nothing to buy. Two kinds of advert: one you
+          choose to watch in the shop, and one at a break in play after a
+          season or a tournament. None during a match, none in the Daily, the
+          Weekly or a duel, and no banners. Not affiliated with, endorsed by
+          or connected to the Premier League, FIFA, UEFA or any club or
+          competition. Player names and ratings are used for identification in
+          a work of statistical fiction.
         </Text>
 
         <View style={{ height: space.s6 }} />

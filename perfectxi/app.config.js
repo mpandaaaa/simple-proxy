@@ -42,6 +42,32 @@
  */
 const RUNTIME = '1.0.0';
 
+/**
+ * The advert account.
+ *
+ * Google's own test identifiers until the real ones are put in. They
+ * serve genuine test adverts, so every placement can be seen and clicked
+ * on a real phone, and they earn nothing, so a development build can
+ * never pollute the live account's numbers or get it banned for invalid
+ * traffic.
+ *
+ * Replacing them is this block and one build. The unit ids live beside
+ * them so there is one place to change rather than five.
+ */
+const ADMOB = {
+  iosAppId: 'ca-app-pub-3940256099942544~1458002511',
+  androidAppId: 'ca-app-pub-3940256099942544~3347511713',
+  /** true while the test ids above are in use */
+  test: true,
+  units: {
+    /* Google's published test units, one per format. */
+    iosInterstitial: 'ca-app-pub-3940256099942544/4411468910',
+    iosRewarded: 'ca-app-pub-3940256099942544/1712485313',
+    androidInterstitial: 'ca-app-pub-3940256099942544/1033173712',
+    androidRewarded: 'ca-app-pub-3940256099942544/5224354917',
+  },
+};
+
 module.exports = () => ({
   name: 'Perfect XI',
   slug: 'perfectxi',
@@ -110,6 +136,32 @@ module.exports = () => ({
     'expo-web-browser',
     'expo-mail-composer',
     'expo-build-properties',
+    [
+      /*
+       * The ads.
+       *
+       * The application id has to be in the app's own Info.plist or the
+       * SDK will not start, so it is here rather than in code. These are
+       * Google's published test ids: they serve real test adverts and
+       * earn nothing, which is exactly what a build in development should
+       * do. Swapping in the live account is these two lines and one
+       * build.
+       */
+      'react-native-google-mobile-ads',
+      {
+        iosAppId: ADMOB.iosAppId,
+        androidAppId: ADMOB.androidAppId,
+        userTrackingUsageDescription:
+          'Perfect XI asks so the adverts it shows can be relevant to you. Saying no changes nothing about the game and you still see the same number of adverts.',
+      },
+    ],
+    [
+      'expo-tracking-transparency',
+      {
+        userTrackingPermission:
+          'Perfect XI asks so the adverts it shows can be relevant to you. Saying no changes nothing about the game and you still see the same number of adverts.',
+      },
+    ],
   ],
   experiments: {
     typedRoutes: true,
@@ -131,6 +183,7 @@ module.exports = () => ({
      * The service key and the database password are not in this repo and
      * never will be.
      */
+    admob: ADMOB,
     supabase: {
       url: 'https://fmupfnknfyiiddwgjlvk.supabase.co',
       key: 'sb_publishable_PlbOP9B2umhLCiH8hRO-Ag_vldKYAcb',

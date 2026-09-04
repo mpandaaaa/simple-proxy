@@ -80,6 +80,7 @@ import {
   type SeasonRecord,
 } from '../../src/save';
 import { achievementFor, earn, foldSeason } from '../../src/game/achievements';
+import { showBreak } from '../../src/game/ads';
 import { pushUnlocks } from '../../src/game/unlocks';
 
 /**
@@ -327,6 +328,20 @@ export default function Results() {
        currency with two places that can add to it has a bug in it
        already. */
     setAward(awardSeason({ pts: r.pts, position: r.position, squad }));
+
+    /*
+     * A full screen advert, and only here.
+     *
+     * The season is over, the page has everything it is going to have,
+     * and the person is about to decide what to do next. That is a break
+     * in play rather than an interruption of one. Never in a Daily, a
+     * Weekly or a duel: those are scored against other people and the
+     * grades are the point, not the pause. The advert itself decides
+     * whether enough time has passed since the last one.
+     */
+    if (!run.daily && !run.weekly && run.duel == null && run.sending !== true) {
+      void showBreak('season');
+    }
   }, [run]);
 
   const result = run?.result ?? null;

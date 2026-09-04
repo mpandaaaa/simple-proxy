@@ -24,6 +24,7 @@ import { useReduceMotion } from '../src/ui/feel';
 import { syncReminder } from '../src/game/remind';
 import { autoBackup } from '../src/game/backup';
 import { noteHere } from '../src/game/nav';
+import { startAds } from '../src/game/ads';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -81,6 +82,18 @@ export default function RootLayout() {
 
   useEffect(() => {
     void syncReminder();
+  }, []);
+
+  /*
+   * The adverts.
+   *
+   * Started after the app is up rather than before it, because the first
+   * thing it does is ask about tracking and a permission sheet over a
+   * splash screen is a bad way to meet somebody. Nothing here can fail
+   * loudly: no adverts is a worse game, not a broken one.
+   */
+  useEffect(() => {
+    void startAds();
   }, []);
 
   /*
