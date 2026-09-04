@@ -322,7 +322,7 @@ export default function Market() {
             const block = saleBlock(career, p);
             return (
               <Press
-                key={p.n}
+                key={`${p.n}-${slot}`}
                 onPress={() => {
                   haptic('light');
                   setSelling({ p, slot });

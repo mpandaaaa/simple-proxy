@@ -187,6 +187,7 @@ export {
   averageWage,
   reputation,
   jobOffers,
+  jobAsk,
 } from './dynastyPeople';
 export type { Offer, Discipline, LoanSpell, JobOffer } from './dynastyPeople';
 

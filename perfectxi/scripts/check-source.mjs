@@ -180,6 +180,20 @@ if (!store.includes('version: 14')) {
   }
 }
 
+/* ---- 11. a heading lower cased into a sentence ---- */
+{
+  /* "Champions League, top four" is a heading. It has a proper noun and a
+     comma in it, and lower casing it gave "They would want you to
+     champions league, top four", which is not English. Anything with two
+     forms carries both rather than mangling one into the other. */
+  for (const f of files) {
+    const src = readFileSync(f, 'utf8');
+    for (const m of src.matchAll(/(\w*(?:objective|heading|title)\w*)\.toLowerCase\(\)/gi)) {
+      fail(`${f} lower cases ${m[1]}, which is a heading. Carry a clause instead.`);
+    }
+  }
+}
+
 console.log(
   failures ? `\n${failures} problems.\n` : '\nEvery source rule holds.\n',
 );

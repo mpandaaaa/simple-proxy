@@ -220,8 +220,8 @@ export default function WorldCupReport() {
             <Text style={[text.label, styles.sect]}>Squad, goals and assists</Text>
             <Collapse label="Every player who did something" count={scorers.length}>
               <View style={styles.card}>
-                {scorers.map((s) => (
-                  <View key={s.n} style={styles.statRow}>
+                {scorers.map((s, i) => (
+                  <View key={`${s.n}-${i}`} style={styles.statRow}>
                     <Text style={styles.statName} numberOfLines={1}>
                       {s.n}
                     </Text>

@@ -107,7 +107,7 @@ export default function UclReport() {
           <Text style={[text.label, styles.sect]}>Your scorers</Text>
           <View style={styles.card}>
             {scorers.map((s, i) => (
-              <Rise key={s.n} delay={Math.min(i, 6)}>
+              <Rise key={`${s.n}-${i}`} delay={Math.min(i, 6)}>
                 <View style={styles.scorer}>
                   <Text style={styles.scorerName} numberOfLines={1}>
                     {s.n}
@@ -139,9 +139,16 @@ export default function UclReport() {
         </>
       ) : null}
 
+      {/* A campaign a career owns goes back to the career. Its result is
+          already written there, and starting another one from here would
+          throw away the season it belongs to. */}
       <Press
         onPress={() => {
           haptic('medium');
+          if (run.owner) {
+            enter('/dynasty');
+            return;
+          }
           clearUcl();
           enter('/ucl');
         }}
@@ -149,7 +156,9 @@ export default function UclReport() {
         scaleTo={0.98}
         style={styles.go}
       >
-        <Text style={styles.goText}>Another campaign</Text>
+        <Text style={styles.goText}>
+          {run.owner ? `Back to ${run.owner.club}` : 'Another campaign'}
+        </Text>
       </Press>
       <View style={{ height: space.s6 }} />
     </ModeScreen>

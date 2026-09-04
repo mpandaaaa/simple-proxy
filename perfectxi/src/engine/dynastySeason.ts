@@ -686,7 +686,7 @@ export function processSeasonEnd(
   for (const j of next.jobs) {
     say(
       `${j.club} want to speak to you`,
-      `${j.note}. They would want you to ${j.objective.toLowerCase()}, with £${j.budget}m to spend. The offer is on the club screen until you answer it.`,
+      `${j.note}. They would want you to ${j.clause}, with £${j.budget}m to spend. The offer is on the club screen until you answer it.`,
       'news',
     );
   }

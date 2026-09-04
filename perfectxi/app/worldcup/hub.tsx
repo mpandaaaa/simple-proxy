@@ -197,8 +197,8 @@ export default function WorldCupHub() {
           <>
             <Text style={[text.label, styles.sect]}>Golden Boot race</Text>
             <View style={styles.card}>
-              {scorers.map((s) => (
-                <View key={s.n} style={styles.scorer}>
+              {scorers.map((s, i) => (
+                <View key={`${s.n}-${i}`} style={styles.scorer}>
                   <Text style={styles.scorerName} numberOfLines={1}>
                     {s.n}
                   </Text>

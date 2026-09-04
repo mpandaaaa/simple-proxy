@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { ClubDisc, ModeScreen, Press, Rise, Shine, Confirm } from '../../src/ui/components';
-import { go, home, swap } from '../../src/game/nav';
+import { enter, go, home, swap } from '../../src/game/nav';
 import { color, space, radius, alpha } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
 import { ucl as sky } from '../../src/ui/ucl';
@@ -64,6 +64,10 @@ export default function UclHub() {
 
   const me = uclNameOf(run, run.you);
   const next = run.ahead[0] ?? null;
+  /* A campaign a career owns belongs behind that career, not behind the
+     front door: backing out of it goes to the club, and finishing it goes
+     back to the club rather than offering another one. */
+  const owned = Boolean(run.custom && run.owner);
   const league = run.stage === 'league';
   const pos = uclPosition(run);
 
@@ -73,7 +77,7 @@ export default function UclHub() {
         overline={UCL_STAGE_NAME[run.stage]}
         title={me}
         scroll={false}
-        onBack={() => home()}
+        onBack={() => (owned ? enter('/dynasty') : home())}
       >
         <ScrollView style={styles.page} showsVerticalScrollIndicator={false}>
           {/* ================= where you are ================= */}

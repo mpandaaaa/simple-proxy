@@ -461,10 +461,56 @@ export function averageWage(d: Dynasty): number {
 
 /* ---------- other clubs want you ---------- */
 
+/**
+ * What a club of that strength would ask of you.
+ *
+ * Two forms of the same thing, written out rather than derived from one
+ * another. A heading has proper nouns and a comma in it and belongs on
+ * its own line; a clause has to read inside a sentence. Lower casing the
+ * heading gave "They would want you to champions league, top four", which
+ * is not English.
+ *
+ * One ladder, so the two can never disagree about what a club wants.
+ */
+export function jobAsk(
+  rating: number,
+  division: 1 | 2,
+): { objective: string; clause: string } {
+  if (division === 2) return { objective: 'Win promotion', clause: 'win promotion' };
+  if (rating >= 88) {
+    return { objective: 'Win the Premier League', clause: 'win the Premier League' };
+  }
+  if (rating >= 82) {
+    return {
+      objective: 'Champions League, top four',
+      clause: 'reach the Champions League places',
+    };
+  }
+  if (rating >= 76) {
+    return { objective: 'European places, top seven', clause: 'reach the European places' };
+  }
+  if (rating >= 70) return { objective: 'Top half finish', clause: 'finish in the top half' };
+  return { objective: 'Avoid the relegation fight', clause: 'keep them up' };
+}
+
 export type JobOffer = {
   club: string;
   rating: number;
+  /**
+   * What they want, as a heading.
+   *
+   * "Champions League, top four". It is a label: it has a proper noun in
+   * it and a comma, and it belongs on its own line.
+   */
   objective: string;
+  /**
+   * The same thing, as a clause that reads inside a sentence.
+   *
+   * "reach the Champions League places". Lower casing the label instead
+   * produced "They would want you to champions league, top four", which
+   * is not a sentence, so the clause is written out rather than mangled.
+   */
+  clause: string;
   budget: number;
   note: string;
   /**
@@ -578,7 +624,7 @@ export function jobOffers(
       {
         club: last.name,
         rating: r,
-        objective: division === 2 ? 'Win promotion' : 'Avoid the relegation fight',
+        ...jobAsk(division === 2 ? 0 : 0, division),
         budget: Math.round(Math.max(15, (r - 62) * 9)),
         note: 'A long way down from where you were',
         division,
@@ -598,18 +644,7 @@ export function jobOffers(
       club: club.name,
       rating,
       division,
-      objective:
-        division === 2
-          ? 'Win promotion'
-          : rating >= 88
-            ? 'Win the Premier League'
-            : rating >= 82
-              ? 'Champions League, top four'
-              : rating >= 76
-                ? 'European places, top seven'
-                : rating >= 70
-                  ? 'Top half finish'
-                  : 'Avoid the relegation fight',
+      ...jobAsk(rating, division),
       budget: Math.round(Math.max(15, (rating - 62) * 9)),
       note: better
         ? 'A bigger job than the one you have'

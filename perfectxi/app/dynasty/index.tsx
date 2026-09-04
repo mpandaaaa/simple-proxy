@@ -42,6 +42,7 @@ import {
   type DynastyPlayer,
   type Position,
   saleBlock,
+  jobAsk,
 } from '../../src/engine';
 import { useCareer, getCareer, setCareer, slotSummaries, updateCareer } from '../../src/game/career';
 import { getUcl, startUclFromDynasty } from '../../src/game/ucl';
@@ -549,7 +550,7 @@ export default function DynastyHub() {
                       £{j.budget}m
                     </Text>
                   </View>
-                  <Text style={styles.offerWhat}>They would want you to {j.objective.toLowerCase()}.</Text>
+                  <Text style={styles.offerWhat}>They would want you to {j.clause ?? jobAsk(j.rating, j.division ?? 1).clause}.</Text>
                   <View style={styles.offerActs}>
                     <Press
                       onPress={() => setJobTarget(j)}
@@ -788,7 +789,7 @@ export default function DynastyHub() {
                   const p = career.roster[i];
                   return p ? (
                     <PlayerRow
-                      key={p.n}
+                      key={`${p.n}-${i}`}
                       player={p}
                       slot={career.slots[i]}
                       armed={swapping === i}
@@ -835,7 +836,7 @@ export default function DynastyHub() {
           {career.roster.slice(11).map((p, i) =>
             p ? (
               <PlayerRow
-                key={p.n}
+                key={`${p.n}-${i}`}
                 player={p}
                 slot={p.pos}
                 armed={swapping === 11 + i}

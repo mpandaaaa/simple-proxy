@@ -8,7 +8,7 @@ import { font, text } from '../src/ui/type';
 import { haptic } from '../src/ui/feel';
 import { sfx } from '../src/ui/sound';
 import { ENGINE_VERSION } from '../src/engine';
-import { exportSave, importSave } from '../src/game/backup';
+import { autoBackup, lastBackup, restoreLatest } from '../src/game/backup';
 import { slotSummaries } from '../src/game/career';
 import { ask, clearReminder, permission, scheduleReminder } from '../src/game/remind';
 import {
@@ -109,16 +109,20 @@ export default function SettingsScreen() {
   const [said, setSaid] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [backed, setBacked] = useState<number | null>(null);
 
   useEffect(() => {
     let alive = true;
     void permission().then((p) => {
       if (alive) setPerm(p);
     });
+    void lastBackup().then((at) => {
+      if (alive) setBacked(at);
+    });
     return () => {
       alive = false;
     };
-  }, []);
+  }, [tick]);
 
   const set = useCallback(<K extends keyof typeof s>(key: K, value: (typeof s)[K]) => {
     haptic('light');
@@ -159,33 +163,34 @@ export default function SettingsScreen() {
     if (next.remind && perm === 'granted') await scheduleReminder(hour);
   }, [perm]);
 
-  /* Writing a save out, and reading one back. */
-  const save = useCallback(async () => {
-    if (busy) return;
-    setBusy(true);
-    haptic('light');
-    const out = await exportSave();
-    setSaid(out.ok ? `Saved as ${out.where}` : out.why);
-    setBusy(false);
-  }, [busy]);
-
+  /* Putting the last one back, and forcing a fresh one. */
   const restore = useCallback(async () => {
     setRestoring(false);
     if (busy) return;
     setBusy(true);
-    const out = await importSave();
+    const out = await restoreLatest();
     if (out.ok) {
       haptic('success');
       setSaid(
-        `Restored ${out.restored} records from ${new Date(out.at).toLocaleDateString('en-GB')}. Close and reopen the app.`,
+        `Put back ${out.restored} records from ${when(out.at)}. Close and reopen the app.`,
       );
       setTick((n) => n + 1);
       setS(settingsStore.read());
       setName(displayName());
-    } else if (out.why) {
+    } else {
       haptic('warning');
       setSaid(out.why);
     }
+    setBusy(false);
+  }, [busy]);
+
+  const backupNow = useCallback(async () => {
+    if (busy) return;
+    setBusy(true);
+    haptic('light');
+    const ok = await autoBackup(true);
+    setBacked(ok ? Date.now() : null);
+    setSaid(ok ? 'Backed up just now.' : 'The backup could not be written.');
     setBusy(false);
   }, [busy]);
 
@@ -399,11 +404,19 @@ export default function SettingsScreen() {
           </Text>
         )}
 
-        {/* ================= carrying it off the phone ================= */}
-        <Text style={[text.label, styles.sect]}>Back it up</Text>
-        <View style={styles.speeds}>
-          <Press onPress={() => void save()} feel="medium" scaleTo={0.98} style={styles.backup}>
-            <Text style={styles.backupText}>Save to a file</Text>
+        {/* ================= keeping a copy ================= */}
+        <Text style={[text.label, styles.sect]}>Your save</Text>
+        <View style={styles.card}>
+          <View style={styles.line}>
+            <Text style={styles.lineLabel}>Backed up</Text>
+            <Text style={styles.lineValue} numberOfLines={1}>
+              {backed ? when(backed) : 'not yet'}
+            </Text>
+          </View>
+        </View>
+        <View style={[styles.speeds, { marginTop: space.s2 }]}>
+          <Press onPress={() => void backupNow()} feel="medium" scaleTo={0.98} style={styles.backup}>
+            <Text style={styles.backupText}>Back up now</Text>
           </Press>
           <Press
             onPress={() => {
@@ -414,12 +427,12 @@ export default function SettingsScreen() {
             scaleTo={0.98}
             style={styles.backup}
           >
-            <Text style={styles.backupText}>Restore</Text>
+            <Text style={styles.backupText}>Put the last one back</Text>
           </Press>
         </View>
         <Text style={styles.note}>
           {said ??
-            'Everything on this phone, written to one file you can keep in Files or send to yourself. Deleting the app throws away everything, and there is no account to get it back from, so this is the only way back.'}
+            'This happens on its own. A copy is written to the phone every time you close the app, the last three are kept, and all of it goes into your iPhone\u2019s own iCloud backup, so a new phone set up from that backup already has every season and every career.'}
         </Text>
 
         {/* ================= what is saved ================= */}
@@ -513,9 +526,13 @@ export default function SettingsScreen() {
 
       <Confirm
         visible={restoring}
-        title="Restore from a file?"
-        body="Everything on this phone is replaced by what is in the file. Whatever is here now is gone."
-        confirmLabel="Choose a file"
+        title="Put the last backup back?"
+        body={
+          backed
+            ? `Everything goes back to how it was ${when(backed).toLowerCase()}. Anything since then is gone.`
+            : 'There is no backup on this phone yet.'
+        }
+        confirmLabel="Put it back"
         cancelLabel="Keep what is here"
         onCancel={() => setRestoring(false)}
         onConfirm={() => void restore()}
@@ -532,6 +549,19 @@ export default function SettingsScreen() {
       />
     </>
   );
+}
+
+/** How long ago, in words rather than a timestamp. */
+function when(at: number): string {
+  const mins = Math.max(0, Math.round((Date.now() - at) / 60000));
+  if (mins < 1) return 'Just now';
+  if (mins === 1) return 'A minute ago';
+  if (mins < 60) return `${mins} minutes ago`;
+  const hours = Math.round(mins / 60);
+  if (hours === 1) return 'An hour ago';
+  if (hours < 24) return `${hours} hours ago`;
+  const days = Math.round(hours / 24);
+  return days === 1 ? 'Yesterday' : `${days} days ago`;
 }
 
 function Stat({ label, value }: { label: string; value: string }) {

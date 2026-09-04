@@ -623,7 +623,16 @@ export type Dynasty = {
   jobs: {
     club: string;
     rating: number;
+    /** what they want, as a heading */
     objective: string;
+    /**
+     * The same thing, as a clause that reads inside a sentence.
+     *
+     * Optional only so a career saved before it existed still reads. An
+     * offer without one falls back to the objective, which is what used
+     * to be lower cased into the sentence and did not read.
+     */
+    clause?: string;
     budget: number;
     /** what they are, in one line */
     note: string;

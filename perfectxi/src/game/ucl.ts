@@ -3,7 +3,9 @@ import { uclStore } from '../save';
 import { awardUcl } from './award';
 import {
   everyone,
+  starters,
   squadRating,
+  uclClub,
   uclAsPlayed,
   uclPlayNext,
   uclSkipLeague,
@@ -84,13 +86,26 @@ export function startUcl(club: string, custom?: UclCustom | null): UclRun {
  */
 export function startUclFromDynasty(d: Dynasty): UclRun | null {
   const squad = everyone(d);
-  if (squad.length < 11) return null;
+  const xi = starters(d);
+  if (squad.length < 11 || xi.length < 11) return null;
+
+  /*
+   * Which place in the field it takes.
+   *
+   * Its own, when the club is one of the thirty six, or the draw can pair
+   * you with yourself: an Arsenal career seated in Sabah's place left the
+   * real Arsenal in the competition and the semi-final was Arsenal
+   * against Arsenal. A club that is not in the field takes the weakest
+   * place, the same way a drafted XI does.
+   */
+  const seat = uclClub(d.club) ? d.club : uclWeakest();
+
   const run = uclStart(
-    uclWeakest(),
+    seat,
     Math.floor(Math.random() * 0x100000000) >>> 0,
     {
       name: d.club,
-      rating: squadRating(squad.slice(0, 11)),
+      rating: squadRating(xi),
       squad: squad.map((p) => ({
         n: p.n,
         nat: p.nat,

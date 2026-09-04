@@ -120,7 +120,7 @@ export default function Squad() {
             const tint = positionColor[p.pos];
             return (
               <View
-                key={p.n}
+                key={`${p.n}-${slot}`}
                 style={[
                   styles.row,
                   urgent ? { borderColor: 'rgba(245,165,36,0.45)' } : null,

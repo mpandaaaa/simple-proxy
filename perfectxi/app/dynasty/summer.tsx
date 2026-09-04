@@ -769,8 +769,8 @@ export default function Summer() {
 
         {report.held.length ? (
           <Group title="Played too well to decline" tone={color.gold}>
-            {report.held.map((p) => (
-              <Line key={p.n} name={p.n} note={p.why ?? ''} pos={p.pos} rtg={p.rtg} />
+            {report.held.map((p, n) => (
+              <Line key={`${p.n}-${n}`} name={p.n} note={p.why ?? ''} pos={p.pos} rtg={p.rtg} />
             ))}
           </Group>
         ) : null}

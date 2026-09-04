@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -20,6 +21,7 @@ import { color } from '../src/ui/tokens';
 import { AchievementToast } from '../src/ui/components';
 import { useReduceMotion } from '../src/ui/feel';
 import { syncReminder } from '../src/game/remind';
+import { autoBackup } from '../src/game/backup';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -56,6 +58,22 @@ export default function RootLayout() {
   // rather than trusted to have survived.
   useEffect(() => {
     void syncReminder();
+  }, []);
+
+  /*
+   * A copy of the save, kept without anybody asking for one.
+   *
+   * Written when the app goes into the background, which is every time it
+   * is closed or swapped away from, and once on launch so there is always
+   * something to fall back to. It skips itself if the last one is under a
+   * minute old, so flicking in and out of the app does not fill the disk.
+   */
+  useEffect(() => {
+    void autoBackup();
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'background' || state === 'inactive') void autoBackup();
+    });
+    return () => sub.remove();
   }, []);
 
   if (!ready && !error) return null;
