@@ -371,7 +371,19 @@ export function MatchLive({
     match.oc === 'win' ? sky.me : match.oc === 'loss' ? sky.opp : color.gold;
 
   return (
-    <Modal visible transparent animationType="none" onRequestClose={onDone}>
+    <Modal
+      /*
+       * Without this a modal is portrait only, whatever the device is
+       * doing. React Native defaults supportedOrientations to portrait
+       * alone, so on an iPad held sideways the card came up rotated in a
+       * squeezed window in the middle of the screen while everything
+       * behind it stayed landscape.
+       *
+       * Both landscapes, because a tablet is turned either way.
+       */
+      supportedOrientations={['portrait', 'landscape']}
+      visible transparent animationType="none" onRequestClose={onDone}
+    >
       <Animated.View style={[styles.dim, dimStyle]} pointerEvents="none" />
       <View
         style={[

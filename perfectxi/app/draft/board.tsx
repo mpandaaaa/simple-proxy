@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
 import { Stack } from 'expo-router';
@@ -101,6 +101,36 @@ export default function DraftBoard() {
    * where a slot was when it first laid out is not where it is now.
    */
   const [measureTick, setMeasureTick] = useState(0);
+
+  /*
+   * And on a rotation, which moves every slot at once.
+   *
+   * The pitch measures where its slots are on screen so a signed card can
+   * fly to the right one. Those measurements are taken when the pitch
+   * lays out and refreshed after each signing. Turning an iPad relays out
+   * the whole page and invalidates all of them in one go, and nothing was
+   * telling the pitch that, so the next card flew to where a slot used to
+   * be. Invisible on a phone, because a phone never turns.
+   */
+  const { width: winWidth, height: winHeight } = useWindowDimensions();
+
+  /*
+   * How tall the squad list is.
+   *
+   * Bounded rather than free on purpose: the page scrolls and the list
+   * scrolls inside it, because one scroll meant a hundred and twenty
+   * players dragged the pitch off the top before you reached the bottom
+   * of a board.
+   *
+   * The bound was a flat 344, which is a phone number. On a tablet that
+   * is a letterbox in the middle of a large screen with the list paging
+   * inside it, so it takes a share of the window instead, and stays
+   * between the two heights that still read as a list.
+   */
+  const listHeight = Math.max(300, Math.min(560, Math.round(winHeight * 0.38)));
+  useEffect(() => {
+    setMeasureTick((n) => n + 1);
+  }, [winWidth, winHeight]);
 
   // Scenery for the reel: every club-season in the era being drafted, so
   // the cards flying past are real sides rather than invented ones.
@@ -430,7 +460,7 @@ export default function DraftBoard() {
           {header}
 
           {board ? (
-            <View style={styles.listBox}>
+            <View style={[styles.listBox, { height: listHeight }]}>
               <FlashList
                 data={rows}
                 keyExtractor={(row, i) =>
@@ -680,7 +710,8 @@ const styles = StyleSheet.create({
    * Five rows and a bit, so it is obviously a list you scroll rather than
    * a list that happens to be cut off.
    */
-  listBox: { height: 344 },
+  /* height comes from the window, not from here */
+  listBox: {},
   listFooter: { height: space.s4 },
 
   avgChip: {

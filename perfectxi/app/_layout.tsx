@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
-import { Stack, usePathname } from 'expo-router';
+import { DarkTheme, Stack, ThemeProvider, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -27,6 +27,28 @@ import { noteHere } from '../src/game/nav';
 import { startAds } from '../src/game/ads';
 
 SplashScreen.preventAutoHideAsync();
+
+/*
+ * The colour behind every screen.
+ *
+ * This is what the white border turned out to be, after four wrong
+ * guesses. Navigation keeps its own theme, separate from anything the
+ * app paints, and without one it uses the light default whose background
+ * is rgb(242, 242, 242). That colour sits underneath the screens, so it
+ * is invisible until something moves and uncovers an edge of it. It was
+ * measured off a screenshot early on and not recognised for what it was.
+ *
+ * Painting the root view, the gesture root and the safe area provider
+ * could never have fixed it: the navigation container is its own layer
+ * inside all three. Nor could navigationBarColor, which is Android only.
+ *
+ * Dark, with the background replaced by the app's own ground so the
+ * colour under the screens is the same colour as the screens.
+ */
+const NAV_THEME = {
+  ...DarkTheme,
+  colors: { ...DarkTheme.colors, background: color.bg, card: color.bg },
+};
 
 /**
  * Navigation is one native stack rooted at Home. No tabs, no drawer, no
@@ -120,6 +142,7 @@ export default function RootLayout() {
     // the first gesture added later silently does nothing.
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: color.bg }}>
       <SafeAreaProvider style={{ backgroundColor: color.bg }}>
+        <ThemeProvider value={NAV_THEME}>
         <StatusBar style="light" />
         <Stack
           screenOptions={{
@@ -160,6 +183,7 @@ export default function RootLayout() {
            */}
           <Stack.Screen name="index" options={{ gestureEnabled: false }} />
         </Stack>
+        </ThemeProvider>
         {/* above every screen, so an achievement finds you wherever you are */}
         <AchievementToast />
       </SafeAreaProvider>

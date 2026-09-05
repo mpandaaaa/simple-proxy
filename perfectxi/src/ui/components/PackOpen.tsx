@@ -90,7 +90,19 @@ export function PackOpen({
   const tint = current ? RARITY_TINT[current.rarity] : hue.emerald;
 
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onDone} statusBarTranslucent>
+    <Modal
+      /*
+       * Without this a modal is portrait only, whatever the device is
+       * doing. React Native defaults supportedOrientations to portrait
+       * alone, so on an iPad held sideways the card came up rotated in a
+       * squeezed window in the middle of the screen while everything
+       * behind it stayed landscape.
+       *
+       * Both landscapes, because a tablet is turned either way.
+       */
+      supportedOrientations={['portrait', 'landscape']}
+      visible transparent animationType="fade" onRequestClose={onDone} statusBarTranslucent
+    >
       <Pressable style={styles.fill} onPress={next}>
         {/* the light behind everything, in the colour of the last card */}
         <View style={StyleSheet.absoluteFill} pointerEvents="none">

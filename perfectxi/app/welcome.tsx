@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Svg, { Circle, Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -60,7 +60,11 @@ export default function Welcome() {
   const reduce = useReduceMotion();
   const [at, setAt] = useState(0);
   const scroller = useRef<ScrollView>(null);
-  const width = Dimensions.get('window').width;
+  /* Measured on every render, not once. This is a paging carousel: each
+     card is one window wide and the scroll position is in window widths,
+     so a width read at mount and never updated leaves the pages the
+     width the iPad used to be the moment it is turned. */
+  const { width } = useWindowDimensions();
 
   /* Written on arrival, not on the way out. Somebody who closes the app on
      card two has still seen it. */

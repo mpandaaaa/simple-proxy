@@ -286,6 +286,101 @@ if (!store.includes('version: 14')) {
   }
 }
 
+/* ---- 14. a modal that cannot turn, and a size read once ---- */
+{
+  /* React Native defaults a modal's supportedOrientations to portrait
+     alone. On a phone that is invisible, because the app is portrait
+     anyway. On an iPad held sideways the modal comes up rotated in a
+     squeezed window while everything behind it stays landscape, which is
+     what happened to the player card. All five modals in the app had it
+     and none of them looked wrong. */
+  /* Comments are blanked before looking, because the word appears in the
+     note explaining why the prop is there. Without this, deleting the
+     prop and leaving the comment passed, which is exactly the shape of
+     edit somebody makes. */
+  /* Comments are blanked before looking, because the word appears in the
+     note explaining why the prop is there. Without this, deleting the
+     prop and leaving the comment passed, which is exactly the shape of
+     edit somebody makes.
+
+     Walked character by character rather than matched with a regular
+     expression: the escape for a newline does not survive being written
+     through a shell, and a stripper that silently stops working takes
+     the rule with it. */
+  function noComments(src) {
+    let out = '';
+    let mode = 0; // 0 code, 1 line comment, 2 block comment
+    for (let i = 0; i < src.length; i++) {
+      const c = src[i];
+      const d = src[i + 1];
+      if (mode === 0) {
+        if (c === '/' && d === '/') { mode = 1; out += '  '; i++; continue; }
+        if (c === '/' && d === '*') { mode = 2; out += '  '; i++; continue; }
+        out += c;
+      } else if (mode === 1) {
+        if (c === String.fromCharCode(10)) { mode = 0; out += c; } else out += ' ';
+      } else {
+        if (c === '*' && d === '/') { mode = 0; out += '  '; i++; continue; }
+        out += c === String.fromCharCode(10) ? c : ' ';
+      }
+    }
+    return out;
+  }
+
+  for (const f of files) {
+    const src = noComments(readFileSync(f, 'utf8'));
+    let at = 0;
+    for (;;) {
+      const i = src.indexOf('<Modal', at);
+      if (i < 0) break;
+      const end = src.indexOf('>', i);
+      const tag = src.slice(i, end < 0 ? src.length : end);
+      if (!tag.includes('supportedOrientations')) {
+        const line = src.slice(0, i).split(String.fromCharCode(10)).length;
+        fail(
+          `${f}:${line} opens a Modal without supportedOrientations, so it is portrait only and comes up rotated on an iPad held sideways.`,
+        );
+      }
+      at = i + 6;
+    }
+  }
+
+  /* Dimensions.get reads the window once and never hears about a
+     rotation. useWindowDimensions re-renders. On a phone locked to
+     portrait the two are the same thing, which is exactly why the wrong
+     one survives until a tablet turns. */
+  for (const f of files) {
+    const src = readFileSync(f, 'utf8');
+    const lines = src.split(String.fromCharCode(10));
+    lines.forEach((l, i) => {
+      if (l.includes('Dimensions.get(') && !l.trimStart().startsWith('*')) {
+        fail(
+          `${f}:${i + 1} reads Dimensions.get, which is measured once and never updates when an iPad is turned. Use useWindowDimensions.`,
+        );
+      }
+    });
+  }
+}
+
+/* ---- 15. the colour behind the screens ---- */
+{
+  /* Navigation keeps its own theme, and without one it uses the light
+     default whose background is rgb(242, 242, 242). That colour sits
+     under every screen, invisible until something moves and shows an
+     edge of it, which is what the white border was for five attempts.
+
+     Painting the root view, the gesture root or the safe area provider
+     does not reach it, because the navigation container is its own layer
+     inside all of them. */
+  const layout = readFileSync(join('app', '_layout.tsx'), 'utf8');
+  if (!layout.includes('<ThemeProvider')) {
+    fail('app/_layout.tsx sets no navigation theme, so the colour behind every screen is the light default, rgb(242, 242, 242).');
+  }
+  if (!layout.includes('background: color.bg')) {
+    fail('app/_layout.tsx has a navigation theme whose background is not the app ground, so a light strip can show behind a moving screen.');
+  }
+}
+
 console.log(
   failures ? `\n${failures} problems.\n` : '\nEvery source rule holds.\n',
 );
