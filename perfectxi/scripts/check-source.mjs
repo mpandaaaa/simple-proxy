@@ -452,6 +452,29 @@ if (!store.includes('version: 14')) {
   }
 }
 
+/* ---- 18. work done on a state that is only a moment ---- */
+{
+  /* On iOS 'inactive' is not a state the app rests in, it is a moment:
+     the app switcher, control centre, any system alert, a notification
+     pulled down, and briefly during launch. Doing real work on it means
+     doing that work every time somebody glances away.
+
+     Backing up on it froze the app. A snapshot reads every store and
+     turns the lot into JSON, JSON.stringify is synchronous, and flicking
+     in and out queued several at once on the same thread. */
+  const layout = noComments(readFileSync(join('app', '_layout.tsx'), 'utf8'));
+  /* A wide window on purpose. Comments are blanked rather than removed,
+     so the note explaining this very rule still occupies its own length
+     in the text, and a short window stopped before reaching the code it
+     was meant to read. */
+  const m = layout.match(/AppState\.addEventListener\([\s\S]{0,1600}/);
+  if (m && m[0].includes('inactive')) {
+    fail(
+      "app/_layout.tsx does work on the 'inactive' app state. On iOS that fires for the app switcher, control centre and any system alert, so the work happens every time somebody glances away. Use 'background', which is the app actually leaving.",
+    );
+  }
+}
+
 console.log(
   failures ? `\n${failures} problems.\n` : '\nEvery source rule holds.\n',
 );

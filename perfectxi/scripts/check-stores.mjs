@@ -42,9 +42,32 @@ const stub = {
   }),
 };
 
+/* ---- the filesystem, as a map, and a count of what it was asked ---- */
+const disk2 = new Map();
+const fsCalls = { writes: 0 };
+const fsStub = {
+  documentDirectory: 'file:///doc/',
+  EncodingType: { UTF8: 'utf8' },
+  getInfoAsync: async (p) => ({ exists: disk2.has(p) || p.endsWith('/') }),
+  makeDirectoryAsync: async () => {},
+  readDirectoryAsync: async () => [...disk2.keys()].map((k) => k.split('/').pop()),
+  readAsStringAsync: async (p) => disk2.get(p) ?? '',
+  writeAsStringAsync: async (p, v) => {
+    fsCalls.writes++;
+    /* a real write takes time, which is the whole point: it is the
+       window in which a second call could slip past a guard */
+    await new Promise((r) => setTimeout(r, 15));
+    disk2.set(p, v);
+  },
+  deleteAsync: async (p) => {
+    disk2.delete(p);
+  },
+};
+
 const load = Module._load;
 Module._load = function (request, parent, isMain) {
   if (request === 'react-native-mmkv') return stub;
+  if (request === 'expo-file-system/legacy' || request === 'expo-file-system') return fsStub;
   return load.call(this, request, parent, isMain);
 };
 
@@ -186,6 +209,57 @@ for (const { file, name, store } of stores) {
         '. A half migrated value has reached the app.');
     }
   }
+}
+
+
+/* ---- a backup runs once at a time, however often it is asked ---- */
+/*
+ * This is the fault that froze the app. It backed up on 'inactive' as
+ * well as 'background', and on iOS 'inactive' fires for the app
+ * switcher, control centre, any system alert, and briefly at launch. So
+ * flicking in and out of the app asked for several backups at once.
+ *
+ * A backup reads every store and turns the lot into JSON, and
+ * JSON.stringify is synchronous: while it runs, nothing else on the
+ * JavaScript thread does, including drawing. Several at once is several
+ * in a row on the same thread with the app frozen for all of them.
+ *
+ * The one-a-minute check did not stop it, because it sat behind two
+ * filesystem reads and two calls could both get past it before either
+ * had written. So the guard is a flag checked before any await, and this
+ * proves it: ask five times at once, and exactly one write happens.
+ */
+{
+  const backup = require_(join(process.cwd(), '.headless/game/backup.js'));
+  disk2.clear();
+  fsCalls.writes = 0;
+
+  const asked = await Promise.all([
+    backup.autoBackup(),
+    backup.autoBackup(),
+    backup.autoBackup(),
+    backup.autoBackup(),
+    backup.autoBackup(),
+  ]);
+
+  if (fsCalls.writes !== 1) {
+    fail(
+      'five backups asked for at once produced ' + fsCalls.writes +
+      ' writes. Each one serialises the whole save on the JavaScript thread, which is what froze the app.',
+    );
+  }
+  if (!asked.some((x) => x === true)) {
+    fail('five backups asked for at once and not one of them succeeded.');
+  }
+  cases += 5;
+
+  /* and asking again straight after does no work either */
+  fsCalls.writes = 0;
+  await backup.autoBackup();
+  if (fsCalls.writes !== 0) {
+    fail('a backup taken seconds after the last one wrote again. The one-a-minute rule is not holding.');
+  }
+  cases++;
 }
 
 /* ---- every version above one has migrations to reach it ---- */

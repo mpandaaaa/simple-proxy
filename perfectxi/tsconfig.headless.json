@@ -21,6 +21,7 @@
     "src/game/commentary.ts",
     "src/game/tournamentMatch.ts",
     "src/game/achievements.ts",
-    "src/save/**/*.ts"
+    "src/save/**/*.ts",
+    "src/game/backup.ts"
   ]
 }

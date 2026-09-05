@@ -11,6 +11,7 @@ import {
   ModeScreen,
   Button,
   OptionGroup,
+  Split,
   Toggle,
   Pitch,
   Rise,
@@ -84,6 +85,21 @@ export default function DraftSetup() {
     <ModeScreen
         wide
         overline="All-Time Premier League" title="Start a draft">
+      {/*
+        * Choices on the left, the pitch on the right.
+        *
+        * Stacked, an iPad in landscape shows a row of formation chips and
+        * then a pitch the width of the screen, and every other choice is
+        * below the fold. Side by side, the shape changes in front of you
+        * while you pick it, which is the point of showing it at all.
+        *
+        * On a phone, and on an iPad held upright, Split stacks them in
+        * this order and the page is exactly what it was.
+        */}
+      <Split
+        ratio={0.56}
+        main={
+          <>
       <Rise delay={0}>
         <Text style={styles.lead}>
           Build your all-time XI, then simulate a full 38 game season.
@@ -100,17 +116,6 @@ export default function DraftSetup() {
 
         <Text style={[text.small, styles.fmDesc]}>{fm?.desc}</Text>
 
-        {/* The multipliers are real engine inputs, so this is not
-            decoration: 4-2-4 really does score more and concede more. */}
-        <View style={styles.shape}>
-          <View style={styles.preview}>
-            <Pitch squad={empty} formation={config.formation} preview />
-          </View>
-          <View style={styles.traits}>
-            <Trait label="Attack" value={fm?.att ?? 1} good />
-            <Trait label="Defence" value={fm?.def ?? 1} />
-          </View>
-        </View>
       </Rise>
 
       <Rise delay={2}>
@@ -230,6 +235,20 @@ export default function DraftSetup() {
           }}
         />
       </Rise>
+          </>
+        }
+        side={
+          <View style={styles.shape}>
+            <View style={styles.preview}>
+              <Pitch squad={empty} formation={config.formation} preview />
+            </View>
+            <View style={styles.traits}>
+              <Trait label="Attack" value={fm?.att ?? 1} good />
+              <Trait label="Defence" value={fm?.def ?? 1} />
+            </View>
+          </View>
+        }
+      />
     </ModeScreen>
   );
 }

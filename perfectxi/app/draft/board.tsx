@@ -393,7 +393,8 @@ export default function DraftBoard() {
 
           {need.length ? (
             <View style={styles.needRow}>
-              <Text style={styles.needLabel}>You need</Text>
+              <Text style={styles.needLabel}>Still to fill</Text>
+              <View style={styles.needChips}>
               {need.map((x) => (
                 <View
                   key={x.pos}
@@ -410,6 +411,7 @@ export default function DraftBoard() {
                   </Text>
                 </View>
               ))}
+              </View>
             </View>
           ) : null}
 
@@ -804,19 +806,42 @@ const styles = StyleSheet.create({
   dotUsed: { backgroundColor: 'rgba(255,255,255,0.16)' },
   rerollsLeft: { fontFamily: font.body, fontSize: 13.5, color: color.text2 },
 
-  needRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space.s2 },
-  needLabel: { ...text.key, fontSize: 9.5, color: color.text3 },
+  /*
+   * What is still missing.
+   *
+   * It was one tight line: a nine point label butted against three small
+   * chips, wedged between the reroll card above and the list heading
+   * below with no air on either side. Three separate things were
+   * fighting for the same strip of screen and none of them won.
+   *
+   * The label sits on its own line now, in the same style as every other
+   * section label on the page, and the chips have a line to themselves.
+   * That costs about twenty points of height and stops it reading as
+   * clutter. The chips are also big enough to be read at a glance, which
+   * is the entire job: this is the thing you check before choosing.
+   */
+  needRow: { marginTop: space.s4, marginBottom: space.s1 },
+  needLabel: { ...text.label, fontSize: 12, color: color.text3 },
+  needChips: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: space.s2,
+    marginTop: space.s2,
+  },
   needChip: {
-    paddingHorizontal: space.s2 + 2,
-    paddingVertical: 3,
+    minHeight: 26,
+    justifyContent: 'center',
+    paddingHorizontal: space.s3,
+    paddingVertical: 4,
     borderRadius: radius.pill,
     borderWidth: 1,
   },
   needText: {
     fontFamily: font.displayBold,
-    fontSize: 11,
-    lineHeight: 13,
-    letterSpacing: 0.6,
+    fontSize: 12.5,
+    lineHeight: 15,
+    letterSpacing: 0.7,
     fontVariant: ['tabular-nums'],
   },
 

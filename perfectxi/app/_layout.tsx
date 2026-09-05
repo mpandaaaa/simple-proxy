@@ -159,7 +159,18 @@ export default function RootLayout() {
   useEffect(() => {
     void autoBackup();
     const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'background' || state === 'inactive') void autoBackup();
+      /*
+       * 'background' only. Not 'inactive'.
+       *
+       * On iOS 'inactive' is a moment, not a state: it fires for the app
+       * switcher, control centre, any system alert, a notification
+       * pulled down, and briefly during launch. Backing up on it meant a
+       * full save serialised every time somebody glanced away, and
+       * flicking in and out of the app queued several at once and froze
+       * it. 'background' is the app actually leaving, which is the only
+       * time a snapshot is worth taking.
+       */
+      if (state === 'background') void autoBackup();
     });
     return () => sub.remove();
   }, []);

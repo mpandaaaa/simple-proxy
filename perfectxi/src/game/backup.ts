@@ -135,16 +135,49 @@ async function listSnapshots(): Promise<{ name: string; at: number }[]> {
  * and out of the background three times in ten seconds is not three
  * things worth keeping.
  */
+/*
+ * One at a time, and not too often.
+ *
+ * A snapshot reads every store, turns the lot into JSON and writes it to
+ * disk. JSON.stringify is synchronous: while it runs, nothing else on
+ * the JavaScript thread does, including drawing. On a save with three
+ * careers and a full album that is real work, and doing it twice at once
+ * is doing it twice on the same thread, one after the other, with the
+ * app frozen for both.
+ *
+ * That is what happened. The app backed up on 'inactive' as well as
+ * 'background', and on iOS 'inactive' fires constantly: the app
+ * switcher, control centre, any system alert, a moment during launch.
+ * Flicking in and out of the app queued a full serialise for each one.
+ *
+ * The time check alone did not stop it, because it came after two
+ * filesystem reads: two calls could both get past it before either had
+ * written anything. This is the flag that actually stops it.
+ */
+let backingUp = false;
+let lastWroteAt = 0;
+
 export async function autoBackup(force = false): Promise<boolean> {
+  /* Checked before any await, so two calls in the same tick cannot both
+     get through. */
+  if (backingUp) return false;
+  if (!force && lastWroteAt && Date.now() - lastWroteAt < 60_000) return true;
+  backingUp = true;
+
   try {
     if (!(await ensureDir())) return false;
     const have = await listSnapshots();
-    if (!force && have[0] && Date.now() - have[0].at < 60_000) return true;
+    if (!force && have[0] && Date.now() - have[0].at < 60_000) {
+      lastWroteAt = have[0].at;
+      return true;
+    }
 
     const at = Date.now();
     await FileSystem.writeAsStringAsync(`${DIR}save-${at}.json`, JSON.stringify(collect()), {
       encoding: FileSystem.EncodingType.UTF8,
     });
+
+    lastWroteAt = at;
 
     for (const old of have.slice(KEEP - 1)) {
       try {
@@ -156,6 +189,8 @@ export async function autoBackup(force = false): Promise<boolean> {
     return true;
   } catch {
     return false;
+  } finally {
+    backingUp = false;
   }
 }
 

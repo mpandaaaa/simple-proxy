@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { go } from '../../game/nav';
 import { color, line, radius, space } from '../tokens';
 import { font, text } from '../type';
@@ -16,7 +17,7 @@ import { GRAIN_URI } from '../grain';
 import { haptic, useReduceMotion } from '../feel';
 import { sfx } from '../sound';
 import { achievementFor } from '../../game/achievements';
-import { peekUnlock, shiftUnlock, subscribeUnlocks } from '../../game/unlocks';
+import { clearUnlocks, peekUnlock, shiftUnlock, subscribeUnlocks } from '../../game/unlocks';
 import { Press } from './Press';
 import { Shine } from './Shine';
 
@@ -40,6 +41,8 @@ export function AchievementToast() {
   const key = useSyncExternalStore(subscribeUnlocks, peekUnlock, peekUnlock);
   const [shown, setShown] = useState<string | null>(null);
   const p = useSharedValue(0);
+  /* how far it has been dragged, in points, while a finger is on it */
+  const drag = useSharedValue(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // The banner holds on to what it is showing until its exit has played,
@@ -61,6 +64,7 @@ export function AchievementToast() {
     haptic('success');
     sfx('pick');
 
+    drag.value = 0;
     p.value = 0;
     p.value = reduce
       ? withTiming(1, { duration: 140 })
@@ -81,9 +85,50 @@ export function AchievementToast() {
     };
   }, [shown, reduce, p]);
 
+  /*
+   * Dismissing one, and dismissing the lot.
+   *
+   * Finishing a season can unlock several at once, and they queue: each
+   * waits its turn, holds, and leaves. Sitting through that is the
+   * complaint, so a flick upwards takes one away at once and the next
+   * arrives immediately, which makes a run of them something you can
+   * clear in a second rather than something that happens to you.
+   *
+   * A long drag clears the whole queue instead. Somebody dragging that
+   * far is not asking to see the next one.
+   */
+  const dismiss = (all: boolean) => {
+    if (timer.current) clearTimeout(timer.current);
+    if (all) clearUnlocks();
+    else shiftUnlock();
+    setShown(null);
+    drag.value = 0;
+    p.value = 0;
+  };
+
+  const swipe = Gesture.Pan()
+    .onChange((e) => {
+      /* Upwards only. Dragging down is how the card is pulled at, not a
+         way out, so it is resisted rather than followed. */
+      drag.value = e.translationY < 0 ? e.translationY : e.translationY * 0.25;
+    })
+    .onEnd((e) => {
+      const far = drag.value < -110;
+      const flicked = e.velocityY < -650 && drag.value < -20;
+      if (far || flicked) {
+        drag.value = withTiming(-260, { duration: 140 });
+        runOnJS(dismiss)(drag.value < -180);
+      } else {
+        drag.value = withSpring(0, { stiffness: 260, damping: 24, mass: 1 });
+      }
+    });
+
   const style = useAnimatedStyle(() => ({
     opacity: p.value,
-    transform: [{ translateY: (1 - p.value) * -70 }, { scale: 0.96 + p.value * 0.04 }],
+    transform: [
+      { translateY: (1 - p.value) * -70 + drag.value },
+      { scale: 0.96 + p.value * 0.04 },
+    ],
   }));
 
   if (!shown) return null;
@@ -95,6 +140,7 @@ export function AchievementToast() {
       style={[styles.root, { paddingTop: insets.top + space.s2 }]}
       pointerEvents="box-none"
     >
+      <GestureDetector gesture={swipe}>
       <Animated.View style={style}>
         <Press
           onPress={() => {
@@ -126,6 +172,7 @@ export function AchievementToast() {
           </View>
         </Press>
       </Animated.View>
+      </GestureDetector>
     </View>
   );
 }
