@@ -708,7 +708,16 @@ function ratingFill(rtg: number): string {
 const styles = StyleSheet.create({
   page: { flex: 1 },
   pageContent: { paddingBottom: space.s6 },
-  header: { gap: space.s3, paddingBottom: space.s2 },
+  /*
+   * The gap between the big blocks.
+   *
+   * It was twelve, which is the spacing for things that belong together:
+   * a label and its value, chips in a row. The overall strip, the pitch
+   * and the club being spun are three separate objects, and at twelve
+   * they read as one crowded slab. Twenty four lets each be its own
+   * thing, which is what makes a page feel unhurried rather than full.
+   */
+  header: { gap: space.s5, paddingBottom: space.s3 },
   block: {},
   /**
    * Five rows and a bit, so it is obviously a list you scroll rather than

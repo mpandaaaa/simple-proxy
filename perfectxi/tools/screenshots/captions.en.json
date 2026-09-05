@@ -7,39 +7,47 @@
       "small": "Real players"
     }
   },
-  "02-xi": {
-    "line": "Build your dream team",
+  "02-reel": {
+    "line": "Eleven spins. Eleven decisions.",
     "seal": {
-      "eyebrow": "Eleven shirts",
-      "big": "11",
-      "small": "Picks, one XI"
-    }
-  },
-  "03-reel": {
-    "line": "Spin. Draft. Repeat.",
-    "seal": {
-      "eyebrow": "The draft",
+      "eyebrow": "Every spin",
       "big": "5",
       "small": "Dealt, you take one"
     }
   },
-  "04-season": {
-    "line": "Play a full 38 game season",
+  "03-xi": {
+    "line": "Build your dream team",
     "seal": {
-      "eyebrow": "Every season",
+      "eyebrow": "One shirt each",
+      "big": "11",
+      "small": "Picks, one XI"
+    }
+  },
+  "04-unbeaten": {
+    "line": "Can you go 38 and 0?",
+    "seal": {
+      "eyebrow": "The challenge",
       "big": "38",
-      "small": "Games played out"
+      "small": "Games, no defeats"
     }
   },
-  "05-dynasty": {
-    "line": "Run a club for decades",
+  "05-table": {
+    "line": "A real table, earned",
     "seal": {
-      "eyebrow": "Decades deep",
-      "big": "Dynasty",
-      "small": "Career mode"
+      "eyebrow": "The league",
+      "big": "20",
+      "small": "Clubs, one season"
     }
   },
-  "06-ucl": {
+  "06-match": {
+    "line": "Every match, minute by minute",
+    "seal": {
+      "eyebrow": "Not a dice roll",
+      "big": "xG",
+      "small": "A real engine"
+    }
+  },
+  "07-ucl": {
     "line": "Nights under the lights",
     "seal": {
       "eyebrow": "The real format",
@@ -47,20 +55,28 @@
       "small": "Clubs, one table"
     }
   },
-  "07-cabinet": {
-    "line": "Win things worth keeping",
+  "08-dynasty": {
+    "line": "Run a club for decades",
+    "seal": {
+      "eyebrow": "Decades deep",
+      "big": "Dynasty",
+      "small": "Career mode"
+    }
+  },
+  "09-history": {
+    "line": "Silverware that stays won",
     "seal": {
       "eyebrow": "The cabinet",
       "big": "111",
       "small": "To be earned"
     }
   },
-  "08-album": {
+  "10-album": {
     "line": "35 years. 712 squads.",
     "seal": {
-      "eyebrow": "The database",
-      "big": "712",
-      "small": "Club seasons"
+      "eyebrow": "The album",
+      "big": "11,077",
+      "small": "Cards to collect"
     }
   }
 }

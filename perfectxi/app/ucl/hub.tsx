@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    marginTop: space.s3,
+    marginTop: space.s5,
     paddingHorizontal: 2,
   },
   railStep: { flexDirection: 'row', alignItems: 'center', flex: 1 },
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
 
   agg: {
     alignItems: 'center',
-    marginTop: space.s3,
+    marginTop: space.s5,
     padding: space.s3,
     borderRadius: radius.lg,
     borderWidth: 1,
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
   aggNote: { ...text.small, fontSize: 12, lineHeight: 17, color: color.text2 },
 
   nextCard: {
-    marginTop: space.s3,
+    marginTop: space.s5,
     padding: space.s4,
     borderRadius: radius.xl,
     borderWidth: 1,

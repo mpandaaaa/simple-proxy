@@ -182,6 +182,8 @@ export default function DynastyHub() {
      place he can go lights up, and tapping one of them puts him there.
      Tapping his own arrows again puts him back down. */
   const [swapping, setSwapping] = useState<number | null>(null);
+  /* shown when the European tie is refused because the XI is short */
+  const [noEuro, setNoEuro] = useState(false);
   const [jobTarget, setJobTarget] = useState<{
     club: string;
     objective: string;
@@ -688,9 +690,26 @@ export default function DynastyHub() {
                 go('/ucl/hub');
                 return;
               }
-              startUclFromDynasty(career);
+              /*
+               * The answer is used now.
+               *
+               * startUclFromDynasty returns null when the first eleven
+               * roster slots are not all filled, and the answer was
+               * thrown away: the campaign never started, the screen went
+               * to the hub anyway, the hub found no run and offered to
+               * pick a club. So a career with one empty shirt was told
+               * to choose somebody else's club, with nothing said about
+               * why. It looked like a fault on one device because that
+               * device happened to hold the career with a gap in it.
+               */
+              const run = startUclFromDynasty(career);
+              if (!run) {
+                setNoEuro(true);
+                return;
+              }
               enter('/ucl/hub');
             }}
+            disabled={short && !playedEurope}
             feel="none"
             style={styles.euro}
             scaleTo={0.98}
@@ -702,7 +721,9 @@ export default function DynastyHub() {
             <Text style={styles.euroSub}>
               {playedEurope
                 ? 'Carry on where you left off. It counts as this season.'
-                : `${career.club} are in it this season. Play every night with this squad, or leave it and the summer will simulate it.`}
+                : short
+                  ? `You are ${11 - xi.length} short of a first eleven. Fill the shirts in Squad and the tie is yours to play.`
+                  : `${career.club} are in it this season. Play every night with this squad, or leave it and the summer will simulate it.`}
             </Text>
           </Press>
         ) : null}
@@ -925,6 +946,27 @@ export default function DynastyHub() {
       />
 
       {/* Leaving a club is not undoable either. */}
+      {/*
+        * Said out loud instead of happening silently.
+        *
+        * The European tie needs a full first eleven. When it is short the
+        * campaign cannot start, and before this the screen went to the
+        * hub anyway, found nothing there, and offered to pick somebody
+        * else's club. Now it says which shirts are empty and where to
+        * fill them.
+        */}
+      <Confirm
+        visible={noEuro}
+        title="Your first eleven is short"
+        body={`There ${11 - xi.length === 1 ? 'is one shirt' : `are ${11 - xi.length} shirts`} still empty, and a European night needs all eleven. Fill them in Squad and come back.`}
+        confirmLabel="Go to Squad"
+        onCancel={() => setNoEuro(false)}
+        onConfirm={() => {
+          setNoEuro(false);
+          go('/dynasty/squad');
+        }}
+      />
+
       <Confirm
         visible={jobTarget !== null}
         title={jobTarget ? `Leave for ${jobTarget.club}?` : ''}

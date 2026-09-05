@@ -77,6 +77,7 @@ CANVASES = {
         "cap_margin": 65,
         "shot_w": 1080,
         "shot_top": 940,
+        "cap_gap": 96,
         "corner": 64,
         "sash": 0.16,
     },
@@ -90,6 +91,7 @@ CANVASES = {
         "cap_margin": 150,
         "shot_w": 1480,
         "shot_top": 1010,
+        "cap_gap": 110,
         "corner": 52,
         "sash": 0.20,
     },
@@ -224,6 +226,14 @@ def compose(path, caption_text, seal=None):
         d.text(((W - d.textlength(ln, font=f)) / 2, y), ln, font=f, fill=INK)
         y += lh
 
+    # Where the screen starts.
+    #
+    # Below the caption rather than at a fixed line. A one line caption and
+    # a two line caption end in different places, and a fixed start meant
+    # the second line of a long one sat a few points off the top of the
+    # phone. Measured, they cannot collide however long the words are.
+    shot_top = max(C["shot_top"], y + C["cap_gap"])
+
     shot_w = C["shot_w"]
     sh = int(shot_w * shot.size[1] / shot.size[0])
     small = shot.resize((shot_w, sh), Image.LANCZOS)
@@ -232,10 +242,10 @@ def compose(path, caption_text, seal=None):
 
     # a shadow, so the screen sits on the ground rather than in it
     sha = Image.new("L", (W, H), 0)
-    sha.paste(mask, (x, C["shot_top"] + 34))
+    sha.paste(mask, (x, shot_top + 34))
     sha = sha.filter(ImageFilter.GaussianBlur(52)).point(lambda v: int(v * 0.55))
     im = Image.composite(Image.new("RGB", (W, H), (0, 0, 0)), im, sha)
-    im.paste(small, (x, C["shot_top"]), mask)
+    im.paste(small, (x, shot_top), mask)
     return device, im
 
 

@@ -475,6 +475,42 @@ if (!store.includes('version: 14')) {
   }
 }
 
+/* ---- 19. a start that can fail, and an answer thrown away ---- */
+{
+  /* startUclFromDynasty returns null when the career has fewer than
+     eleven starters, and the screen ignored it: the campaign never
+     began, the code navigated anyway, the next screen found no run and
+     offered to pick somebody else's club. A career with one empty shirt
+     was quietly told to abandon its own.
+
+     Anything that can answer null has to be asked. */
+  const CAN_FAIL = ['startUclFromDynasty', 'startWorldCupFromDynasty', 'startCupFromDynasty'];
+  for (const f of files) {
+    const src = noComments(readFileSync(f, 'utf8'));
+    const lines = src.split(String.fromCharCode(10));
+    lines.forEach((l, i) => {
+      for (const fn of CAN_FAIL) {
+        const at = l.indexOf(fn + '(');
+        if (at < 0) continue;
+        const lead = l.slice(0, at);
+        /* the declaration itself, or an import of it, is not a call */
+        if (lead.includes('import') || lead.includes('function') || lead.includes('export')) {
+          continue;
+        }
+        const before = l.slice(0, at);
+        /* assigned, returned or tested: the answer is being used */
+        if (/[=(]\s*$|return\s*$|!\s*$/.test(before.trimEnd() + ' '.repeat(0)) ||
+            before.includes('=') || before.includes('return') || before.includes('!')) {
+          continue;
+        }
+        fail(
+          `${f}:${i + 1} calls ${fn} and throws the answer away. It returns null when the squad cannot field a side, and ignoring that sends somebody to a screen with nothing on it.`,
+        );
+      }
+    });
+  }
+}
+
 console.log(
   failures ? `\n${failures} problems.\n` : '\nEvery source rule holds.\n',
 );

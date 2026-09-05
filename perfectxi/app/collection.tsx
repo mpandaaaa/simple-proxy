@@ -126,6 +126,13 @@ export default function CollectionScreen() {
           {best.length ? (
             <>
               <Text style={[text.label, styles.sectFirst]}>Your best</Text>
+              {/*
+                * A row that runs off the edge should look like it runs
+                * off the edge. Cut square, the last card reads as a
+                * drawing mistake rather than as more to come, so the
+                * right hand end fades into the page instead.
+                */}
+              <View style={styles.shelfWrap}>
               <ScrollView
                 keyboardShouldPersistTaps="handled"
                 horizontal
@@ -146,6 +153,8 @@ export default function CollectionScreen() {
                   />
                 ))}
               </ScrollView>
+              <View style={styles.shelfFade} pointerEvents="none" />
+              </View>
             </>
           ) : (
             <View style={styles.empty}>
@@ -407,7 +416,17 @@ const styles = StyleSheet.create({
   sect: { marginTop: space.s5, marginBottom: space.s2 },
   note: { ...text.small, fontSize: 12, lineHeight: 18, color: color.text3, marginBottom: space.s3 },
 
-  shelf: { gap: space.s2, paddingRight: space.s4 },
+  shelf: { gap: space.s2, paddingRight: space.s6 },
+  shelfWrap: { position: 'relative' },
+  shelfFade: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: 0,
+    width: 56,
+    experimental_backgroundImage:
+      `linear-gradient(90deg, ${alpha(color.bg, 0)} 0%, ${color.bg} 82%)`,
+  },
   mini: {
     width: 100,
     paddingVertical: space.s3,

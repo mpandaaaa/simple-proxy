@@ -272,7 +272,7 @@ export default function Home() {
             </View>
           </View>
           <Text style={styles.tagline}>
-            Unofficial fan draft game · free, paid for by adverts
+            Unofficial fan draft game · 1992 to 2026
           </Text>
         </View>
       </Rise>

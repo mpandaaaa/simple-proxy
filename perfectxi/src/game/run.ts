@@ -100,9 +100,38 @@ function subscribe(l: () => void) {
   };
 }
 
-/** A seed the run can be replayed from, even for casual play. */
+/**
+ * A seed the run can be replayed from, even for casual play.
+ *
+ * Mixed from three sources rather than taken straight from Math.random.
+ *
+ * Two devices reported the same spins in the same order. That turned out
+ * to be the Daily, which is meant to be identical everywhere, but the
+ * report is one nothing here could have ruled out: Math.random is seeded
+ * by the engine, and how it is seeded is not this app's to know. If two
+ * phones ever did start their generators the same way, every draft on
+ * both would match, and it would look exactly like this.
+ *
+ * So the clock and a counter go in as well. The clock differs between
+ * two people to the millisecond, and the counter differs between two
+ * draws on the same device inside the same millisecond. Neither is
+ * random on its own and neither needs to be: they only have to differ,
+ * and mixing them means a seed is identical only if all three are.
+ *
+ * The mix is the same avalanche used elsewhere, which spreads a small
+ * difference in the input across the whole output. One millisecond apart
+ * gives two unrelated seeds rather than two adjacent ones.
+ */
+let drawn = 0;
+
 function freshSeed(): number {
-  return Math.floor(Math.random() * 0x7fffffff);
+  drawn += 1;
+  let h = (Math.floor(Math.random() * 0xffffffff) ^ Date.now() ^ (drawn * 0x9e3779b9)) >>> 0;
+  h = Math.imul(h ^ (h >>> 16), 0x21f0aaad) >>> 0;
+  h = Math.imul(h ^ (h >>> 15), 0x735a2d97) >>> 0;
+  h = (h ^ (h >>> 15)) >>> 0;
+  /* positive and inside the range the engine expects */
+  return h % 0x7fffffff;
 }
 
 export function startRun(
