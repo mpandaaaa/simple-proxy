@@ -74,11 +74,14 @@ import {
   careerStore,
   progressStore,
   dailyStore,
+  displayName,
+  me,
   weeklyStore,
   duelStore,
   remember,
   type SeasonRecord,
 } from '../../src/save';
+import { dailyBoard, submitRun } from '../../src/net/leaderboard';
 import { achievementFor, earn, foldSeason } from '../../src/game/achievements';
 import { showBreak } from '../../src/game/ads';
 import { pushUnlocks } from '../../src/game/unlocks';
@@ -268,6 +271,26 @@ export default function Results() {
           at: Date.now(),
         }),
       );
+
+      /*
+       * And offered to the board, which is a different thing from being
+       * banked.
+       *
+       * Banking is the player's own record and happens whatever the
+       * network is doing. This is a request to a server that replays the
+       * run and decides for itself what it scored, so nothing here waits
+       * on it and nothing here is worse if it never arrives. A season is
+       * a season whether or not anybody else ever sees it.
+       */
+      void submitRun({
+        board: dailyBoard(run.daily as number),
+        player: me().id,
+        handle: displayName(),
+        picks: run.picks,
+        pts: r.pts,
+        gf: r.gf,
+        ga: r.ga,
+      });
     }
 
     /* A challenge set becomes a code: the seed, the rules and the score

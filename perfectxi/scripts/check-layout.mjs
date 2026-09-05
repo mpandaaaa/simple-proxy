@@ -117,6 +117,61 @@ for (const g of GRIDS) {
   }
 }
 
+
+/* ---- the two pane split, at every window it can appear on ---- */
+/*
+ * Split puts two panes side by side in landscape on a tablet. The same
+ * arithmetic applies as to a grid: two panes plus the gap between them
+ * must fit, or the second drops underneath and the screen is a stack
+ * with a hole in it.
+ */
+{
+  const RATIOS = [
+    { where: 'the draft board, pitch beside the reel', ratio: 0.52, gap: 16, min: 900 },
+  ];
+  for (const sp of RATIOS) {
+    for (const d of WIDTHS) {
+      const wide = d.w >= WIDE_AT;
+      const landscape = d.w > d.h;
+      const room = Math.min(d.w, WIDE_CAP) - S4 * 2;
+      const splits = wide && landscape && room >= sp.min;
+      if (!splits) continue;
+
+      const main = Math.floor((room - sp.gap) * sp.ratio);
+      const side = room - sp.gap - main;
+      const used = main + sp.gap + side;
+
+      if (used > room) {
+        fail(`${sp.where} on ${d.name}: ${main} plus ${side} plus a ${sp.gap} gap is ${used}, wider than ${room}.`);
+      }
+      if (main < 300 || side < 300) {
+        fail(`${sp.where} on ${d.name}: a pane came out ${Math.min(main, side)} wide, too narrow to hold anything.`);
+      }
+      checked++;
+    }
+  }
+}
+
+/* ---- every modal is capped, so none of them fill a tablet ---- */
+{
+  const MODALS = [
+    ['src/ui/components/MatchLive.tsx', 'the match broadcast'],
+    ['src/ui/components/Confirm.tsx', 'the confirm dialog'],
+    ['src/ui/components/PackOpen.tsx', 'the pack opening'],
+    ['src/ui/components/Sheet.tsx', 'the bottom sheet'],
+    ['src/ui/components/PlayerCard.tsx', 'the player card'],
+  ];
+  const fs = await import('node:fs');
+  for (const [file, what] of MODALS) {
+    const src = fs.readFileSync(file, 'utf8');
+    const caps = [...src.matchAll(/maxWidth:\s*(\d+)/g)].map((m) => Number(m[1]));
+    const fixed = /width:\s*CARD_W/.test(src);
+    if (!caps.length && !fixed) {
+      fail(`${what} has no width cap, so on a thirteen inch iPad it fills the screen.`);
+    }
+  }
+}
+
 /* ---- the readable cap still applies to prose on a tablet ---- */
 {
   const src = (await import('node:fs')).readFileSync('src/ui/tokens.ts', 'utf8');

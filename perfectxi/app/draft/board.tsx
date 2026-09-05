@@ -15,6 +15,7 @@ import {
   ClubDisc,
   Sheet,
   Confirm,
+  Split,
 } from '../../src/ui/components';
 import type { Anchor } from '../../src/ui/components/PlayerCard';
 import type { SlotRect } from '../../src/ui/components/Pitch';
@@ -243,8 +244,17 @@ export default function DraftBoard() {
     n: state.squad.filter((s) => !s.player && s.pos === p).length,
   })).filter((x) => x.n > 0);
 
-  const header = (
-    <View style={styles.header}>
+  /*
+   * The pitch, and everything else.
+   *
+   * On a phone these are one column, exactly as they were. Turned
+   * sideways on a tablet they become two panes, because the pitch and
+   * the reel are the two things being looked at together: stacking them
+   * on a wide screen pushes the reel below the fold and leaves the pitch
+   * enormous and alone.
+   */
+  const pitchPane = (
+    <>
       <OverallStrip overall={avg} lines={lines} />
 
       <View style={styles.block}>
@@ -257,7 +267,11 @@ export default function DraftBoard() {
           measureTick={measureTick}
         />
       </View>
+    </>
+  );
 
+  const controlPane = (
+    <>
       {/* Hidden until the first spin, exactly as the site hides it. */}
       {board || pending ? (
         <View style={styles.block}>
@@ -375,6 +389,12 @@ export default function DraftBoard() {
           </View>
         </>
       ) : null}
+    </>
+  );
+
+  const header = (
+    <View style={styles.header}>
+      <Split main={pitchPane} side={controlPane} ratio={0.52} />
     </View>
   );
 

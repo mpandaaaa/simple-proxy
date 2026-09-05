@@ -13,6 +13,7 @@ import {
   type Pick,
   type SeasonResult,
   type SpinResult,
+  type SubmittedPick,
 } from '../engine';
 
 /**
@@ -60,6 +61,21 @@ export type Run = {
    * has its own review.
    */
   h2h: boolean;
+  /**
+   * Every pick in the order it was made, and the rerolls spent before it.
+   *
+   * Kept because it is the only thing that lets a leaderboard prove a run
+   * was played rather than typed. A seed and a config fix which club
+   * seasons are dealt, so the seed plus this list replays the whole run
+   * spin for spin, and the server can work out the score for itself
+   * instead of believing the phone.
+   *
+   * Nothing else reads it, and it leaves the phone only when somebody
+   * submits to a board.
+   */
+  picks: SubmittedPick[];
+  /** rerolls spent since the last pick, waiting to be recorded with it */
+  spentRerolls: number;
   state: DraftState;
   /** the board on the table right now, unfiltered by blitz */
   board: Pick[] | null;
@@ -108,6 +124,8 @@ export function startRun(
     duel: kind.duel ?? null,
     sending: kind.sending ?? false,
     h2h: false,
+    picks: [],
+    spentRerolls: 0,
     state: newDraft(config),
     board: null,
     club: null,
@@ -145,6 +163,10 @@ export function startRunWithSquad(
     duel: null,
     sending: false,
     h2h: true,
+    /* a head to head XI is drafted by its own rules and is never ranked
+       on a board, so there is no pick list to record */
+    picks: [],
+    spentRerolls: 0,
     state: { ...base, squad, filled: squad.filter((s) => s.player).length },
     board: null,
     club: null,
@@ -192,7 +214,20 @@ export function pickPlayer(player: Pick, slotIndex: number): void {
   if (!run) return;
   const next = place(run.state, player, slotIndex);
   if (next === run.state) return;
-  run = { ...run, state: next, board: null, club: null, season: null };
+  run = {
+    ...run,
+    state: next,
+    /* recorded as it happens, because after the fact there is no way to
+       know which board a player came off or what was spent getting there */
+    picks: [
+      ...run.picks,
+      { name: player.n, slot: slotIndex, rerolls: run.spentRerolls },
+    ],
+    spentRerolls: 0,
+    board: null,
+    club: null,
+    season: null,
+  };
   emit();
 }
 
@@ -203,6 +238,8 @@ export function spendReroll(): boolean {
   run = {
     ...run,
     state: { ...run.state, rerolls: run.state.rerolls + 1 },
+    /* counted against the pick this reroll was spent looking for */
+    spentRerolls: run.spentRerolls + 1,
     board: null,
     club: null,
     season: null,

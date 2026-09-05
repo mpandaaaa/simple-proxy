@@ -1,0 +1,181 @@
+import { defaultConfig } from './types.js';
+import { DAILY_EPOCH } from './daily.js';
+/**
+ * The Weekly Event.
+ *
+ * A rotating rule twist, the same one for everybody, running Monday to
+ * Monday. Where the Daily is one attempt at one board, this is one rule
+ * for seven days and as many attempts as you like: the Daily is the
+ * crossword and this is the practice net.
+ *
+ * That difference is the whole reason both exist. A player who has used
+ * their attempt at today's puzzle still has something to open the app
+ * for, and a rule they have a week to work out rewards a different kind
+ * of thinking from a board they see once.
+ *
+ * Five twists, named as the site names them, rotating in order so it is
+ * always knowable what next week is. Each one is a real constraint rather
+ * than a label: a different era, a different shape, or a rule about who
+ * is allowed on the board at all.
+ */
+const WEEK = 7 * 86400000;
+/**
+ * Which week a moment belongs to.
+ *
+ * Counted from the same epoch as the Daily, so week one contains puzzle
+ * one, and on the same UTC boundary for the same reason.
+ */
+export function weekNumber(now = Date.now()) {
+    return Math.floor((now - DAILY_EPOCH) / WEEK) + 1;
+}
+export function nextWeekAt(now = Date.now()) {
+    return DAILY_EPOCH + weekNumber(now) * WEEK;
+}
+/** How long is left of this week, in whole seconds. */
+export function untilNextWeek(now = Date.now()) {
+    return Math.max(0, Math.round((nextWeekAt(now) - now) / 1000));
+}
+export const TWISTS = [
+    {
+        id: 'nineties',
+        name: 'Nineties Week',
+        rule: 'Only 1992 to 1999.',
+        note: 'Cantona, Shearer and Bergkamp, and nobody who came after them.',
+        apply: (c) => ({ ...c, eraFrom: 1992, eraTo: 1999 }),
+    },
+    {
+        id: 'y2k',
+        name: 'Y2K Week',
+        rule: 'Only 2000 to 2009.',
+        note: 'The Invincibles, the Treble chasers and the last of the four four two.',
+        apply: (c) => ({ ...c, eraFrom: 2000, eraTo: 2009 }),
+    },
+    {
+        id: 'moneyball',
+        name: 'Moneyball',
+        rule: 'No ratings, and only the top three of every board.',
+        note: 'You are picking on the name and the club, with no time to think about it.',
+        apply: (c) => ({ ...c, showRatings: false, blitz: true, eraFrom: 1992, eraTo: 2026 }),
+    },
+    {
+        id: 'modern',
+        name: 'Modern Era',
+        rule: 'Only 2015 to 2026, in a 4-2-4.',
+        note: 'The best players in the world in the most attacking shape there is.',
+        apply: (c) => ({ ...c, eraFrom: 2015, eraTo: 2026, formation: '4-2-4' }),
+    },
+    {
+        id: 'homegrown',
+        name: 'Homegrown',
+        rule: 'English players only.',
+        note: 'Thirty five seasons of the Premier League and only the ones who came through it.',
+        apply: (c) => ({ ...c, nation: 'England', eraFrom: 1992, eraTo: 2026 }),
+    },
+];
+/**
+ * A week's event.
+ *
+ * The twist rotates in order rather than at random, so somebody who has
+ * played four of them knows what the fifth is and can look forward to it.
+ * The board itself is not fixed: every attempt spins fresh, because a
+ * week of the same eleven names would be one puzzle stretched over seven
+ * days rather than a rule to play with.
+ */
+export function weeklyFor(n) {
+    const twist = TWISTS[(((n - 1) % TWISTS.length) + TWISTS.length) % TWISTS.length];
+    return {
+        n,
+        twist,
+        config: twist.apply({ ...defaultConfig, diff: 'normal' }),
+    };
+}
+/** This week's, from the clock. */
+export function thisWeek(now = Date.now()) {
+    return weeklyFor(weekNumber(now));
+}
+/**
+ * What a twist is called, from the id a record kept.
+ *
+ * A week filed away holds the id rather than the name, because the name
+ * is wording and wording changes. The list of weeks you have played still
+ * has to read as English.
+ */
+export function twistName(id) {
+    return TWISTS.find((t) => t.id === id)?.name ?? id;
+}
+/** What next week will be, because knowing is half of coming back. */
+export function nextTwist(now = Date.now()) {
+    return weeklyFor(weekNumber(now) + 1).twist;
+}
+export const WEEKLY_KEEP = 12;
+export const EMPTY_WEEKLY = {
+    week: 0,
+    best: null,
+    past: [],
+    streak: 0,
+};
+/**
+ * Bank an attempt at the week.
+ *
+ * As many goes as you like, and only the best of them is kept. Moving to
+ * a new week files the old best away and starts again, and the streak
+ * counts weeks you turned up for rather than weeks you won.
+ */
+export function bankWeekly(record, result) {
+    // A new week: file the old one and start again.
+    if (result.n !== record.week) {
+        const continued = result.n === record.week + 1;
+        return {
+            week: result.n,
+            best: { ...result, attempts: 1 },
+            past: record.best ? [record.best, ...record.past].slice(0, WEEKLY_KEEP) : record.past,
+            streak: record.best ? (continued ? record.streak + 1 : 1) : 1,
+        };
+    }
+    const attempts = (record.best?.attempts ?? 0) + 1;
+    const better = !record.best || result.pts > record.best.pts;
+    return {
+        ...record,
+        best: better ? { ...result, attempts } : { ...record.best, attempts },
+    };
+}
+/** This week's best, if this week has been played. */
+export function bestThisWeek(record, n) {
+    return record.week === n ? record.best : null;
+}
+/** The streak as it stands now, rather than as it stood when it was set. */
+export function weeklyStreak(record, n) {
+    if (!record.best)
+        return 0;
+    return n - record.week <= 1 ? record.streak : 0;
+}
+export const EMPTY_DUELS = {
+    played: 0,
+    won: 0,
+    drew: 0,
+    lost: 0,
+    results: [],
+    outstanding: null,
+};
+/**
+ * A challenge you have just set.
+ *
+ * Only the code is kept. It is not a played duel and it never becomes
+ * one, because a code sent offline cannot tell you what the other person
+ * did with it: the won, drawn and lost column counts duels that were
+ * actually decided, and a challenge sitting in somebody's messages is
+ * not one of those.
+ */
+export function sendDuel(record, code) {
+    return { ...record, outstanding: code };
+}
+export function bankDuel(record, result) {
+    return {
+        played: record.played + 1,
+        won: record.won + (result.outcome === 'won' ? 1 : 0),
+        drew: record.drew + (result.outcome === 'drew' ? 1 : 0),
+        lost: record.lost + (result.outcome === 'lost' ? 1 : 0),
+        results: [result, ...record.results].slice(0, 12),
+        outstanding: result.sent ? result.code : record.outstanding,
+    };
+}

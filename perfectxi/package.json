@@ -110,11 +110,13 @@
     "progress": "tsc -p tsconfig.headless.json && node scripts/check-progress.mjs",
     "online": "node scripts/check-online.mjs",
     "audit": "node scripts/audit.mjs",
+    "edge": "node scripts/build-edge.mjs",
+    "leaderboard": "tsc -p tsconfig.headless.json && node scripts/check-leaderboard.mjs",
     "stores": "tsc -p tsconfig.headless.json && node scripts/check-stores.mjs",
     "layout": "node scripts/check-layout.mjs",
     "privacy": "node scripts/check-privacy.mjs",
     "source": "node scripts/check-source.mjs",
-    "verify": "npm run typecheck && npm run source && npm run audit && npm run privacy && npm run layout && npm run golden && npm run dynasty && npm run realism && npm run scout && npm run pyramid && npm run cups && npm run people && npm run screens && npm run daily && npm run playtoday && npm run h2h && npm run progress && npm run worldcup && npm run tourney && npm run wcdraft && npm run ucl && npm run ucldraft && npm run cabinet && npm run tscreens && npm run slots && npm run nav && npm run ads && npm run dyneurope && npm run cup && npm run career && npm run save && npm run stores"
+    "verify": "npm run typecheck && npm run source && npm run audit && npm run privacy && npm run layout && npm run golden && npm run dynasty && npm run realism && npm run scout && npm run pyramid && npm run cups && npm run people && npm run screens && npm run daily && npm run playtoday && npm run h2h && npm run progress && npm run worldcup && npm run tourney && npm run wcdraft && npm run ucl && npm run ucldraft && npm run cabinet && npm run tscreens && npm run slots && npm run nav && npm run ads && npm run dyneurope && npm run cup && npm run career && npm run save && npm run stores && npm run leaderboard"
   },
   "private": true
 }

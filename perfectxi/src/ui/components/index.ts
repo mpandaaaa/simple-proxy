@@ -1,6 +1,7 @@
 export { Screen, Section } from './Screen';
 export { ModeScreen } from './ModeScreen';
 export { Grid } from './Grid';
+export { Split } from './Split';
 export { Surface } from './Surface';
 export { Pill } from './Pill';
 export type { PillTone } from './Pill';

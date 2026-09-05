@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Share, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { go, back } from '../src/game/nav';
+import { ONLINE_CONFIGURED } from '../src/net/client';
+import { dailyBoard } from '../src/net/leaderboard';
 import {
   ModeScreen,
   Press,
@@ -153,6 +155,26 @@ export default function Daily() {
             <Press onPress={share} feel="light" scaleTo={0.98} style={styles.share}>
               <Text style={styles.shareText}>Share the scorecard</Text>
             </Press>
+
+            {/* Only once it has been played. A board is other people's
+                answers to a puzzle, and reading them before you have
+                given yours spoils the one attempt you get. */}
+            {ONLINE_CONFIGURED ? (
+              <Press
+                onPress={() => {
+                  haptic('light');
+                  go({
+                    pathname: '/leaderboard',
+                    params: { board: dailyBoard(mine.n), title: `Daily #${mine.n}` },
+                  });
+                }}
+                feel="none"
+                scaleTo={0.98}
+                style={styles.board}
+              >
+                <Text style={styles.boardText}>See how everyone did</Text>
+              </Press>
+            ) : null}
           </View>
         </Rise>
       ) : (
@@ -349,6 +371,15 @@ const styles = StyleSheet.create({
   resultLine: { ...text.small, fontSize: 12.5, lineHeight: 18, marginTop: -space.s2 },
   card: { alignItems: 'center', marginTop: space.s4, gap: 3 },
   cardRow: { fontSize: 19, lineHeight: 24, letterSpacing: 1 },
+  board: {
+    marginTop: space.s2,
+    paddingVertical: space.s3,
+    alignItems: 'center',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: alpha(hue.emerald, 0.4),
+  },
+  boardText: { ...text.button, fontSize: 14, color: hue.emerald },
   share: {
     alignSelf: 'stretch',
     marginTop: space.s4,

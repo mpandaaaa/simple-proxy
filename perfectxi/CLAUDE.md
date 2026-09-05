@@ -67,6 +67,9 @@ new phase.
 - Leaderboards are verified by replaying submitted runs server side, which
   works because a seed plus config plus eleven picks fully determines a
   season. Game Center scores alone are client submitted and spoofable.
+  This is built. The phone has no permission to write to the board at
+  all: it asks a function to replay the run and decide. `docs/LEADERBOARD.md`
+  has the two dashboard steps that are left.
 - The engine carries an `ENGINE_VERSION`. Client and server must replay with
   the same build or honest players get rejected after an app update.
 
@@ -117,6 +120,10 @@ src/game/reset.ts    throwing a save away, memory as well as disk
 src/game/backup.ts   the whole save to a file, and back again
 src/game/remind.ts   the one notification, off unless asked for
 src/save/            versioned storage, migration chain, settings slice
+src/engine/leaderboard.ts  replaying a submitted run to prove it happened
+src/net/leaderboard.ts     sending one, and reading a board
+supabase/leaderboard.sql   the table, and the rule that no client may write
+supabase/functions/submit-run  the only thing that may. Its _engine is generated
 web/app-privacy.html the app's privacy policy as a page, for the App
                      Store listing. the website has its own, different,
                      already live at perfectxi.app/privacy
@@ -257,7 +264,9 @@ npm run wcdraft                        # what a drafted World XI is worth
 npm run ucl                            # the league phase and the format
 npm run ucldraft                       # what a drafted Champions XI is worth
 npm run audit                          # the fault classes that reach a phone
+npm run edge                           # package the engine for the server
 npm run layout                         # every grid at every window size
+npm run leaderboard                    # eleven real runs in, fifteen forgeries out
 npm run stores                         # every saved record survives a bad disk
 npm run privacy                        # manifest and both privacy pages agree
 npm run source                         # the mistakes that reached a phone once

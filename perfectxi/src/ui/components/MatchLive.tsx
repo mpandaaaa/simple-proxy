@@ -738,6 +738,20 @@ const styles = StyleSheet.create({
 
   card: {
     flex: 1,
+    /*
+     * A broadcast, not a billboard.
+     *
+     * The card filled the window, which is right on a phone and wrong on
+     * a tablet: stretched across a thirteen inch screen the score sits
+     * alone at the top and the commentary becomes a long thin ribbon
+     * with a hand's width of empty either side. A match on television is
+     * a framed picture whatever size the set is.
+     *
+     * A phone is narrower than this, so on a phone nothing changes.
+     */
+    width: '100%',
+    maxWidth: 760,
+    alignSelf: 'center',
     borderRadius: 26,
     borderWidth: 1,
     borderColor: NIGHT.edge,

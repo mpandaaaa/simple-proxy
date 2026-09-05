@@ -176,7 +176,7 @@ export function Sheet({
         </Animated.View>
 
         <GestureDetector gesture={pan}>
-          <Animated.View style={[styles.sheet, sheetStyle]} onLayout={onLayout}>
+          <Animated.View style={[styles.sheet, styles.sheetWrap, sheetStyle]} onLayout={onLayout}>
             {bare ? (
               children
             ) : (
@@ -210,6 +210,13 @@ export function Sheet({
 
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: 'flex-end' },
+  /*
+   * A sheet the width of a thirteen inch iPad is not a sheet, it is a
+   * wall coming up off the bottom of the screen. Capped and centred, so
+   * it stays the same object it is on a phone. A phone is narrower than
+   * this, so a phone is unchanged.
+   */
+  sheetWrap: { width: '100%', maxWidth: 620, alignSelf: 'center' },
   dim: {
     position: 'absolute',
     top: 0,

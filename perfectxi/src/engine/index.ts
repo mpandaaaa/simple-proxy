@@ -477,3 +477,4 @@ export {
   cupReached,
 } from './cupTie';
 export type { CupSide, CupRound, CupMatch, CupRun as CupTieRun, CupPlayed } from './cupTie';
+export * from './leaderboard';
