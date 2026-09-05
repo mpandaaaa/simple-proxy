@@ -31,6 +31,14 @@
       "small": "Games, no defeats"
     }
   },
+  "04-champions": {
+    "line": "Take the title",
+    "seal": {
+      "eyebrow": "One season",
+      "big": "38",
+      "small": "Games, one title"
+    }
+  },
   "05-table": {
     "line": "A real table, earned",
     "seal": {

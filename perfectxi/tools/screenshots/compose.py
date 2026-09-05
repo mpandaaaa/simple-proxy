@@ -108,14 +108,22 @@ CANVASES["ipad-legacy"] = {**CANVASES["ipad"], "size": (2048, 2732)}
 
 BY_SIZE = {c["size"]: (name, c) for name, c in CANVASES.items()}
 
-# What an eleven inch iPad produces. Not a size Apple accepts for the
-# listing, but worth naming, because "which is neither canvas" is a much
-# worse message than being told the iPad is the wrong one.
-ELEVEN_INCH = {
-    (1640, 2360): "iPad Air 11 inch",
-    (1668, 2388): "iPad Air or Pro 11 inch",
-    (1620, 2160): "iPad 10th generation",
-    (1488, 2266): "iPad mini",
+# Where a capture may come from, when it is not itself a canvas size.
+#
+# An eleven inch iPad captures 1640 wide. The iPad frame draws the screen
+# 1480 wide inside a 2064 wide canvas, so an eleven inch capture is
+# reduced to fit and never enlarged, and the file Apple receives is a
+# genuine 2064 by 2752 image with a real screen inside it. What Apple
+# refuses is a small file uploaded as though it were a large one, and
+# this is not that: nothing is stretched and no detail is invented.
+#
+# A thirteen inch capture is still the better one, because it is a wider
+# layout showing more of the app at once. This is the fallback.
+SOURCES = {
+    (1640, 2360): ("ipad", "iPad Air 11 inch"),
+    (1668, 2388): ("ipad", "iPad Air or Pro 11 inch"),
+    (1620, 2160): ("ipad", "iPad 10th generation"),
+    (1488, 2266): ("ipad", "iPad mini"),
 }
 
 STRIP_STATUS_BAR = True
@@ -213,31 +221,33 @@ def rounded_mask(size, radius):
 
 def compose(path, caption_text, seal=None):
     shot = Image.open(path).convert("RGB")
-    if shot.size not in BY_SIZE:
-        if shot.size in ELEVEN_INCH:
-            raise SystemExit(
-                f"\n{os.path.basename(path)} is {shot.size[0]} by {shot.size[1]}, "
-                f"which is an {ELEVEN_INCH[shot.size]}." + '\n\n' +
-                "Apple wants the thirteen inch class for the iPad slot, and it" +
-                " rejects a smaller one scaled up. An eleven inch iPad cannot" +
-                " produce it." + '\n\n' +
-                "Two ways round it: borrow a thirteen inch iPad, or turn iPad" +
-                " support off for this release and ship iPhone only." + '\n'
-            )
-        allowed = '\n  '.join(
-            f"{n:12} {c['size'][0]} by {c['size'][1]}" for n, c in CANVASES.items())
+    if shot.size in BY_SIZE:
+        device, C = BY_SIZE[shot.size]
+    elif shot.size in SOURCES:
+        device = SOURCES[shot.size][0]
+        C = CANVASES[device]
+    else:
+        known = [f"{n:10} {c['size'][0]} by {c['size'][1]}"
+                 for n, c in CANVASES.items()]
+        known += [f"{'from':10} {w} by {h}, an {what}"
+                  for (w, h), (_, what) in SOURCES.items()]
         raise SystemExit(
-            f"\n{os.path.basename(path)} is {shot.size[0]} by {shot.size[1]}, "
-            f"which is none of the canvases." + '\n\n' +
-            f"Apple accepts:" + '\n  ' + allowed + '\n\n' +
-            "Do not resize it. Capture it again on a device of the right size." + '\n'
+            '\n' + os.path.basename(path) +
+            f" is {shot.size[0]} by {shot.size[1]}, which is not a size any"
+            " frame is built for." + '\n\n' + "Known sizes:" + '\n  ' +
+            '\n  '.join(known) + '\n\n' +
+            "Do not resize it by hand. Capture it again on one of those." + '\n'
         )
 
-    device, C = BY_SIZE[shot.size]
     W, H = C["size"]
 
+    # The status bar comes off the capture, and the capture may be smaller
+    # than the canvas, so the capture's own size is what bounds the crop.
+    # Cropping to the canvas instead pads a smaller one with black down two
+    # edges, which is the sort of thing that only shows up once it is live.
+    src_w, src_h = shot.size
     if STRIP_STATUS_BAR:
-        shot = shot.crop((0, C["status_bar"], W, H))
+        shot = shot.crop((0, C["status_bar"], src_w, src_h))
 
     im = wash(W, H)
     im = Image.composite(Image.new("RGB", (W, H), (120, 252, 190)), im,

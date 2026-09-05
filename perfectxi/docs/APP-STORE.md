@@ -95,15 +95,34 @@ as part of `npm run verify`. They drifted apart once, which is why it
 exists.
 
 ### 3. Screenshots
-Six point seven inch, which is an iPhone 15 or 16 Pro Max. Apple takes
-that one size and scales it down for the rest. Five or six is plenty:
+Two sizes, and Apple scales each one down for the smaller devices in its
+class. Both are built by `python tools/screenshots/compose.py`, which puts
+the caption and the ground around a capture and never draws any part of
+the app itself.
 
-1. The home screen, showing the modes
-2. A draft board mid spin
-3. The season table with a grade
-4. A Champions League night with the commentary running
-5. The trophy cabinet with shelves open
-6. A pack being opened
+**iPhone, 1320 by 2868**, the six point nine inch class. Ten frames, in
+this order, because the draft and the unbeaten run are what the game is:
+
+1. `01-card` a card being revealed
+2. `02-reel` the wheel mid spin
+3. `03-xi` the finished eleven
+4. `04-unbeaten` the 38 and 0 chase
+5. `05-table` the final table
+6. `06-match` a match running minute by minute
+7. `07-ucl` a Champions League night
+8. `08-dynasty` the career hub
+9. `09-history` the cabinet
+10. `10-album` the album
+
+**iPad, 2064 by 2752**, the thirteen inch class. Eight frames, sharing
+the phone's captions where the screen is the same.
+
+An eleven inch iPad captures 1640 by 2360, which Apple will not accept as
+an upload. It does not need to: the iPad frame draws the screen 1480 wide
+inside a 2064 wide canvas, so the capture is reduced to fit rather than
+enlarged, and the finished file is a real 2064 by 2752 image. A thirteen
+inch capture would still be better, because it is a wider layout with
+more on screen, so recapture there if one is ever to hand.
 
 ### 4. Age rating
 Answer the questionnaire honestly. The answers that matter:
