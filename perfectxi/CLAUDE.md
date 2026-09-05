@@ -104,6 +104,7 @@ src/data/dynasty.ts  GENERATED. birth years, ageing curves, capacities
 data/perfectxi-database.json  the source of truth, committed
 src/game/run.ts      the run in progress, held outside React
 src/ui/tokens.ts     pine emerald palette, spacing, radii, tap targets
+src/ui/layout.ts     how much room this screen has, and how many columns
 src/ui/ucl.ts        the Champions League blue, and its match night
 src/ui/type.ts       Anton, Barlow Condensed, Inter across three roles
 src/ui/feel.ts       reduce motion and haptics, both gated in one place
@@ -125,6 +126,29 @@ vendor/index.html    the web build, not committed. Reference only now
 
 `Press` is the press state used by anything bigger than a button: a spring
 scale on the native thread, no setState, no scale at all under Reduce Motion.
+
+## Phone and tablet
+
+The app ships on both, and the rule is one sentence: **text stays in a
+column, everything else uses the room.** A line of body text the full
+width of a thirteen inch iPad is harder to read, not easier, so prose
+stays capped at `READABLE`. A wall of cards, a league table or a row of
+mode tiles is scanned rather than read, and on a tablet it should fill
+the space instead of sitting in a phone sized ribbon down the middle.
+
+`Screen` and `ModeScreen` take a `wide` prop that says which kind of page
+this is. `useLayout()` in `src/ui/layout.ts` answers how much room there
+actually is and how many columns fit, measured from the window rather
+than from the device, so it is right in split screen and right the
+instant an iPad is turned.
+
+Cell widths are worked out in points, never percentages. Four cells at
+twenty five percent plus three gaps is wider than the row and the fourth
+wraps. `npm run layout` proves every grid fits at eleven real window
+sizes.
+
+The phone is locked to portrait and the iPad is not, which is set in
+`app.config.js` with the two `UISupportedInterfaceOrientations` keys.
 
 `NumberSlot` carries an overflow guard and takes digits only. Word values go
 in `Pill`, never a numeric slot.
@@ -232,6 +256,7 @@ npm run tourney                        # the minute by minute broadcast
 npm run wcdraft                        # what a drafted World XI is worth
 npm run ucl                            # the league phase and the format
 npm run ucldraft                       # what a drafted Champions XI is worth
+npm run layout                         # every grid at every window size
 npm run privacy                        # manifest and both privacy pages agree
 npm run source                         # the mistakes that reached a phone once
 npm run cabinet                        # every achievement can be earned

@@ -90,7 +90,9 @@ export default function Club() {
   const kit = wear(clubColour(career.club));
 
   return (
-    <ModeScreen overline={career.club} title="The club" onBack={() => back()}>
+    <ModeScreen
+        wide
+        overline={career.club} title="The club" onBack={() => back()}>
       {/* ---- the ground ---- */}
       <View style={[styles.ground, { borderColor: kit.lineSoft, experimental_backgroundImage: kit.grad }]}>
         <Shine radius={radius.xl} group="feature" bevel={false} clip={false} />

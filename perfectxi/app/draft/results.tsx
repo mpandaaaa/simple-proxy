@@ -496,6 +496,7 @@ ${challenge}
       <Stack.Screen options={{ gestureEnabled: false }} />
 
       <ModeScreen
+        wide
         overline="Season complete"
         title={config.formation}
         onBack={() => setLeaving(true)}

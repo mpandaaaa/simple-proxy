@@ -96,6 +96,7 @@ export default function UclPick() {
   return (
     <>
       <ModeScreen
+        wide
         overline="Europe"
         title="Champions League"
         scroll={false}

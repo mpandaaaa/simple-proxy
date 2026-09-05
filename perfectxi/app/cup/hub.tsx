@@ -28,7 +28,9 @@ export default function CupHub() {
 
   if (!run) {
     return (
-      <ModeScreen overline="Any era, any club" title="The Cup" onBack={() => home()}>
+      <ModeScreen
+        wide
+        overline="Any era, any club" title="The Cup" onBack={() => home()}>
         <Text style={styles.none}>No cup on the go.</Text>
         <Press
           onPress={() => {

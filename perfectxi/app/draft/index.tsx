@@ -81,7 +81,9 @@ export default function DraftSetup() {
   const hidden = config.diff === 'hard' || !config.showRatings;
 
   return (
-    <ModeScreen overline="All-Time Premier League" title="Start a draft">
+    <ModeScreen
+        wide
+        overline="All-Time Premier League" title="Start a draft">
       <Rise delay={0}>
         <Text style={styles.lead}>
           Build your all-time XI, then simulate a full 38 game season.

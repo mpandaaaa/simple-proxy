@@ -159,7 +159,9 @@ export default function Duel() {
   const wantsEnter = params.mode === 'enter';
 
   return (
-    <ModeScreen overline="Play today" title="Duels" onBack={() => back()}>
+    <ModeScreen
+        wide
+        overline="Play today" title="Duels" onBack={() => back()}>
       {/* ---- your record ---- */}
       {record.played ? (
         <View style={styles.record}>

@@ -115,6 +115,7 @@ export default function SquadComplete() {
       {/* The edge swipe would go round the warning, so it is off here. */}
       <Stack.Screen options={{ gestureEnabled: false }} />
     <ModeScreen
+        wide
       overline="Squad complete"
       title="Your XI"
       // Leaving throws the XI away, so it asks first. The board was

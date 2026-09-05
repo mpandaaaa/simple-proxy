@@ -64,7 +64,9 @@ export default function WorldCupPick() {
 
   return (
     <>
-      <ModeScreen overline="Tournament" title="World Cup" scroll={false} onBack={() => back()}>
+      <ModeScreen
+        wide
+        overline="Tournament" title="World Cup" scroll={false} onBack={() => back()}>
         <ScrollView style={styles.page} showsVerticalScrollIndicator={false}>
           {/* ================= the brand ================= */}
           <View style={styles.hero}>

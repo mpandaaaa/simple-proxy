@@ -382,6 +382,7 @@ export default function DraftBoard() {
     <>
       <Stack.Screen options={{ gestureEnabled: false }} />
     <ModeScreen
+        wide
       overline={`${left} left to fill`}
       title={`${state.filled} of ${state.total} picked`}
       scroll={false}

@@ -12,6 +12,7 @@ import { go, swap } from '../src/game/nav';
 import {
   commas,
   AlbumCard,
+  Grid,
   Screen,
   ModeCard,
   Collapse,
@@ -256,7 +257,7 @@ export default function Home() {
   const lvl = levelProgress(progress.xp);
 
   return (
-    <Screen>
+    <Screen wide>
       <Rise delay={0}>
         <View style={styles.brand}>
           <View style={styles.brandTop}>
@@ -287,6 +288,19 @@ export default function Home() {
         />
       </Rise>
 
+      {/*
+        * The four modes, side by side once there is room.
+        *
+        * Not the draft card above: that is the front door and it stays
+        * the full width at any size. These four are peers, and on a
+        * tablet a single column of them is a phone sized ribbon down the
+        * middle of a large screen.
+        *
+        * 300 is the width below which a mode card stops working, because
+        * its subtitle is a full sentence and wrapping it to three lines
+        * makes the card taller than it is wide.
+        */}
+      <Grid min={300} max={2}>
       <Rise delay={2}>
         <ModeCard
           tone="gold"
@@ -350,6 +364,7 @@ export default function Home() {
           }}
         />
       </Rise>
+      </Grid>
 
       <Rise delay={6}>
         <AlbumCard

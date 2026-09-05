@@ -15,6 +15,7 @@ import {
 } from '../src/ui/components';
 import { color, space, radius, line, hue, alpha, positionColor } from '../src/ui/tokens';
 import { font, text } from '../src/ui/type';
+import { useLayout, cellWidth } from '../src/ui/layout';
 import { haptic } from '../src/ui/feel';
 import { sfx } from '../src/ui/sound';
 import { sellCard } from '../src/game/progress';
@@ -43,6 +44,23 @@ export default function Album() {
   const [coll, setColl] = useState(() => collectionStore.read());
   const [look, setLook] = useState(() => looksStore.read());
   const [open, setOpen] = useState<Card | null>(null);
+
+  /*
+   * How wide one slot in the wall is.
+   *
+   * Three across on a phone, which is what it has always been, and as
+   * many as fit at 96 points on anything wider. The album is the screen
+   * a tablet flatters most: a wall of cards is exactly the thing a big
+   * screen is for, and three of them stretched across it is exactly the
+   * thing that makes an app look like a blown up phone.
+   */
+  const L = useLayout();
+  const perRow = L.wide ? L.cols(96, 10) : 3;
+  const slotWidth = cellWidth(
+    Math.min(L.width, L.wide ? L.wideCap : L.readCap) - space.s4 * 2,
+    perRow,
+    6,
+  );
   const [selling, setSelling] = useState<Card | null>(null);
   const [said, setSaid] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
@@ -94,6 +112,7 @@ export default function Album() {
   return (
     <>
       <ModeScreen
+        wide
         overline="The album"
         title={name || 'Club'}
         scroll={false}
@@ -166,6 +185,7 @@ export default function Album() {
                         scaleTo={0.96}
                         style={[
                           styles.slot,
+                          { width: slotWidth },
                           mine
                             ? {
                                 borderColor: frame?.a ?? tint,
@@ -340,7 +360,9 @@ const styles = StyleSheet.create({
 
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   slot: {
-    width: '31.4%',
+    /* width comes from the window: three across on a phone, more on a
+       tablet, because the same three stretched over a big screen turn
+       a wall of cards into three enormous rectangles */
     minHeight: 78,
     paddingVertical: space.s2,
     paddingHorizontal: 6,

@@ -91,7 +91,9 @@ export default function UclDraft() {
   /* ================= nothing started ================= */
   if (!draft) {
     return (
-      <ModeScreen overline="Champions League" title="Draft a Champions XI" onBack={() => back()}>
+      <ModeScreen
+        wide
+        overline="Champions League" title="Draft a Champions XI" onBack={() => back()}>
         <View style={styles.hero}>
           <View style={StyleSheet.absoluteFill} pointerEvents="none">
             <Svg width="100%" height="100%">

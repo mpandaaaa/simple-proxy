@@ -64,7 +64,9 @@ export default function Weekly() {
   }, [week]);
 
   return (
-    <ModeScreen overline="Play today" title={week.twist.name} onBack={() => back()}>
+    <ModeScreen
+        wide
+        overline="Play today" title={week.twist.name} onBack={() => back()}>
       {/* ---- the rule ---- */}
       <View style={styles.rule}>
         <Shine radius={radius.xl} group="feature" bevel={false} clip={false} />

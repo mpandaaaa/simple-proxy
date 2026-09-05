@@ -46,7 +46,9 @@ export default function Tactics() {
   };
 
   return (
-    <ModeScreen overline={career.club} title="Tactics" onBack={() => back()}>
+    <ModeScreen
+        wide
+        overline={career.club} title="Tactics" onBack={() => back()}>
       {/* ---- what it adds up to ---- */}
       <View style={styles.readout}>
         <Shine radius={radius.lg} group="feature" bevel={false} clip={false} />

@@ -58,7 +58,9 @@ export default function Staff() {
   const wages = staffWages(career);
 
   return (
-    <ModeScreen overline={career.club} title="Staff" onBack={() => back()}>
+    <ModeScreen
+        wide
+        overline={career.club} title="Staff" onBack={() => back()}>
       <View style={styles.summary}>
         <Shine radius={radius.lg} group="panel" />
         <View style={styles.sumRow}>

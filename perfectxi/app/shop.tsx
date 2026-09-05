@@ -194,6 +194,7 @@ export default function Shop() {
   return (
     <>
       <ModeScreen
+        wide
         overline="Your game"
         title="Shop"
         scroll={false}

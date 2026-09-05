@@ -45,7 +45,9 @@ export default function UclHub() {
 
   if (!run) {
     return (
-      <ModeScreen overline="Europe" title="Champions League" onBack={() => home()}>
+      <ModeScreen
+        wide
+        overline="Europe" title="Champions League" onBack={() => home()}>
         <Text style={styles.none}>No campaign on the go.</Text>
         <Press
           onPress={() => {

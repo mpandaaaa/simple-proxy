@@ -120,6 +120,7 @@ export default function Market() {
   return (
     <>
       <ModeScreen
+        wide
         overline={`£${career.budget}m to spend`}
         title="Transfers"
         onBack={() => back()}

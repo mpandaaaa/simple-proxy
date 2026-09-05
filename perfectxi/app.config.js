@@ -158,6 +158,33 @@ module.exports = () => ({
     bundleIdentifier: BUNDLE,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
+      /*
+       * Portrait on a phone, any way up on an iPad.
+       *
+       * The app was locked to portrait everywhere, which on an iPad held
+       * in landscape means iOS letterboxes it: the game runs in a
+       * phone shaped column in the middle of the screen with dark bars
+       * either side. That is what an unoptimised tablet app looks like,
+       * and it is a fair thing for a reviewer to fail.
+       *
+       * These two keys are how iOS has always been told the answer
+       * differs by device. The tilde suffix is not a typo: it is the
+       * iPad specific form of the key above it, and iOS picks whichever
+       * matches the device it is running on.
+       *
+       * A phone stays portrait on purpose. The game is a column of cards
+       * and tables and there is nothing a phone gains from being turned
+       * on its side.
+       */
+      UISupportedInterfaceOrientations: [
+        'UIInterfaceOrientationPortrait',
+      ],
+      'UISupportedInterfaceOrientations~ipad': [
+        'UIInterfaceOrientationPortrait',
+        'UIInterfaceOrientationPortraitUpsideDown',
+        'UIInterfaceOrientationLandscapeLeft',
+        'UIInterfaceOrientationLandscapeRight',
+      ],
     },
     /*
      * The privacy manifest.

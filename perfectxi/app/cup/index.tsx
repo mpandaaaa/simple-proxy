@@ -68,7 +68,9 @@ export default function CupPick() {
 
   return (
     <>
-      <ModeScreen overline="Any era, any club" title="The Cup" scroll={false} onBack={() => back()}>
+      <ModeScreen
+        wide
+        overline="Any era, any club" title="The Cup" scroll={false} onBack={() => back()}>
         <ScrollView style={styles.page} showsVerticalScrollIndicator={false}>
           {/* ================= the brand ================= */}
           <View style={styles.hero}>

@@ -14,6 +14,7 @@ import {
 } from '../../src/ui/components';
 import { color, gradient, line, positionColor, radius, space, hue, alpha, wear, vivid, type Hue } from '../../src/ui/tokens';
 import { font, text } from '../../src/ui/type';
+import { useLayout, cellWidth } from '../../src/ui/layout';
 import { GRAIN_URI } from '../../src/ui/grain';
 import { haptic } from '../../src/ui/feel';
 import { sfx } from '../../src/ui/sound';
@@ -320,6 +321,22 @@ export default function DynastyHub() {
   const tiles = DOORS;
 
   /*
+   * How wide one door is.
+   *
+   * Three across on a phone, which is what it has always been, and as
+   * many as fit at 150 points on anything wider. Three doors stretched
+   * across a thirteen inch iPad would be three times the size they need
+   * to be, and a tile that large stops reading as a tile.
+   */
+  const L = useLayout();
+  const perRow = L.wide ? L.cols(150, 6) : 3;
+  const tileWidth = cellWidth(
+    Math.min(L.width, L.wide ? L.wideCap : L.readCap) - space.s4 * 2,
+    perRow,
+    space.s2,
+  );
+
+  /*
    * A European campaign already on the go for this season.
    *
    * The run itself is the record of it, so this asks the run rather than
@@ -334,6 +351,7 @@ export default function DynastyHub() {
   return (
     <>
       <ModeScreen
+        wide
         overline={`Season ${career.year}`}
         title={career.club}
         onBack={() => back()}
@@ -689,7 +707,13 @@ export default function DynastyHub() {
           </Press>
         ) : null}
 
-        {/* ---- the doors ---- */}
+        {/*
+          * The doors.
+          *
+          * Three across on a phone. On a tablet the same three would be
+          * three times as wide as they need to be, so the row takes as
+          * many as fit at a sensible tile size instead.
+          */}
         <View style={styles.tiles}>
           {tiles.map((t) => (
             <Press
@@ -702,6 +726,7 @@ export default function DynastyHub() {
               style={[
                 styles.tile,
                 {
+                  width: tileWidth,
                   borderColor: alpha(hue[t.tint], 0.28),
                   experimental_backgroundImage: `linear-gradient(180deg, ${alpha(
                     hue[t.tint],
@@ -1371,7 +1396,7 @@ const styles = StyleSheet.create({
 
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s2, marginTop: space.s5 },
   tile: {
-    width: '31.5%',
+    /* width is set on the element from the window, not here */
     flexGrow: 1,
     minHeight: 104,
     alignItems: 'center',

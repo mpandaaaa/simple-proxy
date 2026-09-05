@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { READABLE, color, space, gap } from '../tokens';
+import { useLayout } from '../layout';
 import { text } from '../type';
 
 /**
@@ -13,11 +14,15 @@ import { text } from '../type';
 export function Screen({
   children,
   contentTop = space.s4,
+  wide,
 }: {
   children: ReactNode;
   contentTop?: number;
+  /** grids and tables rather than prose: use the room on a tablet */
+  wide?: boolean;
 }) {
   const insets = useSafeAreaInsets();
+  const L = useLayout();
   return (
     <View style={styles.root}>
       <ScrollView
@@ -27,7 +32,7 @@ export function Screen({
           paddingBottom: insets.bottom + space.s7,
           paddingHorizontal: space.s4,
           width: '100%',
-          maxWidth: READABLE,
+          maxWidth: wide && L.wide ? L.wideCap : READABLE,
           alignSelf: 'center',
         }}
         showsVerticalScrollIndicator={false}

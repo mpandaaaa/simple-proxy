@@ -86,7 +86,9 @@ export default function Cabinet() {
   }, []);
 
   return (
-    <ModeScreen overline="Everything you have won" title="Trophy cabinet">
+    <ModeScreen
+        wide
+        overline="Everything you have won" title="Trophy cabinet">
       {/* ================= the silverware ================= */}
       <View style={styles.shelf}>
         <Shine radius={radius.xl} group="feature" bevel={false} clip={false} />

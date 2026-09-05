@@ -92,6 +92,7 @@ export default function Daily() {
 
   return (
     <ModeScreen
+        wide
       overline="Play today"
       title={dailyTitle(n)}
       onBack={() => back()}

@@ -81,7 +81,9 @@ export default function History() {
     Object.values(career.honours ?? {}).reduce((a, n) => a + (n as number), 0);
 
   return (
-    <ModeScreen overline={career.club} title="History" onBack={() => back()}>
+    <ModeScreen
+        wide
+        overline={career.club} title="History" onBack={() => back()}>
       {/* ---- the cabinet ---- */}
       <View style={styles.honours}>
         <Shine radius={radius.xl} group="feature" bevel={false} clip={false} />

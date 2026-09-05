@@ -103,7 +103,9 @@ export default function ProgressScreen() {
   const owedPacks = coll.owed.length;
 
   return (
-    <ModeScreen overline="Your game" title="Progress" scroll={false} onBack={() => back()}>
+    <ModeScreen
+        wide
+        overline="Your game" title="Progress" scroll={false} onBack={() => back()}>
       <ScrollView
         style={styles.page}
         contentContainerStyle={styles.pageContent}

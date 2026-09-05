@@ -271,6 +271,7 @@ export default function H2HReview() {
 
   return (
     <ModeScreen
+        wide
       overline="Duel"
       title={
         outcome === 'won'

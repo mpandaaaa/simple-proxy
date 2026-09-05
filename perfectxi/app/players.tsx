@@ -64,6 +64,7 @@ export default function Players() {
 
   return (
     <ModeScreen
+        wide
       overline="Records"
       title="Player index"
       scroll={false}

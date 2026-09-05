@@ -31,7 +31,9 @@ export default function UclReport() {
 
   if (!run) {
     return (
-      <ModeScreen overline="Champions League" title="Report" onBack={() => back()}>
+      <ModeScreen
+        wide
+        overline="Champions League" title="Report" onBack={() => back()}>
         <Text style={styles.none}>No campaign to report on.</Text>
       </ModeScreen>
     );

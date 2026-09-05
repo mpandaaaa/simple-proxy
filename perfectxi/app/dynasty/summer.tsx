@@ -223,6 +223,7 @@ export default function Summer() {
     <>
       <Stack.Screen options={{ gestureEnabled: false }} />
       <ModeScreen
+        wide
         overline={`${before.club} · season ${before.year}`}
         title="Season review"
         onBack={() => swap('/dynasty')}

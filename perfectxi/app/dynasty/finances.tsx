@@ -67,7 +67,9 @@ export default function Finances() {
   ].filter((c) => c.v > 0);
 
   return (
-    <ModeScreen overline={career.club} title="Finances" onBack={() => back()}>
+    <ModeScreen
+        wide
+        overline={career.club} title="Finances" onBack={() => back()}>
       {/* ---- the line ---- */}
       <View style={styles.psr}>
         <Shine radius={radius.xl} group="feature" bevel={false} clip={false} />

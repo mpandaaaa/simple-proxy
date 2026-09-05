@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { swap, back } from '../../game/nav';
 import { READABLE, color, space, radius, line, gradient } from '../tokens';
+import { useLayout } from '../layout';
 import { font, text } from '../type';
 import { IconBack } from '../icons';
 import { Press } from './Press';
@@ -61,6 +62,7 @@ export function ModeScreen({
   children,
   scroll = true,
   onBack,
+  wide,
 }: {
   overline: string;
   title: string;
@@ -69,12 +71,29 @@ export function ModeScreen({
   scroll?: boolean;
   /** override where back goes, for a screen that should not simply pop */
   onBack?: () => void;
+  /**
+   * This page is grids and tables rather than prose.
+   *
+   * Prose stays in a column at any window size, because a line of body
+   * text the full width of a thirteen inch iPad is harder to read, not
+   * easier. A wall of cards or a league table is scanned rather than
+   * read, and on a tablet it should use the room it has instead of
+   * sitting in a phone sized column in the middle of the screen.
+   */
+  wide?: boolean;
 }) {
   const insets = useSafeAreaInsets();
   const headerHeight = insets.top + BAR;
+  const L = useLayout();
+
+  /* The bar tracks the body, so the back button stays above the left
+     edge of the content rather than drifting away from it. */
+  const cap = wide && L.wide ? L.wideCap : READABLE;
 
   const body = (
-    <View style={[styles.pad, !scroll && styles.padFill]}>{children}</View>
+    <View style={[styles.pad, { maxWidth: cap }, !scroll && styles.padFill]}>
+      {children}
+    </View>
   );
 
   return (
@@ -106,7 +125,7 @@ export function ModeScreen({
           it lines up with the column underneath, which on an iPad is not
           the same thing. */}
       <View style={[styles.bar, { paddingTop: insets.top, height: headerHeight }]}>
-        <View style={styles.barInner}>
+        <View style={[styles.barInner, { maxWidth: cap }]}>
           <Press
             onPress={onBack ?? goBack}
             feel="light"
@@ -137,7 +156,9 @@ export function ModeScreen({
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: color.bg },
-  pad: { paddingHorizontal: space.s4, width: '100%', maxWidth: READABLE, alignSelf: 'center' },
+  /* maxWidth is set on the element, not here: it depends on whether the
+     page is prose or a grid, and on how wide the window currently is. */
+  pad: { paddingHorizontal: space.s4, width: '100%', alignSelf: 'center' },
   padFill: { flex: 1 },
 
   bar: {
@@ -157,7 +178,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space.s3,
     width: '100%',
-    maxWidth: READABLE,
     alignSelf: 'center',
   },
   /*

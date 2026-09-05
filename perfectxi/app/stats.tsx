@@ -44,7 +44,9 @@ export default function Stats() {
   const earned = ACHIEVEMENTS.filter((a) => career.earned.includes(a.key)).length;
 
   return (
-    <ModeScreen overline="Everything, added up" title="Your record">
+    <ModeScreen
+        wide
+        overline="Everything, added up" title="Your record">
       {/* ================= the three that matter ================= */}
       <View style={styles.hero}>
         <View style={styles.bloom} pointerEvents="none">

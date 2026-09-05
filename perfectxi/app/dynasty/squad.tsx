@@ -66,7 +66,9 @@ export default function Squad() {
 
   return (
     <>
-      <ModeScreen overline={career.club} title="Contracts" onBack={() => back()}>
+      <ModeScreen
+        wide
+        overline={career.club} title="Contracts" onBack={() => back()}>
         <View style={styles.bill}>
           <Shine radius={radius.lg} group="panel" />
           <View style={styles.billHead}>

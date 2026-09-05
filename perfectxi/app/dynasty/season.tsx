@@ -217,6 +217,7 @@ export default function DynastySeason() {
     <>
       <Stack.Screen options={{ gestureEnabled: false }} />
       <ModeScreen
+        wide
         overline={done ? 'Full time' : `Matchday ${played + 1} of ${total}`}
         title={career.club}
         onBack={() => swap('/dynasty')}

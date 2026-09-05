@@ -59,6 +59,7 @@ export default function CollectionScreen() {
 
   return (
     <ModeScreen
+        wide
       overline="Your game"
       title="The album"
       scroll={false}

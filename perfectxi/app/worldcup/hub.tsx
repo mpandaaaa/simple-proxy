@@ -75,6 +75,7 @@ export default function WorldCupHub() {
 
   return (
     <ModeScreen
+        wide
       overline="World Cup 2026"
       title={me.n}
       scroll={false}

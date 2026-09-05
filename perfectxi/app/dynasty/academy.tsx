@@ -141,6 +141,7 @@ export default function Academy() {
   return (
     <>
       <ModeScreen
+        wide
         overline={`Academy level ${career.infra.academy}`}
         title="The academy"
         onBack={() => back()}

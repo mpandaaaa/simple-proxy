@@ -27,7 +27,9 @@ export default function HallOfFame() {
 
   if (!runs.length) {
     return (
-      <ModeScreen overline="Your record" title="Hall of Fame">
+      <ModeScreen
+        wide
+        overline="Your record" title="Hall of Fame">
         <View style={styles.empty}>
           <Text style={styles.emptyMark} allowFontScaling={false}>
             🏟

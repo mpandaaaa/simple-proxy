@@ -54,7 +54,9 @@ export default function Slots() {
 
   return (
     <>
-      <ModeScreen overline="A career, not a run" title="Your careers" onBack={() => back()}>
+      <ModeScreen
+        wide
+        overline="A career, not a run" title="Your careers" onBack={() => back()}>
         <Text style={styles.lead}>
           Three careers, kept apart. The one with a ring round it is the one
           the Dynasty screens are showing.

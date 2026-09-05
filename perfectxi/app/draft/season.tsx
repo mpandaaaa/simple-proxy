@@ -212,6 +212,7 @@ export default function Season() {
       <Stack.Screen options={{ gestureEnabled: false }} />
 
       <ModeScreen
+        wide
         overline="Premier League"
         title="Season"
         onBack={() => {

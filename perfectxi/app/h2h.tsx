@@ -121,6 +121,7 @@ export default function HeadToHead() {
   return (
     <>
       <ModeScreen
+        wide
         overline={`Round ${m.state.round} of ${mine.total}`}
         title={myTurn ? 'Your pick' : `${m.opponentName} picking`}
         scroll={false}
