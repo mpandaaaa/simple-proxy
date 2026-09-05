@@ -109,6 +109,32 @@ read, and that yesterday's run is refused on today's board.
 **No accounts.** A player is a random id made on their own device and a
 handle they typed. Nothing on the board identifies anybody.
 
+**No Weekly board.** Not an oversight, and not something to add later
+without changing what the Weekly is.
+
+The Daily can have an honest board because it is one fixed puzzle: the
+same seed for everybody, one attempt. The server knows what that seed
+must be, so a run either replays to the claimed score or it does not.
+
+The Weekly is deliberately the opposite. Its own comment in
+`src/engine/weekly.ts` says why: the board is not fixed, every attempt
+spins fresh, because a week of the same eleven names would be one puzzle
+stretched over seven days rather than a rule to play with. The seed is
+random per attempt and there is no limit on attempts.
+
+That makes a Weekly high score board grindable. Somebody could run
+thousands of seeds offline, keep the best and submit it, and the server
+would verify it perfectly, because it is a real run. It is simply not a
+run anybody played. No amount of checking catches that: the fault would
+be in the contest, not in the verification.
+
+The three ways out are a fixed weekly seed with one attempt, which
+contradicts the design; a seed issued by the server, which would mean
+needing a connection to play and breaks the offline promise; or ranking
+something nobody can farm, like weeks played or a streak, which is a
+table of commitment rather than of skill. None was worth having, so the
+Weekly stays what it is.
+
 **No global all time board.** A Daily is the same puzzle for everybody
 on the same day, which is what makes comparing scores mean anything. An
 all time board across different drafts would compare runs that were
