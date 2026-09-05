@@ -35,6 +35,19 @@ export function Screen({
           maxWidth: wide && L.wide ? L.wideCap : READABLE,
           alignSelf: 'center',
         }}
+        /*
+         * The first tap after typing must reach what it hit.
+         *
+         * A ScrollView swallows it by default: the tap dismisses the
+         * keyboard and goes nowhere, so typing a duel code and then
+         * pressing Play does nothing the first time, and searching for a
+         * club and tapping it does nothing the first time. Every screen
+         * with a field had this and none of them looked wrong.
+         *
+         * "handled" keeps the tap for anything that can take it and still
+         * dismisses the keyboard on a tap that lands on nothing.
+         */
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
           bounces={false}
           overScrollMode="never"

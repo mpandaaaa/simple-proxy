@@ -88,7 +88,8 @@ export default function WorldCupHub() {
         </View>
       }
     >
-      <ScrollView style={styles.page} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled" style={styles.page} showsVerticalScrollIndicator={false}>
         {/* ---- who you are ---- */}
         <View style={styles.crest}>
           <View style={StyleSheet.absoluteFill} pointerEvents="none">

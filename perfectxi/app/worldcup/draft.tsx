@@ -252,7 +252,8 @@ export default function WorldCupDraft() {
         {nextPos ? ` · ${POSITION_LABEL[nextPos].toLowerCase()} next` : ''}
       </Text>
 
-      <ScrollView style={styles.page} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled" style={styles.page} showsVerticalScrollIndicator={false}>
         {board.map((p, i) => (
           <Rise key={`${p.code}-${p.n}`} delay={Math.min(i, 5)}>
             <Card player={p} slots={wcSlotsFor(draft, p)} shape={draft.slots} onPress={() => take(p)} />

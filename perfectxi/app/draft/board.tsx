@@ -452,6 +452,7 @@ export default function DraftBoard() {
           era card off the top before you reached the bottom of a board, so
           the list is bounded and flicks on its own. */}
       <ScrollView
+        keyboardShouldPersistTaps="handled"
           style={styles.page}
           contentContainerStyle={styles.pageContent}
           showsVerticalScrollIndicator={false}
@@ -462,6 +463,7 @@ export default function DraftBoard() {
           {board ? (
             <View style={[styles.listBox, { height: listHeight }]}>
               <FlashList
+                keyboardShouldPersistTaps="handled"
                 data={rows}
                 keyExtractor={(row, i) =>
                   row.kind === 'divider' ? 'divider' : row.player.n + row.player.club + i

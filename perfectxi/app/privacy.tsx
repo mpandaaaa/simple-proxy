@@ -20,7 +20,8 @@ import { me } from '../src/save';
 export default function Privacy() {
   return (
     <ModeScreen overline="Perfect XI" title="Privacy" scroll={false} onBack={() => back()}>
-      <ScrollView style={styles.page} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled" style={styles.page} showsVerticalScrollIndicator={false}>
         <View style={styles.headline}>
           <Text style={styles.headlineText}>
             No account, no email, and nothing about you sold to anybody. There

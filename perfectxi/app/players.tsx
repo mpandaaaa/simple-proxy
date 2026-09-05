@@ -95,6 +95,7 @@ export default function Players() {
         <Text style={styles.none}>Nobody by that name.</Text>
       ) : (
         <FlashList
+          keyboardShouldPersistTaps="handled"
           data={rows}
           keyExtractor={(r) => r.n}
           showsVerticalScrollIndicator={false}

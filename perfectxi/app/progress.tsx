@@ -107,6 +107,7 @@ export default function ProgressScreen() {
         wide
         overline="Your game" title="Progress" scroll={false} onBack={() => back()}>
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         style={styles.page}
         contentContainerStyle={styles.pageContent}
         showsVerticalScrollIndicator={false}

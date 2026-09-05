@@ -292,6 +292,7 @@ export default function H2HReview() {
     >
       <Confetti fire={outcome === 'won'} />
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         style={styles.page}
         contentContainerStyle={styles.pageContent}
         showsVerticalScrollIndicator={false}

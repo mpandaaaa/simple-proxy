@@ -138,6 +138,7 @@ export default function HeadToHead() {
         }
       >
         <ScrollView
+          keyboardShouldPersistTaps="handled"
           style={styles.page}
           contentContainerStyle={styles.pageContent}
           showsVerticalScrollIndicator={false}

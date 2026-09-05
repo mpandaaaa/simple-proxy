@@ -24,6 +24,37 @@ const fail = (msg) => {
   failures++;
 };
 
+/*
+ * Comments blanked out, so a rule never matches a word inside the note
+ * that explains it. Two rules passed while broken for exactly that
+ * reason: one found supportedOrientations in the comment describing the
+ * prop it was looking for.
+ *
+ * Walked character by character rather than matched with a regular
+ * expression: the escape for a newline does not survive being written
+ * through a shell, and a stripper that silently stops working takes
+ * every rule that uses it down with it.
+ */
+function noComments(src) {
+  let out = '';
+  let mode = 0; // 0 code, 1 line comment, 2 block comment
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i];
+    const d = src[i + 1];
+    if (mode === 0) {
+      if (c === '/' && d === '/') { mode = 1; out += '  '; i++; continue; }
+      if (c === '/' && d === '*') { mode = 2; out += '  '; i++; continue; }
+      out += c;
+    } else if (mode === 1) {
+      if (c === String.fromCharCode(10)) { mode = 0; out += c; } else out += ' ';
+    } else {
+      if (c === '*' && d === '/') { mode = 0; out += '  '; i++; continue; }
+      out += c === String.fromCharCode(10) ? c : ' ';
+    }
+  }
+  return out;
+}
+
 /* ---- 1. the redirect that hijacked the end of a run, twice ---- */
 for (const f of files) {
   if (f.endsWith(join('game', 'run.ts'))) continue;
@@ -306,26 +337,6 @@ if (!store.includes('version: 14')) {
      Walked character by character rather than matched with a regular
      expression: the escape for a newline does not survive being written
      through a shell, and a stripper that silently stops working takes
-     the rule with it. */
-  function noComments(src) {
-    let out = '';
-    let mode = 0; // 0 code, 1 line comment, 2 block comment
-    for (let i = 0; i < src.length; i++) {
-      const c = src[i];
-      const d = src[i + 1];
-      if (mode === 0) {
-        if (c === '/' && d === '/') { mode = 1; out += '  '; i++; continue; }
-        if (c === '/' && d === '*') { mode = 2; out += '  '; i++; continue; }
-        out += c;
-      } else if (mode === 1) {
-        if (c === String.fromCharCode(10)) { mode = 0; out += c; } else out += ' ';
-      } else {
-        if (c === '*' && d === '/') { mode = 0; out += '  '; i++; continue; }
-        out += c === String.fromCharCode(10) ? c : ' ';
-      }
-    }
-    return out;
-  }
 
   for (const f of files) {
     const src = noComments(readFileSync(f, 'utf8'));
@@ -397,6 +408,46 @@ if (!store.includes('version: 14')) {
     }
     if (src.includes('Sharing.shareAsync(') && !src.includes('anchorRect')) {
       fail(`${f} shares a file without an anchor, so the sheet points at nothing on an iPad.`);
+    }
+  }
+}
+
+/* ---- 17. a scroll view that eats the first tap after typing ---- */
+{
+  /* A ScrollView dismisses the keyboard on a tap and does not pass it on,
+     so after typing a duel code the first press on Play does nothing, and
+     after searching for a club the first tap on it does nothing. Every
+     screen with a field had this and none of them looked wrong.
+
+     "handled" keeps the tap for anything that can take it and still
+     dismisses the keyboard when it lands on nothing.
+
+     Applied everywhere rather than only where a field exists today: a
+     field added later to a screen without it brings the bug back
+     silently. */
+  for (const f of files) {
+    const src = noComments(readFileSync(f, 'utf8'));
+    for (const tag of ['<ScrollView', '<FlashList']) {
+      let at = 0;
+      for (;;) {
+        const i = src.indexOf(tag, at);
+        if (i < 0) break;
+        /* a type argument, not an element: useRef<ScrollView> */
+        const before = src.slice(Math.max(0, i - 12), i);
+        if (before.includes('useRef') || before.includes('RefObject')) {
+          at = i + 1;
+          continue;
+        }
+        const end = src.indexOf('>', i);
+        const head = src.slice(i, end < 0 ? src.length : end);
+        if (!head.includes('keyboardShouldPersistTaps')) {
+          const line = src.slice(0, i).split(String.fromCharCode(10)).length;
+          fail(
+            `${f}:${line} scrolls without keyboardShouldPersistTaps, so the first tap after typing is swallowed instead of reaching what it hit.`,
+          );
+        }
+        at = (end < 0 ? i : end) + 1;
+      }
     }
   }
 }

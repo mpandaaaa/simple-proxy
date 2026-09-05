@@ -126,7 +126,8 @@ export default function Album() {
           </View>
         }
       >
-        <ScrollView style={styles.page} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled" style={styles.page} showsVerticalScrollIndicator={false}>
           {said ? <Text style={styles.said}>{said}</Text> : null}
           <View style={styles.crest}>
             <ClubDisc club={name} size={52} />

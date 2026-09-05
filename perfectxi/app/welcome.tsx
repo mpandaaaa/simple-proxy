@@ -126,6 +126,7 @@ export default function Welcome() {
       </View>
 
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         ref={scroller}
         horizontal
         pagingEnabled

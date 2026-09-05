@@ -72,7 +72,8 @@ export default function WorldCupReport() {
       onBack={() => back()}
     >
       <Confetti fire={run.won} />
-      <ScrollView style={styles.page} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled" style={styles.page} showsVerticalScrollIndicator={false}>
         {/* ---- how it ended ---- */}
         <View style={[styles.hero, { borderColor: alpha(tint, 0.45) }]}>
           <Shine radius={radius.xl} group="feature" bevel={false} clip={false} />

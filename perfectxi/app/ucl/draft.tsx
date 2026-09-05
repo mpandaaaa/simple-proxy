@@ -251,7 +251,8 @@ export default function UclDraft() {
         {nextPos ? ` · ${POSITION_LABEL[nextPos].toLowerCase()} next` : ''}
       </Text>
 
-      <ScrollView style={styles.page} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled" style={styles.page} showsVerticalScrollIndicator={false}>
         {board.map((p, i) => (
           <Rise key={`${p.club}-${p.n}`} delay={Math.min(i, 5)}>
             <Card

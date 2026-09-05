@@ -230,7 +230,8 @@ export default function Shop() {
 
         {said ? <Text style={styles.said}>{said}</Text> : null}
 
-        <ScrollView style={styles.page} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled" style={styles.page} showsVerticalScrollIndicator={false}>
           {tab === 'packs' ? (
             <>
               {coll.owed.length ? (

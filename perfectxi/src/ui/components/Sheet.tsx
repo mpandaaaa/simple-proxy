@@ -200,6 +200,7 @@ export function Sheet({
                 <View style={styles.edge} pointerEvents="none" />
                 <View style={styles.grab} />
                 <ScrollView
+                  keyboardShouldPersistTaps="handled"
                   style={styles.scroll}
                   contentContainerStyle={styles.scrollBody}
                   showsVerticalScrollIndicator={false}

@@ -71,7 +71,8 @@ export default function CupPick() {
       <ModeScreen
         wide
         overline="Any era, any club" title="The Cup" scroll={false} onBack={() => back()}>
-        <ScrollView style={styles.page} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled" style={styles.page} showsVerticalScrollIndicator={false}>
           {/* ================= the brand ================= */}
           <View style={styles.hero}>
             <View style={StyleSheet.absoluteFill} pointerEvents="none">

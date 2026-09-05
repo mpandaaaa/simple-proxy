@@ -545,6 +545,7 @@ export function MatchLive({
 
           {/* ---- the feed ---- */}
           <ScrollView
+            keyboardShouldPersistTaps="handled"
             style={styles.feed}
             contentContainerStyle={styles.feedPad}
             showsVerticalScrollIndicator={false}

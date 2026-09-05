@@ -121,11 +121,13 @@ export default function CollectionScreen() {
 
       {/* ================= clubs ================= */}
       {tab === 'album' ? (
-        <ScrollView style={styles.page} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled" style={styles.page} showsVerticalScrollIndicator={false}>
           {best.length ? (
             <>
               <Text style={[text.label, styles.sectFirst]}>Your best</Text>
               <ScrollView
+                keyboardShouldPersistTaps="handled"
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.shelf}
@@ -207,7 +209,8 @@ export default function CollectionScreen() {
 
       {/* ================= squads ================= */}
       {tab === 'squads' ? (
-        <ScrollView style={styles.page} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled" style={styles.page} showsVerticalScrollIndicator={false}>
           <Text style={styles.note}>
             Twenty four sides worth collecting whole. Every card comes from
             drafting or from a pack.
@@ -261,7 +264,8 @@ export default function CollectionScreen() {
 
       {/* ================= goals ================= */}
       {tab === 'goals' ? (
-        <ScrollView style={styles.page} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled" style={styles.page} showsVerticalScrollIndicator={false}>
           <Text style={styles.note}>
             The long ones. Every footballer you draft into a finished XI counts
             towards all of them.

@@ -81,7 +81,8 @@ export default function UclHub() {
         scroll={false}
         onBack={() => (owned ? enter('/dynasty') : home())}
       >
-        <ScrollView style={styles.page} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled" style={styles.page} showsVerticalScrollIndicator={false}>
           {/* ================= where you are ================= */}
           <View style={styles.crest}>
             <View style={StyleSheet.absoluteFill} pointerEvents="none">
