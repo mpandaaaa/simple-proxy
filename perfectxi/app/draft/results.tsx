@@ -12,6 +12,7 @@ import { go, home } from '../../src/game/nav';
 import * as Clipboard from 'expo-clipboard';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
+import { shareFrom, anchorRect } from '../../src/ui/share';
 import {
   ModeScreen,
   Press,
@@ -400,10 +401,16 @@ export default function Results() {
     };
   }, [run?.duel, result]);
 
+  /* Where each share sheet points from. On an iPad they are popovers
+     and, given nothing to point at, iOS puts them in a corner with the
+     arrow aimed at empty space. */
+  const codeAnchor = useRef<View>(null);
+  const cardAnchor = useRef<View>(null);
+
   const shareChallenge = useCallback(async () => {
     if (!challenge) return;
     haptic('medium');
-    await Share.share({
+    await shareFrom(codeAnchor, {
       message:
         `I have set you a Perfect XI duel.
 
@@ -462,6 +469,8 @@ ${challenge}
           mimeType: 'image/png',
           dialogTitle: 'Your XI',
           UTI: 'public.png',
+          /* the button it came from, so the popover points at it */
+          anchor: await anchorRect(cardAnchor),
         });
       }
     } catch {
@@ -618,9 +627,11 @@ ${challenge}
                 your era, chasing your {result.pts} points.
               </Text>
               <View style={styles.duelRow}>
-                <Press onPress={shareChallenge} feel="none" scaleTo={0.97} style={styles.duelSend}>
-                  <Text style={styles.duelSendText}>Send it</Text>
-                </Press>
+                <View ref={codeAnchor} collapsable={false} style={styles.duelSendWrap}>
+                  <Press onPress={shareChallenge} feel="none" scaleTo={0.97} style={styles.duelSend}>
+                    <Text style={styles.duelSendText}>Send it</Text>
+                  </Press>
+                </View>
                 <Press onPress={copyChallenge} feel="none" scaleTo={0.97} style={styles.duelCopy}>
                   <Text style={styles.duelCopyText}>{codeCopied ? 'Copied' : 'Copy'}</Text>
                 </Press>
@@ -924,16 +935,18 @@ ${challenge}
               Carry the eleven forward. They age from here.
             </Text>
           </Press>
-          <Press
-            onPress={share}
-            feel="none"
-            style={[styles.share, { borderColor: tone.edge }]}
-            scaleTo={0.98}
-          >
-            <Text style={[styles.shareText, { color: tone.tint }]}>
-              {sharing ? 'Making the picture' : 'Share this XI'}
-            </Text>
-          </Press>
+          <View ref={cardAnchor} collapsable={false}>
+            <Press
+              onPress={share}
+              feel="none"
+              style={[styles.share, { borderColor: tone.edge }]}
+              scaleTo={0.98}
+            >
+              <Text style={[styles.shareText, { color: tone.tint }]}>
+                {sharing ? 'Making the picture' : 'Share this XI'}
+              </Text>
+            </Press>
+          </View>
           {/* A Daily is one attempt, so it does not offer another go at
               the same puzzle. It goes back to the card that says when the
               next one opens, and the week and the duels go back to theirs. */}
@@ -1527,6 +1540,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   duelRow: { flexDirection: 'row', gap: space.s2, marginTop: space.s2 },
+  duelSendWrap: { flex: 1 },
   duelSend: {
     flex: 2,
     minHeight: 50,

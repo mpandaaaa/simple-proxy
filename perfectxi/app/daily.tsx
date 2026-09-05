@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Share, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { shareFrom } from '../src/ui/share';
 import { useFocusEffect } from 'expo-router';
 import { go, back } from '../src/game/nav';
 import { ONLINE_CONFIGURED } from '../src/net/client';
@@ -77,11 +78,15 @@ export default function Daily() {
     go('/draft/board');
   }, [puzzle]);
 
+  /* The share sheet is a popover on an iPad and has to point at
+     something. This is the thing it points at. */
+  const shareAnchor = useRef<View>(null);
+
   const share = useCallback(async () => {
     if (!mine) return;
     haptic('light');
     const card = scorecard(mine.form).join('\n');
-    await Share.share({
+    await shareFrom(shareAnchor, {
       message:
         `Perfect XI ${dailyTitle(mine.n)}\n` +
         `${ordinal(mine.position)} on ${mine.pts} points\n\n` +
@@ -152,9 +157,11 @@ export default function Daily() {
               ))}
             </View>
 
-            <Press onPress={share} feel="light" scaleTo={0.98} style={styles.share}>
-              <Text style={styles.shareText}>Share the scorecard</Text>
-            </Press>
+            <View ref={shareAnchor} collapsable={false}>
+              <Press onPress={share} feel="light" scaleTo={0.98} style={styles.share}>
+                <Text style={styles.shareText}>Share the scorecard</Text>
+              </Press>
+            </View>
 
             {/* Only once it has been played. A board is other people's
                 answers to a puzzle, and reading them before you have

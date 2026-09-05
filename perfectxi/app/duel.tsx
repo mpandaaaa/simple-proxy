@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { shareFrom } from '../src/ui/share';
 import * as Clipboard from 'expo-clipboard';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { go, back } from '../src/game/nav';
@@ -59,6 +60,10 @@ export default function Duel() {
   const [finding, setFinding] = useState<'idle' | 'searching' | 'found'>('idle');
   const [status, setStatus] = useState('Looking for somebody');
   const [found, setFound] = useState<Match | null>(null);
+  /* What the share sheet points at. On an iPad it is a popover and
+     needs somewhere to come from, or it appears in a corner with its
+     arrow aimed at nothing. */
+  const shareAnchor = useRef<View>(null);
   const gone = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -131,7 +136,7 @@ export default function Duel() {
   const showAgain = useCallback(async () => {
     if (!record.outstanding) return;
     haptic('light');
-    await Share.share({
+    await shareFrom(shareAnchor, {
       message:
         `I have set you a Perfect XI duel.\n\n${record.outstanding}\n\n` +
         `Same spins, same rules. Beat my points.`,
@@ -290,9 +295,11 @@ export default function Duel() {
               <Press onPress={copyOutstanding} feel="light" scaleTo={0.97} style={styles.outAct}>
                 <Text style={styles.outActText}>{copied ? 'Copied' : 'Copy'}</Text>
               </Press>
-              <Press onPress={showAgain} feel="light" scaleTo={0.97} style={styles.outAct}>
-                <Text style={styles.outActText}>Send it again</Text>
-              </Press>
+              <View ref={shareAnchor} collapsable={false} style={styles.outActWrap}>
+                <Press onPress={showAgain} feel="light" scaleTo={0.97} style={styles.outAct}>
+                  <Text style={styles.outActText}>Send it again</Text>
+                </Press>
+              </View>
             </View>
           </View>
         ) : null}
@@ -543,6 +550,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
   },
   outRow: { flexDirection: 'row', gap: space.s2 },
+  outActWrap: { flex: 1 },
   outAct: {
     flex: 1,
     minHeight: 42,

@@ -381,6 +381,26 @@ if (!store.includes('version: 14')) {
   }
 }
 
+/* ---- 16. a share sheet with nothing to point at ---- */
+{
+  /* On a phone the share sheet slides up from the bottom and where it
+     came from does not arise. On an iPad it is a popover, and given
+     nothing to point at iOS puts it in a corner with its arrow aimed at
+     empty space, which reads as a bug in the app. src/ui/share.ts hands
+     it the button that opened it, and is the only place allowed to call
+     the sheet directly. */
+  for (const f of files) {
+    if (f.endsWith(join('src', 'ui', 'share.ts'))) continue;
+    const src = readFileSync(f, 'utf8');
+    if (src.includes('Share.share(')) {
+      fail(`${f} opens a share sheet directly. Use shareFrom from src/ui/share.ts, which gives it something to point at on an iPad.`);
+    }
+    if (src.includes('Sharing.shareAsync(') && !src.includes('anchorRect')) {
+      fail(`${f} shares a file without an anchor, so the sheet points at nothing on an iPad.`);
+    }
+  }
+}
+
 console.log(
   failures ? `\n${failures} problems.\n` : '\nEvery source rule holds.\n',
 );
