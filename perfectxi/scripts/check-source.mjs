@@ -194,6 +194,70 @@ if (!store.includes('version: 14')) {
   }
 }
 
+/* ---- 12. an ordinary function called on the UI thread ---- */
+{
+  /* useAnimatedStyle runs its body on the UI thread as a worklet, and a
+     worklet may only call other worklets. Calling a plain helper in
+     there does not fail to compile, does not warn, and takes the whole
+     app down on the device the moment the animation runs.
+
+     It happened once, in the pack wrapper: alpha() built a glow colour
+     inside the style, and the app crashed as soon as a pack was opened.
+     Nothing on the page looked wrong.
+
+     Colours are worked out on the JavaScript thread and handed in, and
+     the worklet moves between them with interpolateColor, which is a
+     worklet itself. */
+  /* Written with indexOf rather than a regular expression on purpose:
+     the escaping needed for a word boundary does not survive being
+     passed through a shell, and a check that silently stops working is
+     worse than no check. */
+  const calls = (body, name) => {
+    let i = body.indexOf(name);
+    while (i >= 0) {
+      const before = i === 0 ? ' ' : body[i - 1];
+      const after = body.slice(i + name.length).trimStart()[0];
+      const wordish = /[A-Za-z0-9_$.]/;
+      if (!wordish.test(before) && after === '(') return true;
+      i = body.indexOf(name, i + 1);
+    }
+    return false;
+  };
+
+  const HELPERS = [
+    'alpha', 'clubColour', 'positionColor', 'rarityTint', 'wear',
+    'lastName', 'cardValue', 'readable', 'shade', 'tintFor',
+  ];
+  for (const f of files) {
+    const src = readFileSync(f, 'utf8');
+    let at = 0;
+    for (;;) {
+      const start = src.indexOf('useAnimatedStyle(', at);
+      if (start < 0) break;
+      let depth = 0;
+      let end = src.length;
+      for (let i = src.indexOf('(', start); i < src.length; i++) {
+        if (src[i] === '(') depth++;
+        else if (src[i] === ')') {
+          depth--;
+          if (depth === 0) { end = i; break; }
+        }
+      }
+      const body = src.slice(start, end);
+      for (const h of HELPERS) {
+        if (calls(body, h)) {
+          const line = src.slice(0, start).split(String.fromCharCode(10)).length;
+          fail(
+            f + ':' + line + ' calls ' + h + '() inside useAnimatedStyle. ' +
+            'That runs on the UI thread and will crash. Work the value out above and pass it in.',
+          );
+        }
+      }
+      at = end;
+    }
+  }
+}
+
 console.log(
   failures ? `\n${failures} problems.\n` : '\nEvery source rule holds.\n',
 );

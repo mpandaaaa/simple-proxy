@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
+  interpolateColor,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -214,15 +215,36 @@ function Wrapper({ best, reduce }: { best: Card | null; reduce: boolean }) {
     }
   }, [reduce, loud, rarity, pulse, tilt]);
 
+  /*
+   * The glow is worked out here, on the JavaScript thread, and never
+   * inside the animated style.
+   *
+   * useAnimatedStyle runs its body on the UI thread as a worklet, and a
+   * worklet may only call other worklets. alpha() is an ordinary
+   * function, so calling it in there crashed the app the moment a pack
+   * was opened. It is the kind of mistake that looks completely fine on
+   * the page and takes the whole app down on the device.
+   *
+   * So the two ends of the glow are built once, up here, and the worklet
+   * moves between them with interpolateColor, which is a worklet itself.
+   */
+  const glowFrom = alpha(tint, 0.3);
+  const glowTo = alpha(tint, loud ? 0.75 : 0.5);
+  const spread = loud ? 46 : 16;
+
   const style = useAnimatedStyle(() => ({
     transform: [
       { scale: 1 + pulse.value * (loud ? 0.05 : 0.02) },
       { rotate: `${tilt.value * 1.4}deg` },
     ],
-    boxShadow: `0px 0px ${18 + pulse.value * (loud ? 46 : 16)}px ${alpha(
-      tint,
-      0.3 + pulse.value * (loud ? 0.45 : 0.2),
-    )}`,
+    boxShadow: [
+      {
+        offsetX: 0,
+        offsetY: 0,
+        blurRadius: 18 + pulse.value * spread,
+        color: interpolateColor(pulse.value, [0, 1], [glowFrom, glowTo]),
+      },
+    ],
   }));
 
   return (
