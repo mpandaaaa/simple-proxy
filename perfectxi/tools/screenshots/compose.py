@@ -81,8 +81,12 @@ CANVASES = {
         "corner": 64,
         "sash": 0.16,
     },
+    # Apple asks for the thirteen inch class and accepts either of two
+    # sizes for it. Both are here because which one a screenshot comes out
+    # at depends on the iPad, and being refused for six pixels after
+    # taking ten captures is a miserable way to find that out.
     "ipad": {
-        "size": (2064, 2752),     # the 13 inch iPad class
+        "size": (2064, 2752),     # iPad Pro 13 inch, M4 and later
         "status_bar": 48,
         "seal_top": 96,
         "seal_size": 430,
@@ -97,7 +101,22 @@ CANVASES = {
     },
 }
 
+# The legacy thirteen inch size Apple still accepts, laid out the same
+# way. Six pixels narrower and twenty shorter, which changes nothing about
+# where anything sits.
+CANVASES["ipad-legacy"] = {**CANVASES["ipad"], "size": (2048, 2732)}
+
 BY_SIZE = {c["size"]: (name, c) for name, c in CANVASES.items()}
+
+# What an eleven inch iPad produces. Not a size Apple accepts for the
+# listing, but worth naming, because "which is neither canvas" is a much
+# worse message than being told the iPad is the wrong one.
+ELEVEN_INCH = {
+    (1640, 2360): "iPad Air 11 inch",
+    (1668, 2388): "iPad Air or Pro 11 inch",
+    (1620, 2160): "iPad 10th generation",
+    (1488, 2266): "iPad mini",
+}
 
 STRIP_STATUS_BAR = True
 CAP_LINES = 2
@@ -195,12 +214,23 @@ def rounded_mask(size, radius):
 def compose(path, caption_text, seal=None):
     shot = Image.open(path).convert("RGB")
     if shot.size not in BY_SIZE:
-        allowed = "\n  ".join(f"{n:7} {c['size'][0]} by {c['size'][1]}"
-                              for n, c in CANVASES.items())
+        if shot.size in ELEVEN_INCH:
+            raise SystemExit(
+                f"\n{os.path.basename(path)} is {shot.size[0]} by {shot.size[1]}, "
+                f"which is an {ELEVEN_INCH[shot.size]}." + '\n\n' +
+                "Apple wants the thirteen inch class for the iPad slot, and it" +
+                " rejects a smaller one scaled up. An eleven inch iPad cannot" +
+                " produce it." + '\n\n' +
+                "Two ways round it: borrow a thirteen inch iPad, or turn iPad" +
+                " support off for this release and ship iPhone only." + '\n'
+            )
+        allowed = '\n  '.join(
+            f"{n:12} {c['size'][0]} by {c['size'][1]}" for n, c in CANVASES.items())
         raise SystemExit(
             f"\n{os.path.basename(path)} is {shot.size[0]} by {shot.size[1]}, "
-            f"which is neither canvas.\n\nApple accepts:\n  {allowed}\n\n"
-            f"Do not resize it. Capture it again on a device of the right size.\n"
+            f"which is none of the canvases." + '\n\n' +
+            f"Apple accepts:" + '\n  ' + allowed + '\n\n' +
+            "Do not resize it. Capture it again on a device of the right size." + '\n'
         )
 
     device, C = BY_SIZE[shot.size]
