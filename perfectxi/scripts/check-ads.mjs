@@ -99,6 +99,36 @@ for (const f of files) {
   }
 }
 
+/* ---------- and never in the middle of a tournament ---------- */
+/*
+ * "Never during a match" is the constraint, and the three tournament
+ * files are the place it would break: they run every tie through the
+ * same function, so an advert put there without a guard would fire
+ * between matches rather than at the end of the competition.
+ *
+ * Each call has to sit inside a test that the run is over. Checked by
+ * looking at the twelve lines above it, which is where that guard is.
+ */
+for (const f of [join('src', 'game', 'worldcup.ts'), join('src', 'game', 'ucl.ts'), join('src', 'game', 'cup.ts')]) {
+  const src = readFileSync(f, 'utf8');
+  const lines = src.split(String.fromCharCode(10));
+  lines.forEach((l, i) => {
+    if (!/showBreak\(/.test(l)) return;
+    const above = lines.slice(Math.max(0, i - 12), i + 1).join(' ');
+    if (!/\.over/.test(above)) {
+      fail(`${f}:${i + 1} shows an advert without checking the run is over. That fires between matches.`);
+    }
+  });
+}
+
+/* ---------- the cap between full screen adverts still exists ---------- */
+if (!/GAP_MS\s*=\s*4\s*\*\s*60\s*\*\s*1000/.test(adsSrc)) {
+  fail('src/game/ads.ts no longer caps full screen adverts at one every four minutes');
+}
+if (!/Date\.now\(\) - lastShown < GAP_MS/.test(adsSrc)) {
+  fail('src/game/ads.ts no longer refuses an advert that comes too soon after the last');
+}
+
 /* The season advert must be refused for those modes at its own call site. */
 const results = readFileSync(join('app', 'draft', 'results.tsx'), 'utf8');
 if (!/if \(!run\.daily && !run\.weekly && run\.duel == null/.test(results)) {

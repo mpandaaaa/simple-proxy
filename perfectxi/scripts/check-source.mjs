@@ -258,6 +258,34 @@ if (!store.includes('version: 14')) {
   }
 }
 
+/* ---- 13. a check script quietly broken by a stray control character ---- */
+{
+  /* This has happened three times and each time it disabled a rule
+     silently. Writing a regular expression through a shell can turn the
+     two characters backslash b into one backspace character. The file
+     still parses, the regex still runs, and it matches nothing ever
+     again, so the rule reports success forever.
+
+     Nothing in this project should contain a raw control character, so
+     any of them is that fault or something equally wrong. */
+  const BAD = [7, 8, 11, 12];
+  const NAMES = { 7: 'bell', 8: 'backspace', 11: 'vertical tab', 12: 'form feed' };
+  const scripts = readdirSync('scripts').filter((n) => n.endsWith('.mjs'));
+
+  for (const name of [...scripts.map((n) => 'scripts/' + n), ...files]) {
+    const src = readFileSync(name, 'utf8');
+    for (const c of BAD) {
+      const at = src.indexOf(String.fromCharCode(c));
+      if (at >= 0) {
+        const line = src.slice(0, at).split(String.fromCharCode(10)).length;
+        fail(
+          `${name}:${line} contains a raw ${NAMES[c]} character. That is usually a regular expression whose backslash was eaten, which makes the rule match nothing and pass forever.`,
+        );
+      }
+    }
+  }
+}
+
 console.log(
   failures ? `\n${failures} problems.\n` : '\nEvery source rule holds.\n',
 );

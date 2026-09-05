@@ -455,7 +455,12 @@ const styles = StyleSheet.create({
 
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s2, marginTop: space.s3 },
   tile: {
-    width: '31.5%',
+    /* 31 and not 31.5. Three at 31.5 percent plus two eight point
+       gaps comes to 288.2 in the 288 points an iPhone SE has, so the
+       third tile dropped to a line of its own. Two tenths of a point
+       over, on one phone, which is exactly the sort of thing nobody
+       finds by looking. flexGrow fills the rest back in. */
+    width: '31%',
     flexGrow: 1,
     alignItems: 'center',
     paddingVertical: space.s3,

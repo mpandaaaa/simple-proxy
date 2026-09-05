@@ -256,7 +256,9 @@ npm run tourney                        # the minute by minute broadcast
 npm run wcdraft                        # what a drafted World XI is worth
 npm run ucl                            # the league phase and the format
 npm run ucldraft                       # what a drafted Champions XI is worth
+npm run audit                          # the fault classes that reach a phone
 npm run layout                         # every grid at every window size
+npm run stores                         # every saved record survives a bad disk
 npm run privacy                        # manifest and both privacy pages agree
 npm run source                         # the mistakes that reached a phone once
 npm run cabinet                        # every achievement can be earned
