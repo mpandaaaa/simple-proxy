@@ -4,7 +4,7 @@ import { shareFrom } from '../src/ui/share';
 import { useFocusEffect } from 'expo-router';
 import { go, back } from '../src/game/nav';
 import { ONLINE_CONFIGURED } from '../src/net/client';
-import { dailyBoard } from '../src/net/leaderboard';
+import { boardLive, dailyBoard } from '../src/net/leaderboard';
 import {
   ModeScreen,
   Press,
@@ -81,6 +81,27 @@ export default function Daily() {
   /* The share sheet is a popover on an iPad and has to point at
      something. This is the thing it points at. */
   const shareAnchor = useRef<View>(null);
+
+  /*
+   * Whether there is a board to go to.
+   *
+   * Asked once, and the way in appears only if the answer is yes. A
+   * button that says no connection every single time is not an online
+   * feature having a bad day, it is a broken one, and offering it is
+   * worse than not having it.
+   */
+  const [hasBoard, setHasBoard] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    if (ONLINE_CONFIGURED) {
+      void boardLive().then((yes) => {
+        if (alive) setHasBoard(yes);
+      });
+    }
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const share = useCallback(async () => {
     if (!mine) return;
@@ -166,7 +187,7 @@ export default function Daily() {
             {/* Only once it has been played. A board is other people's
                 answers to a puzzle, and reading them before you have
                 given yours spoils the one attempt you get. */}
-            {ONLINE_CONFIGURED ? (
+            {hasBoard ? (
               <Press
                 onPress={() => {
                   haptic('light');
@@ -379,7 +400,15 @@ const styles = StyleSheet.create({
   card: { alignItems: 'center', marginTop: space.s4, gap: 3 },
   cardRow: { fontSize: 19, lineHeight: 24, letterSpacing: 1 },
   board: {
+    /* alignSelf and minHeight are what bound the touch target. Press
+       moves the layout keys to the outer Pressable and leaves the rest
+       on an inner view that grows to fill it, so a style with no layout
+       key at all leaves nothing to fill and the button stretches down
+       the page. Every other button here carries both. */
+    alignSelf: 'stretch',
+    minHeight: 46,
     marginTop: space.s2,
+    justifyContent: 'center',
     paddingVertical: space.s3,
     alignItems: 'center',
     borderRadius: radius.md,

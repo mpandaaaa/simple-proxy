@@ -33,6 +33,29 @@ export type SubmitResult =
   /** refused, with the reason the server gave, for telling the player */
   | { ok: false; why: string };
 
+/**
+ * Is there a board on the other end at all?
+ *
+ * Asked before a way in to it is offered. A button that leads to
+ * "no connection" every single time is not an online feature having a
+ * bad day, it is a feature that does not work, and it is the kind of
+ * thing an App Store reviewer taps first.
+ *
+ * So the way in appears only once this has said yes. If the table is not
+ * there, or the connection is not, nobody is offered a door that opens
+ * onto nothing, and the game is exactly what it was before: a Daily
+ * played, scored and kept on the phone.
+ *
+ * The cheapest question there is: how many rows, without fetching any.
+ */
+export async function boardLive(): Promise<boolean> {
+  const got = await net(
+    (db) => db.from('leaderboard').select('player', { count: 'exact', head: true }).limit(1),
+    5000,
+  );
+  return Boolean(got && !(got as { error?: unknown }).error);
+}
+
 /** The name of the board a Daily belongs to. */
 export function dailyBoard(n: number): string {
   return `daily-${n}`;

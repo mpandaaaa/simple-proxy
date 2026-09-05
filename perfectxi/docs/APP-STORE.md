@@ -6,6 +6,17 @@ asks. Written so it can be worked through top to bottom.
 
 ---
 
+## Before you submit, one thing to decide
+
+The leaderboard needs two steps on the Supabase dashboard, in
+`docs/LEADERBOARD.md`. If they are not done, the app hides the way in to
+the board rather than offering a button that always says no connection,
+so a reviewer never meets a dead end and nothing is broken.
+
+So you can submit either way. What you cannot do is submit with the board
+half set up: the table there but the function not, or the other way
+round. Do both, or neither.
+
 ## Already done in the app
 
 - Bundle identifier `app.perfectxi.game`, version 1.0.0, build numbers
@@ -23,6 +34,16 @@ asks. Written so it can be worked through top to bottom.
   declares for them rather than going up silent
 - Loot box odds printed on every pack, per card, with what it guarantees
 - In-app privacy page that matches what the app actually does
+- Portrait on a phone, any orientation on an iPad, with the layouts to
+  match rather than a stretched phone
+- Every modal turns with the device, every share sheet points at the
+  button that opened it, and text is capped at 1.6 so the largest
+  accessibility setting does not break a layout
+- Nothing dev only can ship: the two testing buttons are behind `__DEV__`,
+  which is false in every build that leaves this machine
+- No feature offers a door that opens onto nothing. The live duel falls
+  back to the Machine when nobody joins, and the leaderboard hides itself
+  when there is no board
 
 ## What only you can do
 

@@ -169,6 +169,12 @@ const styles = StyleSheet.create({
     maxWidth: 300,
   },
   retry: {
+    /* bounded, or the inner view grows down the page. See the note in
+       Press: layout keys go to the touch target, everything else to a
+       view that fills it. */
+    alignSelf: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
     marginTop: space.s3,
     paddingHorizontal: space.s4,
     paddingVertical: space.s2,

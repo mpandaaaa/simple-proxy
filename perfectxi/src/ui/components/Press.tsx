@@ -130,8 +130,22 @@ export function Press({
 }
 
 const styles = StyleSheet.create({
-  // The inner view has to fill whatever the Pressable was given, or a
-  // press that was told to stretch would stretch its touch target and not
-  // its face.
+  /*
+   * The inner view has to fill whatever the Pressable was given, or a
+   * press that was told to stretch would stretch its touch target and
+   * not its face.
+   *
+   * The other side of that: a style handed to Press needs something that
+   * bounds its height. Padding is usually enough, because the content
+   * then sets the height. What is not enough is a style whose only
+   * height comes from alignItems, with nothing to align inside: the
+   * outer Pressable has no size to give, this grows into whatever space
+   * the parent has, and the button runs to the bottom of the page.
+   *
+   * It happened twice in one afternoon, on two buttons written the same
+   * afternoon, and looked completely reasonable on the page both times.
+   * If a button is meant to be a certain height, say so with minHeight
+   * and justifyContent, the way every other one here does.
+   */
   fill: { flexGrow: 1 },
 });
