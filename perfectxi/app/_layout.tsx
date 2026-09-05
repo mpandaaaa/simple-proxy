@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Text, TextInput } from 'react-native';
 import { DarkTheme, Stack, ThemeProvider, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -27,6 +27,36 @@ import { noteHere } from '../src/game/nav';
 import { startAds } from '../src/game/ads';
 
 SplashScreen.preventAutoHideAsync();
+
+/*
+ * How far text is allowed to grow.
+ *
+ * iOS lets somebody scale text up to about three times, and this app has
+ * fourteen hundred pieces of text of which only a fifth opt out. At full
+ * accessibility size a fourteen point label becomes forty three, and a
+ * row of three tiles, a league table or a card face has no way to hold
+ * that. It stops being large text and becomes a broken screen.
+ *
+ * A cap of 1.6 is the compromise most apps make. Text still grows by
+ * more than half, which is the point of the setting, and no layout is
+ * asked to hold three times what it was drawn for.
+ *
+ * This changes nothing for anybody at the normal size, because the
+ * multiplier is one and the cap never applies. It only ever affects
+ * somebody who has turned text up, and for them the choice is between
+ * bigger text and a screen that works.
+ *
+ * Applied through defaultProps because React Native offers no other way
+ * to say it once. If a future version stops honouring that, this becomes
+ * a no-op rather than an error, and the app is exactly where it is now.
+ */
+const MAX_TEXT_SCALE = 1.6;
+for (const C of [Text, TextInput] as unknown as { defaultProps?: Record<string, unknown> }[]) {
+  C.defaultProps = C.defaultProps ?? {};
+  if (C.defaultProps.maxFontSizeMultiplier === undefined) {
+    C.defaultProps.maxFontSizeMultiplier = MAX_TEXT_SCALE;
+  }
+}
 
 /*
  * The colour behind every screen.
