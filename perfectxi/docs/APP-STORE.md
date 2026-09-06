@@ -165,14 +165,17 @@ the answer is.
 
 **Mature themes, medical, sexuality, violence.** None of any of them.
 
-Two of these are worth understanding before you answer.
+**The result: 4+.** That is what the questionnaire calculated from these
+answers on 6 September 2026, which is the best band available.
 
-**The loot box question is the one that can push the rating above 4+.**
-It has to be answered yes: packs are loot boxes, whatever they are opened
-with. The mitigation is already true and already visible, that coins are
-earned rather than bought and the odds are printed, but Apple computes
-the band from the answers and it may land at 9+. Answer it honestly and
-take the band that comes out.
+On the last step, leave **Age Categories and Override** on Not
+Applicable. Made for Kids looks like it fits a football game and it does
+not: the Kids Category bans the advertising this app runs, so choosing it
+is a guaranteed rejection. Leave the age suitability URL blank, and leave
+the Republic of Korea classification number blank, which is only needed
+for age restricted games.
+
+One thing is still worth understanding.
 
 **User-generated content is a display name and nothing else.** Settings
 lets a player type up to eighteen characters, and that name is what a
