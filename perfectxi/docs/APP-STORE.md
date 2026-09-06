@@ -189,10 +189,13 @@ queue so it falls back to the Machine. The game is unaffected, because it
 was built to work with the connection dead.
 
 ### 5. App privacy, the nutrition label
-None of this is the game. Every line is the Google advert SDK, and every
-line is taken from the table Google publishes for exactly this purpose at
-developers.google.com/admob/ios/privacy/data-disclosure. Answer it in
-this order and it takes about five minutes.
+Eight rows. Six are the Google advert SDK and two are the game's own
+online layer. First answer yes to "do you or your third-party partners
+collect data from this app", then tick these eight types, then answer
+purpose, linked and tracking for each one.
+
+**The adverts.** Taken from the table Google publishes for exactly this
+purpose at developers.google.com/admob/ios/privacy/data-disclosure.
 
 | Apple category | Data type | Purpose | Linked to you | Tracking |
 | --- | --- | --- | --- | --- |
@@ -203,8 +206,22 @@ this order and it takes about five minutes.
 | Diagnostics | Crash Data | App Functionality, Analytics | No | No |
 | Location | Coarse Location | Third-Party Advertising | No | No |
 
-Two of those look alarming and are worth understanding before you tick
-them, because you will be asked about them:
+**The game.** A duel and a finished Daily go to the Supabase database in
+Europe. The app privacy page already describes this, so the label has to
+match it.
+
+| Apple category | Data type | Purpose | Linked to you | Tracking |
+| --- | --- | --- | --- | --- |
+| Identifiers | User ID | App Functionality | Yes | No |
+| User Content | Gameplay Content | App Functionality | Yes | No |
+
+User ID is the random id made on the phone. Gameplay Content is the rest
+of what goes up: the handle, the seed, the picks and the score. Both are
+linked, because they are stored against that id, and neither is tracking,
+because nothing is joined to anything from any other company.
+
+Three of these look alarming and are worth understanding, because you may
+be asked about them.
 
 **Coarse Location.** The game never asks for your position and there is
 no location prompt. Google works out roughly which country an advert
@@ -212,12 +229,20 @@ request came from by looking at the internet address it arrived from,
 the same way any website can. Apple counts that as coarse location, so
 it gets declared.
 
-**Linked to you.** There is no account, so nothing is linked to a person
-by anything the game does. Google's own table says linked, because they
-join it up on their side. Declaring it their way is the honest answer.
+**Linked to you, on the advert rows.** There is no account, so nothing is
+linked to a person by anything the game does. Google's own table says
+linked, because they join it up on their side. Declaring it their way is
+the honest answer.
 
-Declare nothing beyond the table. The game itself sends no name, no
-email, no position, and nothing about what you play.
+**Linked to you, on the game rows.** Apple's test is whether data is
+associated with an account, a device id or anything similar, not whether
+it names a person. The picks and the score are stored against the random
+id, so they are linked by that test, even though the id identifies
+nobody.
+
+Declare nothing beyond these eight. The game itself sends no name, no
+email and no position, and the adverts never run during a match, a Daily,
+a Weekly or a duel.
 
 ### 6. Ads and the tracking prompt
 Apple checks the prompt appears and behaves. It does, on first launch,
