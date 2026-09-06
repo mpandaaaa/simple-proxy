@@ -322,11 +322,15 @@ match by match, and see how far it goes. Free, offline, no subscriptions.`
 > 712 club seasons, 3,003 players, 51 clubs, 1992 to 2026.
 >
 > Free. No subscriptions, nothing to buy, and it works with no connection.
-> Paid for by adverts: one you choose to watch, and one at a break in
-> play. Never during a match.
 >
 > Unofficial and unaffiliated. Not connected to the Premier League, FIFA,
 > UEFA, or any club, competition or player.
+
+The adverts are not mentioned. Mo took that line out twice, once from the
+app and once from here, and Apple does not require it in a description.
+It is still declared where it has to be: the nutrition label, the privacy
+manifest, both privacy pages and the review notes. Nothing is hidden from
+a reviewer, only from a shop window.
 
 ### Keywords, 100 characters
 Four words came out of this list and it is worth knowing why, because the
