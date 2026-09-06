@@ -128,16 +128,57 @@ inch capture would still be better, because it is a wider layout with
 more on screen, so recapture there if one is ever to hand.
 
 ### 4. Age rating
-Answer the questionnaire honestly. The answers that matter:
+Apple replaced this questionnaire in 2025 and made the social media
+questions compulsory for new apps from September 2026, so the old four
+line answer no longer covers it. The bands are now 4+, 9+, 13+, 16+ and
+18+. It lives in App Information, not on the version page.
 
-- **Contests**: none
-- **Gambling**: **no**. Packs are opened with coins earned by playing.
-  There is no way to buy coins and no way to cash anything out. If you
-  ever add a way to buy coins, this answer changes and the rating goes up
-- **Unrestricted web access**: no
-- **Violence, sexual content, drugs, language**: none
+Answer it honestly, section by section.
 
-That should come out at 4+.
+**In-app controls.** None. There is no account, no age gate and no
+parental controls, because there is nothing to gate.
+
+**Capabilities**
+
+| Question | Answer | Why |
+| --- | --- | --- |
+| Web browser or unrestricted web access | No | There is no WebView anywhere, by rule |
+| Advertising | **Yes** | One rewarded advert in the shop, one after a season or tournament ends |
+| In-app purchases | No | Nothing is for sale |
+| Messaging or chat | No | Players never send each other anything |
+| User-generated content | **Yes** | A display name, and nothing else |
+| Social media, a feed of user content | No | A leaderboard is a table of names and scores. Nothing is posted, amplified or replied to |
+
+**Chance-based activities**
+
+| Question | Answer | Why |
+| --- | --- | --- |
+| Gambling with real money | No | Nothing can be bought and nothing can be cashed out |
+| Simulated gambling | No | The draft wheel is a random selector with no stake |
+| Contests | No | |
+| **Loot boxes** | **Yes** | Packs. Opened with coins earned by playing, with the odds printed on every pack |
+
+**Mature themes, medical, sexuality, violence.** None of any of them.
+
+Two of these are worth understanding before you answer.
+
+**The loot box question is the one that can push the rating above 4+.**
+It has to be answered yes: packs are loot boxes, whatever they are opened
+with. The mitigation is already true and already visible, that coins are
+earned rather than bought and the odds are printed, but Apple computes
+the band from the answers and it may land at 9+. Answer it honestly and
+take the band that comes out.
+
+**User-generated content is a display name and nothing else.** Settings
+lets a player type up to eighteen characters, and that name is what a
+leaderboard row and a duel opponent see. There is no filter on it, which
+is the open question against guideline 1.2.
+
+Until there is one, leave the two Supabase steps in `docs/LEADERBOARD.md`
+undone. Without those tables no name reaches anybody: `boardLive()` says
+no so the way in to the board is hidden, and a live duel cannot join the
+queue so it falls back to the Machine. The game is unaffected, because it
+was built to work with the connection dead.
 
 ### 5. App privacy, the nutrition label
 None of this is the game. Every line is the Google advert SDK, and every
