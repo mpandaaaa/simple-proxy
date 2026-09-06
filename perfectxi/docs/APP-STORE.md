@@ -98,7 +98,10 @@ exists.
 Two sizes, and Apple scales each one down for the smaller devices in its
 class. Both are built by `python tools/screenshots/compose.py`, which puts
 the caption and the ground around a capture and never draws any part of
-the app itself.
+the app itself. It writes a folder per device, `out/iphone` and
+`out/ipad`, holding nothing but frames of that size, so a whole folder
+can go into one slot in App Store Connect. The contact sheets sit
+outside those folders on purpose.
 
 **iPhone, 1320 by 2868**, the six point nine inch class. Ten frames, in
 this order, because the draft and the unbeaten run are what the game is:

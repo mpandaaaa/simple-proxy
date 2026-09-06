@@ -331,7 +331,14 @@ def main():
             continue
         entry = captions[key]
         device, im = compose(os.path.join(RAW, name), entry["line"], entry.get("seal"))
-        im.convert("RGB").save(os.path.join(OUT, f"{stem}.png"))
+        # A folder per device, holding nothing but frames of that size, so
+        # the whole folder can be dragged into one slot in App Store
+        # Connect. The contact sheet stays outside it: it is the right
+        # shape for nothing, and one stray file in the folder is one wrong
+        # screenshot on the listing.
+        folder = os.path.join(OUT, device)
+        os.makedirs(folder, exist_ok=True)
+        im.convert("RGB").save(os.path.join(folder, f"{stem}.png"))
         by_device.setdefault(device, []).append((stem, im))
         print(f"  {device:7} {stem:18} {entry['line']}")
 
