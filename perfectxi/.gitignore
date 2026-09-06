@@ -45,3 +45,7 @@ yarn-error.*
 
 # the web build the database is extracted from
 vendor/
+
+# The website icon pack is generated. Keep the builder, not the output.
+tools/webicons/out/
+tools/webicons/*.zip
