@@ -149,14 +149,19 @@ parental controls, because there is nothing to gate.
 | User-generated content | **Yes** | A display name, and nothing else |
 | Social media, a feed of user content | No | A leaderboard is a table of names and scores. Nothing is posted, amplified or replied to |
 
-**Chance-based activities**
+**Chance-based activities.** Read Apple's own wording on each row before
+answering. Two of these are not what they look like.
 
 | Question | Answer | Why |
 | --- | --- | --- |
-| Gambling with real money | No | Nothing can be bought and nothing can be cashed out |
-| Simulated gambling | No | The draft wheel is a random selector with no stake |
-| Contests | No | |
-| **Loot boxes** | **Yes** | Packs. Opened with coins earned by playing, with the odds printed on every pack |
+| Simulated Gambling | None | Their definition is betting or wagering. The draft wheel has no stake |
+| Contests | **Infrequent** | Their definition is events where users compete for rankings, which the Daily, the Weekly and Duels are. But the draft, Dynasty, both tournaments and the cup have nobody else in them, so it is not frequent |
+| Gambling | No | Nothing is wagered and nothing converts to money |
+| Loot Boxes | **No** | Their definition ends "for purchase". Nothing in the app can be purchased: there are no in-app purchases and coins are earned by playing |
+
+The loot box answer flips to yes the day anyone can buy coins with money.
+The odds are printed on every pack regardless, which is right whatever
+the answer is.
 
 **Mature themes, medical, sexuality, violence.** None of any of them.
 
