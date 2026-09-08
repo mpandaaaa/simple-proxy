@@ -49,3 +49,5 @@ vendor/
 # The website icon pack is generated. Keep the builder, not the output.
 tools/webicons/out/
 tools/webicons/*.zip
+tools/social/out/
+tools/social/*.zip
