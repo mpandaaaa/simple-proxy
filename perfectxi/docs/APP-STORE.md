@@ -271,6 +271,48 @@ Paste this into App Review Notes:
 > on the home screen, in Settings and on its privacy page that it is
 > unofficial and unaffiliated.
 
+### 8. The first rejection, and what answered it
+Build 8 was refused on 9 September 2026, reviewed on an iPad Air 11 inch
+running iPadOS 26.6.1. Two issues, both configuration rather than
+gameplay, and both invisible on a phone.
+
+**Guideline 2.5.4, background audio.** The build declared the `audio`
+background mode and played nothing in the background. Nothing asked for
+that: the `expo-audio` config plugin adds it unless told not to. It is
+told not to now, with `enableBackgroundPlayback: false`, and the key is
+gone from the plist. No recording is needed to answer this one, because
+the capability is simply no longer claimed.
+
+**Guideline 2.1, the tracking prompt never appeared.** `startAds` ran
+from an effect on the root layout, which fires at mount while the splash
+is still covering the app. iOS will not present a permission sheet then
+and does not report that it refused: the call returns, the status is
+undetermined, nothing appears. The old code took that as an answer,
+latched, and never asked again. The app declared App Tracking
+Transparency and never asked.
+
+It now waits for the same signal that takes the splash down, and the ask
+waits for the app to be active, checks whether the sheet actually
+appeared, and goes round again if it did not.
+
+Rule 20 in `check-source.mjs` guards all three parts and was proved to
+fail on each.
+
+**Apple wants a screen recording** of the prompt, on a physical device,
+and it belongs in the Resolution Center reply and in App Review
+Information for future submissions. What it has to show:
+
+1. A fresh install, or tracking permissions reset first
+2. The app launching
+3. The tracking sheet appearing before anything is collected
+4. Tapping a choice, and the game carrying on either way
+
+Reset tracking with Settings, Privacy and Security, Tracking, turning
+"Allow Apps to Request to Track" off and on again, or just delete the app
+and install it again from TestFlight.
+
+---
+
 ---
 
 ## The listing
