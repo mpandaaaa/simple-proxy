@@ -511,6 +511,50 @@ if (!store.includes('version: 14')) {
   }
 }
 
+/* ---- 20. the two things Apple refused the first build for ---- */
+{
+  /* Both were config rather than gameplay, and both were invisible on a
+     phone. They cost a review cycle, so each one gets a rule. */
+
+  const cfg = readFileSync('app.config.js', 'utf8');
+
+  /* expo-audio declares the "audio" background mode unless it is told
+     not to. That tells iOS the app keeps playing when it is not on
+     screen. This one plays a tick when you pick a player. A reviewer
+     checked, heard silence, and refused it under guideline 2.5.4. */
+  const audio = cfg.match(/'expo-audio'[\s\S]{0,400}/);
+  if (!audio || !/enableBackgroundPlayback:\s*false/.test(audio[0])) {
+    fail(
+      'app.config.js must pass enableBackgroundPlayback: false to expo-audio. Without it the build claims the audio background mode it does not use, which is guideline 2.5.4 and a rejection.',
+    );
+  }
+
+  /* The tracking sheet cannot be presented while the splash is up. iOS
+     does not say so: the call returns undetermined and nothing appears.
+     Asking from an effect with no dependencies asks too early, once, and
+     never again. Guideline 2.1, rejected. */
+  const layout = readFileSync('app/_layout.tsx', 'utf8');
+  const at = layout.indexOf('startAds()');
+  if (at < 0) {
+    fail('app/_layout.tsx no longer starts the adverts, so nothing ever asks about tracking.');
+  } else {
+    const around = layout.slice(Math.max(0, at - 400), at + 200);
+    if (!/ready\s*\|\|\s*error/.test(around)) {
+      fail(
+        'app/_layout.tsx calls startAds without waiting for the splash to come down. iOS will not show the tracking sheet over a splash screen and does not report that it refused, so the app declares App Tracking Transparency and never asks. Guideline 2.1, and a rejection.',
+      );
+    }
+  }
+
+  /* And the ask itself has to survive the sheet not appearing. */
+  const ads = readFileSync('src/game/ads.ts', 'utf8');
+  if (!/AppState/.test(ads)) {
+    fail(
+      'src/game/ads.ts must wait for the app to be active before asking about tracking. iOS silently declines to present the sheet otherwise.',
+    );
+  }
+}
+
 console.log(
   failures ? `\n${failures} problems.\n` : '\nEvery source rule holds.\n',
 );

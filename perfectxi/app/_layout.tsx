@@ -139,14 +139,23 @@ export default function RootLayout() {
   /*
    * The adverts.
    *
-   * Started after the app is up rather than before it, because the first
-   * thing it does is ask about tracking and a permission sheet over a
-   * splash screen is a bad way to meet somebody. Nothing here can fail
-   * loudly: no adverts is a worse game, not a broken one.
+   * Started once the splash is down, not at mount, and the difference is
+   * the whole reason the first submission was refused. The first thing
+   * this does is ask about tracking, and iOS will not put that sheet in
+   * front of an app that is still behind a splash screen. It does not say
+   * so either: the call returns undetermined, nothing appears, and a
+   * reviewer sees an app that declares App Tracking Transparency and
+   * never asks. Guideline 2.1, rejected.
+   *
+   * So it waits for the same signal that takes the splash away. startAds
+   * latches, so running this again when `ready` settles costs nothing.
+   * Nothing here can fail loudly: no adverts is a worse game, not a
+   * broken one.
    */
   useEffect(() => {
+    if (!(ready || error)) return;
     void startAds();
-  }, []);
+  }, [ready, error]);
 
   /*
    * A copy of the save, kept without anybody asking for one.

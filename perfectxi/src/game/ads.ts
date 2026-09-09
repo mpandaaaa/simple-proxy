@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import Constants from 'expo-constants';
 import mobileAds, {
   AdEventType,
@@ -76,6 +76,67 @@ function unitFor(kind: 'interstitial' | 'rewarded'): string {
 let started = false;
 let personalised = false;
 
+/** Long enough for the window to be the one on screen. */
+const SETTLE_MS = 600;
+/** How many times to go round before giving up and running unpersonalised. */
+const TRIES = 3;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+/**
+ * Resolves once the app is genuinely in the foreground.
+ *
+ * iOS will not put a permission sheet in front of an app that is not
+ * active, and it does not report that it refused: the call returns, the
+ * status is still undetermined, and nothing appeared.
+ */
+function whenActive(): Promise<void> {
+  if (AppState.currentState === 'active') return Promise.resolve();
+  return new Promise((resolve) => {
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') {
+        sub.remove();
+        resolve();
+      }
+    });
+  });
+}
+
+/**
+ * The tracking question, asked until it is actually asked.
+ *
+ * This is the thing that got the app rejected the first time, so it is
+ * worth being plain about what went wrong. The request went out from an
+ * effect on the root layout, which runs while the splash screen is still
+ * covering the app. iOS silently declines to present a sheet at that
+ * moment, hands back "undetermined", and the old code took that as an
+ * answer and never asked again. A reviewer launched the app, saw no
+ * prompt, and refused it under guideline 2.1.
+ *
+ * So: wait for the app to be active, settle, ask, and if the answer is
+ * still undetermined then the sheet did not appear and it is worth going
+ * round again rather than giving up on the first refusal.
+ */
+async function askAboutTracking(): Promise<string> {
+  for (let i = 0; i < TRIES; i++) {
+    await whenActive();
+    await sleep(SETTLE_MS);
+
+    const seen = await getTrackingPermissionsAsync();
+    if (seen.status !== 'undetermined') return seen.status;
+
+    const asked = await requestTrackingPermissionsAsync();
+    if (asked.status !== 'undetermined') return asked.status;
+
+    await sleep(1200);
+  }
+  /* Never presented. The adverts run unpersonalised, which is what an
+     undetermined status means anyway, and the game is unchanged. */
+  return 'undetermined';
+}
+
 /**
  * Ask about tracking, then start the SDK.
  *
@@ -85,17 +146,14 @@ let personalised = false;
  * state. It means the adverts are not personalised, and everything else
  * about the game is identical.
  *
- * Asked once ever, by the system. Asking again does nothing, which is why
- * this can be called on every launch without checking first.
+ * Call this once the splash screen is down. Asked once ever, by the
+ * system, so calling it on every launch is free.
  */
 export async function startAds(): Promise<void> {
   if (started) return;
   started = true;
   try {
-    let { status } = await getTrackingPermissionsAsync();
-    if (status === 'undetermined') {
-      ({ status } = await requestTrackingPermissionsAsync());
-    }
+    const status = await askAboutTracking();
     personalised = status === 'granted';
 
     await mobileAds().setRequestConfiguration({

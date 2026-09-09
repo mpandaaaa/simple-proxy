@@ -348,7 +348,27 @@ module.exports = () => ({
         imageWidth: 180,
       },
     ],
-    'expo-audio',
+    [
+      /*
+       * The sound cues.
+       *
+       * Every option here is off, and the first one is why the app was
+       * refused under guideline 2.5.4. This plugin declares the "audio"
+       * background mode by default, which tells iOS the app keeps playing
+       * when it is not on screen. Perfect XI plays a tick when you pick a
+       * player. It has nothing to say to somebody who has left, and a
+       * reviewer who checks and hears silence rejects the build.
+       *
+       * The other two go with it: the app never records, so it has no
+       * business asking Android for a microphone or a recording service.
+       */
+      'expo-audio',
+      {
+        enableBackgroundPlayback: false,
+        enableBackgroundRecording: false,
+        recordAudioAndroid: false,
+      },
+    ],
     'expo-sharing',
     'expo-document-picker',
     [
