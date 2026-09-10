@@ -9,6 +9,51 @@ module so it costs one of the EAS builds rather than a dev server reload.
 
 ---
 
+## Paused until 1 October 2026, waiting on a build
+
+Apple refused build 8 on 9 September under guidelines 2.5.4 and 2.1. Both
+causes are fixed, committed and verified: `npm run verify` passes, doctor
+is 21/21, and rule 20 catches all three parts if anyone undoes them. The
+detail is in `docs/APP-STORE.md` section 8 and the reply to Apple is
+written out in `docs/REVIEW-REPLY.md`.
+
+The only thing missing is a binary. The EAS free plan ran out of iOS
+builds for September and resets on **1 October 2026**. Mo chose to wait
+rather than pay for the Starter plan.
+
+**On 1 October, in this order:**
+
+1. `npx eas-cli@latest build --platform ios --profile production --non-interactive --auto-submit`
+2. Install it on the iPad from TestFlight
+3. Reset tracking: Settings, Privacy and Security, Tracking, toggle
+   "Allow Apps to Request to Track" off and back on
+4. Screen record: home screen, open the app, the tracking sheet appearing
+   on its own, tap either button, play for a few seconds
+5. Reply in the Resolution Center on submission
+   `d956b10e-fd21-44e5-869d-b6bada87072c` with that recording attached
+   and the text from `docs/REVIEW-REPLY.md`
+6. Pick the new build on the version page and submit for review
+
+Step 4 before step 6. The recording is what answers the 2.1 finding.
+
+### The three weeks are not wasted
+
+Two things were skipped only because they each cost a build, and the next
+build is now happening in October whatever we do. They can ride along at
+no extra cost.
+
+**The name filter.** Settings lets anyone type eighteen characters, and
+that name is what a leaderboard row and a duel opponent see. Nothing
+checks it, which is the open question against guideline 1.2, and it is
+why the two Supabase steps in `docs/LEADERBOARD.md` are deliberately
+still undone. Filter the name and both unblock together.
+
+**SKAdNetworkItems.** Empty in the plist, so AdMob cannot attribute
+installs. Not a rejection reason and not urgent, but it costs real
+revenue and it is a config change, not code.
+
+---
+
 ## Before 1.0 ships
 
 These are the ones that are not optional.
