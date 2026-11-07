@@ -1,0 +1,18 @@
+{
+  "sourceBuild": "s67-1",
+  "sourceSha256": "40c592d07f7953221119439bb5600aaf286c33a207fc39ecb4c1f3b38599c6d5",
+  "counts": {
+    "clubSeasons": 706,
+    "players": 2978,
+    "playerRows": 10976,
+    "clubs": 51,
+    "seasons": 35,
+    "firstSeason": 1992,
+    "lastSeason": 2026,
+    "datesOfBirth": 3062
+  },
+  "correctionPass": {
+    "removed": 1,
+    "rated": 1001
+  }
+}
