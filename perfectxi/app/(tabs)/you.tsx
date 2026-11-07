@@ -14,9 +14,10 @@ import { color, space, radius } from '../../src/ui/tokens';
 import { text } from '../../src/ui/type';
 import { settingsStore, type Settings } from '../../src/save';
 
-/** Verified against the database, not the marketing copy. */
-const TOTAL_CLUB_SEASONS = 712;
-const TOTAL_PLAYERS = 3003;
+import meta from '../../src/data/meta.json';
+
+/** Read from the extracted database so the copy can never drift from it. */
+const { clubSeasons: TOTAL_CLUB_SEASONS, players: TOTAL_PLAYERS, clubs: TOTAL_CLUBS, seasons: TOTAL_SEASONS, firstSeason: FIRST_SEASON, lastSeason: LAST_SEASON } = meta.counts;
 
 export default function YouScreen() {
   // Settings are read straight off disk on first render, so a relaunch
@@ -62,8 +63,8 @@ export default function YouScreen() {
             <View style={[styles.barFill, { width: `${pct}%` }]} />
           </View>
           <Text style={[text.small, styles.collectFoot]}>
-            {TOTAL_PLAYERS.toLocaleString('en-GB')} players across 51 clubs and 35
-            seasons, 1992 to 2026.
+            {TOTAL_PLAYERS.toLocaleString('en-GB')} players across {TOTAL_CLUBS} clubs and{' '}
+            {TOTAL_SEASONS} seasons, {FIRST_SEASON} to {LAST_SEASON}.
           </Text>
         </Surface>
       </Section>

@@ -1,0 +1,9 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["tests/**/*.ts", "scripts/**/*.ts", "scripts/**/*.d.mts", "src/engine/**/*.ts", "src/data/**/*.json"]
+}
