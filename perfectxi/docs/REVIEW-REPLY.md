@@ -15,8 +15,10 @@ Guideline 2.5.4: Perfect XI has no feature that needs background audio.
 We have removed "audio" from the UIBackgroundModes key. Sound effects play
 only while the app is in use.
 
-Guideline 2.1: Perfect XI does not track users. We have removed the
-AppTrackingTransparency framework from the app and updated our app privacy
-information to declare that no data is used for tracking.
+Guideline 2.1: Perfect XI no longer shows advertising. We have removed the
+Google Mobile Ads SDK, which was the only component using the
+AppTrackingTransparency framework, so the app does not track users. We have
+updated our app privacy information to declare that no data is used for
+tracking.
 
 Thank you.
