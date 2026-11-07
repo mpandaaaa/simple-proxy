@@ -1,98 +1,104 @@
 # Perfect XI, native iOS app
 
 Native React Native rebuild of the browser game at perfectxi.app. Free, no
-ads, no subscriptions, works offline. A collection of football games shaped
-like NYT Games: the front door is today, the games are the content.
+ads, no subscriptions. Single player works offline; multiplayer, the Daily
+and progress sync use the same Supabase backend as the web game.
 
-Full background, the source inventory, the decisions and the ten phase plan
-live in `../docs/perfect-xi/PHASE-0-INVENTORY.md`. Read it before starting a
-new phase.
+**Read `../docs/perfect-xi/PLAN.md` before starting work.** It has the
+current phases, the decisions taken, the App Store risks and what only Mo
+can do. `PHASE-0-INVENTORY.md` beside it describes the August web build and
+is history.
 
 ## Working with Mo
 
-- He is non-technical and judges everything by looking at his iPhone. He does
-  not read code. Describe what to check on the phone, not what changed in the
-  file.
-- One step at a time. Finish it, say what to look at, wait for his answer.
-- **No em-dashes** in anything written for him or in UI copy. This includes
-  commit messages and on-screen text.
-- Back up before every write. Anchor edits on file content actually read,
-  never assumed.
-- If a change does not land, say "PATCH FAILED" plainly rather than carrying on.
-- He is on Windows with PowerShell. Give exact commands, and do not assume he
-  is already in the right folder.
-- He has an Apple Developer account, App Store Connect, and EAS set up under
-  the Expo account `hearthapplication`. He is protective of build quota, so do
-  not spend a build when a dev server reload would do.
+- He is non-technical and judges everything by looking at his iPhone. He
+  does not read code. Describe what to check on the phone, not what changed
+  in the file.
+- **He has asked for the app to be finished and taken to submission without
+  stopping for approval at each step.** Work through the phases. Stop only
+  for a phone check at the end of a phase, for something only he can do
+  (Apple agreements, 2FA, confirming privacy answers), or for a decision
+  that would be expensive to get wrong. Always ask before Submit for Review.
+- **No em-dashes** in anything written for him or in UI copy, commit
+  messages included.
+- Anchor edits on file content actually read, never assumed. If a change
+  does not land, say "PATCH FAILED" plainly.
+- Windows and PowerShell. Give exact commands; do not assume he is already
+  in the right folder.
+- Expo account `hearthapplication`. He is protective of build quota: do not
+  spend a build when a dev server reload would do.
 
 ## Hard constraints
 
-- **Never use a WebView.** Apple guideline 4.2 rejects repackaged websites.
-  Every screen is rebuilt natively. This is not negotiable.
-- **Never change the tuned maths.** The Dixon-Coles constants, the Dynasty
-  ageing, valuation, wage and finance curves are already balanced: 2.75 goals
-  per game, champions near 90 points, a 92 rated 23 year old worth about
-  £125m. Port them exactly. Golden number tests guard this from Phase 2.
-- **`src/engine` and `src/data` import nothing from React or React Native.**
-  Plain modules. This is what lets the engine run headless in tests and
-  unchanged inside a Supabase edge function for replay validation.
-- **Real database figures in all copy**: 712 club seasons, 3,003 players,
-  51 clubs, 35 seasons, 1992 to 2026. Not the old marketing numbers.
+- **Never use a WebView.** Apple guideline 4.2. Every screen is native.
+- **Never retune the maths.** The engine is ported from the live web game
+  and proven identical by `tests/engine/parity.test.ts`. The shipping
+  balance is about 3.0 goals a game and champions on about 93 points,
+  locked by `tests/engine/golden.test.ts`. A change that moves either is a
+  balance change and needs Mo's decision plus an `ENGINE_VERSION` bump.
+- **`src/engine` and `src/data` import nothing from React, React Native or
+  Expo.** That is what lets the engine run headless and on the server.
+- **Preserve the order of random draws.** Seeded runs (the Daily,
+  multiplayer rooms) depend on it. Port functions draw for draw.
+- **Database figures come from `src/data/meta.json`**, never typed into
+  copy: 706 club-seasons, 2,978 players, 51 clubs, 35 seasons, 1992 to 2026.
+
+## The source
+
+`source/web/` is a snapshot of the live site (build s67-1): `index.html`
+plus every script it loads. `scripts/lib/web-sandbox.mjs` loads the
+original main script into a Node vm behind a stub browser, so the real web
+functions can be called. Two uses:
+
+- `npm run extract-db` reads the finished, corrected tables into `src/data/`.
+- Each engine port gets a parity test that runs the web function and the
+  port on the same seed and requires identical output.
+
+When porting a mode, read the web function first, port it line for line,
+then write its parity test. Do not "tidy" the maths.
 
 ## Decisions already made
 
-- Blitz stays a toggle on the draft setup screen, not its own mode tile.
-- Duels and Versus are merged into one PLAY entry.
-- Online leaderboard and live 1v1 are in scope, on Supabase, with Game Center
-  layered on top. Version 1.0 does not ship until online is in.
-- Leaderboards are verified by replaying submitted runs server side, which
-  works because a seed plus config plus eleven picks fully determines a
-  season. Game Center scores alone are client submitted and spoofable.
-- The engine carries an `ENGINE_VERSION`. Client and server must replay with
-  the same build or honest players get rejected after an app update.
+- Blitz stays a toggle on the draft setup screen.
+- Duels and Beat the Machine are gone, as on the web since release S54.
+  Multiplayer replaces them. Versus stays.
+- The app is a client of the existing Supabase backend; iPhone and web
+  players share rooms, leagues, the Daily and leaderboards.
+- Champions League and World Cup 2026 are both in scope.
+- Online results come from the server; the phone displays them.
 
 ## Where things are
 
 ```
 app/(tabs)/          the four tabs: today, play, career, you
-src/ui/tokens.ts     pine emerald palette, spacing, radii, tap targets
-src/ui/type.ts       Anton, Barlow Condensed, Inter across three roles
-src/ui/components/   Screen Surface Pill NumberSlot Button Tile Toggle
-src/ui/icons.tsx     hand drawn SVG tab icons
+src/engine/          rng, match/dixonColes, strength, season, version
+src/data/            extracted JSON; meta.json has counts and the source hash
+src/ui/              tokens, type, components, icons
 src/save/            versioned storage, migration chain, settings slice
+source/web/          the live web game snapshot (not bundled)
+scripts/             extract-db, sim-season, lib/web-sandbox
+tests/engine/        parity and golden tests
 ```
 
 `NumberSlot` carries an overflow guard and takes digits only. Word values go
-in `Pill`, never a numeric slot.
-
-Every saved record is wrapped in `{v, t, data}` and migrated on read. Reads
-never throw and never return a half migrated value.
+in `Pill`. Every saved record is wrapped in `{v, t, data}` and migrated on
+read.
 
 ## Status
 
-Phase 1 is complete: Expo SDK 57 shell, four tab navigation, design tokens,
-three fonts, real haptics, and the versioned save layer with working settings.
-Nothing is wired to an engine yet, so on screen numbers are placeholders and
-cards are tagged "Not wired yet".
-
-**Phase 2 is next**: port the engine and database from the web build as plain
-modules, add `ENGINE_VERSION`, and prove it with a headless script that
-simulates a season and prints a realistic table, plus the golden number tests.
-
-The source `index.html` is the 1.6MB single file web build. The player
-database is one JSON line inside it. Apply the three data layers in order
-(base, the 2025/26 and 2026/27 blocks, then the correction pass) once at build
-time via `scripts/extract-db.mjs` and ship a finished `squads.json`. The phone
-should never run the correction pass.
+Phases 1 and 2 are done. **Phase 3, the draft end to end, is next.**
 
 ## Commands
 
 ```
 npm install
-npx expo start --dev-client            # add --tunnel if the phone cannot find it
-npm run typecheck                      # tsc --noEmit
-npx expo-doctor                        # must stay at 21/21
+npm test                    # parity and golden tests
+npm run typecheck           # app and node configs
+npm run sim -- 2026         # print a full simulated season
+npm run extract-db          # rebuild src/data from source/web
+npx expo-doctor             # must stay at 21/21
+npx expo start --dev-client # add --tunnel if the phone cannot find it
 ```
 
-Verify with typecheck and expo-doctor before committing. Both were clean at
-the end of Phase 1.
+Before committing: `npm test`, `npm run typecheck` and `npx expo-doctor`
+must all be clean.
