@@ -28,15 +28,6 @@ import {
 } from '../src/engine';
 import { collectionStore, looksStore, progressStore } from '../src/save';
 import { buyCosmetic, buyPack, equip, hasCosmetic } from '../src/game/progress';
-import { rewardReady } from '../src/game/ads';
-import {
-  COIN_REWARD,
-  coinsLeftToday,
-  untilFreePack,
-  waitWords,
-  watchForCoins,
-  watchForPack,
-} from '../src/game/rewards';
 
 /**
  * The shop.
@@ -79,92 +70,16 @@ export default function Shop() {
   );
   const [said, setSaid] = useState<string | null>(null);
 
-  /* What watching an advert can still be worth today. */
-  const [packIn, setPackIn] = useState(() => untilFreePack());
-  const [coinsLeft, setCoinsLeft] = useState(() => coinsLeftToday());
-  const [watched, setWatched] = useState<string | null>(null);
-  const [watching, setWatching] = useState(false);
-
   const refresh = useCallback(() => {
     setP(progressStore.read());
     setColl(collectionStore.read());
     setLooks(looksStore.read());
-    setPackIn(untilFreePack());
-    setCoinsLeft(coinsLeftToday());
   }, []);
-
-  /*
-   * Watching one for a pack.
-   *
-   * The pack is owed rather than opened here, so it goes through the same
-   * door as a pack from a level and the animation is the one everybody
-   * already knows. Nothing is given unless the advert was actually
-   * watched: closing it after two seconds pays nothing and costs nothing.
-   */
-  const takePack = useCallback(async () => {
-    if (watching) return;
-    if (untilFreePack() > 0) {
-      haptic('warning');
-      setWatched(`The next free pack is ${waitWords(untilFreePack())}.`);
-      return;
-    }
-    if (!rewardReady()) {
-      haptic('warning');
-      setWatched('No advert is ready. Try again in a moment.');
-      return;
-    }
-    setWatching(true);
-    haptic('light');
-    const out = await watchForPack();
-    setWatching(false);
-    refresh();
-    if (out.ok) {
-      haptic('success');
-      setWatched('A Bronze Pack is waiting below. Open it whenever you like.');
-    } else {
-      setWatched(
-        out.why === 'limit'
-          ? `The next free pack is ${waitWords(untilFreePack())}.`
-          : 'That advert did not finish, so nothing was given.',
-      );
-    }
-  }, [watching, refresh]);
-
-  const takeCoins = useCallback(async () => {
-    if (watching) return;
-    if (coinsLeftToday() <= 0) {
-      haptic('warning');
-      setWatched('That is all the coins adverts will pay today.');
-      return;
-    }
-    if (!rewardReady()) {
-      haptic('warning');
-      setWatched('No advert is ready. Try again in a moment.');
-      return;
-    }
-    setWatching(true);
-    haptic('light');
-    const out = await watchForCoins();
-    setWatching(false);
-    refresh();
-    if (out.ok) {
-      haptic('success');
-      sfx('pick');
-      setWatched(`${commas(COIN_REWARD)} coins added.`);
-    } else {
-      setWatched(
-        out.why === 'limit'
-          ? 'That is all the coins adverts will pay today.'
-          : 'That advert did not finish, so nothing was given.',
-      );
-    }
-  }, [watching, refresh]);
 
   useFocusEffect(
     useCallback(() => {
       refresh();
       setSaid(null);
-      setWatched(null);
     }, [refresh]),
   );
 
@@ -283,37 +198,6 @@ export default function Shop() {
                   </Text>
                 </Press>
               ) : null}
-
-              {/* ================= adverts, only here ================= */}
-              <View style={styles.watch}>
-                <Text style={styles.watchKey}>WATCH SOMETHING, GET SOMETHING</Text>
-                <View style={styles.watchRow}>
-                  <Press
-                    onPress={() => void takePack()}
-                    feel="medium"
-                    scaleTo={0.98}
-                    style={[styles.watchBtn, packIn > 0 ? styles.watchOff : null]}
-                  >
-                    <Text style={[styles.watchText, packIn > 0 ? styles.watchTextOff : null]}>
-                      {packIn > 0 ? `Free pack ${waitWords(packIn)}` : 'A free Bronze Pack'}
-                    </Text>
-                  </Press>
-                  <Press
-                    onPress={() => void takeCoins()}
-                    feel="medium"
-                    scaleTo={0.98}
-                    style={[styles.watchBtn, coinsLeft <= 0 ? styles.watchOff : null]}
-                  >
-                    <Text style={[styles.watchText, coinsLeft <= 0 ? styles.watchTextOff : null]}>
-                      {coinsLeft > 0 ? `${commas(COIN_REWARD)} coins` : 'Coins back tomorrow'}
-                    </Text>
-                  </Press>
-                </View>
-                <Text style={styles.watchNote}>
-                  {watched ??
-                    `One pack every four hours and ${coinsLeft} more lots of coins today. There are no adverts anywhere else in the game except a single one when a season or a tournament finishes, and never in the Daily, the Weekly or a duel.`}
-                </Text>
-              </View>
 
               <Text style={styles.note}>
                 A pack looks for somebody you have not got before it settles for
@@ -555,32 +439,6 @@ const styles = StyleSheet.create({
   said: { ...text.small, fontSize: 12.5, color: hue.amber, marginBottom: space.s2 },
   note: { ...text.small, fontSize: 12, lineHeight: 18, color: color.text3, marginBottom: space.s3 },
 
-  watch: {
-    marginBottom: space.s4,
-    padding: space.s3,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: alpha(hue.emerald, 0.34),
-    backgroundColor: alpha(hue.emerald, 0.08),
-    gap: space.s2,
-  },
-  watchKey: { ...text.key, fontSize: 8, color: hue.emerald },
-  watchRow: { flexDirection: 'row', gap: space.s2 },
-  watchBtn: {
-    flex: 1,
-    minHeight: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: space.s2,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: alpha(hue.emerald, 0.45),
-    backgroundColor: alpha(hue.emerald, 0.13),
-  },
-  watchOff: { borderColor: line.card, backgroundColor: 'rgba(255,255,255,0.03)' },
-  watchText: { ...text.key, fontSize: 8.5, color: hue.emerald, textAlign: 'center' },
-  watchTextOff: { color: color.text3 },
-  watchNote: { ...text.small, fontSize: 11, lineHeight: 16, color: color.text3 },
   dev: {
     minHeight: 46,
     marginBottom: space.s3,

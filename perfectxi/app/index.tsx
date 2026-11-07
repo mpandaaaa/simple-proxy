@@ -522,7 +522,7 @@ export default function Home() {
 
       <Rise delay={7}>
         <Text style={styles.dbLine}>
-          51 clubs · 712 squad-seasons · 1992 to 2026
+          51 clubs · 706 squad-seasons · 1992 to 2026
         </Text>
 
         <Text style={styles.legal}>

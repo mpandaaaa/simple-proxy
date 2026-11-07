@@ -1,18 +1,22 @@
 /**
- * Where adverts are allowed to be.
+ * No adverts and no tracking.
  *
- * Adverts are the one thing in this app that can quietly spread. A break
- * advert added to a screen that is not a break, a reward offered in a
- * mode that is scored against other people, a banner slipped onto the
- * home screen: each of those is one line and none of them look wrong on
- * their own.
- *
- * So the rule is written down here rather than remembered. Only the two
- * placements that were agreed exist, and only the one file talks to the
- * SDK.
+ * App Review refused build 8 under guideline 2.1 because the app carried
+ * App Tracking Transparency. The fix was to take tracking out, which meant
+ * taking out the advert SDK that needed it. One line in package.json or
+ * one plugin would bring the framework straight back, so this looks for it.
  */
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+
+let bad = 0;
+const fail = (m) => {
+  console.log('  ' + m);
+  bad++;
+};
+
+const BANNED =
+  /react-native-google-mobile-ads|expo-tracking-transparency|AppTrackingTransparency|NSUserTrackingUsageDescription|requestTrackingPermissions|GADApplicationIdentifier|appsflyer|react-native-adjust|react-native-branch|react-native-fbsdk/i;
 
 function walk(dir, out = []) {
   for (const f of readdirSync(dir)) {
@@ -23,142 +27,26 @@ function walk(dir, out = []) {
   return out;
 }
 
-const files = [...walk('src'), ...walk('app')];
-let bad = 0;
-const fail = (m) => {
-  console.log('  ' + m);
-  bad++;
-};
+for (const f of ['package.json', ...walk('src'), ...walk('app')]) {
+  const hit = BANNED.exec(readFileSync(f, 'utf8'));
+  if (hit) fail(`${f} mentions ${hit[0]}. Perfect XI does not track anybody.`);
+}
 
-const ADS = join('src', 'game', 'ads.ts');
-
-/* ---------- one door to the SDK ---------- */
-
-for (const f of files) {
-  if (f.endsWith(ADS)) continue;
-  const src = readFileSync(f, 'utf8');
-  if (/from ['"]react-native-google-mobile-ads['"]/.test(src)) {
-    fail(`${f} talks to the advert SDK directly. Everything goes through src/game/ads.ts.`);
-  }
-  if (/expo-tracking-transparency/.test(src)) {
-    fail(`${f} asks about tracking. Only src/game/ads.ts may, and only once.`);
+for (const pkg of ['react-native-google-mobile-ads', 'expo-tracking-transparency']) {
+  if (existsSync(join('node_modules', pkg))) {
+    fail(`${pkg} is still installed, so it would still be linked into a build.`);
   }
 }
 
-/* ---------- no banners, ever ---------- */
-
-const adsSrc = readFileSync(ADS, 'utf8');
-for (const banned of ['BannerAd', 'BannerAdSize', 'AppOpenAd', 'adaptiveBanner']) {
-  if (adsSrc.includes(banned)) {
-    fail(`src/game/ads.ts uses ${banned}. There are no banners and no app open adverts.`);
-  }
-}
-for (const f of files) {
-  const src = readFileSync(f, 'utf8');
-  if (/<BannerAd/.test(src)) fail(`${f} draws a banner. There are none.`);
-}
-
-/* ---------- the two placements, and no others ---------- */
-
-const ALLOWED_BREAK = [
-  join('app', 'draft', 'results.tsx'),
-  join('src', 'game', 'worldcup.ts'),
-  join('src', 'game', 'ucl.ts'),
-  join('src', 'game', 'cup.ts'),
-];
-const ALLOWED_REWARD = [join('src', 'game', 'rewards.ts'), join('app', 'shop.tsx')];
-
-for (const f of files) {
-  if (f.endsWith(ADS)) continue;
-  const src = readFileSync(f, 'utf8');
-  if (/\bshowBreak\(/.test(src) && !ALLOWED_BREAK.some((a) => f.endsWith(a))) {
-    fail(`${f} shows a full screen advert. Only the end of a season or a tournament may.`);
-  }
-  if (/\bwatchForReward\(|\bwatchForPack\(|\bwatchForCoins\(/.test(src) && !ALLOWED_REWARD.some((a) => f.endsWith(a))) {
-    fail(`${f} offers a rewarded advert. Only the shop does.`);
-  }
-}
-
-/* ---------- nothing competitive can be bought with one ---------- */
-
-const COMPETITIVE = [
-  join('app', 'daily.tsx'),
-  join('app', 'weekly.tsx'),
-  join('app', 'duel.tsx'),
-  join('app', 'h2h.tsx'),
-  join('app', 'h2hreview.tsx'),
-  join('src', 'engine', 'daily.ts'),
-  join('src', 'engine', 'weekly.ts'),
-  join('src', 'engine', 'duel.ts'),
-];
-for (const f of files) {
-  if (!COMPETITIVE.some((c) => f.endsWith(c))) continue;
-  const src = readFileSync(f, 'utf8');
-  if (/game\/ads|game\/rewards|showBreak|watchFor/.test(src)) {
-    fail(`${f} is scored against other people and must never touch an advert.`);
-  }
-}
-
-/* ---------- and never in the middle of a tournament ---------- */
-/*
- * "Never during a match" is the constraint, and the three tournament
- * files are the place it would break: they run every tie through the
- * same function, so an advert put there without a guard would fire
- * between matches rather than at the end of the competition.
- *
- * Each call has to sit inside a test that the run is over. Checked by
- * looking at the twelve lines above it, which is where that guard is.
- */
-for (const f of [join('src', 'game', 'worldcup.ts'), join('src', 'game', 'ucl.ts'), join('src', 'game', 'cup.ts')]) {
-  const src = readFileSync(f, 'utf8');
-  const lines = src.split(String.fromCharCode(10));
-  lines.forEach((l, i) => {
-    if (!/showBreak\(/.test(l)) return;
-    const above = lines.slice(Math.max(0, i - 12), i + 1).join(' ');
-    if (!/\.over/.test(above)) {
-      fail(`${f}:${i + 1} shows an advert without checking the run is over. That fires between matches.`);
-    }
-  });
-}
-
-/* ---------- the cap between full screen adverts still exists ---------- */
-if (!/GAP_MS\s*=\s*4\s*\*\s*60\s*\*\s*1000/.test(adsSrc)) {
-  fail('src/game/ads.ts no longer caps full screen adverts at one every four minutes');
-}
-if (!/Date\.now\(\) - lastShown < GAP_MS/.test(adsSrc)) {
-  fail('src/game/ads.ts no longer refuses an advert that comes too soon after the last');
-}
-
-/* The season advert must be refused for those modes at its own call site. */
-const results = readFileSync(join('app', 'draft', 'results.tsx'), 'utf8');
-if (!/if \(!run\.daily && !run\.weekly && run\.duel == null/.test(results)) {
-  fail('the season advert no longer refuses a Daily, a Weekly or a duel');
-}
-
-/* ---------- and the page that describes them is honest ---------- */
-
-const privacy = readFileSync(join('app', 'privacy.tsx'), 'utf8');
-if (/No advertising, no advertising\s*\n?\s*identifiers/.test(privacy)) {
-  fail('the privacy page still says there is no advertising');
-}
-for (const must of ['The adverts', 'Who shows them', 'The tracking question']) {
-  if (!privacy.includes(must)) fail(`the privacy page has no "${must}" section`);
-}
-if (!privacy.includes('AdMob')) fail('the privacy page does not name who shows the adverts');
-
-const settings = readFileSync(join('app', 'settings.tsx'), 'utf8');
-if (/No ads, no subscriptions/.test(settings)) {
-  fail('the settings page still says there are no ads');
-}
-
-console.log('');
-console.log('  one file talks to the SDK, no banners, two placements');
-console.log('  nothing scored against other people can be bought with an advert');
-console.log('  and the privacy page says what they see');
-console.log('');
+const cfg = readFileSync('app.config.js', 'utf8');
+const hit = BANNED.exec(cfg);
+if (hit) fail(`app.config.js mentions ${hit[0]}. Perfect XI does not track anybody.`);
+if (!/NSPrivacyTracking:\s*false/.test(cfg)) fail('the privacy manifest no longer says NSPrivacyTracking: false');
+if (/NSPrivacyCollectedDataTypeTracking:\s*true/.test(cfg)) fail('the privacy manifest declares data used for tracking');
+if (/^\s*UIBackgroundModes\s*:/m.test(cfg)) fail('app.config.js declares UIBackgroundModes');
 
 if (bad) {
-  console.log(`${bad} problems\n`);
+  console.log(`\n${bad} problems\n`);
   process.exit(1);
 }
-console.log('The adverts are where they were agreed to be, and nowhere else.\n');
+console.log('\nNo adverts, no tracking, and nothing that would link the framework.\n');

@@ -52,6 +52,7 @@ const SAID_AS = {
   Name: 'name',
   PhoneNumber: 'phone number',
   UserID: 'user id',
+  GameplayContent: 'gameplay content',
   PurchaseHistory: 'purchase history',
   PhysicalAddress: 'address',
   Contacts: 'contacts',
@@ -128,9 +129,8 @@ if (missingOnWeb.length === 0 && missingInApp.length === 0) {
  * as well as in the pages.
  */
 const PROMISES = [
-  { words: 'no banners', why: 'the app promises there are no banner adverts anywhere' },
-  { words: 'none during a match', why: 'the app promises no advert interrupts a match' },
-  { words: 'the daily, the weekly or a duel', why: 'the app promises no advert appears in anything scored against other people' },
+  { words: 'no adverts', why: 'the app promises it shows no adverts' },
+  { words: 'no tracking', why: 'the app promises it does not track anybody' },
   { words: 'nothing to sign in to', why: 'the app promises there is no account' },
 ];
 

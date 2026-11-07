@@ -529,30 +529,7 @@ if (!store.includes('version: 14')) {
     );
   }
 
-  /* The tracking sheet cannot be presented while the splash is up. iOS
-     does not say so: the call returns undetermined and nothing appears.
-     Asking from an effect with no dependencies asks too early, once, and
-     never again. Guideline 2.1, rejected. */
-  const layout = readFileSync('app/_layout.tsx', 'utf8');
-  const at = layout.indexOf('startAds()');
-  if (at < 0) {
-    fail('app/_layout.tsx no longer starts the adverts, so nothing ever asks about tracking.');
-  } else {
-    const around = layout.slice(Math.max(0, at - 400), at + 200);
-    if (!/ready\s*\|\|\s*error/.test(around)) {
-      fail(
-        'app/_layout.tsx calls startAds without waiting for the splash to come down. iOS will not show the tracking sheet over a splash screen and does not report that it refused, so the app declares App Tracking Transparency and never asks. Guideline 2.1, and a rejection.',
-      );
-    }
-  }
-
-  /* And the ask itself has to survive the sheet not appearing. */
-  const ads = readFileSync('src/game/ads.ts', 'utf8');
-  if (!/AppState/.test(ads)) {
-    fail(
-      'src/game/ads.ts must wait for the app to be active before asking about tracking. iOS silently declines to present the sheet otherwise.',
-    );
-  }
+  /* The tracking half of that refusal is guarded by scripts/check-ads.mjs. */
 }
 
 console.log(

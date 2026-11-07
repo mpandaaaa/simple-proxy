@@ -1,8 +1,8 @@
 {
  "_meta": {
-  "generated": "2026-09-02",
-  "note": "Perfect XI complete game database. Updated for the summer 2026 window, which closed 1 September 2026.",
-  "clubSeasons": 712,
+  "generated": "2026-11-07",
+  "note": "Perfect XI complete game database. Squads and dates of birth taken from src/data on branch claude/perfect-xi-ios-app-g38h3b, extracted from web build s67-1.",
+  "clubSeasons": 706,
   "clubs": 51,
   "seasons": [
    "1992",
@@ -9822,155 +9822,6 @@
     "prime": 71
    }
   ],
-  "Crystal Palace|1993": [
-   {
-    "n": "Chris Armstrong",
-    "nat": "England",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 74,
-    "prime": 77
-   },
-   {
-    "n": "Mark Bright",
-    "nat": "England",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 73,
-    "prime": 77
-   },
-   {
-    "n": "Nigel Martyn",
-    "nat": "England",
-    "pos": [
-     "GK"
-    ],
-    "rtg": 80,
-    "prime": 85
-   },
-   {
-    "n": "John Salako",
-    "nat": "England",
-    "pos": [
-     "ATT",
-     "MID"
-    ],
-    "rtg": 72,
-    "prime": 75
-   },
-   {
-    "n": "Gareth Southgate",
-    "nat": "England",
-    "pos": [
-     "DEF",
-     "MID"
-    ],
-    "rtg": 74,
-    "prime": 80
-   },
-   {
-    "n": "Andy Thorn",
-    "nat": "England",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 70,
-    "prime": 73
-   },
-   {
-    "n": "Eric Young",
-    "nat": "Wales",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 70,
-    "prime": 73
-   },
-   {
-    "n": "Richard Shaw",
-    "nat": "England",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 69,
-    "prime": 73
-   },
-   {
-    "n": "Dean Gordon",
-    "nat": "England",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 68,
-    "prime": 72
-   },
-   {
-    "n": "Simon Rodger",
-    "nat": "England",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 67,
-    "prime": 70
-   },
-   {
-    "n": "Eddie McGoldrick",
-    "nat": "Ireland",
-    "pos": [
-     "MID",
-     "DEF"
-    ],
-    "rtg": 68,
-    "prime": 73
-   },
-   {
-    "n": "Bobby Bowry",
-    "nat": "England",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 65,
-    "prime": 68
-   },
-   {
-    "n": "Simon Osborn",
-    "nat": "England",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 65,
-    "prime": 70
-   },
-   {
-    "n": "David Whyte",
-    "nat": "Scotland",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 67,
-    "prime": 71
-   },
-   {
-    "n": "Marc Fish",
-    "nat": "England",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 63,
-    "prime": 67
-   },
-   {
-    "n": "Lee Sinnott",
-    "nat": "England",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 67,
-    "prime": 71
-   }
-  ],
   "Crystal Palace|1994": [
    {
     "n": "Nigel Martyn",
@@ -10219,136 +10070,6 @@
     ],
     "rtg": 67,
     "prime": 71
-   }
-  ],
-  "Crystal Palace|1998": [
-   {
-    "n": "Clinton Morrison",
-    "nat": "Ireland",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 71,
-    "prime": 74
-   },
-   {
-    "n": "Matt Jansen",
-    "nat": "England",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 73,
-    "prime": 79
-   },
-   {
-    "n": "Attilio Lombardo",
-    "nat": "Italy",
-    "pos": [
-     "ATT",
-     "MID"
-    ],
-    "rtg": 75,
-    "prime": 82
-   },
-   {
-    "n": "Fan Zhiyi",
-    "nat": "China",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 71,
-    "prime": 74
-   },
-   {
-    "n": "Marc Edworthy",
-    "nat": "England",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 70,
-    "prime": 73
-   },
-   {
-    "n": "Marcus Bent",
-    "nat": "England",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 68,
-    "prime": 73
-   },
-   {
-    "n": "Hayden Mullins",
-    "nat": "England",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 69,
-    "prime": 73
-   },
-   {
-    "n": "Kevin Pressman",
-    "nat": "England",
-    "pos": [
-     "GK"
-    ],
-    "rtg": 70,
-    "prime": 74
-   },
-   {
-    "n": "David Tuttle",
-    "nat": "England",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 68,
-    "prime": 71
-   },
-   {
-    "n": "Andy Roberts",
-    "nat": "England",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 69,
-    "prime": 73
-   },
-   {
-    "n": "Kevin Muscat",
-    "nat": "Australia",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 69,
-    "prime": 73
-   },
-   {
-    "n": "Simon Rodger",
-    "nat": "England",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 65,
-    "prime": 70
-   },
-   {
-    "n": "Neil Shipperley",
-    "nat": "England",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 66,
-    "prime": 73
-   },
-   {
-    "n": "Julian Gray",
-    "nat": "England",
-    "pos": [
-     "MID",
-     "ATT"
-    ],
-    "rtg": 65,
-    "prime": 70
    }
   ],
   "Crystal Palace|2004": [
@@ -13099,15 +12820,6 @@
     ],
     "rtg": 64,
     "prime": 73
-   },
-   {
-    "n": "Billy Davies",
-    "nat": "Scotland",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 62,
-    "prime": 66
    }
   ],
   "Charlton|1998": [
@@ -13243,136 +12955,6 @@
     "nat": "England",
     "pos": [
      "DEF"
-    ],
-    "rtg": 67,
-    "prime": 71
-   }
-  ],
-  "Charlton|1999": [
-   {
-    "n": "Mark Kinsella",
-    "nat": "Ireland",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 73,
-    "prime": 75
-   },
-   {
-    "n": "Jason Euell",
-    "nat": "England",
-    "pos": [
-     "MID",
-     "ATT"
-    ],
-    "rtg": 73,
-    "prime": 77
-   },
-   {
-    "n": "Richard Rufus",
-    "nat": "England",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 72,
-    "prime": 75
-   },
-   {
-    "n": "Dean Kiely",
-    "nat": "Ireland",
-    "pos": [
-     "GK"
-    ],
-    "rtg": 74,
-    "prime": 77
-   },
-   {
-    "n": "Luke Young",
-    "nat": "England",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 71,
-    "prime": 74
-   },
-   {
-    "n": "Scott Parker",
-    "nat": "England",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 74,
-    "prime": 80
-   },
-   {
-    "n": "Paul Konchesky",
-    "nat": "England",
-    "pos": [
-     "DEF",
-     "MID"
-    ],
-    "rtg": 69,
-    "prime": 74
-   },
-   {
-    "n": "Shaun Newton",
-    "nat": "England",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 68,
-    "prime": 71
-   },
-   {
-    "n": "Claus Jensen",
-    "nat": "Denmark",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 72,
-    "prime": 77
-   },
-   {
-    "n": "Jonatan Johansson",
-    "nat": "Finland",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 70,
-    "prime": 74
-   },
-   {
-    "n": "Jorge Costa",
-    "nat": "Portugal",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 71,
-    "prime": 76
-   },
-   {
-    "n": "Hermann Hreidarsson",
-    "nat": "Iceland",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 72,
-    "prime": 77
-   },
-   {
-    "n": "Steve Brown",
-    "nat": "England",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 68,
-    "prime": 71
-   },
-   {
-    "n": "Mathias Svensson",
-    "nat": "Sweden",
-    "pos": [
-     "ATT"
     ],
     "rtg": 67,
     "prime": 71
@@ -14760,145 +14342,6 @@
     ],
     "rtg": 67,
     "prime": 71
-   }
-  ],
-  "Middlesbrough|1997": [
-   {
-    "n": "Hamilton Ricard",
-    "nat": "Colombia",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 73,
-    "prime": 76
-   },
-   {
-    "n": "Juninho",
-    "nat": "Brazil",
-    "pos": [
-     "MID",
-     "ATT"
-    ],
-    "rtg": 79,
-    "prime": 85
-   },
-   {
-    "n": "Michael Schwarzer",
-    "nat": "Australia",
-    "pos": [
-     "GK"
-    ],
-    "rtg": 77,
-    "prime": 82
-   },
-   {
-    "n": "Emerson",
-    "nat": "Brazil",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 75,
-    "prime": 78
-   },
-   {
-    "n": "Steve Vickers",
-    "nat": "England",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 71,
-    "prime": 73
-   },
-   {
-    "n": "Gianluca Festa",
-    "nat": "Italy",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 72,
-    "prime": 75
-   },
-   {
-    "n": "Colin Cooper",
-    "nat": "England",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 71,
-    "prime": 75
-   },
-   {
-    "n": "Neil Cox",
-    "nat": "England",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 70,
-    "prime": 73
-   },
-   {
-    "n": "Dean Gordon",
-    "nat": "England",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 68,
-    "prime": 72
-   },
-   {
-    "n": "Robbie Mustoe",
-    "nat": "England",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 71,
-    "prime": 73
-   },
-   {
-    "n": "Craig Hignett",
-    "nat": "England",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 73,
-    "prime": 76
-   },
-   {
-    "n": "Andy Townsend",
-    "nat": "Ireland",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 71,
-    "prime": 79
-   },
-   {
-    "n": "Brian Deane",
-    "nat": "England",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 71,
-    "prime": 76
-   },
-   {
-    "n": "Clayton Blackmore",
-    "nat": "Wales",
-    "pos": [
-     "DEF",
-     "MID"
-    ],
-    "rtg": 67,
-    "prime": 75
-   },
-   {
-    "n": "Marco Branca",
-    "nat": "Italy",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 70,
-    "prime": 74
    }
   ],
   "Middlesbrough|1998": [
@@ -16970,145 +16413,6 @@
     ],
     "rtg": 68,
     "prime": 73
-   }
-  ],
-  "Norwich|2014": [
-   {
-    "n": "Leroy Fer",
-    "nat": "Netherlands",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 73,
-    "prime": 77
-   },
-   {
-    "n": "Wes Hoolahan",
-    "nat": "Ireland",
-    "pos": [
-     "MID",
-     "ATT"
-    ],
-    "rtg": 74,
-    "prime": 77
-   },
-   {
-    "n": "John Ruddy",
-    "nat": "England",
-    "pos": [
-     "GK"
-    ],
-    "rtg": 74,
-    "prime": 77
-   },
-   {
-    "n": "Russell Martin",
-    "nat": "Scotland",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 73,
-    "prime": 75
-   },
-   {
-    "n": "Gary O'Neil",
-    "nat": "England",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 70,
-    "prime": 73
-   },
-   {
-    "n": "Michael Turner",
-    "nat": "England",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 70,
-    "prime": 74
-   },
-   {
-    "n": "Nathan Redmond",
-    "nat": "England",
-    "pos": [
-     "ATT",
-     "MID"
-    ],
-    "rtg": 72,
-    "prime": 78
-   },
-   {
-    "n": "Alexander Tettey",
-    "nat": "Norway",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 72,
-    "prime": 75
-   },
-   {
-    "n": "Grant Holt",
-    "nat": "England",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 72,
-    "prime": 79
-   },
-   {
-    "n": "Steven Whittaker",
-    "nat": "Scotland",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 70,
-    "prime": 73
-   },
-   {
-    "n": "Johan Elmander",
-    "nat": "Sweden",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 71,
-    "prime": 75
-   },
-   {
-    "n": "Jonny Howson",
-    "nat": "England",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 72,
-    "prime": 76
-   },
-   {
-    "n": "Bradley Johnson",
-    "nat": "England",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 69,
-    "prime": 73
-   },
-   {
-    "n": "Luciano Becchio",
-    "nat": "Argentina",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 70,
-    "prime": 74
-   },
-   {
-    "n": "Javier Garrido",
-    "nat": "Spain",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 68,
-    "prime": 75
    }
   ],
   "Norwich|2015": [
@@ -22180,7 +21484,7 @@
     "prime": 72
    },
    {
-    "n": "Marney Dean",
+    "n": "Dean Marney",
     "nat": "England",
     "pos": [
      "MID"
@@ -22613,155 +21917,6 @@
     ],
     "rtg": 68,
     "prime": 72
-   }
-  ],
-  "Hull|2015": [
-   {
-    "n": "Robert Snodgrass",
-    "nat": "Scotland",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 73,
-    "prime": 78
-   },
-   {
-    "n": "Abel Hernandez",
-    "nat": "Uruguay",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 72,
-    "prime": 73
-   },
-   {
-    "n": "Andrew Robertson",
-    "nat": "Scotland",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 71,
-    "prime": 88
-   },
-   {
-    "n": "Tom Huddlestone",
-    "nat": "England",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 73,
-    "prime": 79
-   },
-   {
-    "n": "Curtis Davies",
-    "nat": "England",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 72,
-    "prime": 77
-   },
-   {
-    "n": "Allan McGregor",
-    "nat": "Scotland",
-    "pos": [
-     "GK"
-    ],
-    "rtg": 76,
-    "prime": 80
-   },
-   {
-    "n": "Ahmed Elmohamady",
-    "nat": "Egypt",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 70,
-    "prime": 75
-   },
-   {
-    "n": "George Boyd",
-    "nat": "Scotland",
-    "pos": [
-     "ATT",
-     "MID"
-    ],
-    "rtg": 70,
-    "prime": 73
-   },
-   {
-    "n": "Robbie Brady",
-    "nat": "Ireland",
-    "pos": [
-     "DEF",
-     "ATT"
-    ],
-    "rtg": 72,
-    "prime": 79
-   },
-   {
-    "n": "Hatem Ben Arfa",
-    "nat": "France",
-    "pos": [
-     "ATT",
-     "MID"
-    ],
-    "rtg": 74,
-    "prime": 82
-   },
-   {
-    "n": "Mohamed Diame",
-    "nat": "Senegal",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 73,
-    "prime": 77
-   },
-   {
-    "n": "Paul McShane",
-    "nat": "Ireland",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 66,
-    "prime": 71
-   },
-   {
-    "n": "Maynor Figueroa",
-    "nat": "Honduras",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 67,
-    "prime": 73
-   },
-   {
-    "n": "Liam Rosenior",
-    "nat": "England",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 67,
-    "prime": 71
-   },
-   {
-    "n": "Nikica Jelavic",
-    "nat": "Croatia",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 70,
-    "prime": 80
-   },
-   {
-    "n": "Alex Bruce",
-    "nat": "Ireland",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 67,
-    "prime": 71
    }
   ],
   "Wigan|2005": [
@@ -47109,15 +46264,6 @@
     "prime": 70
    },
    {
-    "n": "Jihai Sun",
-    "nat": "China",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 70,
-    "prime": 73
-   },
-   {
     "n": "Kiki Musampa",
     "nat": "DR Congo",
     "pos": [
@@ -51326,16 +50472,6 @@
     "prime": 72
    },
    {
-    "n": "Gael Bale",
-    "nat": "Wales",
-    "pos": [
-     "ATT",
-     "MID"
-    ],
-    "rtg": 61,
-    "prime": 89
-   },
-   {
     "n": "Michael Carrick",
     "nat": "England",
     "pos": [
@@ -51343,15 +50479,6 @@
     ],
     "rtg": 79,
     "prime": 83
-   },
-   {
-    "n": "Martin Jol",
-    "nat": "Netherlands",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 63,
-    "prime": 68
    }
   ],
   "Tottenham|2005": [
@@ -53085,13 +52212,13 @@
     "prime": 90
    },
    {
-    "n": "Heung-min Son",
+    "n": "Son Heung-min",
     "nat": "S.Korea",
     "pos": [
      "ATT"
     ],
-    "rtg": 87,
-    "prime": 89
+    "rtg": 86,
+    "prime": 88
    },
    {
     "n": "Dele Alli",
@@ -53232,13 +52359,13 @@
     "prime": 90
    },
    {
-    "n": "Heung-min Son",
+    "n": "Son Heung-min",
     "nat": "S.Korea",
     "pos": [
      "ATT"
     ],
-    "rtg": 88,
-    "prime": 89
+    "rtg": 87,
+    "prime": 88
    },
    {
     "n": "Hugo Lloris",
@@ -53379,13 +52506,13 @@
     "prime": 90
    },
    {
-    "n": "Heung-min Son",
+    "n": "Son Heung-min",
     "nat": "S.Korea",
     "pos": [
      "ATT"
     ],
-    "rtg": 88,
-    "prime": 89
+    "rtg": 87,
+    "prime": 88
    },
    {
     "n": "Hugo Lloris",
@@ -53527,13 +52654,13 @@
     "prime": 90
    },
    {
-    "n": "Heung-min Son",
+    "n": "Son Heung-min",
     "nat": "S.Korea",
     "pos": [
      "ATT"
     ],
-    "rtg": 88,
-    "prime": 89
+    "rtg": 87,
+    "prime": 88
    },
    {
     "n": "Hugo Lloris",
@@ -53668,13 +52795,13 @@
   ],
   "Tottenham|2023": [
    {
-    "n": "Heung-min Son",
+    "n": "Son Heung-min",
     "nat": "S.Korea",
     "pos": [
      "ATT"
     ],
-    "rtg": 87,
-    "prime": 89
+    "rtg": 86,
+    "prime": 88
    },
    {
     "n": "James Maddison",
@@ -53817,13 +52944,13 @@
   ],
   "Tottenham|2024": [
    {
-    "n": "Heung-min Son",
+    "n": "Son Heung-min",
     "nat": "S.Korea",
     "pos": [
      "ATT"
     ],
-    "rtg": 86,
-    "prime": 89
+    "rtg": 85,
+    "prime": 88
    },
    {
     "n": "James Maddison",
@@ -58663,15 +57790,6 @@
     "prime": 86
    },
    {
-    "n": "Kevin Keegan",
-    "nat": "England",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 63,
-    "prime": 88
-   },
-   {
     "n": "Pavel Srnicek",
     "nat": "Czech Rep",
     "pos": [
@@ -59870,7 +58988,7 @@
     "prime": 73
    },
    {
-    "n": "Ameobi Shola",
+    "n": "Shola Ameobi",
     "nat": "England",
     "pos": [
      "ATT"
@@ -60027,7 +59145,7 @@
     "prime": 78
    },
    {
-    "n": "Ameobi Shola",
+    "n": "Shola Ameobi",
     "nat": "England",
     "pos": [
      "ATT"
@@ -60174,7 +59292,7 @@
     "prime": 78
    },
    {
-    "n": "Ameobi Shola",
+    "n": "Shola Ameobi",
     "nat": "England",
     "pos": [
      "ATT"
@@ -67771,7 +66889,7 @@
     "prime": 72
    },
    {
-    "n": "Cole Joe",
+    "n": "Joe Cole",
     "nat": "England",
     "pos": [
      "MID"
@@ -67780,7 +66898,7 @@
     "prime": 82
    },
    {
-    "n": "Wanchope Paulo",
+    "n": "Paulo Wanchope",
     "nat": "Costa Rica",
     "pos": [
      "ATT"
@@ -68144,15 +67262,6 @@
     "prime": 79
    },
    {
-    "n": "Glenn Roeder",
-    "nat": "England",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 63,
-    "prime": 68
-   },
-   {
     "n": "Michael Carrick",
     "nat": "England",
     "pos": [
@@ -68236,7 +67345,7 @@
     "prime": 78
    },
    {
-    "n": "Hislop Shaka",
+    "n": "Shaka Hislop",
     "nat": "T&T",
     "pos": [
      "GK"
@@ -69454,13 +68563,13 @@
     "prime": 78
    },
    {
-    "n": "Carroll Andy",
+    "n": "Andy Carroll",
     "nat": "England",
     "pos": [
      "ATT"
     ],
-    "rtg": 72,
-    "prime": 80
+    "rtg": 68,
+    "prime": 76
    },
    {
     "n": "Aaron Cresswell",
@@ -74863,7 +73972,7 @@
     "prime": 73
    },
    {
-    "n": "Rush Ian",
+    "n": "Ian Rush",
     "nat": "Wales",
     "pos": [
      "ATT"
@@ -76713,15 +75822,6 @@
     ],
     "rtg": 67,
     "prime": 72
-   },
-   {
-    "n": "Martin O'Neill",
-    "nat": "N.Ireland",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 63,
-    "prime": 71
    },
    {
     "n": "Robert Ullathorne",
@@ -82574,15 +81674,6 @@
     ],
     "rtg": 68,
     "prime": 74
-   },
-   {
-    "n": "Steve Kean",
-    "nat": "Scotland",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 63,
-    "prime": 67
    }
   ],
   "Bolton|1995": [
@@ -84276,15 +83367,6 @@
     ],
     "rtg": 70,
     "prime": 73
-   },
-   {
-    "n": "Lee Chung-yong",
-    "nat": "S.Korea",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 71,
-    "prime": 75
    },
    {
     "n": "Chung-yong Lee",
@@ -86126,7 +85208,7 @@
     "prime": 73
    },
    {
-    "n": "March Solly",
+    "n": "Solly March",
     "nat": "England",
     "pos": [
      "ATT",
@@ -87282,15 +86364,6 @@
     ],
     "rtg": 68,
     "prime": 72
-   },
-   {
-    "n": "Owen Coyle",
-    "nat": "Ireland",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 63,
-    "prime": 68
    },
    {
     "n": "Robbie Blake",
@@ -90095,7 +89168,7 @@
     "prime": 69
    },
    {
-    "n": "Kasami Pajtim",
+    "n": "Pajtim Kasami",
     "nat": "Switzerland",
     "pos": [
      "MID"
@@ -91924,15 +90997,6 @@
     ],
     "rtg": 64,
     "prime": 68
-   },
-   {
-    "n": "Andrea Radrizzani",
-    "nat": "Italy",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 63,
-    "prime": 67
    }
   ],
   "Nottm Forest|1996": [
@@ -94311,15 +93375,6 @@
    }
   ],
   "Sunderland|1996": [
-   {
-    "n": "Peter Reid",
-    "nat": "England",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 63,
-    "prime": 75
-   },
    {
     "n": "Michael Bridges",
     "nat": "England",
@@ -97396,145 +96451,6 @@
     ],
     "rtg": 70,
     "prime": 78
-   }
-  ],
-  "Wolves|2002": [
-   {
-    "n": "Kenny Miller",
-    "nat": "Scotland",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 69,
-    "prime": 73
-   },
-   {
-    "n": "Michael Oakes",
-    "nat": "England",
-    "pos": [
-     "GK"
-    ],
-    "rtg": 67,
-    "prime": 71
-   },
-   {
-    "n": "Paul Butler",
-    "nat": "England",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 68,
-    "prime": 72
-   },
-   {
-    "n": "Alex Rae",
-    "nat": "Scotland",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 65,
-    "prime": 70
-   },
-   {
-    "n": "Mark Kennedy",
-    "nat": "Ireland",
-    "pos": [
-     "MID",
-     "ATT"
-    ],
-    "rtg": 67,
-    "prime": 73
-   },
-   {
-    "n": "Lee Naylor",
-    "nat": "England",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 66,
-    "prime": 71
-   },
-   {
-    "n": "Colin Cameron",
-    "nat": "Scotland",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 68,
-    "prime": 72
-   },
-   {
-    "n": "Denis Irwin",
-    "nat": "Ireland",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 71,
-    "prime": 85
-   },
-   {
-    "n": "Silas",
-    "nat": "Portugal",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 64,
-    "prime": 68
-   },
-   {
-    "n": "Kevin Cooper",
-    "nat": "England",
-    "pos": [
-     "ATT",
-     "MID"
-    ],
-    "rtg": 64,
-    "prime": 68
-   },
-   {
-    "n": "Joleon Lescott",
-    "nat": "England",
-    "pos": [
-     "DEF"
-    ],
-    "rtg": 64,
-    "prime": 79
-   },
-   {
-    "n": "George Ndah",
-    "nat": "Ghana",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 64,
-    "prime": 68
-   },
-   {
-    "n": "Dean Sturridge",
-    "nat": "England",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 66,
-    "prime": 76
-   },
-   {
-    "n": "Nathan Blake",
-    "nat": "Wales",
-    "pos": [
-     "ATT"
-    ],
-    "rtg": 65,
-    "prime": 72
-   },
-   {
-    "n": "Paul Ince",
-    "nat": "England",
-    "pos": [
-     "MID"
-    ],
-    "rtg": 72,
-    "prime": 84
    }
   ],
   "Wolves|2003": [
@@ -102632,6 +101548,155 @@
     ],
     "rtg": 84,
     "prime": 85
+   }
+  ],
+  "Nottm Forest|1994": [
+   {
+    "n": "Stan Collymore",
+    "nat": "England",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 82,
+    "prime": 82
+   },
+   {
+    "n": "Stuart Pearce",
+    "nat": "England",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 79,
+    "prime": 82
+   },
+   {
+    "n": "Bryan Roy",
+    "nat": "Netherlands",
+    "pos": [
+     "ATT",
+     "MID"
+    ],
+    "rtg": 74,
+    "prime": 76
+   },
+   {
+    "n": "Mark Crossley",
+    "nat": "Wales",
+    "pos": [
+     "GK"
+    ],
+    "rtg": 74,
+    "prime": 77
+   },
+   {
+    "n": "Lars Bohinen",
+    "nat": "Norway",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 72,
+    "prime": 78
+   },
+   {
+    "n": "Steve Stone",
+    "nat": "England",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 72,
+    "prime": 74
+   },
+   {
+    "n": "Colin Cooper",
+    "nat": "England",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 72,
+    "prime": 74
+   },
+   {
+    "n": "Steve Chettle",
+    "nat": "England",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 71,
+    "prime": 74
+   },
+   {
+    "n": "Ian Woan",
+    "nat": "England",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 70,
+    "prime": 72
+   },
+   {
+    "n": "Alfie Haaland",
+    "nat": "Norway",
+    "pos": [
+     "DEF",
+     "MID"
+    ],
+    "rtg": 69,
+    "prime": 73
+   },
+   {
+    "n": "David Phillips",
+    "nat": "Wales",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 69,
+    "prime": 72
+   },
+   {
+    "n": "Kingsley Black",
+    "nat": "N.Ireland",
+    "pos": [
+     "ATT",
+     "MID"
+    ],
+    "rtg": 68,
+    "prime": 72
+   },
+   {
+    "n": "Des Lyttle",
+    "nat": "England",
+    "pos": [
+     "DEF"
+    ],
+    "rtg": 67,
+    "prime": 70
+   },
+   {
+    "n": "Scot Gemmill",
+    "nat": "Scotland",
+    "pos": [
+     "MID"
+    ],
+    "rtg": 67,
+    "prime": 72
+   },
+   {
+    "n": "Jason Lee",
+    "nat": "England",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 65,
+    "prime": 69
+   },
+   {
+    "n": "Paul McGregor",
+    "nat": "England",
+    "pos": [
+     "ATT"
+    ],
+    "rtg": 64,
+    "prime": 68
    }
   ]
  },

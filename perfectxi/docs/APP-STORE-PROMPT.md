@@ -1,3 +1,5 @@
+> **Out of date on adverts.** Written while the app had AdMob. Tracking and adverts were removed on 7 November 2026, so `docs/APP-STORE.md` is right wherever the two disagree.
+
 # The prompt to paste into a Claude chat
 
 Everything below the line is self contained. Copy all of it into a new

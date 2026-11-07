@@ -26,10 +26,9 @@ round. Do both, or neither.
 - App icon is 1024 by 1024 with no alpha channel, which is the one icon
   rule Apple rejects on automatically
 - Launch screen present, and the app declares it owns the full screen
-- Tracking permission string written, and the prompt appears after the
-  app is up rather than over the splash
+- No tracking: no App Tracking Transparency, no prompt and no advert SDK
 - Privacy manifest declaring every required reason interface the app
-  touches, what data the adverts collect, and the domains they talk to.
+  touches and what the game's online layer collects.
   Three of the libraries ship no manifest of their own, so the app
   declares for them rather than going up silent
 - Loot box odds printed on every pack, per card, with what it guarantees
@@ -143,7 +142,7 @@ parental controls, because there is nothing to gate.
 | Question | Answer | Why |
 | --- | --- | --- |
 | Web browser or unrestricted web access | No | There is no WebView anywhere, by rule |
-| Advertising | **Yes** | One rewarded advert in the shop, one after a season or tournament ends |
+| Advertising | No | The advert SDK was removed on 7 November 2026 |
 | In-app purchases | No | Nothing is for sale |
 | Messaging or chat | No | Players never send each other anything |
 | User-generated content | **Yes** | A display name, and nothing else |
@@ -170,8 +169,7 @@ answers on 6 September 2026, which is the best band available.
 
 On the last step, leave **Age Categories and Override** on Not
 Applicable. Made for Kids looks like it fits a football game and it does
-not: the Kids Category bans the advertising this app runs, so choosing it
-is a guaranteed rejection. Leave the age suitability URL blank, and leave
+not: the app does not qualify for the Kids Category, so do not choose it. Leave the age suitability URL blank, and leave
 the Republic of Korea classification number blank, which is only needed
 for age restricted games.
 
@@ -189,22 +187,9 @@ queue so it falls back to the Machine. The game is unaffected, because it
 was built to work with the connection dead.
 
 ### 5. App privacy, the nutrition label
-Eight rows. Six are the Google advert SDK and two are the game's own
-online layer. First answer yes to "do you or your third-party partners
-collect data from this app", then tick these eight types, then answer
-purpose, linked and tracking for each one.
-
-**The adverts.** Taken from the table Google publishes for exactly this
-purpose at developers.google.com/admob/ios/privacy/data-disclosure.
-
-| Apple category | Data type | Purpose | Linked to you | Tracking |
-| --- | --- | --- | --- | --- |
-| Identifiers | Device ID | Third-Party Advertising, Analytics | Yes | **Yes** |
-| Usage Data | Advertising Data | Third-Party Advertising, Analytics | Yes | **Yes** |
-| Usage Data | Product Interaction | Third-Party Advertising, Analytics | Yes | No |
-| Diagnostics | Performance Data | Analytics, App Functionality | Yes | No |
-| Diagnostics | Crash Data | App Functionality, Analytics | No | No |
-| Location | Coarse Location | Third-Party Advertising | No | No |
+Two rows, both the game's own online layer. Answer **No** to "do you or your
+third-party partners use data for tracking purposes". This needs the Account
+Holder or Admin role.
 
 **The game.** A duel and a finished Daily go to the Supabase database in
 Europe. The app privacy page already describes this, so the label has to
@@ -220,34 +205,16 @@ of what goes up: the handle, the seed, the picks and the score. Both are
 linked, because they are stored against that id, and neither is tracking,
 because nothing is joined to anything from any other company.
 
-Three of these look alarming and are worth understanding, because you may
-be asked about them.
-
-**Coarse Location.** The game never asks for your position and there is
-no location prompt. Google works out roughly which country an advert
-request came from by looking at the internet address it arrived from,
-the same way any website can. Apple counts that as coarse location, so
-it gets declared.
-
-**Linked to you, on the advert rows.** There is no account, so nothing is
-linked to a person by anything the game does. Google's own table says
-linked, because they join it up on their side. Declaring it their way is
-the honest answer.
-
-**Linked to you, on the game rows.** Apple's test is whether data is
+**Linked to you.** Apple's test is whether data is
 associated with an account, a device id or anything similar, not whether
 it names a person. The picks and the score are stored against the random
 id, so they are linked by that test, even though the id identifies
 nobody.
 
-Declare nothing beyond these eight. The game itself sends no name, no
-email and no position, and the adverts never run during a match, a Daily,
-a Weekly or a duel.
+Declare nothing beyond these two.
 
-### 6. Ads and the tracking prompt
-Apple checks the prompt appears and behaves. It does, on first launch,
-and answering no changes nothing about the game. Say so in the review
-notes so nobody has to guess.
+### 6. No adverts and no tracking prompt
+There is no prompt to look for, because App Tracking Transparency is gone.
 
 ### 7. Review notes
 Paste this into App Review Notes:
@@ -255,9 +222,7 @@ Paste this into App Review Notes:
 > Perfect XI is a football management game played entirely offline. There
 > is no account and no sign in.
 >
-> Adverts: two kinds. A rewarded advert the player chooses to watch in the
-> shop, and one full screen advert after a season or tournament finishes,
-> capped at one every four minutes. None during play.
+> There are no adverts and no tracking.
 >
 > Packs are opened with coins earned by playing. There is no way to buy
 > coins with money. Odds are printed on every pack.
@@ -283,33 +248,12 @@ told not to now, with `enableBackgroundPlayback: false`, and the key is
 gone from the plist. No recording is needed to answer this one, because
 the capability is simply no longer claimed.
 
-**Guideline 2.1, the tracking prompt never appeared.** `startAds` ran
-from an effect on the root layout, which fires at mount while the splash
-is still covering the app. iOS will not present a permission sheet then
-and does not report that it refused: the call returns, the status is
-undetermined, nothing appears. The old code took that as an answer,
-latched, and never asked again. The app declared App Tracking
-Transparency and never asked.
-
-It now waits for the same signal that takes the splash down, and the ask
-waits for the app to be active, checks whether the sheet actually
-appeared, and goes round again if it did not.
-
-Rule 20 in `check-source.mjs` guards all three parts and was proved to
-fail on each.
-
-**Apple wants a screen recording** of the prompt, on a physical device,
-and it belongs in the Resolution Center reply and in App Review
-Information for future submissions. What it has to show:
-
-1. A fresh install, or tracking permissions reset first
-2. The app launching
-3. The tracking sheet appearing before anything is collected
-4. Tapping a choice, and the game carrying on either way
-
-Reset tracking with Settings, Privacy and Security, Tracking, turning
-"Allow Apps to Request to Track" off and on again, or just delete the app
-and install it again from TestFlight.
+**Guideline 2.1, App Tracking Transparency.** The build carried the framework
+and the reviewer could not find the prompt. An attempt to fix the timing of
+the prompt was never submitted. Instead, on 7 November 2026, tracking was
+removed: `expo-tracking-transparency`, `react-native-google-mobile-ads`, the
+usage description, both advert placements and the rewards in the shop.
+`npm run ads` fails if any of it comes back. No recording is needed.
 
 ---
 
@@ -361,18 +305,12 @@ match by match, and see how far it goes. Free, offline, no subscriptions.`
 >
 > THE DATABASE
 >
-> 712 club seasons, 3,003 players, 51 clubs, 1992 to 2026.
+> 706 club seasons, 2,978 players, 51 clubs, 1992 to 2026.
 >
 > Free. No subscriptions, nothing to buy, and it works with no connection.
 >
 > Unofficial and unaffiliated. Not connected to the Premier League, FIFA,
 > UEFA, or any club, competition or player.
-
-The adverts are not mentioned. Mo took that line out twice, once from the
-app and once from here, and Apple does not require it in a description.
-It is still declared where it has to be: the nutrition label, the privacy
-manifest, both privacy pages and the review notes. Nothing is hidden from
-a reviewer, only from a shop window.
 
 ### Keywords, 100 characters
 Four words came out of this list and it is worth knowing why, because the
@@ -406,10 +344,8 @@ Information. Use perfectxigame@gmail.com there too.
 ## The one thing worth thinking about before you press submit
 
 The game is built on real player names, club names and thirty five
-seasons of real results, and it now earns money. Free fan projects and
-commercial products using the same marks are treated very differently by
-the Premier League, FIFA and UEFA.
+seasons of real results. Free fan projects and commercial products using the
+same marks are treated very differently by the Premier League, FIFA and UEFA.
 
-Nothing here is legal advice and plenty of apps live in this space. But
-the risk is real and it is worth knowing that it went up the moment the
-adverts went in, rather than finding out from a letter.
+Nothing here is legal advice and plenty of apps live in this space. The risk
+would go up again if adverts ever came back.

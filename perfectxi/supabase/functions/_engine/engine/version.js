@@ -9,7 +9,7 @@
  *
  * Change this for: the Dixon-Coles constants, the strength curve, the
  * chemistry bonus, formation modifiers, the fixture order, the opposition
- * league, or the order in which random numbers are drawn. Do not change it
+ * league, the player database, or the order in which random numbers are drawn. Do not change it
  * for anything that only affects what is drawn on screen.
  */
-export const ENGINE_VERSION = 2;
+export const ENGINE_VERSION = 3;

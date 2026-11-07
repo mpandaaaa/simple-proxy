@@ -27,7 +27,7 @@ const seasonListCache = new Map();
  * Every club-season in an era, as scenery for the spin reel.
  *
  * Cached per era: the reel asks for this on every spin and there is no
- * reason to walk 712 keys each time.
+ * reason to walk 706 keys each time.
  */
 export function clubSeasons(from, to) {
     const key = from + ':' + to;

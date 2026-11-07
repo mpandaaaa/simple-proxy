@@ -197,7 +197,7 @@ export default function Welcome() {
         )}
 
         <Text style={styles.note}>
-          712 squad seasons {'·'} 3,003 players {'·'} 1992 to 2026
+          706 squad seasons {'·'} 2,978 players {'·'} 1992 to 2026
         </Text>
       </View>
     </View>

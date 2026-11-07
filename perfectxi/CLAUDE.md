@@ -2,8 +2,7 @@
 
 Native React Native rebuild of the browser game at perfectxi.app. Free,
 no subscriptions, nothing to buy, and it works offline apart from duels.
-Paid for by adverts, which arrived late and are deliberately confined:
-see the hard constraint below. A collection of football games shaped
+No adverts and no tracking: see the hard constraint below. A collection of football games shaped
 like NYT Games: the front door is today, the games are the content.
 
 Full background, the source inventory, the decisions and the ten phase plan
@@ -29,17 +28,13 @@ new phase.
 
 ## Hard constraints
 
-- **Adverts live in two places and nowhere else.** One rewarded advert
-  somebody chose to watch, in the shop, for a pack or coins. One full
-  screen advert at a break in play, after a season or a tournament has
-  finished, capped at one every four minutes. Never during a match. Never
-  in the Daily, the Weekly or a duel, because those are scored against
-  other people and an advert that buys an advantage is cheating. No
-  banners anywhere. `src/game/ads.ts` is the only file that talks to the
-  SDK.
+- **No adverts and no tracking.** App Review refused build 8 under guideline
+  2.1, and Mo's instruction of 7 November 2026 (`docs/perfect-xi/REVIEW-2026-09.md`)
+  was to remove tracking rather than add the prompt. That took the AdMob SDK
+  with it. `npm run ads` fails if any of it comes back.
 
-- **The privacy page is the truth.** It says what the adverts see and
-  what they do not. If the advert behaviour changes, that page changes in
+- **The privacy page is the truth.** It says what leaves the phone and
+  what does not. If that changes, the page changes in
   the same commit or the App Store listing becomes a lie.
 
 - **No social studio.** The web build has a "Make social posts from this XI"
@@ -55,7 +50,7 @@ new phase.
 - **`src/engine` and `src/data` import nothing from React or React Native.**
   Plain modules. This is what lets the engine run headless in tests and
   unchanged inside a Supabase edge function for replay validation.
-- **Real database figures in all copy**: 712 club seasons, 3,003 players,
+- **Real database figures in all copy**: 706 club seasons, 2,978 players,
   51 clubs, 35 seasons, 1992 to 2026. Not the old marketing numbers.
 
 ## Decisions already made
@@ -102,7 +97,7 @@ app/stats.tsx        every mode's totals, in one place
 app/dynasty/slots.tsx  three careers, and which one you are playing
 app/soon.tsx         holding screen for a mode not built yet
 src/engine/          the game, free of React. sim, draft, formations, rng
-src/data/squads.ts   GENERATED. 712 club-seasons, do not hand edit
+src/data/squads.ts   GENERATED. 706 club-seasons, do not hand edit
 src/data/dynasty.ts  GENERATED. birth years, ageing curves, capacities
 data/perfectxi-database.json  the source of truth, committed
 src/game/run.ts      the run in progress, held outside React
@@ -173,8 +168,8 @@ The database is `data/perfectxi-database.json`, committed, and
 `scripts/import-db.mjs` turns it into `src/data/squads.ts` and
 `src/data/dynasty.ts`. It validates every row, refuses to write if a
 formation multiplier disagrees with the engine, and sorts the club-seasons
-so a seed always lands in the same place. Verified output: 712 club-seasons,
-51 clubs, 35 seasons, 11,077 rows, 3,003 distinct players, plus 3,062 dated
+so a seed always lands in the same place. Verified output: 706 club-seasons,
+51 clubs, 35 seasons, 10,976 rows, 2,978 distinct players, plus 3,062 dated
 players, 25 stadium capacities and 21 derbies for Dynasty.
 
 `scripts/extract-db.mjs` mined the same data out of `vendor/index.html` and

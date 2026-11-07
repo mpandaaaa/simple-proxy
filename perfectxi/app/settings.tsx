@@ -493,7 +493,7 @@ export default function SettingsScreen() {
           <View style={styles.rule} />
           <Line label="Engine" value={`v${ENGINE_VERSION}`} />
           <View style={styles.rule} />
-          <Line label="Database" value="712 club seasons, 3,003 players" />
+          <Line label="Database" value="706 club seasons, 2,978 players" />
           <View style={styles.rule} />
           <Line label="Covering" value="51 clubs, 35 seasons, 1992 to 2026" />
         </View>
@@ -514,11 +514,8 @@ export default function SettingsScreen() {
         </Rise>
 
         <Text style={styles.legal}>
-          Perfect XI is a free unofficial fan game, paid for by adverts. No
-          subscriptions and nothing to buy. Two kinds of advert: one you
-          choose to watch in the shop, and one at a break in play after a
-          season or a tournament. None during a match, none in the Daily, the
-          Weekly or a duel, and no banners. Not affiliated with, endorsed by
+          Perfect XI is a free unofficial fan game. No adverts, no
+          subscriptions and nothing to buy. Not affiliated with, endorsed by
           or connected to the Premier League, FIFA, UEFA or any club or
           competition. Player names and ratings are used for identification in
           a work of statistical fiction.

@@ -1,3 +1,5 @@
+> **Out of date on adverts.** Written while the app had AdMob. Tracking and adverts were removed on 7 November 2026, so `docs/APP-STORE.md` is right wherever the two disagree.
+
 # The prompt for whoever maintains perfectxi.app
 
 Copy everything below the line into the chat that built the website.

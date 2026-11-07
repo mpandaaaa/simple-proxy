@@ -69,43 +69,10 @@ const IS_DEV_BUILD = process.env.APP_VARIANT === 'development';
  *
  * So the development build gets its own identifier and its own name, and
  * lives on the phone beside the real one. Preview and production keep the
- * real identifier deliberately: it is the one registered with AdMob, and
- * an advert unit will not serve to an app whose identifier does not match
- * the one it was created for.
+ * real identifier deliberately: it is the one App Store Connect knows.
  */
 const BUNDLE = IS_DEV_BUILD ? 'app.perfectxi.game.dev' : 'app.perfectxi.game';
 const APP_NAME = IS_DEV_BUILD ? 'Perfect XI dev' : 'Perfect XI';
-
-/**
- * The advert account.
- *
- * The application id is the real one and has to be here, because it goes
- * into the app's own Info.plist and the SDK will not start without it.
- *
- * The unit ids are what decide whether a real advert is served, and they
- * are deliberately still empty. An empty unit falls back to Google's own
- * test unit, which serves a genuine test advert that can be watched and
- * clicked on a phone and earns nothing. That is what a build in
- * development should do: pointing a development build at live units is
- * how an AdMob account gets suspended for invalid traffic, and it is the
- * developer who pays for that, not Google.
- *
- * Filling the two ids in below and building once is all that is left.
- */
-const ADMOB = {
-  /* Perfect XI, iOS. */
-  iosAppId: 'ca-app-pub-4069943095077854~1082884431',
-  /* Google's test application, until there is an Android app to point at. */
-  androidAppId: 'ca-app-pub-3940256099942544~3347511713',
-  units: {
-    /* Perfect XI, iOS. Anything left empty serves a test advert instead
-       of a real one, which is what Android does until there is one. */
-    iosInterstitial: 'ca-app-pub-4069943095077854/9348387268',
-    iosRewarded: 'ca-app-pub-4069943095077854/2204394414',
-    androidInterstitial: '',
-    androidRewarded: '',
-  },
-};
 
 module.exports = () => ({
   name: APP_NAME,
@@ -197,104 +164,38 @@ module.exports = () => ({
      *
      * Every reason code below is the one Apple publishes for that use,
      * and every one is true of this app: it reads and writes its own
-     * files, keeps its own settings, and shows adverts.
+     * files and keeps its own settings.
      */
     privacyManifests: {
-      NSPrivacyTracking: true,
-      /* Where an advert request goes. Listed so that iOS can block them
-         by itself when somebody has said no to tracking, which is the
-         behaviour that question is supposed to produce. */
-      NSPrivacyTrackingDomains: [
-        'googleads.g.doubleclick.net',
-        'pagead2.googlesyndication.com',
-        'googlesyndication.com',
-        'google-analytics.com',
-        'app-measurement.com',
-      ],
       /*
-       * What the adverts collect.
-       *
-       * The game itself collects none of this. Every line below is the
-       * Google Mobile Ads SDK, and every line is taken from the table
-       * Google publishes at developers.google.com/admob/ios/privacy/
-       * data-disclosure rather than from what seemed likely. Google's
-       * own words for each are in the comments.
-       *
-       * Declared as a superset on purpose. Apple does not reject an app
-       * for declaring something it does not collect. It does reject one
-       * for collecting something it did not declare, and the app cannot
-       * see inside somebody else's SDK to know when that list grows.
+       * No tracking and no advertising, so no tracking domains. This has
+       * to stay false: App Review refused build 8 under guideline 2.1 for
+       * carrying App Tracking Transparency, and the fix was to take
+       * tracking out rather than to ask about it.
+       */
+      NSPrivacyTracking: false,
+      NSPrivacyTrackingDomains: [],
+      /*
+       * What the game's own online layer sends to Supabase. The same two
+       * rows as the App Store nutrition label, and neither is tracking.
        */
       NSPrivacyCollectedDataTypes: [
         {
-          /* "the device's advertising identifier or other app or
-             developer bounded device identifiers", for third party
-             advertising and analytics. This is the one the tracking
-             question is about. */
-          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeDeviceID',
-          NSPrivacyCollectedDataTypeLinked: true,
-          NSPrivacyCollectedDataTypeTracking: true,
-          NSPrivacyCollectedDataTypePurposes: [
-            'NSPrivacyCollectedDataTypePurposeThirdPartyAdvertising',
-            'NSPrivacyCollectedDataTypePurposeAnalytics',
-          ],
-        },
-        {
-          /* "power analytics and advertising features". Which advert was
-             shown, whether it was watched, whether it was tapped. */
-          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeAdvertisingData',
-          NSPrivacyCollectedDataTypeLinked: true,
-          NSPrivacyCollectedDataTypeTracking: true,
-          NSPrivacyCollectedDataTypePurposes: [
-            'NSPrivacyCollectedDataTypePurposeThirdPartyAdvertising',
-            'NSPrivacyCollectedDataTypePurposeAnalytics',
-          ],
-        },
-        {
-          /* "app launch taps and video views", to "improve advertising
-             performance". Taps on the advert, not taps in the game. */
-          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeProductInteraction',
+          /* The random id made on the phone. */
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeUserID',
           NSPrivacyCollectedDataTypeLinked: true,
           NSPrivacyCollectedDataTypeTracking: false,
           NSPrivacyCollectedDataTypePurposes: [
-            'NSPrivacyCollectedDataTypePurposeThirdPartyAdvertising',
-            'NSPrivacyCollectedDataTypePurposeAnalytics',
-          ],
-        },
-        {
-          /* "understand the effectiveness of existing product features",
-             and whether an advert managed to display. */
-          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypePerformanceData',
-          NSPrivacyCollectedDataTypeLinked: true,
-          NSPrivacyCollectedDataTypeTracking: false,
-          NSPrivacyCollectedDataTypePurposes: [
-            'NSPrivacyCollectedDataTypePurposeAnalytics',
             'NSPrivacyCollectedDataTypePurposeAppFunctionality',
           ],
         },
         {
-          /* "non user related crash logs", to "diagnose problems and
-             improve the SDK". The game has no crash reporting of its
-             own: this is Google's, inside their own SDK. */
-          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeCrashData',
-          NSPrivacyCollectedDataTypeLinked: false,
+          /* The handle, the seed, the picks and the score. */
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeGameplayContent',
+          NSPrivacyCollectedDataTypeLinked: true,
           NSPrivacyCollectedDataTypeTracking: false,
           NSPrivacyCollectedDataTypePurposes: [
             'NSPrivacyCollectedDataTypePurposeAppFunctionality',
-            'NSPrivacyCollectedDataTypePurposeAnalytics',
-          ],
-        },
-        {
-          /* Google uses the IP address of an advert request to "estimate
-             the general location of a device". Apple counts a location
-             worked out that way as coarse location, so it is declared,
-             even though nothing in the game ever asks for a position and
-             there is no location permission prompt. */
-          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeCoarseLocation',
-          NSPrivacyCollectedDataTypeLinked: false,
-          NSPrivacyCollectedDataTypeTracking: false,
-          NSPrivacyCollectedDataTypePurposes: [
-            'NSPrivacyCollectedDataTypePurposeThirdPartyAdvertising',
           ],
         },
       ],
@@ -392,25 +293,6 @@ module.exports = () => ({
     'expo-build-properties',
     [
       /*
-       * The ads.
-       *
-       * The application id has to be in the app's own Info.plist or the
-       * SDK will not start, so it is here rather than in code. These are
-       * Google's published test ids: they serve real test adverts and
-       * earn nothing, which is exactly what a build in development should
-       * do. Swapping in the live account is these two lines and one
-       * build.
-       */
-      'react-native-google-mobile-ads',
-      {
-        iosAppId: ADMOB.iosAppId,
-        androidAppId: ADMOB.androidAppId,
-        userTrackingUsageDescription:
-          'Perfect XI asks so the adverts it shows can be relevant to you. Saying no changes nothing about the game and you still see the same number of adverts.',
-      },
-    ],
-    [
-      /*
        * Saving a share card to Photos.
        *
        * Adding only, never reading. The game has no reason to look at
@@ -424,13 +306,6 @@ module.exports = () => ({
         photosPermission:
           'Perfect XI does not read your photos. It only adds a share card when you ask it to.',
         isAccessMediaLocationEnabled: false,
-      },
-    ],
-    [
-      'expo-tracking-transparency',
-      {
-        userTrackingPermission:
-          'Perfect XI asks so the adverts it shows can be relevant to you. Saying no changes nothing about the game and you still see the same number of adverts.',
       },
     ],
   ],
@@ -454,7 +329,6 @@ module.exports = () => ({
      * The service key and the database password are not in this repo and
      * never will be.
      */
-    admob: ADMOB,
     supabase: {
       url: 'https://fmupfnknfyiiddwgjlvk.supabase.co',
       key: 'sb_publishable_PlbOP9B2umhLCiH8hRO-Ag_vldKYAcb',

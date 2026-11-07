@@ -1,5 +1,4 @@
 import { useSyncExternalStore } from 'react';
-import { showBreak } from './ads';
 import { cupStore } from '../save';
 import { cupPlayNext, cupStart, type CupPlayed, type CupTieRun } from '../engine';
 
@@ -60,7 +59,6 @@ export function playNextTie(): CupPlayed | null {
   const step = cupPlayNext(current);
   if (!step) return null;
   setCup(step.run);
-  if (step.run.over) void showBreak('cup');
   return step;
 }
 

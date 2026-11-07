@@ -2,8 +2,6 @@ export { defineStore, clearAllSaves } from './storage';
 export type { Envelope, Migration, Migrations, StoreDef } from './schema';
 export { settingsStore } from './settings';
 export { flagsStore } from './flags';
-export { rewardsStore } from './rewards';
-export type { Rewards } from './rewards';
 export type { Flags } from './flags';
 export type { Settings, MatchSpeed, Voice } from './settings';
 export { progressStore } from './progress';

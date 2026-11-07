@@ -83,7 +83,7 @@ export default function Players() {
       {q.trim().length < 2 ? (
         <View style={styles.blank}>
           <Text style={styles.blankBig}>
-            {commas(total)} cards, {commas(3003)} footballers
+            {commas(total)} cards, {commas(2978)} footballers
           </Text>
           <Text style={styles.blankText}>
             Thirty five seasons of the Premier League, 1992 to 2026. Type two
