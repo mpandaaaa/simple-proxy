@@ -268,6 +268,10 @@ module.exports = () => ({
         enableBackgroundPlayback: false,
         enableBackgroundRecording: false,
         recordAudioAndroid: false,
+        /* and on iOS the same: no microphone string at all, because a
+           permission string for something the app never asks for is a
+           question from App Review waiting to happen. */
+        microphonePermission: false,
       },
     ],
     'expo-sharing',
@@ -287,7 +291,25 @@ module.exports = () => ({
       },
     ],
     'expo-asset',
-    'expo-secure-store',
+    [
+      /*
+       * The save keys. The app never asks for Face ID, so it does not
+       * carry the default Face ID permission string either.
+       */
+      'expo-secure-store',
+      { faceIDPermission: false },
+    ],
+    [
+      /*
+       * The card shine follows the tilt of the phone. Say exactly that
+       * rather than the default line, which names nothing.
+       */
+      'expo-sensors',
+      {
+        motionPermission:
+          'Perfect XI uses the tilt of your phone to make the player cards shine. Nothing about how it moves is saved or sent.',
+      },
+    ],
     'expo-web-browser',
     'expo-mail-composer',
     'expo-build-properties',
