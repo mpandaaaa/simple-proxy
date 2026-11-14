@@ -16,23 +16,25 @@ Apple refused build 8 on 9 September under guidelines 2.5.4 and 2.1. On
 removed rather than the prompt being fixed, so no recording is needed. See
 `docs/perfect-xi/REVIEW-2026-09.md` and `docs/REVIEW-REPLY.md`.
 
-**In this order:**
+**Done, 14 November 2026.** Build 10 was resubmitted at 23:30 and is
+waiting for review, with the reply from `docs/REVIEW-REPLY.md` posted on
+the submission. The version is set to release automatically once approved.
 
-1. In App Store Connect, App Privacy: answer No to tracking and take off the
-   six advert rows. Change Advertising to No in the age rating.
-2. Publish the new `web/app-privacy.html` at the address the listing points at.
-3. Change the database line in the description to 706 club seasons, 2,978 players.
-4. `npx eas-cli@latest build --platform ios --profile production --non-interactive --auto-submit`
-5. Reply in the Resolution Center on submission
-   `d956b10e-fd21-44e5-869d-b6bada87072c` with the text from
-   `docs/REVIEW-REPLY.md`, then pick the new build and submit for review.
+- App Privacy: no tracking, and two data types only, User ID and Gameplay
+  Content, both linked and both for app functionality.
+- Age rating: Advertising answered No, still 4+.
+- Description, promotional text and review notes: the current database
+  figures, no adverts, and the word free taken out.
+- Screenshots: the second edition from `tools/screenshots`, ten for iPhone
+  and eight for iPad.
+- `perfectxi.app/app-privacy` (both copies on the site) replaced with
+  `web/app-privacy.html`, every other file on the site left as it was.
+- Build 10 also drops the microphone and Face ID permission strings, which
+  the app never used, and says what the motion one is for.
+- The Dynasty points deduction now comes off, so `npm run verify` passes.
 
-**Known fault, not fixed because it is not what review raised.** Dynasty
-announces a points deduction for losses past the limit and says it comes off
-next season, but nothing reads `psrHit`, so the points never come off.
-`npm run screens` reports this for Arsenal and Everton since the database
-swap, because those careers now reach a deduction, and that stops
-`npm run verify` at that step.
+If Apple comes back again, read the message in App Store Connect under App
+Review before changing anything.
 
 ### Held over, not part of this resubmission
 
