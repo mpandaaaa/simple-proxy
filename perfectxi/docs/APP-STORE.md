@@ -94,37 +94,33 @@ as part of `npm run verify`. They drifted apart once, which is why it
 exists.
 
 ### 3. Screenshots
-Two sizes, and Apple scales each one down for the smaller devices in its
-class. Both are built by `python tools/screenshots/compose.py`, which puts
-the caption and the ground around a capture and never draws any part of
-the app itself. It writes a folder per device, `out/iphone` and
-`out/ipad`, holding nothing but frames of that size, so a whole folder
-can go into one slot in App Store Connect. The contact sheets sit
-outside those folders on purpose.
+Second edition, 14 November 2026, built from the competitor research of the
+same day. Made by `npm run frames` in `tools/screenshots` (run
+`npm install` there once), from the real captures in `raw/` and the words
+in `frames.en.json`. Nothing in a frame draws any part of the app. The one
+new move is the lift: a part of the real capture, such as the card being
+signed or the trophy, shown a little larger over the screen it came from.
 
-**iPhone, 1320 by 2868**, the six point nine inch class. Ten frames, in
-this order, because the draft and the unbeaten run are what the game is:
+`out/iphone` holds ten frames at 1320 by 2868 and `out/ipad` holds eight
+at 2064 by 2752, numbered in upload order. Drag each whole folder into its
+slot.
 
-1. `01-card` a card being revealed
-2. `02-reel` the wheel mid spin
-3. `03-xi` the finished eleven
-4. `04-unbeaten` the 38 and 0 chase
-5. `05-table` the final table
-6. `06-match` a match running minute by minute
-7. `07-ucl` a Champions League night
-8. `08-dynasty` the career hub
-9. `09-history` the cabinet
-10. `10-album` the album
+The first three are the only ones a search result shows, so each makes a
+whole claim alone:
 
-**iPad, 2064 by 2752**, the thirteen inch class. Eight frames, sharing
-the phone's captions where the screen is the same.
+1. Build the perfect XI
+2. Who makes your XI?
+3. Could your XI win the league?
 
-An eleven inch iPad captures 1640 by 2360, which Apple will not accept as
-an upload. It does not need to: the iPad frame draws the screen 1480 wide
-inside a 2064 wide canvas, so the capture is reduced to fit rather than
-enlarged, and the finished file is a real 2064 by 2752 image. A thirteen
-inch capture would still be better, because it is a wider layout with
-more on screen, so recapture there if one is ever to hand.
+Then Henry and Ronaldo, same team (Salah and Shearer on the iPad, because
+that is who is on the iPad capture), Can you go 38 and 0, Every goal every
+save, Europe's biggest nights, Run a club for decades, Silverware that
+stays won, and 2,978 players, 35 seasons.
+
+Rules the captions keep: no Premier League, Champions League, World Cup,
+FIFA or UEFA in the words, never the word free, and never a player named
+who is not on the screen beneath. The first edition, `compose.py`, needs
+Python and is kept only as a record.
 
 ### 4. Age rating
 Apple replaced this questionnaire in 2025 and made the social media

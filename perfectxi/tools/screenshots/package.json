@@ -1,0 +1,11 @@
+{
+  "name": "perfectxi-screenshots",
+  "private": true,
+  "description": "Frames the App Store screenshots. Kept apart from the app so nothing here reaches a build.",
+  "scripts": {
+    "frames": "node frame.mjs"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.65"
+  }
+}

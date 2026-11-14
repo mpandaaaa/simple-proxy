@@ -1,0 +1,177 @@
+{
+  "_read_me": "Order is upload order. [square brackets] mark the phrase in the second colour. lift rects are x, y, width, height in capture pixels. No competition or league names and no prices in any caption.",
+  "frames": [
+    {
+      "raw": "01-card",
+      "eyebrow": "1992 to 2026",
+      "headline": "Build the [perfect XI]",
+      "sub": "Spin a real club season. Sign one player from it.",
+      "top": "#34E8A0",
+      "bottom": "#07603C",
+      "ink": "#04140C",
+      "lift": "#FFFFFF",
+      "subInk": "rgba(4,20,12,0.8)",
+      "pill": "#04140C",
+      "pillInk": "#5CF5B4",
+      "lift_iphone": {
+        "rect": [
+          211,
+          848,
+          897,
+          1064
+        ],
+        "corner": 67,
+        "scale": 1.2
+      }
+    },
+    {
+      "raw": "02-reel",
+      "eyebrow": "Every spin",
+      "headline": "Who makes [your XI?]",
+      "sub": "Five real players a spin. You keep one.",
+      "top": "#2FDB95",
+      "bottom": "#0A5A3A",
+      "ink": "#04140C",
+      "lift": "#FFFFFF",
+      "subInk": "rgba(4,20,12,0.8)",
+      "pill": "#04140C",
+      "pillInk": "#5CF5B4"
+    },
+    {
+      "raw": "04-unbeaten",
+      "raw_ipad": "04-champions-ipad",
+      "eyebrow": "38 games",
+      "headline": "Could your XI [win the league?]",
+      "sub": "Play the whole season. Get graded.",
+      "top": "#FFD966",
+      "bottom": "#B06406",
+      "ink": "#1C1000",
+      "lift": "#FFFFFF",
+      "subInk": "rgba(28,16,0,0.8)",
+      "pill": "#1C1000",
+      "pillInk": "#FFD966",
+      "lift_iphone": {
+        "rect": [
+          49,
+          403,
+          1222,
+          1125
+        ],
+        "corner": 75,
+        "scale": 1.1
+      }
+    },
+    {
+      "raw": "03-xi",
+      "eyebrow": "Every era",
+      "headline": "Henry and Ronaldo. [Same team.]",
+      "headline_ipad": "Salah and Shearer. [Same team.]",
+      "sub": "Thirty five seasons in one dressing room.",
+      "top": "#A6F070",
+      "bottom": "#1E7430",
+      "ink": "#0A1A04",
+      "lift": "#FFFFFF",
+      "subInk": "rgba(10,26,4,0.8)",
+      "pill": "#0A1A04",
+      "pillInk": "#B8F58A"
+    },
+    {
+      "raw": "05-table",
+      "eyebrow": "The table",
+      "headline": "Can you go [38 and 0?]",
+      "sub": "A real table, earned one match at a time.",
+      "top": "#45E3D2",
+      "bottom": "#0A5A64",
+      "ink": "#02191B",
+      "lift": "#FFFFFF",
+      "subInk": "rgba(2,25,27,0.8)",
+      "pill": "#02191B",
+      "pillInk": "#6FF0E2"
+    },
+    {
+      "raw": "06-match",
+      "eyebrow": "Minute by minute",
+      "headline": "Every goal. [Every save.]",
+      "sub": "Live commentary, possession and xG.",
+      "top": "#FF6A9E",
+      "bottom": "#5E0C3E",
+      "ink": "#FFFFFF",
+      "lift": "#FFE45C",
+      "subInk": "rgba(255,255,255,0.88)",
+      "pill": "#FFFFFF",
+      "pillInk": "#8A1457",
+      "lift_iphone": {
+        "rect": [
+          38,
+          223,
+          1244,
+          567
+        ],
+        "corner": 75,
+        "scale": 1.1
+      }
+    },
+    {
+      "raw": "07-ucl",
+      "eyebrow": "Europe",
+      "headline": "Europe's [biggest nights]",
+      "sub": "The new 36 club league phase, then knockouts.",
+      "top": "#5AA2FF",
+      "bottom": "#0A2268",
+      "ink": "#FFFFFF",
+      "lift": "#FFD34D",
+      "subInk": "rgba(255,255,255,0.88)",
+      "pill": "#FFFFFF",
+      "pillInk": "#0F3290"
+    },
+    {
+      "raw": "08-dynasty",
+      "eyebrow": "Dynasty",
+      "headline": "Run a club [for decades]",
+      "sub": "Transfers, the academy, the books and the board.",
+      "top": "#2FD6A8",
+      "bottom": "#05443A",
+      "ink": "#021612",
+      "lift": "#FFFFFF",
+      "subInk": "rgba(2,22,18,0.8)",
+      "pill": "#021612",
+      "pillInk": "#62F0C8",
+      "lift_iphone": {
+        "rect": [
+          49,
+          403,
+          1222,
+          793
+        ],
+        "corner": 75,
+        "scale": 1.1
+      }
+    },
+    {
+      "raw": "09-history",
+      "eyebrow": "The cabinet",
+      "headline": "Silverware [that stays won]",
+      "sub": "Every season kept. 111 achievements to earn.",
+      "top": "#FFC24D",
+      "bottom": "#9C4405",
+      "ink": "#1C0E00",
+      "lift": "#FFFFFF",
+      "subInk": "rgba(28,14,0,0.8)",
+      "pill": "#1C0E00",
+      "pillInk": "#FFC24D"
+    },
+    {
+      "raw": "10-album",
+      "eyebrow": "The album",
+      "headline": "2,978 players. [35 seasons.]",
+      "sub": "No ads. No tracking. Nothing to buy.",
+      "top": "#B48CFF",
+      "bottom": "#36127F",
+      "ink": "#FFFFFF",
+      "lift": "#FFE45C",
+      "subInk": "rgba(255,255,255,0.88)",
+      "pill": "#FFFFFF",
+      "pillInk": "#4A1CA6"
+    }
+  ]
+}
