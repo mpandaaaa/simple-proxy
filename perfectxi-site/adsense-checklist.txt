@@ -1,0 +1,67 @@
+PERFECT XI - ADSENSE REMEDIATION (v3)
+=====================================
+Everything fixable in the files is done. The remaining steps are actions
+only you can take in Google's own tools. Do them IN THIS ORDER.
+
+WHAT CHANGED IN THIS BUILD
+  contact.html        NEW. Real email + X handle + what to contact about.
+                      A missing contact method is a common rejection cause.
+  changelog.html      NEW. Shows the site is actively maintained.
+  robots.txt          REWRITTEN. Explicit Allow rules for Mediapartners-Google
+                      (the AdSense crawler ignores wildcard rules), AdsBot and
+                      Googlebot incl. JS/CSS, so the reviewer can render the game.
+  privacy.html        Added the exact disclosures Google requires: third-party
+                      cookies, Google ad cookies, Ads Settings + aboutads.info
+                      opt-outs, and UK/EEA consent wording.
+  index.html          Homepage now carries far more crawlable static text:
+                      the seven game modes, a text link to every guide, and
+                      the unofficial-fan-project disclaimer.
+  All 19 pages        Contact in the nav, Contact + Updates in the footer,
+                      and the unofficial/not-affiliated disclaimer.
+  3 guides deepened   match-engine (1081 words), dynasty-guide (1185),
+                      chemistry (897).
+  sitemap.xml         18 URLs, valid XML, today's lastmod.
+  IndexNow            Key file at root + indexnow-submit.json ready to POST.
+
+NOW DO THIS (the part that actually decides approval)
+
+1. DEPLOY everything, then hard-refresh the site twice.
+
+2. GOOGLE SEARCH CONSOLE - diagnose indexing. This is the likely blocker.
+   - Add/verify perfectxi.app if not already.
+   - Sitemaps -> submit  sitemap.xml
+   - URL Inspection on EACH of these, note the status, then "Request Indexing":
+       /                        /guides.html            /how-to-play.html
+       /faq.html                /about.html             /contact.html
+       /changelog.html          /guides/match-engine.html
+       /guides/dynasty-guide.html   /guides/chemistry.html
+     (roughly 10-15 requests per day is the informal limit)
+   - Read the Pages report. "Discovered - currently not indexed" = crawl
+     priority problem (needs links). "Crawled - currently not indexed" =
+     quality signal problem.
+
+3. LIVE TEST what Google sees: in URL Inspection use "Test Live URL" ->
+   "View Tested Page" -> HTML. Confirm you can see the words
+   "Perfect XI is a free English top-flight draft game". If you can, the
+   reviewer can too.
+
+4. INDEXNOW (optional, helps Bing fast):
+   POST the contents of indexnow-submit.json to https://api.indexnow.org/indexnow
+   with Content-Type: application/json
+
+5. GET 2-3 REAL BACKLINKS. New sites with none get crawled slowly.
+   r/FantasyPL, r/soccer weekly threads, r/incremental_games, a football
+   forum, itch.io, or a Product Hunt / Hacker News post.
+
+6. WAIT 3-4 WEEKS. Do not reapply before your key pages show as INDEXED.
+   Reapplying early just re-shows Google the old site and burns a review.
+
+7. THEN in AdSense: Sites -> perfectxi.app -> Request Review.
+
+IF IT FAILS A THIRD TIME
+  The residual blocker is the game-on-the-homepage. Options, in order:
+   a) Make a text page the root and move the game to /play (biggest change,
+      highest success rate for game sites).
+   b) Apply to AdinPlay/Venatus instead - built for browser games, and they
+      pay better for gameplay traffic than AdSense does anyway.
+   c) Publish on CrazyGames for rewarded video revenue.

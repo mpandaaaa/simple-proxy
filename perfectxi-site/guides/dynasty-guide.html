@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- Google AdSense: replace ca-pub-4069943095077854 with your real publisher ID -->
+<meta name="google-adsense-account" content="ca-pub-4069943095077854">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4069943095077854" crossorigin="anonymous"></script>
+<title>Dynasty Mode: The Complete Guide | Perfect XI</title>
+<meta name="description" content="Every number behind Perfect XI's career mode: age curves, transfer budgets by finish, player values, board objectives and how not to get sacked.">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#12291e">
+<meta name="author" content="Perfect XI">
+<link rel="canonical" href="https://perfectxi.app/guides/dynasty-guide.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Perfect XI">
+<meta property="og:title" content="Dynasty Mode: The Complete Guide">
+<meta property="og:description" content="Every number behind Perfect XI's career mode: age curves, transfer budgets by finish, player values, board objectives and how not to get sacked.">
+<meta property="og:url" content="https://perfectxi.app/guides/dynasty-guide.html">
+<meta property="og:image" content="https://perfectxi.app/og-image.png">
+<meta property="og:locale" content="en_GB">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@perfectxigame">
+<meta name="twitter:title" content="Dynasty Mode: The Complete Guide">
+<meta name="twitter:description" content="Every number behind Perfect XI's career mode: age curves, transfer budgets by finish, player values, board objectives and how not to get sacked.">
+<meta name="twitter:image" content="https://perfectxi.app/og-image.png">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a1610;--bg2:#0e1c14;--card:#12211a;--card2:#16281f;
+  --b1:#243a2c;--b2:#2f4c3a;--t1:#f5f7fa;--t2:#a9b1bf;--t3:#646d7c;
+  --green:#1fc57e;--gbg:rgba(255,255,255,.035);--gold:#d6b25e;--blue:#5b8bf5;--red:#ee4f63;
+  --pill:999px;--r2:10px;--r3:14px;--r4:18px;
+  --disp:"Barlow Condensed",'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--t1);
+  line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(120% 60% at 50% -12%,rgba(31,197,126,.10),transparent 55%),
+             linear-gradient(180deg,#0a120d 0%,#070d09 56%,#0d0f13 100%)}
+a{color:var(--green);text-decoration:none}
+a:hover{text-decoration:underline}
+::selection{background:rgba(31,197,126,.3)}
+/* header */
+.hdr{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:13px 20px;background:rgba(5,9,7,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--b1)}
+.hdr::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(31,197,126,.55),transparent);pointer-events:none}
+.brand{font-family:var(--disp);font-weight:800;letter-spacing:.05em;text-transform:uppercase;font-size:1.15rem;color:var(--t1);line-height:1}
+.brand span{color:var(--green);text-shadow:0 0 22px rgba(31,197,126,.35)}
+.brand:hover{text-decoration:none}
+.nav{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.nav a{color:var(--t2);font-size:.76rem;font-weight:700;padding:7px 11px;border-radius:var(--pill);
+  text-transform:uppercase;letter-spacing:.05em;transition:color .14s,background .14s}
+.nav a:hover{color:var(--t1);background:rgba(255,255,255,.05);text-decoration:none}
+.nav a.play{color:var(--green);border:1px solid rgba(31,197,126,.45)}
+.nav a.active{color:var(--t1);background:rgba(255,255,255,.06)}
+/* layout */
+.wrap{max-width:760px;margin:0 auto;padding:32px 20px 72px}
+@keyframes pgRise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.wrap>*{animation:pgRise .45s cubic-bezier(.2,.7,.3,1) both}
+.wrap>*:nth-child(2){animation-delay:.05s}
+.wrap>*:nth-child(3){animation-delay:.1s}
+.wrap>*:nth-child(4){animation-delay:.15s}
+.wrap>*:nth-child(n+5){animation-delay:.18s}
+.eyebrow{display:inline-block;font-family:var(--disp);font-size:.78rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--green);border:1px solid rgba(31,197,126,.45);border-radius:var(--pill);padding:6px 15px;margin-bottom:18px}
+h1{font-family:var(--disp);font-size:clamp(2.9rem,10vw,4.4rem);font-weight:800;line-height:.94;letter-spacing:.01em;
+  text-transform:uppercase;margin-bottom:16px}
+h1 span{color:var(--green);text-shadow:0 0 30px rgba(31,197,126,.3)}
+.lead{font-size:1.06rem;color:var(--t2);max-width:640px;margin-bottom:28px}
+.crumb{font-size:.72rem;color:var(--t3);margin-bottom:22px;letter-spacing:.02em}
+.crumb a{color:var(--t3)}
+/* cards */
+.sec{background:var(--card);border:1px solid var(--b1);border-radius:var(--r4);padding:24px 22px;margin-bottom:16px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.sec h2{font-family:var(--disp);font-size:1.7rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+  margin-bottom:14px;color:var(--t1);position:relative;padding-bottom:10px}
+.sec h2::after{content:'';position:absolute;left:0;bottom:0;width:42px;height:2px;background:var(--green);
+  border-radius:1px;box-shadow:0 0 12px rgba(31,197,126,.5)}
+.sec h3{font-size:1.02rem;font-weight:700;margin:18px 0 8px;color:var(--t1)}
+.sec p{color:var(--t2);margin-bottom:13px;font-size:.95rem}
+.sec p:last-child{margin-bottom:0}
+.sec ul,.sec ol{color:var(--t2);font-size:.95rem;margin:0 0 13px 1.1em}
+.sec li{margin-bottom:7px}
+.sec strong{color:var(--t1);font-weight:700}
+/* steps */
+.step{display:flex;gap:14px;align-items:flex-start;background:rgba(255,255,255,.02);border:1px solid var(--b1);
+  border-radius:var(--r3);padding:15px 16px;margin-bottom:10px;transition:border-color .14s}
+.step:hover{border-color:var(--b2)}
+.step-n{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--green);color:#06130c;
+  font-family:var(--disp);font-weight:800;font-size:1.05rem;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 16px rgba(31,197,126,.3)}
+.step h3{margin:0 0 4px;font-size:.96rem}
+.step p{margin:0;font-size:.88rem}
+/* accordions */
+details{border:1px solid var(--b1);border-radius:var(--r3);margin-bottom:10px;background:var(--card);overflow:hidden;
+  transition:border-color .14s}
+details:hover{border-color:var(--b2)}
+details[open]{border-color:rgba(31,197,126,.35)}
+summary{cursor:pointer;list-style:none;padding:15px 16px;font-weight:700;font-size:.95rem;color:var(--t1);
+  display:flex;justify-content:space-between;align-items:center;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'+';color:var(--green);font-family:var(--disp);font-weight:800;font-size:1.35rem;flex-shrink:0;line-height:1}
+details[open] summary::after{content:'\2212'}
+details .a{padding:0 16px 16px;color:var(--t2);font-size:.92rem}
+details .a p{margin-bottom:10px}
+details .a p:last-child{margin-bottom:0}
+/* buttons & chips */
+.cta{display:inline-flex;align-items:center;gap:8px;background:var(--green);color:#06130c;
+  font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.05em;
+  font-size:1.1rem;padding:13px 28px;border-radius:var(--pill);margin-top:6px;
+  box-shadow:0 6px 22px rgba(31,197,126,.28),inset 0 1px 0 rgba(255,255,255,.28);
+  transition:transform .12s,filter .12s}
+.cta:hover{text-decoration:none;filter:brightness(1.07)}
+.cta:active{transform:translateY(1px)}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 2px}
+.tag{font-size:.72rem;font-weight:700;color:var(--t2);background:var(--card2);border:1px solid var(--b1);
+  border-radius:var(--pill);padding:5px 12px}
+.note{font-size:.82rem;color:var(--t3);background:rgba(255,255,255,.02);border:1px solid var(--b1);
+  border-left:3px solid var(--gold);border-radius:var(--r2);padding:12px 14px;margin:14px 0}
+/* tables */
+table.gl{width:100%;border-collapse:collapse;font-size:.9rem;margin-bottom:6px;font-variant-numeric:tabular-nums}
+table.gl td{border-bottom:1px solid var(--b1);padding:10px 8px;color:var(--t2);vertical-align:top}
+table.gl td:first-child{color:var(--t1);font-weight:700;white-space:nowrap;width:34%}
+/* footer */
+.foot{border-top:1px solid var(--b1);background:#081209;padding:34px 20px 46px;position:relative}
+.foot::before{content:'';position:absolute;left:0;right:0;top:-1px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(31,197,126,.35),transparent)}
+.foot-in{max-width:760px;margin:0 auto}
+.foot-brand{font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--t1);
+  font-size:1.05rem;margin-bottom:14px}
+.foot-brand span{color:var(--green)}
+.foot-cols{display:flex;flex-wrap:wrap;gap:26px 50px;margin-bottom:22px}
+.foot-col h4{font-family:var(--disp);font-size:.76rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--t3);margin-bottom:10px}
+.foot-col a{display:block;color:var(--t2);font-size:.86rem;margin-bottom:8px}
+.foot-col a:hover{color:var(--t1)}
+.disclaimer{font-size:.74rem;color:var(--t3);line-height:1.6;border-top:1px solid var(--b1);padding-top:18px;margin-top:4px}
+.copy{font-size:.74rem;color:var(--t3);margin-top:12px}
+:focus-visible{outline:2px solid var(--green);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.wrap>*{animation:none}}
+@media (max-width:560px){.nav a{padding:6px 8px;font-size:.72rem}.wrap{padding:24px 16px 56px}h1{font-size:clamp(2.6rem,13vw,3.6rem)}}
+
+/* SEASON 26/27 REFRESH */
+body::before{background:
+ radial-gradient(85% 46% at 50% -12%, rgba(46,190,130,.22), transparent 62%),
+ linear-gradient(180deg,#12291e 0%,#0d1d15 48%,#081209 100%)}
+h1 span{text-shadow:none}
+.sec h2::after{box-shadow:none;width:28px}
+.step-n{box-shadow:none}
+.cta{box-shadow:0 1px 0 rgba(255,255,255,.12) inset;border-radius:12px}
+.eyebrow{border-color:#2f4c3a;color:#a9b1bf;letter-spacing:.14em}
+.hdr::after,.foot::before{background:linear-gradient(90deg,transparent,rgba(31,197,126,.22),transparent)}
+.sec,details,.step{border-radius:14px}
+
+/* ===== S27-E: BACKGROUND ON BODY (the fix) ===== */
+html{background:#081209}
+body{background:
+ radial-gradient(85% 46% at 50% -12%, rgba(46,190,130,.22), transparent 62%),
+ linear-gradient(180deg,#12291e 0%,#0d1d15 48%,#081209 100%) !important}
+body::before{content:none!important;display:none!important}
+
+/* ===== S28 DESIGN SYSTEM (site pages) ===== */
+:root{--bg:#0A0F0C;--surface-1:#101713;--surface-2:#17211B;--border:rgba(255,255,255,.08);
+--border-strong:rgba(255,255,255,.14);--border-top-hi:rgba(255,255,255,.06);
+--t1:#E6EDE9;--t2:#A9B7AF;--t3:#6E7E74;--green:#1FC57E;--gold:#D6B25E;
+--e2:0 1px 2px rgba(0,0,0,.5),0 4px 8px rgba(3,10,6,.4);--focus-ring:0 0 0 3px rgba(31,197,126,.45);}
+html{background:#080C0A}
+body{background:radial-gradient(120% 90% at 50% -10%,#14201A 0%,#0A0F0C 60%),linear-gradient(180deg,#0C1310,#080C0A)!important;color:#E6EDE9}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.035;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E")}
+.wrap,.hdr,.foot{position:relative;z-index:1}
+.hdr{background:rgba(10,15,12,.72)!important;backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);
+ border-bottom:1px solid var(--border)!important;padding-top:calc(13px + env(safe-area-inset-top))!important}
+.sec,details,.step{background:linear-gradient(180deg,#101713,#0D1410)!important;border:1px solid var(--border)!important;
+ box-shadow:inset 0 1px 0 var(--border-top-hi),var(--e2)!important;border-radius:20px!important}
+.cta{background:linear-gradient(180deg,#26D086,#15B270)!important;color:#062A18!important;border:0!important;
+ min-height:52px;border-radius:14px!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -1px 0 rgba(0,0,0,.18),0 1px 2px rgba(0,0,0,.5),0 6px 16px rgba(21,178,112,.28)!important;
+ transition:transform .1s cubic-bezier(0,0,.2,1),box-shadow .15s ease,filter .15s ease}
+.cta:hover{filter:brightness(1.06);text-decoration:none}
+.cta:active{transform:translateY(1px) scale(.985)}
+a:focus-visible,button:focus-visible{outline:0;box-shadow:var(--focus-ring)}
+table.gl td{font-variant-numeric:tabular-nums lining-nums;border-bottom:1px solid var(--border)!important}
+.tag{background:var(--surface-2)!important;border:1px solid var(--border)!important}
+.eyebrow{border-color:var(--border-strong)!important;color:var(--t2)!important;letter-spacing:.14em!important}
+h1 span{color:var(--green)}
+html{-webkit-text-size-adjust:100%}
+body{touch-action:manipulation}
+input,select,textarea{font-size:16px}
+</style>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "The Perfect XI formations guide", "description": "A guide to all seven formations in Perfect XI, their strengths and weaknesses, and which draft each one suits.", "author": {"@type": "Organization", "name": "Perfect XI"}, "publisher": {"@type": "Organization", "name": "Perfect XI", "logo": {"@type": "ImageObject", "url": "https://perfectxi.app/og-image.png"}}, "mainEntityOfPage": "https://perfectxi.app/guides/formations.html"}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Dynasty Mode: The Complete Guide", "description": "Every number behind Perfect XI's career mode: age curves, transfer budgets by finish, player values, board objectives and how not to get sacked.", "datePublished": "2026-07-08", "dateModified": "2026-07-08", "author": {"@type": "Person", "name": "Perfect XI developer"}, "publisher": {"@type": "Organization", "name": "Perfect XI", "url": "https://perfectxi.app"}, "mainEntityOfPage": "https://perfectxi.app/guides/dynasty-guide.html"}</script>
+</head>
+<body>
+<header class="hdr"><a class="brand" href="/">PERFECT <span>XI</span></a><nav class="nav" aria-label="Primary"><a href="/" class="play">Play</a><a href='/how-to-play'>How to Play</a><a href='/guides'>Guides</a><a href='/faq'>FAQ</a><a href='/about'>About</a><a href='/contact'>Contact</a></nav></header>
+<main class="wrap">
+<div class="crumb"><a href="../">Home</a> / <a href="./">Guides</a> / Career Mode</div>
+<span class="eyebrow">CAREER MODE</span>
+<h1>THE COMPLETE <span>DYNASTY GUIDE</span></h1>
+<p class="lead">Ages, budgets, board expectations, the sack &mdash; Dynasty runs on real rules. This is all of them, with the exact tables.</p>
+<p class="crumb">Written by the Perfect XI developer &middot; Updated 8 July 2026</p>
+<div class="sec"><h2>What Dynasty is</h2><p>Dynasty turns one finished season into a multi-season career. Your XI carries over with <strong>career ages</strong>; players develop, decline and retire; your league finish earns a <strong>transfer budget</strong>; and a board sets expectations that your <strong>manager rating</strong> lives or dies by. It starts from the results screen of any completed standard season &mdash; name your club and you're in.</p></div>
+<div class="sec"><h2>Ages and development, exactly</h2><p>Every player is assigned a realistic career age when the dynasty begins &mdash; outfielders land between 21 and 32, weighted to the 24&ndash;27 prime; goalkeepers run older, 23 to 34, reflecting how keepers actually age. Each summer, development follows the curve (goalkeepers hit each stage two years later):</p><table class="gl"><tr><td>Age (outfield)</td><td>Summer change</td></tr><tr><td>23 or under</td><td>+1 to +3</td></tr><tr><td>24&ndash;27</td><td>&minus;1 to +1</td></tr><tr><td>28&ndash;30</td><td>&minus;2 to 0</td></tr><tr><td>31&ndash;32</td><td>&minus;3 to &minus;1</td></tr><tr><td>33&ndash;34</td><td>&minus;4 to &minus;2</td></tr><tr><td>35+</td><td>&minus;5 to &minus;3</td></tr></table><p>Retirement is probabilistic, not a hard cut-off &mdash; careers end when the dice say so, mostly between 33 and 38 for outfielders and as late as 40 for goalkeepers:</p><table class="gl"><tr><td>Age (outfield / GK)</td><td>Chance of retiring</td></tr><tr><td>33 / 35</td><td>8%</td></tr><tr><td>34 / 36</td><td>18%</td></tr><tr><td>35 / 37</td><td>38%</td></tr><tr><td>36 / 38</td><td>60%</td></tr><tr><td>37 / 39</td><td>80%</td></tr><tr><td>38+ / 40+</td><td>93%</td></tr></table><p>Ratings are clamped between 55 and 99. The design consequence: a 23-year-old 84 is often worth more to your dynasty than a 30-year-old 88 &mdash; and the market prices agree.</p></div>
+<div class="sec"><h2>Money: budgets and values</h2><p>Your budget each summer is set by the league finish, plus anything unspent carried over:</p><table class="gl"><tr><td>Finish</td><td>Budget</td></tr><tr><td>Champions</td><td>&pound;160m</td></tr><tr><td>2nd</td><td>&pound;130m</td></tr><tr><td>3rd</td><td>&pound;110m</td></tr><tr><td>4th</td><td>&pound;95m</td></tr><tr><td>5th&ndash;7th</td><td>&pound;75m</td></tr><tr><td>8th&ndash;10th</td><td>&pound;58m</td></tr><tr><td>11th&ndash;14th</td><td>&pound;45m</td></tr><tr><td>15th&ndash;17th</td><td>&pound;34m</td></tr><tr><td>18th&ndash;20th</td><td>&pound;25m</td></tr></table><p>Values are tuned to the real market: fees rise steeply with rating, peak for players 24&ndash;26 (about +12% over base), and fall off a cliff after 29 &mdash; roughly &minus;35% at 30, half price at 31, and pennies by 34. Goalkeepers are discounted around a third and age two years later. In practice that means the very best young superstar in the game commands close to &pound;185m, a prime 88 sits in the &pound;80&ndash;90m band, and an elite 90 aged 30 is a &pound;60m decision. Selling returns 60% of value, and the market always lists three free agents, so a retirement never strands you.</p></div>
+<div class="sec"><h2>The board, and the sack</h2><p>Each season the board sets a target from your squad average: 90+ means win the title, 87+ top two, 84+ top four, 80+ top seven, 76+ top half, and below that, avoid the drop. Meeting it earns <strong>+12</strong> manager rating (+15 if the target was the title); missing narrowly costs 6; missing badly costs 14. Fall to 20 and you are <strong>sacked</strong> &mdash; the dynasty ends and your legacy line is written.</p></div>
+<div class="sec"><h2>Long-game strategy</h2><p>Three rules from the maths above. Sell declining stars a summer early &mdash; the age multiplier cliff at 31 destroys value. Buy 22&ndash;23-year-olds in the 80&ndash;84 band; two growth summers can make them 88s for a fraction of the price. And manage the objective: a squad average sneaking over 90 commits you to a title charge, so sometimes the smart window is the one that keeps the board's target winnable. Chemistry still applies every season &mdash; the <a href='/guides/chemistry'>links guide</a> matters even more across a career.</p></div>
+<div class="sec"><h2>A worked three-season plan</h2><p>Season one: finish 3rd with an ageing 87-average squad &mdash; &pound;85m arrives. Resist the marquee 31-year-old; sign two 22-year-olds at 82&ndash;83 (&pound;35m-ish each at the youth multiplier) and sell your 31-year-old 88 <em>now</em> for &pound;40m+ before the value cliff. Season two: the kids grow to 84&ndash;86, the board target stays "top four" &mdash; comfortably met, +12 rating. Season three: your core hits its prime window together, chemistry intact, and the title charge is funded by two summers of compounding rather than one panic window. That compounding loop is the whole mode.</p></div>
+<div class="sec"><h2>Reading the hub</h2><p>Everything you need is on one screen: the <strong>manager bar</strong> turns amber below 60 and red below 40 &mdash; treat red as two bad seasons from the sack; <strong>trend arrows</strong> on each player show last summer's development at a glance; and the <strong>history strip</strong> is your legacy line, trophies marked in gold. Start Season stays locked until all eleven slots are filled, so a retirement can never launch you into a 10-man campaign.</p></div>
+<a class="cta" href="../">&#9654; Play Perfect XI free</a>
+<div class="sec"><h2>Ageing, decline and the retirement curve</h2>
+<p>Dynasty assigns every drafted player a career age when your save begins, weighted towards a 24 to 27 prime, with goalkeepers skewed older because keepers genuinely peak later. From there each season applies a development curve: players under 24 tend to improve, 25 to 28 is a plateau, and decline accelerates from 30.</p>
+<p>Retirement is a probability, not a cliff. It begins around 8% at 33 and climbs steeply to near-certainty by 38, shifted two years later for goalkeepers. That means two identical 34-year-olds can have very different fates, and you cannot plan a squad on the assumption that anyone will definitely still be there.</p>
+<h3>Reading the transfer market</h3>
+<p>Valuations follow the real market: fees rise steeply with rating, peak between 24 and 26, and fall away sharply after 29. A 31-year-old rated 86 costs a fraction of a 25-year-old rated 84, and that gap is the single biggest source of value in the game.</p>
+<p>Budgets run from about &pound;160m for champions down to &pound;25m for a bottom-half finish, so a title is worth more than the trophy: it funds the next two seasons.</p>
+<h3>Surviving the board</h3>
+<p>Objectives scale with your last finish. Beat them and your manager rating climbs; miss them repeatedly and you are sacked. The practical advice is to sell one season early rather than one season late, because a 30-year-old still has resale value and a 32-year-old does not.</p></div><div class="sec"><h2>Dynasty 3.0: how the new systems work</h2>
+<p>Dynasty was rebuilt in September 2026 around real football data. Players are no longer a single number that ticks down.</p>
+<h3>Three attribute tracks, not one rating</h3>
+<p>Every player now carries a Physical, Technical and Mental rating, and they age on different clocks. Physical output peaks first and falls hard; technical ability holds into the thirties; mental attributes keep improving. A midfielder who is 85 physical and 80 technical at 24 will typically be 74 physical and 87 technical at 34. He is the same overall rating on paper and a completely different player.</p>
+<p>Peak ages follow the research: goalkeepers latest, then defenders, then midfielders, with attackers peaking earliest and declining fastest. Every player also gets a personal peak offset and decline rate, so two identical players can have very different careers. Roughly one in six peaks unusually late.</p>
+<h3>Transfer values follow the real market</h3>
+<p>Value peaks around 23, before the performance peak, because buyers are paying for the remaining prime years. It then falls about 12% a year. Contract length matters enormously: a player with four years left is worth full price, with two years about 70%, with one year about 45%, and nothing at all once it expires. Letting a star run down his deal is the most expensive mistake in the mode.</p>
+<h3>Wages, revenue and PSR</h3>
+<p>Every player draws a wage. Revenue comes from prize money, TV facility fees, commercial income and European qualification, so a title is worth far more than the trophy. Transfer fees are amortised across the contract, exactly as clubs account for them, and three-year rolling losses beyond &pound;105m bring a points deduction, as Everton discovered in 2023-24.</p>
+<h3>Injuries and the academy</h3>
+<p>Injuries follow elite-football rates, weighted towards thigh and hamstring problems, and become more frequent with age. Serious injuries leave a permanent mark on the physical track.</p>
+<p>The academy produces an intake every summer. Potential is never shown as a number, only as a range, and scouting narrows that range without ever removing the doubt. Most prospects never make it. Academy graduates carry no book value, so selling one is almost pure profit.</p></div>
+<div class="sec"><h2>Dynasty is now a standalone mode</h2>
+<p>You no longer need to finish a draft run first. Dynasty launches straight from the home screen: choose how you want to play, choose a challenge, choose a club, and you take over that club&rsquo;s real squad.</p>
+<h3>Simple or Immersive</h3>
+<p><strong>Simple</strong> keeps it to the decisions that matter: your shape, your signings, and one overall standard for your backroom staff. Everything else is handled for you.</p>
+<p><strong>Immersive</strong> opens up the pressing and defensive-line controls, individual staff departments, stadium expansion and the full accounts.</p>
+<h3>Five ways to start</h3>
+<p><strong>Sleeping Giant</strong> gives you a big club, a big budget and no patience. <strong>Establish the Elite</strong> asks you to break into Europe. <strong>The Rebuild</strong> hands you a struggling side and almost nothing to spend. <strong>The Long Haul</strong> gives you the smallest squad in the division and a long leash. <strong>Defend the Throne</strong> starts you at the champions, where anything but first is failure.</p>
+<h3>Tactics that actually change results</h3>
+<p>Formation, mentality and style all feed into the match engine as real adjustments. Attacking raises the goals at both ends, which helps a strong squad and hurts a weak one. Possession football rewards good players and punishes bad ones. Counter-attacking is the underdog&rsquo;s weapon and falls away as your squad improves. There is no single correct tactic &mdash; the right answer depends on the players you have.</p>
+<p>Playing footballers out of position costs you, and a new shape takes a few seasons to bed in before the squad plays it at full effectiveness.</p>
+<h3>Staff and the stadium</h3>
+<p>An elite medical department halves your injuries. A better head coach speeds up development. A set-piece coach matters because set pieces are over a quarter of all goals scored. All of it comes out of the same money you would otherwise spend on players.</p>
+<p>Stadium expansion costs around &pound;12m for five thousand seats and pays back over roughly eight years at a big club &mdash; and almost never at a small one. That is the real trade-off clubs face.</p></div>
+</main>
+<footer class="foot"><div class="foot-in">
+<div class="foot-brand">PERFECT <span>XI</span></div>
+<div class="foot-cols">
+<div class="foot-col"><h4>Play</h4>
+<a href="/">Premier League draft</a><a href='/how-to-play'>How to play</a><a href='/guides'>Strategy guides</a></div>
+<div class="foot-col"><h4>Learn</h4>
+<a href='/guides/unbeaten-xi'>The 38-0 guide</a><a href='/guides/formations'>Formations guide</a><a href='/faq'>FAQ</a></div>
+<div class="foot-col"><h4>Site</h4>
+<a href='/about'>About</a><a href='/contact'>Contact</a><a href='/changelog'>Updates</a><a href='/privacy'>Privacy policy</a><a href='/terms'>Terms of use</a></div>
+<div class="foot-col"><h4>Contact</h4>
+<a href="mailto:perfectxigame@gmail.com">perfectxigame@gmail.com</a><a href="https://x.com/perfectxigame" rel="noopener">@perfectxigame on X</a></div>
+</div>
+<p class="disclaimer">Perfect XI is an unofficial, independent, fan-made game. It is not affiliated with,
+endorsed by, sponsored by, or associated with the Premier League, FIFA, any football club, competition,
+or official ratings provider. Club names, competition names and player names are the property of their
+respective owners and are used here for identification and editorial purposes only. Player and team ratings
+are a fan interpretation created for gameplay, derived from a public football dataset, and are not official.</p>
+<p class="copy">&copy; 2026 Perfect XI. All rights reserved.</p>
+</div><p class="disclaimer" style="margin-top:14px">Perfect XI is an unofficial, independent fan project. It is not affiliated with, endorsed by, or connected to the Premier League, the Football Association, UEFA, FIFA, or any football club or player. Club and player names are used descriptively for the purposes of a factual football database. No club crests, kits, badges or player images are used.</p></footer>
+</body>
+</html>

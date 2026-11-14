@@ -1,0 +1,70 @@
+PERFECT XI — Google AdSense: what's done & the one thing left to do
+===================================================================
+
+WHAT I ADDED (already in the files)
+-----------------------------------
+1. The AdSense Auto-ads loader + verification meta in the <head> of:
+     - index.html (the game)
+     - every content page (about, how-to-play, guides, faq, privacy, terms, 404)
+   Both use a PLACEHOLDER publisher ID:  ca-pub-XXXXXXXXXXXXXXXX
+2. ads.txt with a matching placeholder:  pub-XXXXXXXXXXXXXXXX
+3. Auto ads = Google places ads automatically once approved. No per-ad code needed.
+
+THE ONE THING YOU MUST DO
+-------------------------
+Get your AdSense publisher ID and replace the placeholder EVERYWHERE.
+
+  a) Go to https://adsense.google.com → "Sites" → add perfectxi.app.
+     AdSense shows you a code snippet containing your ID, which looks like:
+       ca-pub-1234567890123456   (ca-pub- followed by 16 digits)
+     You can also find it under AdSense → Account → Account information.
+
+  b) Replace the placeholder in ALL files:
+       ca-pub-XXXXXXXXXXXXXXXX   ->  your ca-pub-#### (in <head> of every .html)
+       pub-XXXXXXXXXXXXXXXX      ->  your pub-####     (in ads.txt, no "ca-")
+
+     Fast way (Mac/Linux, run inside your site folder — set YOURID first):
+       YOURID=1234567890123456
+       grep -rl "ca-pub-XXXXXXXXXXXXXXXX" . | xargs sed -i '' "s/ca-pub-XXXXXXXXXXXXXXXX/ca-pub-$YOURID/g"   # macOS
+       sed -i "s/pub-XXXXXXXXXXXXXXXX/pub-$YOURID/g" ads.txt
+     (On Linux use: sed -i  without the '' )
+
+  c) Deploy. Submit the site for review in AdSense.
+
+IMPORTANT NOTES
+---------------
+- Ads will NOT show until Google approves the site. The script being present is
+  exactly what AdSense wants during review — that's normal.
+- Don't add the script more than once per page (it already is once).
+- Keep the content pages + privacy policy live (they're what get you approved).
+- After approval, you can leave Auto ads on, or fine-tune ad placement / density
+  in the AdSense dashboard (no code changes needed).
+
+OPTIONAL — manual in-article ad unit
+------------------------------------
+If you later want a specific ad slot (e.g. between sections of a guide), create
+an "In-article" unit in AdSense to get a data-ad-slot, then paste:
+
+  <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+       data-ad-slot="0000000000"
+       data-ad-format="fluid"
+       data-ad-layout="in-article"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+
+Replace data-ad-slot with the number AdSense gives you. (Not required if you use
+Auto ads.)
+
+DATABASE CAVEAT (read before deploying index.html)
+--------------------------------------------------
+The index.html in this folder is built from my working copy, whose PLAYER
+DATABASE is older/smaller than your LIVE site. It already contains the grey-out
+fix AND the AdSense head block. If you deploy it as-is you'll roll back recent
+players. Safer options:
+  - Paste just the AdSense <head> block (the two lines: the meta + the script,
+    placed right after <meta name="viewport">) into your LIVE index.html, OR
+  - Re-upload your current live index.html and I'll drop the AdSense block in
+    for you with no data loss.
+The content pages, ads.txt, robots, sitemap and favicon files are net-new and
+safe to upload as-is.

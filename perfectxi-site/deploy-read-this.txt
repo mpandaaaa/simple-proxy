@@ -1,0 +1,60 @@
+PERFECT XI  —  BUILD S67-1
+===========================
+
+WHAT TO DO
+  Drag everything in this folder into Netlify (Deploys -> drag and drop).
+  Nothing else. The database side is already live.
+
+  Check the build pill on perfectxi.app reads s67-1 afterwards.
+
+
+WHAT CHANGED SINCE S66-1
+  This one is almost all data accuracy. A football fan would have spotted
+  every item below, and several were embarrassing.
+
+  SEVEN CLUB-SEASONS THAT NEVER HAPPENED
+    The wheel could land you on Wolves 2002/03 or Norwich 2014/15 — seasons
+    those clubs spent in the division below. Removed:
+      Crystal Palace 1993/94 and 1998/99, Middlesbrough 1997/98,
+      Charlton 1999/00, Wolves 2002/03, Norwich 2014/15, Hull 2015/16
+    And Nottingham Forest's 1994/95 side was missing entirely — they
+    finished 3rd that year with Collymore scoring 22. Added, with Alfie
+    Haaland (Erling's dad) in it.
+    The database now holds exactly 706 club-seasons, which is the real
+    number: 22 clubs for the first three seasons, 20 ever since.
+
+  TEN PEOPLE WHO WERE NEVER PLAYERS
+    Mostly the club's MANAGER, sitting in the squad as a low-rated player:
+      Kevin Keegan (Newcastle 93/94), Martin O'Neill (Leicester 98/99),
+      Peter Reid (Sunderland 96/97), Martin Jol (Spurs 04/05),
+      Glenn Roeder (West Ham 02/03), Steve Kean (Blackburn 11/12),
+      Billy Davies (Derby 07/08), Owen Coyle (Burnley 09/10)
+    Plus Andrea Radrizzani, who owned Leeds and never played football,
+    and "Gael Bale", who is not a person.
+
+  TWELVE PLAYERS STORED TWICE UNDER A REVERSED NAME
+    Joe Cole and "Cole Joe". Ian Rush and "Rush Ian". Son Heung-min and
+    "Heung-min Son". Also Shaka Hislop, Shola Ameobi, Andy Carroll,
+    Solly March, Paulo Wanchope, Dean Marney, Pajtim Kasami.
+    Two of them — Lee Chung-yong at Bolton and Sun Jihai at Man City —
+    were in the SAME squad under both spellings, so you could draft the
+    same player twice into one XI.
+
+  PINCH-ZOOM RESTORED ON 20 PAGES
+    Every page blocked zooming. That fails an accessibility standard and
+    made the guides hard to read on a phone.
+
+  COUNTS CORRECTED EVERYWHERE
+    The site said 3,003 players and 712 club-seasons. It is now 2,978 and
+    706, which is what the database actually contains.
+
+
+A WEEKLY CHECK NOW RUNS ON ITS OWN
+  Every Monday morning it looks at the live database, clears any stuck
+  multiplayer rooms, checks the site is up, researches one thing, and
+  sends you a short note. You do not need to start it.
+
+
+STILL ON YOUR LIST
+  app-config.js has NOTIFY_ENDPOINT unset, and APP_ID / STORE_URL need
+  the real values on the day the iOS app is approved.

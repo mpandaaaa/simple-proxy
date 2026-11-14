@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- Google AdSense: replace ca-pub-4069943095077854 with your real publisher ID -->
+<meta name="google-adsense-account" content="ca-pub-4069943095077854">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4069943095077854" crossorigin="anonymous"></script>
+<title>Every Club's Highest-Rated Player in Perfect XI | Perfect XI</title>
+<meta name="description" content="The best-rated player at all 51 Premier League clubs in the Perfect XI database — full table with ratings and seasons, plus the anomalies worth knowing.">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#12291e">
+<meta name="author" content="Perfect XI">
+<link rel="canonical" href="https://perfectxi.app/guides/highest-rated-players.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Perfect XI">
+<meta property="og:title" content="Every Club's Highest-Rated Player in Perfect XI">
+<meta property="og:description" content="The best-rated player at all 51 Premier League clubs in the Perfect XI database — full table with ratings and seasons, plus the anomalies worth knowing.">
+<meta property="og:url" content="https://perfectxi.app/guides/highest-rated-players.html">
+<meta property="og:image" content="https://perfectxi.app/og-image.png">
+<meta property="og:locale" content="en_GB">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@perfectxigame">
+<meta name="twitter:title" content="Every Club's Highest-Rated Player in Perfect XI">
+<meta name="twitter:description" content="The best-rated player at all 51 Premier League clubs in the Perfect XI database — full table with ratings and seasons, plus the anomalies worth knowing.">
+<meta name="twitter:image" content="https://perfectxi.app/og-image.png">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a1610;--bg2:#0e1c14;--card:#12211a;--card2:#16281f;
+  --b1:#243a2c;--b2:#2f4c3a;--t1:#f5f7fa;--t2:#a9b1bf;--t3:#646d7c;
+  --green:#1fc57e;--gbg:rgba(255,255,255,.035);--gold:#d6b25e;--blue:#5b8bf5;--red:#ee4f63;
+  --pill:999px;--r2:10px;--r3:14px;--r4:18px;
+  --disp:"Barlow Condensed",'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--t1);
+  line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(120% 60% at 50% -12%,rgba(31,197,126,.10),transparent 55%),
+             linear-gradient(180deg,#0a120d 0%,#070d09 56%,#0d0f13 100%)}
+a{color:var(--green);text-decoration:none}
+a:hover{text-decoration:underline}
+::selection{background:rgba(31,197,126,.3)}
+/* header */
+.hdr{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:13px 20px;background:rgba(5,9,7,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--b1)}
+.hdr::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(31,197,126,.55),transparent);pointer-events:none}
+.brand{font-family:var(--disp);font-weight:800;letter-spacing:.05em;text-transform:uppercase;font-size:1.15rem;color:var(--t1);line-height:1}
+.brand span{color:var(--green);text-shadow:0 0 22px rgba(31,197,126,.35)}
+.brand:hover{text-decoration:none}
+.nav{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.nav a{color:var(--t2);font-size:.76rem;font-weight:700;padding:7px 11px;border-radius:var(--pill);
+  text-transform:uppercase;letter-spacing:.05em;transition:color .14s,background .14s}
+.nav a:hover{color:var(--t1);background:rgba(255,255,255,.05);text-decoration:none}
+.nav a.play{color:var(--green);border:1px solid rgba(31,197,126,.45)}
+.nav a.active{color:var(--t1);background:rgba(255,255,255,.06)}
+/* layout */
+.wrap{max-width:760px;margin:0 auto;padding:32px 20px 72px}
+@keyframes pgRise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.wrap>*{animation:pgRise .45s cubic-bezier(.2,.7,.3,1) both}
+.wrap>*:nth-child(2){animation-delay:.05s}
+.wrap>*:nth-child(3){animation-delay:.1s}
+.wrap>*:nth-child(4){animation-delay:.15s}
+.wrap>*:nth-child(n+5){animation-delay:.18s}
+.eyebrow{display:inline-block;font-family:var(--disp);font-size:.78rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--green);border:1px solid rgba(31,197,126,.45);border-radius:var(--pill);padding:6px 15px;margin-bottom:18px}
+h1{font-family:var(--disp);font-size:clamp(2.9rem,10vw,4.4rem);font-weight:800;line-height:.94;letter-spacing:.01em;
+  text-transform:uppercase;margin-bottom:16px}
+h1 span{color:var(--green);text-shadow:0 0 30px rgba(31,197,126,.3)}
+.lead{font-size:1.06rem;color:var(--t2);max-width:640px;margin-bottom:28px}
+.crumb{font-size:.72rem;color:var(--t3);margin-bottom:22px;letter-spacing:.02em}
+.crumb a{color:var(--t3)}
+/* cards */
+.sec{background:var(--card);border:1px solid var(--b1);border-radius:var(--r4);padding:24px 22px;margin-bottom:16px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.sec h2{font-family:var(--disp);font-size:1.7rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+  margin-bottom:14px;color:var(--t1);position:relative;padding-bottom:10px}
+.sec h2::after{content:'';position:absolute;left:0;bottom:0;width:42px;height:2px;background:var(--green);
+  border-radius:1px;box-shadow:0 0 12px rgba(31,197,126,.5)}
+.sec h3{font-size:1.02rem;font-weight:700;margin:18px 0 8px;color:var(--t1)}
+.sec p{color:var(--t2);margin-bottom:13px;font-size:.95rem}
+.sec p:last-child{margin-bottom:0}
+.sec ul,.sec ol{color:var(--t2);font-size:.95rem;margin:0 0 13px 1.1em}
+.sec li{margin-bottom:7px}
+.sec strong{color:var(--t1);font-weight:700}
+/* steps */
+.step{display:flex;gap:14px;align-items:flex-start;background:rgba(255,255,255,.02);border:1px solid var(--b1);
+  border-radius:var(--r3);padding:15px 16px;margin-bottom:10px;transition:border-color .14s}
+.step:hover{border-color:var(--b2)}
+.step-n{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--green);color:#06130c;
+  font-family:var(--disp);font-weight:800;font-size:1.05rem;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 16px rgba(31,197,126,.3)}
+.step h3{margin:0 0 4px;font-size:.96rem}
+.step p{margin:0;font-size:.88rem}
+/* accordions */
+details{border:1px solid var(--b1);border-radius:var(--r3);margin-bottom:10px;background:var(--card);overflow:hidden;
+  transition:border-color .14s}
+details:hover{border-color:var(--b2)}
+details[open]{border-color:rgba(31,197,126,.35)}
+summary{cursor:pointer;list-style:none;padding:15px 16px;font-weight:700;font-size:.95rem;color:var(--t1);
+  display:flex;justify-content:space-between;align-items:center;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'+';color:var(--green);font-family:var(--disp);font-weight:800;font-size:1.35rem;flex-shrink:0;line-height:1}
+details[open] summary::after{content:'\2212'}
+details .a{padding:0 16px 16px;color:var(--t2);font-size:.92rem}
+details .a p{margin-bottom:10px}
+details .a p:last-child{margin-bottom:0}
+/* buttons & chips */
+.cta{display:inline-flex;align-items:center;gap:8px;background:var(--green);color:#06130c;
+  font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.05em;
+  font-size:1.1rem;padding:13px 28px;border-radius:var(--pill);margin-top:6px;
+  box-shadow:0 6px 22px rgba(31,197,126,.28),inset 0 1px 0 rgba(255,255,255,.28);
+  transition:transform .12s,filter .12s}
+.cta:hover{text-decoration:none;filter:brightness(1.07)}
+.cta:active{transform:translateY(1px)}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 2px}
+.tag{font-size:.72rem;font-weight:700;color:var(--t2);background:var(--card2);border:1px solid var(--b1);
+  border-radius:var(--pill);padding:5px 12px}
+.note{font-size:.82rem;color:var(--t3);background:rgba(255,255,255,.02);border:1px solid var(--b1);
+  border-left:3px solid var(--gold);border-radius:var(--r2);padding:12px 14px;margin:14px 0}
+/* tables */
+table.gl{width:100%;border-collapse:collapse;font-size:.9rem;margin-bottom:6px;font-variant-numeric:tabular-nums}
+table.gl td{border-bottom:1px solid var(--b1);padding:10px 8px;color:var(--t2);vertical-align:top}
+table.gl td:first-child{color:var(--t1);font-weight:700;white-space:nowrap;width:34%}
+/* footer */
+.foot{border-top:1px solid var(--b1);background:#081209;padding:34px 20px 46px;position:relative}
+.foot::before{content:'';position:absolute;left:0;right:0;top:-1px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(31,197,126,.35),transparent)}
+.foot-in{max-width:760px;margin:0 auto}
+.foot-brand{font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--t1);
+  font-size:1.05rem;margin-bottom:14px}
+.foot-brand span{color:var(--green)}
+.foot-cols{display:flex;flex-wrap:wrap;gap:26px 50px;margin-bottom:22px}
+.foot-col h4{font-family:var(--disp);font-size:.76rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--t3);margin-bottom:10px}
+.foot-col a{display:block;color:var(--t2);font-size:.86rem;margin-bottom:8px}
+.foot-col a:hover{color:var(--t1)}
+.disclaimer{font-size:.74rem;color:var(--t3);line-height:1.6;border-top:1px solid var(--b1);padding-top:18px;margin-top:4px}
+.copy{font-size:.74rem;color:var(--t3);margin-top:12px}
+:focus-visible{outline:2px solid var(--green);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.wrap>*{animation:none}}
+@media (max-width:560px){.nav a{padding:6px 8px;font-size:.72rem}.wrap{padding:24px 16px 56px}h1{font-size:clamp(2.6rem,13vw,3.6rem)}}
+
+/* SEASON 26/27 REFRESH */
+body::before{background:
+ radial-gradient(85% 46% at 50% -12%, rgba(46,190,130,.22), transparent 62%),
+ linear-gradient(180deg,#12291e 0%,#0d1d15 48%,#081209 100%)}
+h1 span{text-shadow:none}
+.sec h2::after{box-shadow:none;width:28px}
+.step-n{box-shadow:none}
+.cta{box-shadow:0 1px 0 rgba(255,255,255,.12) inset;border-radius:12px}
+.eyebrow{border-color:#2f4c3a;color:#a9b1bf;letter-spacing:.14em}
+.hdr::after,.foot::before{background:linear-gradient(90deg,transparent,rgba(31,197,126,.22),transparent)}
+.sec,details,.step{border-radius:14px}
+
+/* ===== S27-E: BACKGROUND ON BODY (the fix) ===== */
+html{background:#081209}
+body{background:
+ radial-gradient(85% 46% at 50% -12%, rgba(46,190,130,.22), transparent 62%),
+ linear-gradient(180deg,#12291e 0%,#0d1d15 48%,#081209 100%) !important}
+body::before{content:none!important;display:none!important}
+
+/* ===== S28 DESIGN SYSTEM (site pages) ===== */
+:root{--bg:#0A0F0C;--surface-1:#101713;--surface-2:#17211B;--border:rgba(255,255,255,.08);
+--border-strong:rgba(255,255,255,.14);--border-top-hi:rgba(255,255,255,.06);
+--t1:#E6EDE9;--t2:#A9B7AF;--t3:#6E7E74;--green:#1FC57E;--gold:#D6B25E;
+--e2:0 1px 2px rgba(0,0,0,.5),0 4px 8px rgba(3,10,6,.4);--focus-ring:0 0 0 3px rgba(31,197,126,.45);}
+html{background:#080C0A}
+body{background:radial-gradient(120% 90% at 50% -10%,#14201A 0%,#0A0F0C 60%),linear-gradient(180deg,#0C1310,#080C0A)!important;color:#E6EDE9}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.035;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E")}
+.wrap,.hdr,.foot{position:relative;z-index:1}
+.hdr{background:rgba(10,15,12,.72)!important;backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);
+ border-bottom:1px solid var(--border)!important;padding-top:calc(13px + env(safe-area-inset-top))!important}
+.sec,details,.step{background:linear-gradient(180deg,#101713,#0D1410)!important;border:1px solid var(--border)!important;
+ box-shadow:inset 0 1px 0 var(--border-top-hi),var(--e2)!important;border-radius:20px!important}
+.cta{background:linear-gradient(180deg,#26D086,#15B270)!important;color:#062A18!important;border:0!important;
+ min-height:52px;border-radius:14px!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -1px 0 rgba(0,0,0,.18),0 1px 2px rgba(0,0,0,.5),0 6px 16px rgba(21,178,112,.28)!important;
+ transition:transform .1s cubic-bezier(0,0,.2,1),box-shadow .15s ease,filter .15s ease}
+.cta:hover{filter:brightness(1.06);text-decoration:none}
+.cta:active{transform:translateY(1px) scale(.985)}
+a:focus-visible,button:focus-visible{outline:0;box-shadow:var(--focus-ring)}
+table.gl td{font-variant-numeric:tabular-nums lining-nums;border-bottom:1px solid var(--border)!important}
+.tag{background:var(--surface-2)!important;border:1px solid var(--border)!important}
+.eyebrow{border-color:var(--border-strong)!important;color:var(--t2)!important;letter-spacing:.14em!important}
+h1 span{color:var(--green)}
+html{-webkit-text-size-adjust:100%}
+body{touch-action:manipulation}
+input,select,textarea{font-size:16px}
+</style>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "The Perfect XI formations guide", "description": "A guide to all seven formations in Perfect XI, their strengths and weaknesses, and which draft each one suits.", "author": {"@type": "Organization", "name": "Perfect XI"}, "publisher": {"@type": "Organization", "name": "Perfect XI", "logo": {"@type": "ImageObject", "url": "https://perfectxi.app/og-image.png"}}, "mainEntityOfPage": "https://perfectxi.app/guides/formations.html"}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Every Club's Highest-Rated Player in Perfect XI", "description": "The best-rated player at all 51 Premier League clubs in the Perfect XI database \u2014 full table with ratings and seasons, plus the anomalies worth knowing.", "datePublished": "2026-07-08", "dateModified": "2026-07-08", "author": {"@type": "Person", "name": "Perfect XI developer"}, "publisher": {"@type": "Organization", "name": "Perfect XI", "url": "https://perfectxi.app"}, "mainEntityOfPage": "https://perfectxi.app/guides/highest-rated-players.html"}</script>
+</head>
+<body>
+<header class="hdr"><a class="brand" href="/">PERFECT <span>XI</span></a><nav class="nav" aria-label="Primary"><a href="/" class="play">Play</a><a href='/how-to-play'>How to Play</a><a href='/guides'>Guides</a><a href='/faq'>FAQ</a><a href='/about'>About</a><a href='/contact'>Contact</a></nav></header>
+<main class="wrap">
+<div class="crumb"><a href="../">Home</a> / <a href="./">Guides</a> / Club By Club</div>
+<span class="eyebrow">CLUB BY CLUB</span>
+<h1>EVERY CLUB'S <span>BEST PLAYER</span></h1>
+<p class="lead">All 51 clubs in the database, their single highest-rated player, and the season that version comes from &mdash; straight from the game's data.</p>
+<p class="crumb">Written by the Perfect XI developer &middot; Updated 8 July 2026</p>
+<div class="sec"><h2>The full table: all 51 clubs</h2><table class="gl"><tr><td>Club</td><td>Player</td><td>Rating</td><td>Season</td></tr><tr><td><strong>Arsenal</strong></td><td>Thierry Henry</td><td>97</td><td>2003</td></tr><tr><td><strong>Aston Villa</strong></td><td>Peter Schmeichel</td><td>93</td><td>2001</td></tr><tr><td><strong>Barnsley</strong></td><td>Neil Redfearn</td><td>76</td><td>1997</td></tr><tr><td><strong>Birmingham</strong></td><td>Dwight Yorke</td><td>86</td><td>2004</td></tr><tr><td><strong>Blackburn</strong></td><td>Alan Shearer</td><td>94</td><td>1992</td></tr><tr><td><strong>Blackpool</strong></td><td>Charlie Adam</td><td>80</td><td>2010</td></tr><tr><td><strong>Bolton</strong></td><td>Peter Beardsley</td><td>88</td><td>1997</td></tr><tr><td><strong>Bournemouth</strong></td><td>Dean Huijsen</td><td>85</td><td>2024</td></tr><tr><td><strong>Bradford</strong></td><td>Dan Petrescu</td><td>81</td><td>1999</td></tr><tr><td><strong>Brentford</strong></td><td>Igor Thiago</td><td>87</td><td>2026</td></tr><tr><td><strong>Brighton</strong></td><td>Alexis Mac Allister</td><td>86</td><td>2020</td></tr><tr><td><strong>Burnley</strong></td><td>Sandro Tonali</td><td>86</td><td>2023</td></tr><tr><td><strong>Cardiff</strong></td><td>Craig Bellamy</td><td>82</td><td>2013</td></tr><tr><td><strong>Charlton</strong></td><td>Darren Bent</td><td>83</td><td>2002</td></tr><tr><td><strong>Chelsea</strong></td><td>Mohamed Salah</td><td>94</td><td>2013</td></tr><tr><td><strong>Coventry</strong></td><td>Gary McAllister</td><td>84</td><td>1992</td></tr><tr><td><strong>Crystal Palace</strong></td><td>Marc Guehi</td><td>87</td><td>2025</td></tr><tr><td><strong>Derby</strong></td><td>Paul McGrath</td><td>85</td><td>1996</td></tr><tr><td><strong>Everton</strong></td><td>Wayne Rooney</td><td>93</td><td>2002</td></tr><tr><td><strong>Fulham</strong></td><td>Edwin van der Sar</td><td>88</td><td>2001</td></tr><tr><td><strong>Huddersfield</strong></td><td>Aaron Mooy</td><td>77</td><td>2017</td></tr><tr><td><strong>Hull</strong></td><td>Andrew Robertson</td><td>88</td><td>2014</td></tr><tr><td><strong>Ipswich</strong></td><td>Emersonn</td><td>84</td><td>2026</td></tr><tr><td><strong>Leeds</strong></td><td>Eric Cantona</td><td>91</td><td>1992</td></tr><tr><td><strong>Leicester</strong></td><td>N'Golo Kante</td><td>91</td><td>2015</td></tr><tr><td><strong>Liverpool</strong></td><td>Steven Gerrard</td><td>94</td><td>2008</td></tr><tr><td><strong>Luton</strong></td><td>Ross Barkley</td><td>84</td><td>2023</td></tr><tr><td><strong>Man City</strong></td><td>Erling Haaland</td><td>95</td><td>2025</td></tr><tr><td><strong>Man United</strong></td><td>Cristiano Ronaldo</td><td>99</td><td>2002</td></tr><tr><td><strong>Middlesbrough</strong></td><td>Jimmy Floyd Hasselbaink</td><td>89</td><td>2004</td></tr><tr><td><strong>Newcastle</strong></td><td>Alan Shearer</td><td>94</td><td>1996</td></tr><tr><td><strong>Norwich</strong></td><td>Emi Buendia</td><td>83</td><td>2019</td></tr><tr><td><strong>Nottm Forest</strong></td><td>Roy Keane</td><td>92</td><td>1992</td></tr><tr><td><strong>Oldham</strong></td><td>Denis Irwin</td><td>82</td><td>1992</td></tr><tr><td><strong>Portsmouth</strong></td><td>Sol Campbell</td><td>88</td><td>2007</td></tr><tr><td><strong>QPR</strong></td><td>Rio Ferdinand</td><td>90</td><td>2014</td></tr><tr><td><strong>Reading</strong></td><td>Marcus Hahnemann</td><td>77</td><td>2006</td></tr><tr><td><strong>Sheffield United</strong></td><td>Phil Jagielka</td><td>84</td><td>2006</td></tr><tr><td><strong>Sheffield Wednesday</strong></td><td>Chris Waddle</td><td>88</td><td>1992</td></tr><tr><td><strong>Southampton</strong></td><td>Virgil van Dijk</td><td>92</td><td>2015</td></tr><tr><td><strong>Stoke</strong></td><td>Michael Owen</td><td>90</td><td>2012</td></tr><tr><td><strong>Sunderland</strong></td><td>Dwight Yorke</td><td>86</td><td>2007</td></tr><tr><td><strong>Swansea</strong></td><td>Gylfi Sigurdsson</td><td>83</td><td>2011</td></tr><tr><td><strong>Swindon</strong></td><td>Jan Fjortoft</td><td>77</td><td>1993</td></tr><tr><td><strong>Tottenham</strong></td><td>Gael Bale</td><td>93</td><td>2004</td></tr><tr><td><strong>Watford</strong></td><td>Ben Foster</td><td>84</td><td>2006</td></tr><tr><td><strong>West Brom</strong></td><td>Romelu Lukaku</td><td>87</td><td>2011</td></tr><tr><td><strong>West Ham</strong></td><td>Frank Lampard</td><td>91</td><td>1998</td></tr><tr><td><strong>Wigan</strong></td><td>Leighton Baines</td><td>83</td><td>2005</td></tr><tr><td><strong>Wimbledon</strong></td><td>John Fashanu</td><td>80</td><td>1992</td></tr><tr><td><strong>Wolves</strong></td><td>Rui Patricio</td><td>86</td><td>2018</td></tr></table></div>
+<div class="sec"><h2>The surprises worth knowing</h2><p>Some rows will start arguments, and a few are pure trivia gold. <strong>Peter Schmeichel</strong> is Aston Villa's highest-rated player &mdash; his 2001 stint outranks every outfield Villan in the database. <strong>Peter Beardsley at Bolton</strong> (88, 1997) and <strong>Sandro Tonali at Burnley</strong> (86, 2023) are the kind of late-career and loan anomalies the season-by-season format surfaces that a normal all-time list never would.</p><p>At the very top, only two clubs own a 95+: Manchester United with Ronaldo's 99 and Arsenal with Henry's 97 &mdash; the two most valuable single spins in the game. Erling Haaland's 95 makes Manchester City the only other club within touching distance.</p></div>
+<div class="sec"><h2>Why "highest-rated" is club-specific</h2><p>Ratings in Perfect XI are attached to a <em>player-in-a-shirt</em>, not just a player &mdash; a design choice explained in <a href='/guides/ratings-database'>the ratings database guide</a>. So Shearer shows twice in the 94 club: once for Blackburn (1992) and once for Newcastle. When you spin a club, you are drafting from that club's own history at those specific strengths.</p><p>Strategically, this table doubles as a spin-value chart. If the wheel offers a reroll and lands on a club whose ceiling is 80, spending it is usually right; landing on one of the 94+ clubs, take the room. More on reroll economy in <a href='/guides/unbeaten-xi'>the 38-0 guide</a>.</p></div>
+<div class="sec"><h2>Small clubs, real ceilings</h2><p>The table also shows why underdog drafts are playable at all: even Barnsley's single Premier League season yields a 76 (Neil Redfearn), and most one-season clubs top out in the high 70s to low 80s. In <a href='/guides/daily-duels'>weekly Moneyball events</a>, where nobody above 85 is allowed, these entries stop being trivia and become picks.</p></div>
+<a class="cta" href="../">&#9654; Play Perfect XI free</a>
+</main>
+<footer class="foot"><div class="foot-in">
+<div class="foot-brand">PERFECT <span>XI</span></div>
+<div class="foot-cols">
+<div class="foot-col"><h4>Play</h4>
+<a href="/">Premier League draft</a><a href='/how-to-play'>How to play</a><a href='/guides'>Strategy guides</a></div>
+<div class="foot-col"><h4>Learn</h4>
+<a href='/guides/unbeaten-xi'>The 38-0 guide</a><a href='/guides/formations'>Formations guide</a><a href='/faq'>FAQ</a></div>
+<div class="foot-col"><h4>Site</h4>
+<a href='/about'>About</a><a href='/contact'>Contact</a><a href='/changelog'>Updates</a><a href='/privacy'>Privacy policy</a><a href='/terms'>Terms of use</a></div>
+<div class="foot-col"><h4>Contact</h4>
+<a href="mailto:perfectxigame@gmail.com">perfectxigame@gmail.com</a><a href="https://x.com/perfectxigame" rel="noopener">@perfectxigame on X</a></div>
+</div>
+<p class="disclaimer">Perfect XI is an unofficial, independent, fan-made game. It is not affiliated with,
+endorsed by, sponsored by, or associated with the Premier League, FIFA, any football club, competition,
+or official ratings provider. Club names, competition names and player names are the property of their
+respective owners and are used here for identification and editorial purposes only. Player and team ratings
+are a fan interpretation created for gameplay, derived from a public football dataset, and are not official.</p>
+<p class="copy">&copy; 2026 Perfect XI. All rights reserved.</p>
+</div><p class="disclaimer" style="margin-top:14px">Perfect XI is an unofficial, independent fan project. It is not affiliated with, endorsed by, or connected to the Premier League, the Football Association, UEFA, FIFA, or any football club or player. Club and player names are used descriptively for the purposes of a factual football database. No club crests, kits, badges or player images are used.</p></footer>
+</body>
+</html>

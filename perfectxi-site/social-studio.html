@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Perfect XI · Social Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080b09;--card:#111613;--card2:#1a201c;--b1:#262d28;--b2:#3a453d;
+  --t1:#f1f5f2;--t2:#9aa8a0;--t3:#5f6e67;--green:#3dba6f;--mint:#8fffc4;--gold:#f5c842;--pill:999px;--r:16px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--t1);line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(120% 70% at 50% -10%,rgba(61,186,111,.12),transparent 55%),radial-gradient(100% 70% at 100% 110%,rgba(38,150,94,.07),transparent 55%),linear-gradient(180deg,#0c130f,#080b09 60%)}
+a{color:var(--green);text-decoration:none}
+::selection{background:rgba(61,186,111,.3)}
+button:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 18px;border-bottom:1px solid var(--b1);position:sticky;top:0;background:rgba(8,11,9,.85);backdrop-filter:blur(14px);z-index:30}
+.brand{font-weight:900;letter-spacing:.04em;text-transform:uppercase;font-size:.92rem;line-height:1}
+.brand span{color:var(--green)}
+.brand small{display:block;font-size:.58rem;letter-spacing:.24em;color:var(--t3);font-weight:700;margin-top:3px}
+.toplink{font-size:.76rem;font-weight:700}
+
+.app{max-width:580px;margin:0 auto;padding:20px 16px 60px;display:flex;flex-direction:column;gap:22px}
+.sec-label{font-size:.66rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--t3);display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.mini{background:none;border:1px solid var(--b1);color:var(--t2);border-radius:var(--pill);padding:5px 12px;font-family:inherit;font-size:.72rem;font-weight:700;cursor:pointer;transition:all .15s}
+.mini:hover{border-color:var(--green);color:var(--t1)}
+
+/* story chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.tpl{text-align:left;background:var(--card2);border:1px solid var(--b1);border-radius:13px;padding:10px 13px;cursor:pointer;color:var(--t2);font-family:inherit;transition:border-color .15s,background .15s,color .15s;flex:1 1 auto;min-width:128px}
+.tpl:hover{border-color:var(--b2);color:var(--t1)}
+.tpl.sel{border-color:var(--green);background:rgba(61,186,111,.12);color:var(--t1)}
+.tpl b{display:block;font-size:.84rem;font-weight:700;color:inherit;line-height:1.2}
+.tpl span{font-size:.66rem;color:var(--t3);display:block;margin-top:2px}
+.storydesc{font-size:.74rem;color:var(--t2);margin-top:12px;line-height:1.5;min-height:1.1em}
+
+/* preview */
+.preview{display:flex;flex-direction:column;align-items:center;gap:14px}
+.canvas-shell{width:100%;display:flex;justify-content:center;background:repeating-conic-gradient(#0e120f 0 25%,#0c0f0d 0 50%) 50%/22px 22px;border-radius:var(--r);padding:14px;border:1px solid var(--b1)}
+canvas{max-width:100%;height:auto;max-height:64vh;border-radius:9px;box-shadow:0 18px 50px rgba(0,0,0,.55);display:block}
+video{max-width:100%;max-height:64vh;border-radius:9px;background:#000;display:block;width:auto}
+.caro{display:none;align-items:center;justify-content:center;gap:16px;width:100%}
+.caro button{background:var(--card2);border:1px solid var(--b1);color:var(--t1);width:44px;height:44px;border-radius:50%;font-size:1.15rem;cursor:pointer;font-family:inherit}
+.caro button:hover{border-color:var(--green)}
+.caro button:disabled{opacity:.3;cursor:default}
+.caro .cc{font-size:.8rem;font-weight:800;letter-spacing:.06em;color:var(--t2);min-width:118px;text-align:center}
+.dots{display:flex;gap:7px;justify-content:center;flex-wrap:wrap}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--b2);cursor:pointer;transition:background .15s}
+.dots i.on{background:var(--green)}
+.prog{display:none;width:100%}
+.prog .bar{height:8px;background:var(--b1);border-radius:6px;overflow:hidden}
+.prog .bar i{display:block;height:100%;width:0;background:var(--green);transition:width .12s linear}
+
+/* segmented controls */
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1 1 0;min-width:72px;background:var(--card2);border:1px solid var(--b1);color:var(--t2);border-radius:11px;padding:11px 8px;font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .15s}
+.seg button:hover{border-color:var(--b2);color:var(--t1)}
+.seg button.sel{border-color:var(--green);background:rgba(61,186,111,.14);color:var(--t1)}
+.modehint{font-size:.72rem;color:var(--t3);margin-top:9px}
+
+/* buttons */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--green);color:#04140a;font-weight:800;font-size:.95rem;padding:15px;border:none;border-radius:13px;cursor:pointer;font-family:inherit;transition:filter .15s}
+.btn:hover{filter:brightness(1.07)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.ghost{background:var(--card2);color:var(--t1);border:1px solid var(--b1);font-weight:700;font-size:.88rem;padding:13px}
+.btn.ghost:hover{filter:none;border-color:var(--b2)}
+.actions{display:flex;flex-direction:column;gap:9px;margin-top:14px}
+
+/* style row */
+.style-grid{display:flex;flex-direction:column;gap:6px}
+label.fl{display:block;font-size:.64rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin:12px 0 6px}
+label.fl:first-child{margin-top:0}
+input.tf,textarea.tf,select.tf{width:100%;background:var(--bg);border:1px solid var(--b1);border-radius:11px;color:var(--t1);font-family:inherit;font-size:16px;padding:11px 13px;resize:vertical}
+select.tf{appearance:none;cursor:pointer}
+input.tf:focus,textarea.tf:focus,select.tf:focus{outline:none;border-color:var(--green)}
+textarea.tf{min-height:74px;line-height:1.4}
+.hint{font-size:.7rem;color:var(--t3);margin-top:9px;line-height:1.55}
+.btnrow{display:flex;gap:8px;margin-top:10px}
+.btnrow .btn{font-size:.86rem;padding:12px}
+
+/* captions */
+.cap-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:13px}
+.cap-tabs button{background:var(--card2);border:1px solid var(--b1);color:var(--t2);border-radius:var(--pill);padding:8px 15px;font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .15s}
+.cap-tabs button.sel{border-color:var(--green);background:rgba(61,186,111,.14);color:var(--t1)}
+.cap{background:var(--bg);border:1px solid var(--b1);border-radius:13px;padding:14px;margin-bottom:10px}
+.cap p{font-size:.86rem;color:var(--t1);white-space:pre-wrap;margin:0 0 11px;line-height:1.5}
+.cap .row{display:flex;gap:8px}
+.cap button{font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer;border-radius:9px;padding:9px 16px}
+.cap .copy{background:var(--card2);border:1px solid var(--b1);color:var(--t2)}
+.cap .copy:hover{border-color:var(--green);color:var(--t1)}
+.cap .copy.done{border-color:var(--green);color:var(--green)}
+.cap .shareb{background:var(--green);border:1px solid var(--green);color:#04140a;flex:1}
+.cap .shareb:hover{filter:brightness(1.07)}
+
+/* cards / sections */
+.panel{background:var(--card);border:1px solid var(--b1);border-radius:var(--r);padding:18px}
+
+/* more options disclosure */
+details.more{background:var(--card);border:1px solid var(--b1);border-radius:var(--r);overflow:hidden}
+details.more>summary{list-style:none;cursor:pointer;padding:16px 18px;font-size:.8rem;font-weight:800;letter-spacing:.04em;color:var(--t1);display:flex;align-items:center;justify-content:space-between}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::after{content:'\203A';font-size:1.4rem;color:var(--t3);transform:rotate(90deg);transition:transform .2s;line-height:1}
+details.more[open]>summary::after{transform:rotate(-90deg)}
+details.more>summary:hover{color:var(--green)}
+.more-body{padding:0 18px 18px;display:flex;flex-direction:column;gap:20px}
+.opt{border-top:1px solid var(--b1);padding-top:18px}
+.opt:first-child{border-top:none;padding-top:0}
+.opt h3{font-size:.74rem;font-weight:800;letter-spacing:.04em;color:var(--t1);margin-bottom:4px}
+.opt .hint{margin-top:0;margin-bottom:10px}
+
+.foot{max-width:580px;margin:0 auto;padding:4px 18px 50px;color:var(--t3);font-size:.7rem;line-height:1.6;text-align:center}
+
+@media(min-width:760px){
+  .app{max-width:620px}
+  canvas,video{max-height:60vh}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto}}
+html{-webkit-text-size-adjust:100%}
+body{touch-action:manipulation}
+input,select,textarea{font-size:16px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<meta name="theme-color" content="#0F8D5B">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-title" content="Perfect XI">
+<meta name="msapplication-TileColor" content="#0F8D5B">
+</head>
+<body>
+<header class="top">
+  <div class="brand">PERFECT <span>XI</span><small>SOCIAL STUDIO</small></div>
+  <a class="toplink" href="https://perfectxi.app" target="_blank" rel="noopener">perfectxi.app &nearr;</a>
+</header>
+
+<main class="app">
+
+  <section>
+    <div class="sec-label">Make a post <button class="mini" id="surprise">&#127922; Surprise me</button></div>
+    <div class="chips" id="tplGrid"></div>
+    <p class="storydesc" id="storyDesc"></p>
+  </section>
+
+  <section class="preview">
+    <div class="canvas-shell" id="cvShell"><canvas id="cv" width="1080" height="1350"></canvas></div>
+    <div id="vidWrap" style="display:none;width:100%;justify-content:center;"><video id="vid" playsinline controls loop></video></div>
+    <div class="prog" id="prog"><div class="bar"><i id="progBar"></i></div><p class="hint" id="progTxt" style="text-align:center">Rendering your video&hellip; keep this tab open</p></div>
+    <div class="caro" id="caro"><button id="prev" aria-label="Previous slide">&#8249;</button><span class="cc" id="cc">Slide 1 / 5</span><button id="next" aria-label="Next slide">&#8250;</button></div>
+    <div class="dots" id="dots"></div>
+  </section>
+
+  <section class="panel">
+    <div class="seg" id="modeSeg">
+      <button data-mode="single" class="sel">Single</button>
+      <button data-mode="story">Carousel</button>
+      <button data-mode="video">Video</button>
+    </div>
+    <p class="modehint" id="modeHint">A single graphic with a caption.</p>
+
+    <div id="fmtBlock">
+      <label class="fl">Size</label>
+      <div class="seg" id="fmtSeg">
+        <button data-w="1080" data-h="1350" class="sel">Post 4:5</button>
+        <button data-w="1080" data-h="1080">Square</button>
+        <button data-w="1080" data-h="1920">Story 9:16</button>
+      </div>
+    </div>
+    <div id="vidLenBlock" style="display:none">
+      <label class="fl">Aspect ratio</label>
+      <div class="seg" id="vidAspSeg">
+        <button data-w="1080" data-h="1920" class="sel">9:16 Reel</button>
+        <button data-w="1080" data-h="1080">1:1 Feed</button>
+        <button data-w="1080" data-h="1350">4:5 Post</button>
+      </div>
+      <label class="fl">Length</label>
+      <div class="seg" id="vidLenSeg">
+        <button data-len="full" class="sel">Full &#126;15s</button>
+        <button data-len="quick">Quick &#126;8s</button>
+      </div>
+    </div>
+
+    <label class="fl">Accent</label>
+    <div class="seg" id="accSeg">
+      <button data-acc="green" class="sel">Emerald</button>
+      <button data-acc="gold">Gold</button>
+      <button data-acc="white">Mono</button>
+    </div>
+
+    <div class="actions">
+      <div id="exSingle">
+        <button class="btn" id="save">&#128247; Save to camera roll</button>
+        <button class="btn ghost" id="dl" style="margin-top:9px">&#11015; Download PNG</button>
+      </div>
+      <div id="exStory" style="display:none">
+        <button class="btn" id="saveAll">&#128247; Save all slides</button>
+        <button class="btn ghost" id="dlAll" style="margin-top:9px">&#11015; Download all slides</button>
+      </div>
+      <div id="exVideo" style="display:none">
+        <button class="btn" id="genVid">&#127909; Generate video</button>
+        <button class="btn" id="saveVid" style="margin-top:9px;display:none">&#128247; Save video to camera roll</button>
+        <button class="btn ghost" id="dlVid" style="margin-top:9px;display:none">&#11015; Download video</button>
+      </div>
+      <button class="btn ghost" id="shuffleAll">&#127922; New version</button>
+    </div>
+    <p class="hint">Save opens the share sheet on a phone &mdash; tap <b>Save Image</b> / <b>Save Video</b> for your camera roll. On desktop it downloads.</p>
+  </section>
+
+  <section class="panel">
+    <div class="sec-label" style="margin-bottom:13px">Caption &amp; share</div>
+    <div class="cap-tabs" id="capTabs"></div>
+    <div id="capList"></div>
+    <button class="btn ghost" id="reshuffle" style="margin-top:4px">&#8635; New variations</button>
+  </section>
+
+  <details class="more">
+    <summary>More options</summary>
+    <div class="more-body">
+
+      <div class="opt">
+        <h3>Use your own XI</h3>
+        <p class="hint">Paste a code from the game and your posts build around your real team.</p>
+        <textarea class="tf" id="xiCode" placeholder="Paste your Perfect XI code (PXI1\u2026)" rows="2" style="font-family:monospace;font-size:.8rem"></textarea>
+        <div class="btnrow"><button class="btn" id="loadXI">&#9989; Load my XI</button></div>
+        <div class="btnrow"><button class="btn ghost" id="clearXI">Use random instead</button></div>
+        <p class="hint" id="xiStatus"></p>
+      </div>
+
+      <div class="opt">
+        <h3>Look</h3>
+        <label class="fl">Background</label>
+        <div class="seg" id="motifSeg">
+          <button data-motif="formation" class="sel">Formation</button>
+          <button data-motif="pitch">Pitch</button>
+          <button data-motif="minimal">Minimal</button>
+        </div>
+        <div id="formRow" style="display:none">
+          <label class="fl">Formation</label>
+          <div class="seg" id="formSeg">
+            <button data-f="433" class="sel">4-3-3</button>
+            <button data-f="442">4-4-2</button>
+            <button data-f="352">3-5-2</button>
+            <button data-f="4231">4-2-3-1</button>
+          </div>
+        </div>
+        <label class="fl">Club theme</label>
+        <select class="tf" id="clubSel"><option value="">None &mdash; use accent</option></select>
+      </div>
+
+      <div class="opt" id="editBox">
+        <h3>Edit the words</h3>
+        <label class="fl">Eyebrow</label>
+        <input class="tf" id="fEyebrow" maxlength="34">
+        <label class="fl">Headline <span style="text-transform:none;letter-spacing:0;color:var(--t3);font-weight:600">(Enter = new line)</span></label>
+        <textarea class="tf" id="fHead" maxlength="90"></textarea>
+        <label class="fl">Subline</label>
+        <textarea class="tf" id="fSub" maxlength="170"></textarea>
+        <label class="fl">Button text</label>
+        <input class="tf" id="fCta" maxlength="22">
+        <label class="fl">Handle / URL</label>
+        <input class="tf" id="fUrl" maxlength="36">
+        <div class="btnrow"><button class="btn ghost" id="randomCopy">&#9851; Randomise the copy</button></div>
+      </div>
+
+      <div class="opt" id="storyBox" style="display:none">
+        <h3>Carousel / video story</h3>
+        <div class="btnrow"><button class="btn ghost" id="newStory">&#8635; New story (random)</button></div>
+      </div>
+
+      <div class="opt">
+        <h3>Plan a week</h3>
+        <p class="hint">Builds seven ready-to-post graphics plus a captions file, so you can fill your queue in one go. Uses the current size &amp; platform.</p>
+        <div class="btnrow"><button class="btn ghost" id="planWeek">&#128197; Generate 7 posts</button></div>
+      </div>
+
+    </div>
+  </details>
+
+</main>
+<div class="foot">
+  Everything is generated on your device &mdash; nothing is uploaded. Videos are silent by design; add trending audio in-app. Perfect XI is an unofficial fan game.
+</div>
+<script>
+"use strict";
+var URL_DEF="perfectxi.app";
+var TPL={
+ seasonreview:{label:"Season Review",note:"Draft \u2192 result",motif:"formation",
+  eyebrows:["FULL-TIME","SEASON COMPLETE","MY PERFECT XI","THE VERDICT","FINAL TABLE","JOB DONE"],
+  heads:["FULL\nSEASON.\nDONE.","38 GAMES.\nONE\nVERDICT.","I BUILT\nA SIDE.\nIT WON.","MY XI.\nMY\nSEASON.","ONE SAVE.\nONE\nVERDICT."],
+  subs:["From draft to full-time, built in Perfect XI. Can you beat it?","Picked a team, played 38 games. Here's the verdict.","One save, one season. Your turn to try.","Drafted, simulated, done. How does yours end?","No edits, no resets. Just the table."],
+  ctas:["Beat my season","Build yours","Try it free","Your turn"]},
+ challenge:{label:"38-0 Challenge",note:"The unbeaten run",motif:"formation",
+  eyebrows:["THE 38-0 CHALLENGE","UNBEATEN OR BUST","THE PERFECT SEASON","CAN YOU DO IT?","THE IMPOSSIBLE RUN","INVINCIBLE MODE"],
+  heads:["CAN YOU GO\nA SEASON\nUNBEATEN?","38 GAMES.\nZERO LOSSES.\nGO.","BUILD AN\nINVINCIBLE\nXI.","WIN ALL 38.\nLOSE NONE.\nEASY?","DROP A\nSINGLE\nGAME?","CHASE THE\nPERFECT\nSEASON."],
+  subs:["Draft your all-time Premier League XI and try not to lose once.","No club has ever done it for real. Your move.","Pick eleven legends, simulate 38 games, stay unbeaten.","Forty fixtures of pressure. One slip ends it.","Most people drop points by November. Can you?"],
+  ctas:["Play free","Take the challenge","Try it now","Build your XI","Start the run"]},
+ dropxi:{label:"Drop Your XI",note:"Reply-bait",motif:"pitch",
+  eyebrows:["TEAM TALK","YOUR ALL-TIME XI","SETTLE THE DEBATE","ELEVEN LEGENDS","NAME YOUR XI","NO WRONG ANSWERS"],
+  heads:["DROP YOUR\nALL-TIME\nPREM XI","PICK 11.\nNO MORE.\nGO.","YOUR\nGREATEST-EVER\nPREM XI?","NAME YOUR\nDREAM\nXI.","BUILD THE\nULTIMATE\nXI."],
+  subs:["No wrong answers, only arguments. Build it and post it.","Thirty years of the Prem. Who makes your eleven?","Mix 90s icons with today's stars. Your call.","You get eleven. Choose carefully.","Tag a mate and compare elevens."],
+  ctas:["Build yours","Make your XI","Start now","Pick your 11"]},
+ stats:{label:"The Numbers",note:"Scale flex",motif:"minimal",
+  eyebrows:["THE NUMBERS","BY THE NUMBERS","THE SCALE","INSIDE PERFECT XI","THE STATS","IT ALL ADDS UP"],
+  heads:["51 CLUBS.\n4,000+ PLAYERS.\nONE XI.","THIRTY YEARS\nOF THE PREM.\nONE DRAFT.","EVERY ERA.\nEVERY LEGEND.\nONE TEAM.","FROM CANTONA\nTO HAALAND.\nALL HERE."],
+  subs:["Every Premier League season since 1992, in one drafting game.","Spin, draft and build your perfect eleven from the whole Prem era.","Decades of legends, one team sheet.","The entire Prem, distilled into one squad."],
+  ctas:["Start drafting","Build your XI","Play free","Spin now"]},
+ debate:{label:"Era Debate",note:"This-or-that",motif:"pitch",
+  eyebrows:["SETTLE IT","ERA WARS","PICK A SIDE","WHO WINS?","THE GREAT DEBATE","CHOOSE ONE"],
+  heads:["90s XI\nvs\n2020s XI","LEGENDS\nvs\nTODAY","OLD SCHOOL\nvs\nNEW SCHOOL","THE PAST\nvs\nTHE PRESENT"],
+  subs:["Pick a decade, build a side, simulate the season. Which era wins?","Could the classics beat today's best? Prove it with an XI.","Filter by era, draft your team, let the table decide.","One pitch, two eras, one winner."],
+  ctas:["Pick your era","Settle it","Build your XI","Choose a side"]},
+ worldcup:{label:"World Cup 2026",note:"Tournament",motif:"formation",
+  eyebrows:["WORLD CUP 2026","ROAD TO THE FINAL","BUILD A GLOBAL XI","48 NATIONS","THE TOURNAMENT","CHASE THE CUP"],
+  heads:["BUILD A\nWORLD XI.\nWIN THE CUP.","ONE STAR.\nEVERY NATION.\nONE TROPHY.","TAKE YOUR\nNATION TO\nGLORY.","DRAFT THE\nWORLD'S\nBEST XI."],
+  subs:["Draft a star from a different nation at every position, then go all the way.","Pick a real nation or build a global super-team.","Group stage, knockouts, the final. Can your XI go all the way?","One save, one tournament, no second chances."],
+  ctas:["Enter the cup","Build your XI","Play free","Kick off"]},
+ hottake:{label:"Hot Take",note:"Provocation",motif:"minimal",
+  eyebrows:["HOT TAKE","UNPOPULAR OPINION","FIGHT ME","PROVE ME WRONG","CONTROVERSIAL","SAY IT LOUDER"],
+  heads:["NO CLUB HAS\nEVER GONE\n38-0.","YOU CAN'T\nGO\nUNBEATEN.","PERFECT\nSEASONS\nDON'T EXIST.","YOUR XI\nISN'T\nUNBEATABLE."],
+  subs:["Think you can do better than the Invincibles? One way to find out.","Everyone thinks they can. Almost no one can. Prove it.","Build the team, simulate the season, eat your words or mine.","Big talk is easy. The table doesn't lie."],
+  ctas:["Prove it","Prove me wrong","Try it","Take the challenge"]},
+ ratexi:{label:"Rate This XI",note:"Score & beat it",motif:"formation",
+  eyebrows:["RATE THIS XI","WOULD YOU BEAT IT?","HONEST RATINGS","ONE TO TEN","SCORE IT","HOW STRONG?"],
+  heads:["RATE THIS\nXI OUT\nOF 10.","COULD YOUR\nXI BEAT\nTHIS?","HOW GOOD\nIS THIS\nLINE-UP?","BUILD ONE\nBETTER.\nGO ON."],
+  subs:["Drop your score in the comments, then build one that beats it.","Honest ratings only. Then make your own and compare.","Think you can do better? The draft is waiting.","Out of ten, then build your answer."],
+  ctas:["Build a better XI","Rate & play","Make yours","Beat it"]},
+ whowins:{label:"Who'd Win",note:"Club vs club",motif:"pitch",
+  eyebrows:["WHO'D WIN?","CLUB CLASH","SETTLE IT","ALL-TIME TIE","THE MATCHUP","YOU DECIDE"],
+  heads:["WHO'D WIN:\nCLUB vs\nCLUB?","BEST XI\nvs\nBEST XI","THE ALL-TIME\nDERBY","TWO CLUBS.\nONE\nWINNER."],
+  subs:["Build each club's greatest-ever XI and simulate the match.","All-time best vs all-time best. Who comes out on top?","Pick two clubs, draft their legends, let the engine decide.","The matchup every fan argues about — now you can run it."],
+  ctas:["Run the match","Build both XIs","Settle it","Play free"]}
+};
+var ERAS=[{k:"90s",line:"The Premier League's wild, iconic early years."},{k:"2000s",line:"The deepest, most glamorous era of the Prem."},{k:"2010s",line:"The most stacked decade the league has seen."},{k:"2020s",line:"Modern football, sky-high ceilings."},{k:"ALL-TIME",line:"Thirty years of legends in one squad."},{k:"GAL\u00c1CTICOS",line:"All flair, all firepower, no compromise."},{k:"UNDERDOG",line:"Budget legends and proper scrappers only."},{k:"HOMEGROWN",line:"Academy graduates and local heroes."}];
+var FORMS_TXT=["4-3-3","4-4-2","3-5-2","4-2-3-1","3-4-3","4-1-4-1","3-4-2-1"];
+var SPINES=["a world-class spine","an unbreakable back four","a midfield that runs every game","goals from all over the pitch","a legendary keeper and defence","pace and power everywhere","a number ten pulling the strings","two strikers who never stop"];
+var STAT_POOL=[{big:"51",label:"CLUBS"},{big:"4,000+",label:"PLAYERS"},{big:"30+",label:"SEASONS"},{big:"12",label:"FORMATIONS"},{big:"48",label:"WORLD CUP NATIONS"},{big:"38",label:"GAMES A SEASON"},{big:"1992",label:"WHERE IT BEGINS"}];
+var CTA_HEADS=["YOUR\nTURN.","READY\nTO PLAY?","BUILD\nYOURS.","GO ON\nTHEN.","YOUR\nMOVE.","CAN YOU\nBEAT IT?","TAP IN.\nPLAY."];
+var SEASON_LINES=["Every fixture simulated. Here's how it went...","One save, one season, no second chances...","38 matches against the whole league. Then the table landed.","No edits, no resets. Just the results...","Played them all. The verdict is in..."];
+var DEBATE_PAIRS=[["THE 90s","TODAY"],["THE 2000s","THE 2020s"],["LEGENDS","MODERNS"],["THE PAST","THE PRESENT"],["BACK THEN","RIGHT NOW"]];
+var DEBATE_THEN=["Iconic keepers, hard defenders and match-winners who defined an era.","Grit, leaders and legends \u2014 football with the gloves off.","Flair players who'd walk into any team, any decade.","The originals. Less data, more soul."];
+var DEBATE_NOW=["Elite full-backs, relentless pressing and forwards who never stop scoring.","Faster, fitter, deeper \u2014 the most stacked squads ever.","Technical monsters at every position.","The modern machine. Ruthless and relentless."];
+var WC_STEPS=[
+ {k:"STEP 1 \u00b7 CHOOSE",h:["NATION OR\nWORLD XI","PICK YOUR\nPATH","FLAG OR\nGLOBAL XI"],b:["Take a real qualified nation, or draft one star per country.","Pick a flag to fly, or build a global super-team.","Your country, or the best of the planet \u2014 you decide."]},
+ {k:"STEP 2 \u00b7 SURVIVE",h:["GROUP, THEN\nKNOCKOUTS","TOP YOUR\nGROUP","SURVIVE\nTHE DRAW"],b:["Top your group, then it's sudden death all the way.","One bad day ends it. Balance wins tournaments.","Get out of the group, then hold your nerve."]},
+ {k:"STEP 3 \u00b7 LIFT IT",h:["WIN THE\nFINAL","LIFT THE\nTROPHY","GO ALL\nTHE WAY"],b:["Chase the trophy, the Golden Boot and the Golden Glove.","Go all the way and lift it without losing a game.","Ninety minutes from glory. Don't blink."]}
+];
+var BEATS={
+ challenge:[
+  {k:"THE METHOD",h:["DRAFT THE\nSPINE FIRST","START WITH\nTHE SPINE","BUILD FROM\nTHE BACK"],b:["Keeper, centre-backs, a controlling midfielder. Nail the core first.","Win the middle of the pitch before you chase any flair.","Lock the spine and the rest falls into place."]},
+  {k:"THE TRAP",h:["BALANCE\nOVER STARS","DON'T GO\nTOP-HEAVY","NO WEAK\nLINKS"],b:["One weak link caps the whole team. Be strong everywhere.","Two superstars can't paper over a hole at the back.","A balanced 85 beats a lopsided 90 every time."]},
+  {k:"POSITION FIT",h:["PLAY THEM\nIN ROLE","FIT BEFORE\nFAME","RIGHT MAN,\nRIGHT SLOT"],b:["A natural fit beats a bigger name shoved out of position.","Read the slot on offer before you spend a spin.","Square pegs in round holes drag your rating down."]},
+  {k:"THE RE-ROLLS",h:["SPEND SWAPS\nLIKE GOLD","HOARD YOUR\nRE-ROLLS","SAVE THE\nSWAPS"],b:["Only re-roll when a spin can't fill any open slot.","Keep one in reserve for the final, narrow picks.","Burn them early and the back end gets brutal."]},
+  {k:"THE STAKES",h:["NEVER\nBEEN DONE","HARDER THAN\nIT LOOKS","CHASING\nPERFECTION"],b:["Arsenal went unbeaten but still drew 12. You want all wins.","No club has ever won all 38 in a season. That's the bar.","One slip and the perfect run is gone."]}
+ ],
+ ratexi:[
+  {k:"THE SPINE",h:["IS IT\nSOLID?","CHECK THE\nSPINE","START AT\nTHE BACK"],b:["Keeper, centre-backs, a controlling midfielder \u2014 the core decides it.","A shaky spine sinks even a glamorous front three.","Rate the middle of the pitch before the wingers."]},
+  {k:"THE BALANCE",h:["OR TOP-\nHEAVY?","SPOT THE\nWEAK LINK","ALL-ROUND\nOR NOT?"],b:["Strong everywhere, or brilliant up top and thin at the back?","The engine punishes one weak link. Find it.","A balanced side always out-performs a lopsided one."]},
+  {k:"THE X-FACTOR",h:["WHO WINS\nTIGHT GAMES?","ANY MATCH-\nWINNERS?","CLUTCH\nFACTOR"],b:["Every great XI has someone who decides the close ones.","Flair is nice \u2014 end product wins seasons.","Who grabs the goal when it's 0-0 in April?"]},
+  {k:"THE ERA",h:["WHICH ERA\nWINS?","MIXED OR\nONE DECADE?","TIME-\nPROOF?"],b:["All-time picks out-rate any single decade. Worth knowing.","A 90s legend next to a 2020s star is fair game here.","Era doesn't matter to the engine \u2014 only rating does."]}
+ ],
+ hottake:[
+  {k:"THE FACT",h:["NEVER\nHAPPENED","NOT ONCE\nIN 30 YEARS","ZERO\nTIMES"],b:["No club has won all 38 in a Premier League season. Ever.","A flawless season is a myth \u2014 in real life.","Thirty-plus seasons, not one perfect record."]},
+  {k:"THE PROOF",h:["THE GREATS\nSLIPPED TOO","EVEN THEY\nDROPPED IT","NOBODY'S\nIMMUNE"],b:["The Invincibles drew 12. The centurions still lost twice.","Every legendary side dropped points somewhere.","The best teams ever still had off days."]},
+  {k:"THE CATCH",h:["SO WHAT'S\nYOUR XI?","THINK YOU\nCAN?","TALK IS\nCHEAP"],b:["Easy to claim. Much harder to actually do it.","Confidence is free. Proof costs 38 games.","Everyone's unbeatable until the table loads."]}
+ ],
+ dropxi:[
+  {k:"THE RULES",h:["11 PLAYERS.\nANY ERA.","ONE TEAM,\nALL OF TIME","NO LIMITS,\nJUST 11"],b:["Any club, any season since 1992. That's the only rule.","Mix the legends with the modern greats. Your call.","Thirty years of the Prem, one team sheet."]},
+  {k:"PICK A SHAPE",h:["CHOOSE YOUR\nFORMATION","4-3-3 OR\n3-5-2?","YOUR SHAPE,\nYOUR CALL"],b:["Twelve formations. Build around your best players.","The shape changes who fits \u2014 choose wisely.","Two up top or a false nine? Up to you."]},
+  {k:"YOUR MOVE",h:["BUILD IT.\nPOST IT.","SCREENSHOT\nAND SHARE","BACK YOUR\nELEVEN"],b:["Screenshot your XI and tag a mate who'll disagree.","Back your eleven in the replies. No fence-sitting.","Post it and let the arguments begin."]},
+  {k:"THE TWIST",h:["ONE PICK\nPER CLUB?","HARD MODE:\nNO REPEATS","MAKE IT\nHARDER"],b:["Try a one-player-per-club rule for a real challenge.","Ban your favourite club and see who you'd pick instead.","Set your own rules \u2014 the best debates come from limits."]}
+ ]
+};
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function rint(lo,hi){return lo+Math.floor(Math.random()*(hi-lo+1));}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+var PXDATA={"clubs":["Arsenal","Aston Villa","Barnsley","Birmingham","Blackburn","Blackpool","Bolton","Bournemouth","Bradford","Brentford","Brighton","Burnley","Cardiff","Charlton","Chelsea","Coventry","Crystal Palace","Derby","Everton","Fulham","Huddersfield","Hull","Ipswich","Leeds","Leicester","Liverpool","Luton","Man City","Man United","Middlesbrough","Newcastle","Norwich","Nottm Forest","Oldham","Portsmouth","QPR","Reading","Sheffield United","Sheffield Wednesday","Southampton","Stoke","Sunderland","Swansea","Swindon","Tottenham","Watford","West Brom","West Ham","Wigan","Wimbledon","Wolves"],"eras":{"90s":[{"n":"Peter Schmeichel","c":"Man United","p":"GK","r":93},{"n":"Neville Southall","c":"Everton","p":"GK","r":91},{"n":"David Seaman","c":"Arsenal","p":"GK","r":89},{"n":"Ed de Goey","c":"Chelsea","p":"GK","r":83},{"n":"Bruce Grobbelaar","c":"Liverpool","p":"GK","r":83},{"n":"Mark Bosnich","c":"Man United","p":"GK","r":82},{"n":"Jaap Stam","c":"Man United","p":"DEF","r":90},{"n":"Marcel Desailly","c":"Chelsea","p":"DEF","r":89},{"n":"Tony Adams","c":"Arsenal","p":"DEF","r":88},{"n":"Paul McGrath","c":"Derby","p":"DEF","r":85},{"n":"Frank Leboeuf","c":"Chelsea","p":"DEF","r":85},{"n":"Gary Neville","c":"Man United","p":"DEF","r":84},{"n":"Steve Bruce","c":"Man United","p":"DEF","r":84},{"n":"Gary Pallister","c":"Man United","p":"DEF","r":84},{"n":"Steve Bould","c":"Arsenal","p":"DEF","r":83},{"n":"Martin Keown","c":"Arsenal","p":"DEF","r":83},{"n":"Mark Wright","c":"Liverpool","p":"DEF","r":82},{"n":"Denis Irwin","c":"Man United","p":"DEF","r":82},{"n":"Graeme Le Saux","c":"Blackburn","p":"DEF","r":82},{"n":"Des Walker","c":"Sheffield Wednesday","p":"DEF","r":82},{"n":"Lee Dixon","c":"Arsenal","p":"DEF","r":82},{"n":"Nigel Winterburn","c":"Arsenal","p":"DEF","r":82},{"n":"Roy Keane","c":"Man United","p":"MID","r":92},{"n":"Ruud Gullit","c":"Chelsea","p":"MID","r":92},{"n":"Paul Gascoigne","c":"Tottenham","p":"MID","r":91},{"n":"Paul Scholes","c":"Man United","p":"MID","r":90},{"n":"David Beckham","c":"Man United","p":"MID","r":90},{"n":"John Barnes","c":"Liverpool","p":"MID","r":88},{"n":"Peter Beardsley","c":"Everton","p":"MID","r":88},{"n":"Gianfranco Zola","c":"Chelsea","p":"MID","r":88},{"n":"Bryan Robson","c":"Man United","p":"MID","r":88},{"n":"Matt Le Tissier","c":"Southampton","p":"MID","r":88},{"n":"Juninho","c":"Middlesbrough","p":"MID","r":85},{"n":"Emmanuel Petit","c":"Arsenal","p":"MID","r":85},{"n":"Gary McAllister","c":"Coventry","p":"MID","r":84},{"n":"Georgi Kinkladze","c":"Derby","p":"MID","r":84},{"n":"Paul Ince","c":"Middlesbrough","p":"MID","r":84},{"n":"David Platt","c":"Arsenal","p":"MID","r":84},{"n":"Alan Shearer","c":"Newcastle","p":"ATT","r":94},{"n":"Ruud van Nistelrooy","c":"Man United","p":"ATT","r":93},{"n":"Ryan Giggs","c":"Man United","p":"ATT","r":92},{"n":"Michael Owen","c":"Liverpool","p":"ATT","r":91},{"n":"Eric Cantona","c":"Man United","p":"ATT","r":91},{"n":"Ian Wright","c":"Arsenal","p":"ATT","r":90},{"n":"Robbie Fowler","c":"Liverpool","p":"ATT","r":89},{"n":"Gianluca Vialli","c":"Chelsea","p":"ATT","r":89},{"n":"Jurgen Klinsmann","c":"Tottenham","p":"ATT","r":89},{"n":"Chris Waddle","c":"Sheffield Wednesday","p":"ATT","r":88},{"n":"Gary Lineker","c":"Tottenham","p":"ATT","r":88},{"n":"Kevin Keegan","c":"Newcastle","p":"ATT","r":88},{"n":"Ian Rush","c":"Liverpool","p":"ATT","r":87},{"n":"Andy Cole","c":"Man United","p":"ATT","r":87}],"2000s":[{"n":"Petr Cech","c":"Chelsea","p":"GK","r":91},{"n":"Pepe Reina","c":"Liverpool","p":"GK","r":88},{"n":"Edwin van der Sar","c":"Man United","p":"GK","r":88},{"n":"Fabien Barthez","c":"Man United","p":"GK","r":88},{"n":"Jens Lehmann","c":"Arsenal","p":"GK","r":86},{"n":"Joe Hart","c":"Man City","p":"GK","r":85},{"n":"John Terry","c":"Chelsea","p":"DEF","r":91},{"n":"Rio Ferdinand","c":"Man United","p":"DEF","r":90},{"n":"Nemanja Vidic","c":"Man United","p":"DEF","r":90},{"n":"Gerard Pique","c":"Man United","p":"DEF","r":89},{"n":"Ashley Cole","c":"Arsenal","p":"DEF","r":88},{"n":"Sol Campbell","c":"Arsenal","p":"DEF","r":88},{"n":"Jamie Carragher","c":"Liverpool","p":"DEF","r":87},{"n":"Ricardo Carvalho","c":"Chelsea","p":"DEF","r":86},{"n":"Laurent Blanc","c":"Man United","p":"DEF","r":86},{"n":"Patrice Evra","c":"Man United","p":"DEF","r":85},{"n":"William Gallas","c":"Chelsea","p":"DEF","r":84},{"n":"Sami Hyypia","c":"Liverpool","p":"DEF","r":84},{"n":"Jonathan Woodgate","c":"Leeds","p":"DEF","r":84},{"n":"Phil Jagielka","c":"Everton","p":"DEF","r":84},{"n":"Kolo Toure","c":"Arsenal","p":"DEF","r":83},{"n":"Martin Skrtel","c":"Liverpool","p":"DEF","r":83},{"n":"Steven Gerrard","c":"Liverpool","p":"MID","r":94},{"n":"Luka Modric","c":"Tottenham","p":"MID","r":93},{"n":"Patrick Vieira","c":"Arsenal","p":"MID","r":92},{"n":"Frank Lampard","c":"Chelsea","p":"MID","r":91},{"n":"Claude Makelele","c":"Chelsea","p":"MID","r":90},{"n":"Dennis Bergkamp","c":"Arsenal","p":"MID","r":88},{"n":"Javier Mascherano","c":"Liverpool","p":"MID","r":88},{"n":"Xabi Alonso","c":"Liverpool","p":"MID","r":88},{"n":"Michael Essien","c":"Chelsea","p":"MID","r":88},{"n":"Michael Ballack","c":"Chelsea","p":"MID","r":88},{"n":"Jay-Jay Okocha","c":"Bolton","p":"MID","r":86},{"n":"Juan Sebastian Veron","c":"Man United","p":"MID","r":86},{"n":"Youri Djorkaeff","c":"Bolton","p":"MID","r":85},{"n":"Freddie Ljungberg","c":"Arsenal","p":"MID","r":84},{"n":"Andrey Arshavin","c":"Arsenal","p":"MID","r":84},{"n":"Mikel Arteta","c":"Everton","p":"MID","r":83},{"n":"Cristiano Ronaldo","c":"Man United","p":"ATT","r":99},{"n":"Thierry Henry","c":"Arsenal","p":"ATT","r":97},{"n":"Fernando Torres","c":"Liverpool","p":"ATT","r":93},{"n":"Wayne Rooney","c":"Man United","p":"ATT","r":93},{"n":"Gareth Bale","c":"Tottenham","p":"ATT","r":93},{"n":"Gael Bale","c":"Tottenham","p":"ATT","r":93},{"n":"Andriy Shevchenko","c":"Chelsea","p":"ATT","r":92},{"n":"Didier Drogba","c":"Chelsea","p":"ATT","r":91},{"n":"Robert van Persie","c":"Arsenal","p":"ATT","r":90},{"n":"Arjen Robben","c":"Chelsea","p":"ATT","r":89},{"n":"Jimmy Floyd Hasselbaink","c":"Middlesbrough","p":"ATT","r":89},{"n":"Robert Pires","c":"Arsenal","p":"ATT","r":88},{"n":"Carlos Tevez","c":"Man United","p":"ATT","r":88},{"n":"Patrick Kluivert","c":"Newcastle","p":"ATT","r":88}],"2010s":[{"n":"Alisson","c":"Liverpool","p":"GK","r":92},{"n":"David de Gea","c":"Man United","p":"GK","r":92},{"n":"Alisson Becker","c":"Liverpool","p":"GK","r":92},{"n":"Ederson","c":"Man City","p":"GK","r":91},{"n":"Thibaut Courtois","c":"Chelsea","p":"GK","r":89},{"n":"Hugo Lloris","c":"Tottenham","p":"GK","r":88},{"n":"Virgil van Dijk","c":"Liverpool","p":"DEF","r":92},{"n":"Trent Alexander-Arnold","c":"Liverpool","p":"DEF","r":90},{"n":"Andrew Robertson","c":"Liverpool","p":"DEF","r":88},{"n":"Vincent Kompany","c":"Man City","p":"DEF","r":88},{"n":"Aymeric Laporte","c":"Man City","p":"DEF","r":88},{"n":"Kyle Walker","c":"Man City","p":"DEF","r":86},{"n":"Toby Alderweireld","c":"Tottenham","p":"DEF","r":86},{"n":"Jan Vertonghen","c":"Tottenham","p":"DEF","r":86},{"n":"Laurent Koscielny","c":"Arsenal","p":"DEF","r":85},{"n":"Cesar Azpilicueta","c":"Chelsea","p":"DEF","r":85},{"n":"David Luiz","c":"Chelsea","p":"DEF","r":85},{"n":"Nicolas Otamendi","c":"Man City","p":"DEF","r":85},{"n":"Ledley King","c":"Tottenham","p":"DEF","r":85},{"n":"Luke Shaw","c":"Man United","p":"DEF","r":84},{"n":"Harry Maguire","c":"Man United","p":"DEF","r":84},{"n":"Thomas Vermaelen","c":"Arsenal","p":"DEF","r":84},{"n":"Kevin De Bruyne","c":"Man City","p":"MID","r":94},{"n":"N'Golo Kante","c":"Chelsea","p":"MID","r":91},{"n":"David Silva","c":"Man City","p":"MID","r":90},{"n":"Yaya Toure","c":"Man City","p":"MID","r":90},{"n":"Mesut Ozil","c":"Arsenal","p":"MID","r":88},{"n":"Philippe Coutinho","c":"Liverpool","p":"MID","r":88},{"n":"Cesc Fabregas","c":"Chelsea","p":"MID","r":87},{"n":"Fabinho","c":"Liverpool","p":"MID","r":87},{"n":"Bernardo Silva","c":"Man City","p":"MID","r":87},{"n":"Paul Pogba","c":"Man United","p":"MID","r":87},{"n":"Nemanja Matic","c":"Chelsea","p":"MID","r":86},{"n":"Christian Eriksen","c":"Tottenham","p":"MID","r":86},{"n":"Samir Nasri","c":"Man City","p":"MID","r":86},{"n":"Rafael van der Vaart","c":"Tottenham","p":"MID","r":86},{"n":"Juan Mata","c":"Chelsea","p":"MID","r":86},{"n":"Santi Cazorla","c":"Arsenal","p":"MID","r":85},{"n":"Mohamed Salah","c":"Liverpool","p":"ATT","r":94},{"n":"Sergio Aguero","c":"Man City","p":"ATT","r":93},{"n":"Harry Kane","c":"Tottenham","p":"ATT","r":93},{"n":"Zlatan Ibrahimovic","c":"Man United","p":"ATT","r":93},{"n":"Eden Hazard","c":"Chelsea","p":"ATT","r":92},{"n":"Luis Suarez","c":"Liverpool","p":"ATT","r":92},{"n":"Sadio Mane","c":"Liverpool","p":"ATT","r":91},{"n":"Phil Foden","c":"Man City","p":"ATT","r":91},{"n":"Samuel Eto'o","c":"Chelsea","p":"ATT","r":91},{"n":"Robin van Persie","c":"Man United","p":"ATT","r":90},{"n":"Alexis Sanchez","c":"Arsenal","p":"ATT","r":89},{"n":"Son Heung-min","c":"Tottenham","p":"ATT","r":89},{"n":"Pierre-Emerick Aubameyang","c":"Arsenal","p":"ATT","r":89},{"n":"Radamel Falcao","c":"Chelsea","p":"ATT","r":89}],"2020s":[{"n":"Edouard Mendy","c":"Chelsea","p":"GK","r":88},{"n":"Andre Onana","c":"Man United","p":"GK","r":86},{"n":"Emiliano Martinez","c":"Aston Villa","p":"GK","r":86},{"n":"David Raya","c":"Arsenal","p":"GK","r":85},{"n":"Nick Pope","c":"Newcastle","p":"GK","r":85},{"n":"Bart Verbruggen","c":"Brighton","p":"GK","r":84},{"n":"Ruben Dias","c":"Man City","p":"DEF","r":91},{"n":"Thiago Silva","c":"Chelsea","p":"DEF","r":89},{"n":"Raphael Varane","c":"Man United","p":"DEF","r":89},{"n":"William Saliba","c":"Arsenal","p":"DEF","r":88},{"n":"Joao Cancelo","c":"Man City","p":"DEF","r":88},{"n":"Josko Gvardiol","c":"Man City","p":"DEF","r":88},{"n":"Kalidou Koulibaly","c":"Chelsea","p":"DEF","r":87},{"n":"Gabriel Magalhaes","c":"Arsenal","p":"DEF","r":86},{"n":"Matthijs de Ligt","c":"Man United","p":"DEF","r":86},{"n":"Leny Yoro","c":"Man United","p":"DEF","r":86},{"n":"Cristian Romero","c":"Tottenham","p":"DEF","r":86},{"n":"Micky van de Ven","c":"Tottenham","p":"DEF","r":86},{"n":"Antonio Rudiger","c":"Chelsea","p":"DEF","r":85},{"n":"Reece James","c":"Chelsea","p":"DEF","r":85},{"n":"Ibrahima Konate","c":"Liverpool","p":"DEF","r":85},{"n":"Lisandro Martinez","c":"Man United","p":"DEF","r":85},{"n":"Rodri","c":"Man City","p":"MID","r":93},{"n":"Casemiro","c":"Man United","p":"MID","r":89},{"n":"Thiago Alcantara","c":"Liverpool","p":"MID","r":89},{"n":"Martin Odegaard","c":"Arsenal","p":"MID","r":88},{"n":"Bruno Fernandes","c":"Man United","p":"MID","r":88},{"n":"Declan Rice","c":"Arsenal","p":"MID","r":87},{"n":"Bruno Guimaraes","c":"Newcastle","p":"MID","r":87},{"n":"James Rodriguez","c":"Everton","p":"MID","r":87},{"n":"Ryan Gravenberch","c":"Liverpool","p":"MID","r":86},{"n":"Dominik Szoboszlai","c":"Liverpool","p":"MID","r":86},{"n":"Alexis Mac Allister","c":"Liverpool","p":"MID","r":86},{"n":"Kobbie Mainoo","c":"Man United","p":"MID","r":86},{"n":"Sandro Tonali","c":"Newcastle","p":"MID","r":86},{"n":"Marco Asensio","c":"Aston Villa","p":"MID","r":86},{"n":"Eberechi Eze","c":"Crystal Palace","p":"MID","r":86},{"n":"Cole Palmer","c":"Chelsea","p":"MID","r":86},{"n":"Erling Haaland","c":"Man City","p":"ATT","r":95},{"n":"Bukayo Saka","c":"Arsenal","p":"ATT","r":89},{"n":"Alexander Isak","c":"Newcastle","p":"ATT","r":88},{"n":"Edinson Cavani","c":"Man United","p":"ATT","r":88},{"n":"Raheem Sterling","c":"Arsenal","p":"ATT","r":87},{"n":"Romelu Lukaku","c":"Chelsea","p":"ATT","r":87},{"n":"Michael Olise","c":"Crystal Palace","p":"ATT","r":87},{"n":"Darwin Nunez","c":"Liverpool","p":"ATT","r":86},{"n":"Ollie Watkins","c":"Aston Villa","p":"ATT","r":86},{"n":"Gabriel Martinelli","c":"Arsenal","p":"ATT","r":85},{"n":"Luis Diaz","c":"Liverpool","p":"ATT","r":85},{"n":"Cody Gakpo","c":"Liverpool","p":"ATT","r":85},{"n":"Alejandro Garnacho","c":"Man United","p":"ATT","r":85},{"n":"Marcus Rashford","c":"Man United","p":"ATT","r":85}]},"alltime":[{"n":"Peter Schmeichel","c":"Man United","p":"GK","r":93},{"n":"Alisson","c":"Liverpool","p":"GK","r":92},{"n":"David de Gea","c":"Man United","p":"GK","r":92},{"n":"Alisson Becker","c":"Liverpool","p":"GK","r":92},{"n":"Petr Cech","c":"Chelsea","p":"GK","r":91},{"n":"Ederson","c":"Man City","p":"GK","r":91},{"n":"Neville Southall","c":"Everton","p":"GK","r":91},{"n":"Thibaut Courtois","c":"Chelsea","p":"GK","r":89},{"n":"Virgil van Dijk","c":"Liverpool","p":"DEF","r":92},{"n":"John Terry","c":"Chelsea","p":"DEF","r":91},{"n":"Ruben Dias","c":"Man City","p":"DEF","r":91},{"n":"Trent Alexander-Arnold","c":"Liverpool","p":"DEF","r":90},{"n":"Jaap Stam","c":"Man United","p":"DEF","r":90},{"n":"Rio Ferdinand","c":"Man United","p":"DEF","r":90},{"n":"Nemanja Vidic","c":"Man United","p":"DEF","r":90},{"n":"Thiago Silva","c":"Chelsea","p":"DEF","r":89},{"n":"Gerard Pique","c":"Man United","p":"DEF","r":89},{"n":"Marcel Desailly","c":"Chelsea","p":"DEF","r":89},{"n":"Raphael Varane","c":"Man United","p":"DEF","r":89},{"n":"Ashley Cole","c":"Arsenal","p":"DEF","r":88},{"n":"Sol Campbell","c":"Arsenal","p":"DEF","r":88},{"n":"William Saliba","c":"Arsenal","p":"DEF","r":88},{"n":"Andrew Robertson","c":"Liverpool","p":"DEF","r":88},{"n":"Vincent Kompany","c":"Man City","p":"DEF","r":88},{"n":"Aymeric Laporte","c":"Man City","p":"DEF","r":88},{"n":"Joao Cancelo","c":"Man City","p":"DEF","r":88},{"n":"Josko Gvardiol","c":"Man City","p":"DEF","r":88},{"n":"Tony Adams","c":"Arsenal","p":"DEF","r":88},{"n":"Steven Gerrard","c":"Liverpool","p":"MID","r":94},{"n":"Kevin De Bruyne","c":"Man City","p":"MID","r":94},{"n":"Rodri","c":"Man City","p":"MID","r":93},{"n":"Luka Modric","c":"Tottenham","p":"MID","r":93},{"n":"Patrick Vieira","c":"Arsenal","p":"MID","r":92},{"n":"Roy Keane","c":"Man United","p":"MID","r":92},{"n":"Ruud Gullit","c":"Chelsea","p":"MID","r":92},{"n":"Frank Lampard","c":"Chelsea","p":"MID","r":91},{"n":"N'Golo Kante","c":"Chelsea","p":"MID","r":91},{"n":"Paul Gascoigne","c":"Tottenham","p":"MID","r":91},{"n":"Claude Makelele","c":"Chelsea","p":"MID","r":90},{"n":"Paul Scholes","c":"Man United","p":"MID","r":90},{"n":"David Beckham","c":"Man United","p":"MID","r":90},{"n":"David Silva","c":"Man City","p":"MID","r":90},{"n":"Yaya Toure","c":"Man City","p":"MID","r":90},{"n":"Casemiro","c":"Man United","p":"MID","r":89},{"n":"Thiago Alcantara","c":"Liverpool","p":"MID","r":89},{"n":"Dennis Bergkamp","c":"Arsenal","p":"MID","r":88},{"n":"Mesut Ozil","c":"Arsenal","p":"MID","r":88},{"n":"Martin Odegaard","c":"Arsenal","p":"MID","r":88},{"n":"Cristiano Ronaldo","c":"Man United","p":"ATT","r":99},{"n":"Thierry Henry","c":"Arsenal","p":"ATT","r":97},{"n":"Erling Haaland","c":"Man City","p":"ATT","r":95},{"n":"Mohamed Salah","c":"Liverpool","p":"ATT","r":94},{"n":"Alan Shearer","c":"Newcastle","p":"ATT","r":94},{"n":"Fernando Torres","c":"Liverpool","p":"ATT","r":93},{"n":"Wayne Rooney","c":"Man United","p":"ATT","r":93},{"n":"Sergio Aguero","c":"Man City","p":"ATT","r":93},{"n":"Gareth Bale","c":"Tottenham","p":"ATT","r":93},{"n":"Harry Kane","c":"Tottenham","p":"ATT","r":93},{"n":"Ruud van Nistelrooy","c":"Man United","p":"ATT","r":93},{"n":"Zlatan Ibrahimovic","c":"Man United","p":"ATT","r":93},{"n":"Gael Bale","c":"Tottenham","p":"ATT","r":93},{"n":"Eden Hazard","c":"Chelsea","p":"ATT","r":92},{"n":"Ryan Giggs","c":"Man United","p":"ATT","r":92},{"n":"Andriy Shevchenko","c":"Chelsea","p":"ATT","r":92},{"n":"Luis Suarez","c":"Liverpool","p":"ATT","r":92},{"n":"Didier Drogba","c":"Chelsea","p":"ATT","r":91}],"wc":{"MEX":{"n":"Mexico","f":"🇲🇽","r":79,"g":"A","c":"CONCACAF","s":[{"n":"Santiago Gimenez","r":85},{"n":"Edson Alvarez","r":83},{"n":"Raul Jimenez","r":82}]},"KOR":{"n":"South Korea","f":"🇰🇷","r":79,"g":"A","c":"AFC","s":[{"n":"Son Heungmin","r":88},{"n":"Minjae Kim","r":87},{"n":"Kangin Lee","r":82}]},"RSA":{"n":"South Africa","f":"🇿🇦","r":72,"g":"A","c":"CAF","s":[{"n":"Ronwen Williams","r":79},{"n":"Teboho Mokoena","r":78},{"n":"Lyle Foster","r":78}]},"CZE":{"n":"Czechia","f":"🇨🇿","r":76,"g":"A","c":"UEFA","s":[{"n":"Matej Kovar","r":84},{"n":"Tomas Soucek","r":83},{"n":"Patrik Schick","r":83}]},"CAN":{"n":"Canada","f":"🇨🇦","r":80,"g":"B","c":"CONCACAF","s":[{"n":"Alphonso Davies","r":88},{"n":"Jonathan David","r":87},{"n":"Stephen Eustaquio","r":82}]},"SUI":{"n":"Switzerland","f":"🇨🇭","r":78,"g":"B","c":"UEFA","s":[{"n":"Gregor Kobel","r":86},{"n":"Manuel Akanji","r":85},{"n":"Granit Xhaka","r":84}]},"QAT":{"n":"Qatar","f":"🇶🇦","r":71,"g":"B","c":"AFC","s":[{"n":"Akram Afif","r":80},{"n":"Almoez Ali","r":79},{"n":"Hassan Al-Haydos","r":77}]},"BIH":{"n":"Bosnia","f":"🇧🇦","r":73,"g":"B","c":"UEFA","s":[{"n":"Ermedin Demirovic","r":83},{"n":"Benjamin Tahirovic","r":82},{"n":"Sead Kolasinac","r":80}]},"BRA":{"n":"Brazil","f":"🇧🇷","r":88,"g":"C","c":"CONMEBOL","s":[{"n":"Vinicius Junior","r":94},{"n":"Alisson","r":90},{"n":"Bruno Guimaraes","r":87}]},"MAR":{"n":"Morocco","f":"🇲🇦","r":82,"g":"C","c":"CAF","s":[{"n":"Achraf Hakimi","r":88},{"n":"Yassine Bounou","r":86},{"n":"Noussair Mazraoui","r":84}]},"SCO":{"n":"Scotland","f":"🏴󠁧󠁢󠁳󠁣󠁴󠁿","r":74,"g":"C","c":"UEFA","s":[{"n":"Andy Robertson","r":84},{"n":"Scott McTominay","r":83},{"n":"John McGinn","r":82}]},"HAI":{"n":"Haiti","f":"🇭🇹","r":65,"g":"C","c":"CONCACAF","s":[{"n":"Wilson Isidor","r":73},{"n":"Jean-Ricner Bellegarde","r":72},{"n":"Jean Jacques Danley","r":71}]},"USA":{"n":"United States","f":"🇺🇸","r":81,"g":"D","c":"CONCACAF","s":[{"n":"Christian Pulisic","r":85},{"n":"Tyler Adams","r":83},{"n":"Antonee Robinson","r":82}]},"AUS":{"n":"Australia","f":"🇦🇺","r":77,"g":"D","c":"AFC","s":[{"n":"Mathew Ryan","r":80},{"n":"Harry Souttar","r":80},{"n":"Jackson Irvine","r":79}]},"PAR":{"n":"Paraguay","f":"🇵🇾","r":73,"g":"D","c":"CONMEBOL","s":[{"n":"Miguel Almirón","r":82},{"n":"Diego Gomez","r":81},{"n":"Gustavo Gomez","r":80}]},"TUR":{"n":"Turkey","f":"🇹🇷","r":77,"g":"D","c":"UEFA","s":[{"n":"Hakan Calhanoglu","r":87},{"n":"Arda Guler","r":85},{"n":"Mert Gunok","r":83}]},"GER":{"n":"Germany","f":"🇩🇪","r":88,"g":"E","c":"UEFA","s":[{"n":"Jamal Musiala","r":91},{"n":"Florian Wirtz","r":91},{"n":"Joshua Kimmich","r":88}]},"ECU":{"n":"Ecuador","f":"🇪🇨","r":75,"g":"E","c":"CONMEBOL","s":[{"n":"Moisés Caicedo","r":86},{"n":"Piero Hincapie","r":82},{"n":"Kendry Paez","r":82}]},"CIV":{"n":"Ivory Coast","f":"🇨🇮","r":77,"g":"E","c":"CAF","s":[{"n":"Ousmane Diomande","r":84},{"n":"Franck Kessie","r":84},{"n":"Ibrahim Sangare","r":83}]},"CUR":{"n":"Curacao","f":"🇨🇼","r":63,"g":"E","c":"CONCACAF","s":[{"n":"Leandro Bacuna","r":75},{"n":"Eloy Room","r":74},{"n":"Juninho Bacuna","r":74}]},"NED":{"n":"Netherlands","f":"🇳🇱","r":87,"g":"F","c":"UEFA","s":[{"n":"Virgil van Dijk","r":88},{"n":"Ryan Gravenberch","r":85},{"n":"Frenkie de Jong","r":85}]},"JPN":{"n":"Japan","f":"🇯🇵","r":82,"g":"F","c":"AFC","s":[{"n":"Takefusa Kubo","r":84},{"n":"Daichi Kamada","r":83},{"n":"Hiroki Ito","r":82}]},"SWE":{"n":"Sweden","f":"🇸🇪","r":76,"g":"F","c":"UEFA","s":[{"n":"Alexander Isak","r":88},{"n":"Viktor Gyokeres","r":87},{"n":"Victor Lindelof","r":82}]},"TUN":{"n":"Tunisia","f":"🇹🇳","r":74,"g":"F","c":"CAF","s":[{"n":"Ellyes Skhiri","r":80},{"n":"Hannibal Mejbri","r":79},{"n":"Anis Slimane","r":79}]},"BEL":{"n":"Belgium","f":"🇧🇪","r":85,"g":"G","c":"UEFA","s":[{"n":"Thibaut Courtois","r":90},{"n":"Kevin De Bruyne","r":89},{"n":"Romelu Lukaku","r":85}]},"IRN":{"n":"Iran","f":"🇮🇷","r":74,"g":"G","c":"AFC","s":[{"n":"Mehdi Taremi","r":83},{"n":"Alireza Beiranvand","r":79},{"n":"Alireza Jahanbakhsh","r":79}]},"EGY":{"n":"Egypt","f":"🇪🇬","r":74,"g":"G","c":"CAF","s":[{"n":"Mohamed Salah","r":91},{"n":"Omar Marmoush","r":86},{"n":"Mohamed Elshenawy","r":80}]},"NZL":{"n":"New Zealand","f":"🇳🇿","r":68,"g":"G","c":"OFC","s":[{"n":"Chris Wood","r":79},{"n":"Michael Boxall","r":74},{"n":"Matthew Garbett","r":74}]},"ESP":{"n":"Spain","f":"🇪🇸","r":91,"g":"H","c":"UEFA","s":[{"n":"Lamine Yamal","r":93},{"n":"Rodri","r":92},{"n":"Nico Williams","r":87}]},"URU":{"n":"Uruguay","f":"🇺🇾","r":82,"g":"H","c":"CONMEBOL","s":[{"n":"Federico Valverde","r":89},{"n":"Ronald Araujo","r":87},{"n":"Darwin Nunez","r":87}]},"KSA":{"n":"Saudi Arabia","f":"🇸🇦","r":74,"g":"H","c":"AFC","s":[{"n":"Salem Al-Dawsari","r":79},{"n":"Mohammed Al-Owais","r":78},{"n":"Feras Al-Brikan","r":78}]},"CPV":{"n":"Cape Verde","f":"🇨🇻","r":68,"g":"H","c":"CAF","s":[{"n":"Logan Costa","r":76},{"n":"Jovane Cabral","r":76},{"n":"Jamiro Monteiro","r":75}]},"FRA":{"n":"France","f":"🇫🇷","r":90,"g":"I","c":"UEFA","s":[{"n":"Kylian Mbappe","r":97},{"n":"Mike Maignan","r":88},{"n":"William Saliba","r":88}]},"SEN":{"n":"Senegal","f":"🇸🇳","r":78,"g":"I","c":"CAF","s":[{"n":"Sadio Mane","r":85},{"n":"Edouard Mendy","r":84},{"n":"Kalidou Koulibaly","r":84}]},"IRQ":{"n":"Iraq","f":"🇮🇶","r":69,"g":"I","c":"AFC","s":[{"n":"Zidane Iqbal","r":76},{"n":"Ali Al-Hamadi","r":76},{"n":"Ibrahim Bayesh","r":75}]},"NOR":{"n":"Norway","f":"🇳🇴","r":79,"g":"I","c":"UEFA","s":[{"n":"Erling Haaland","r":95},{"n":"Martin Odegaard","r":90},{"n":"Alexander Sorloth","r":83}]},"ARG":{"n":"Argentina","f":"🇦🇷","r":90,"g":"J","c":"CONMEBOL","s":[{"n":"Lionel Messi","r":93},{"n":"Emiliano Martinez","r":90},{"n":"Lautaro Martinez","r":88}]},"ALG":{"n":"Algeria","f":"🇩🇿","r":74,"g":"J","c":"CAF","s":[{"n":"Riyad Mahrez","r":84},{"n":"Ramy Bensebaini","r":82},{"n":"Rayan Ait-Nouri","r":81}]},"AUT":{"n":"Austria","f":"🇦🇹","r":77,"g":"J","c":"UEFA","s":[{"n":"Marcel Sabitzer","r":84},{"n":"David Alaba","r":83},{"n":"Kevin Danso","r":82}]},"JOR":{"n":"Jordan","f":"🇯🇴","r":67,"g":"J","c":"AFC","s":[{"n":"Mousa Al-Tamari","r":75},{"n":"Yazeed Abu Laila","r":73},{"n":"Yazan Alarab","r":72}]},"POR":{"n":"Portugal","f":"🇵🇹","r":87,"g":"K","c":"UEFA","s":[{"n":"Ruben Dias","r":88},{"n":"Bruno Fernandes","r":88},{"n":"Bernardo Silva","r":88}]},"COL":{"n":"Colombia","f":"🇨🇴","r":83,"g":"K","c":"CONMEBOL","s":[{"n":"Luis Diaz","r":88},{"n":"James Rodriguez","r":83},{"n":"Davinson Sanchez","r":82}]},"UZB":{"n":"Uzbekistan","f":"🇺🇿","r":70,"g":"K","c":"AFC","s":[{"n":"Eldor Shomurodov","r":80},{"n":"Abdukodir Khusanov","r":79},{"n":"Abbosbek Fayzullaev","r":79}]},"COD":{"n":"DR Congo","f":"🇨🇩","r":70,"g":"K","c":"CAF","s":[{"n":"Yoane Wissa","r":82},{"n":"Chancel Mbemba","r":80},{"n":"Aaron Wan-Bissaka","r":80}]},"ENG":{"n":"England","f":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","r":89,"g":"L","c":"UEFA","s":[{"n":"Jude Bellingham","r":93},{"n":"Harry Kane","r":90},{"n":"Bukayo Saka","r":88}]},"CRO":{"n":"Croatia","f":"🇭🇷","r":79,"g":"L","c":"UEFA","s":[{"n":"Josko Gvardiol","r":87},{"n":"Dominik Livakovic","r":85},{"n":"Luka Modric","r":85}]},"GHA":{"n":"Ghana","f":"🇬🇭","r":74,"g":"L","c":"CAF","s":[{"n":"Thomas Partey","r":83},{"n":"Inaki Williams","r":82},{"n":"Antoine Semenyo","r":80}]},"PAN":{"n":"Panama","f":"🇵🇦","r":72,"g":"L","c":"CONCACAF","s":[{"n":"Adalberto Carrasquilla","r":77},{"n":"Amir Murillo","r":76},{"n":"Anibal Godoy","r":76}]}},"top":{"n":"Cristiano Ronaldo","c":"Man United","r":99},"count":2866,"clubColours":{"Arsenal":"#EF0107","Aston Villa":"#670E36","Barnsley":"#D62B2B","Birmingham":"#1B3D6F","Blackburn":"#009EE0","Bolton":"#263C7B","Bournemouth":"#DA291C","Brentford":"#D20000","Brighton":"#0057B8","Burnley":"#6C1D45","Cardiff":"#0070B5","Charlton":"#D4011D","Chelsea":"#034694","Coventry":"#59CCED","Crystal Palace":"#1B458F","Derby":"#1E3560","Everton":"#003399","Fulham":"#CC0000","Hull":"#F18A01","Ipswich":"#0043A8","Leeds":"#FFCD00","Leicester":"#003090","Liverpool":"#C8102E","Man City":"#6CABDD","Man United":"#DA291C","Middlesbrough":"#E62020","Newcastle":"#FFD700","Norwich":"#00A650","Nottm Forest":"#DD0000","Oldham":"#005DAA","Portsmouth":"#001489","QPR":"#005CAB","Reading":"#004494","Sheffield United":"#EE2737","Southampton":"#D71920","Stoke":"#E03A3E","Sunderland":"#EB172B","Swansea":"#121212","Tottenham":"#132257","Watford":"#FBEE23","West Brom":"#122F67","West Ham":"#7A263A","Wigan":"#1D59AF","Wimbledon":"#005CBF","Wolves":"#FDB913"}};
+/* ===== REAL GAME DATA HELPERS ===== */
+function fmtCount(n){return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,",");}
+function surname(n){var p=(n||"").split(" ");return p[p.length-1];}
+function up(t){return (t||"").toUpperCase();}
+function artFor(t){return /^[AEIOU]/i.test(t||"")?"AN":"A";}
+var FORM_SHAPE={"4-3-3":[4,3,3],"4-4-2":[4,4,2],"3-5-2":[3,5,2],"4-2-3-1":[4,5,1],"3-4-3":[3,4,3],"4-1-4-1":[4,5,1],"3-4-2-1":[3,4,3],"4-5-1":[4,5,1],"4-2-4":[4,2,4],"4-3-1-2":[4,4,2],"5-3-2":[5,3,2],"5-4-1":[5,4,1]};
+function rdPool(k){if(k==="90s")return PXDATA.eras["90s"];if(k==="2000s")return PXDATA.eras["2000s"];if(k==="2010s")return PXDATA.eras["2010s"];if(k==="2020s")return PXDATA.eras["2020s"];return PXDATA.alltime;}
+function rdByPos(pool,pos){var o=[];for(var i=0;i<pool.length;i++){if(pool[i].p===pos)o.push(pool[i]);}return o;}
+function rdClub(){return pick(PXDATA.clubs);}
+function rdLegend(k,pos){var c=rdByPos(rdPool(k),pos);if(!c.length)c=rdByPos(PXDATA.alltime,pos);var slc=c.slice(0,Math.min(c.length,6));return pick(slc.length?slc:c);}
+function rdTopFrom(pool,pos,n,extra){var c=rdByPos(pool,pos);var top=shuffle(c.slice(0,Math.min(c.length,n+(extra||0)))).slice(0,n);
+ if(top.length<n){var alt=rdByPos(PXDATA.alltime,pos);for(var i=0;i<alt.length&&top.length<n;i++){var dup=false;for(var j=0;j<top.length;j++){if(top[j].n===alt[i].n)dup=true;}if(!dup)top.push(alt[i]);}}
+ return top;}
+function rdXI(k,form){var pool=rdPool(k),sh=FORM_SHAPE[form]||[4,3,3],xi=[];
+ var gk=rdTopFrom(pool,"GK",1,3),df=rdTopFrom(pool,"DEF",sh[0],6),md=rdTopFrom(pool,"MID",sh[1],6),at=rdTopFrom(pool,"ATT",sh[2],5);
+ function add(list,pos){for(var i=0;i<list.length;i++)xi.push({n:list[i].n,c:list[i].c,r:list[i].r,pos:pos});}
+ add(gk,"GK");add(df,"DEF");add(md,"MID");add(at,"ATT");
+ var sum=0;for(var x=0;x<xi.length;x++)sum+=xi[x].r;var ovr=xi.length?Math.round(sum/xi.length):0;
+ return{xi:xi,ovr:ovr,form:form};}
+function rdDebatePair(){var pos=pick(["DEF","MID","ATT","ATT","MID"]);var tk=pick(["90s","2000s"]),nk=pick(["2010s","2020s"]);
+ var a=rdLegend(tk,pos),b=rdLegend(nk,pos);if(a&&b&&a.n===b.n)b=rdLegend(nk,pos);
+ return{pos:pos,thenK:tk,nowK:nk,then:a,now:b};}
+function rdNation(strong){var codes=Object.keys(PXDATA.wc),c;
+ if(strong){var hi=[];for(var i=0;i<codes.length;i++){if(PXDATA.wc[codes[i]].r>=82)hi.push(codes[i]);}c=pick(hi.length?hi:codes);}else c=pick(codes);
+ var t=PXDATA.wc[c];return{code:c,n:t.n,f:t.f,r:t.r,g:t.g,star:(t.s&&t.s[0])?t.s[0]:null,stars:t.s||[]};}
+function pad2(n){return("0"+n).slice(-2);}
+function makeSeason(xi){
+ var tier=pick(["invincible","dominant","champions","runnersup","europe","mid"]),W,D,L,rem,verdict,finish;
+ if(tier==="invincible"){W=38;D=0;L=0;verdict="INVINCIBLE";finish="CHAMPIONS";}
+ else{var rng={dominant:[0,2,30],champions:[3,6,24],runnersup:[5,8,22],europe:[8,12,17],mid:[12,16,11]}[tier];
+  L=rint(rng[0],rng[1]);rem=38-L;W=rint(rng[2],Math.max(rng[2],rem-1));if(W>rem)W=rem;D=rem-W;if(D<0){D=0;W=rem;}
+  verdict=pick({dominant:["CHAMPIONS","TITLE WON"],champions:["CHAMPIONS","LEAGUE WINNERS"],runnersup:["RUNNERS-UP","SO CLOSE"],europe:["TOP FOUR","CHAMPIONS LEAGUE"],mid:["MID-TABLE","SOLID SEASON"]}[tier]);
+  finish=({dominant:"CHAMPIONS",champions:"CHAMPIONS",runnersup:"RUNNERS-UP",europe:"TOP FOUR",mid:"MID-TABLE"})[tier];}
+ var pts=3*W+D,gaR={invincible:[8,18],dominant:[14,24],champions:[20,30],runnersup:[24,34],europe:[30,42],mid:[38,52]}[tier];
+ var ga=rint(gaR[0],gaR[1]),gf=Math.round(W*1.9+D*0.8+rint(8,20)),gd=gf-ga;
+ var atts=[],mids=[],defs=[],gkn="",pots="";
+ if(xi&&xi.xi){for(var z=0;z<xi.xi.length;z++){var pl=xi.xi[z];if(pl.pos==="ATT")atts.push(pl);else if(pl.pos==="MID")mids.push(pl);else if(pl.pos==="DEF")defs.push(pl);else if(pl.pos==="GK")gkn=surname(pl.n);}
+  var best=xi.xi[0];for(var z2=0;z2<xi.xi.length;z2++){if(xi.xi[z2].pos!=="GK"&&xi.xi[z2].r>best.r)best=xi.xi[z2];}pots=surname(best.n);}
+ var sc=atts.length?pick(atts):(mids.length?pick(mids):null),as=mids.length?pick(mids):(atts.length?pick(atts):null);
+ var golden=sc?surname(sc.n):"—",goals=Math.max(14,Math.round(gf*pick([0.42,0.48,0.54,0.6]))),assister=as?surname(as.n):"—",assists=rint(9,19);
+ var cs=Math.min(22,Math.max(5,Math.round((W+D)/2-L*0.4-ga*0.06))),biggest=pick(["4-0","5-0","5-1","6-1","4-1","6-0","3-0","7-1","5-2"]);
+ return{verdict:verdict,P:38,W:W,D:D,L:L,pts:pts,gd:gd,gf:gf,ga:ga,finish:finish,golden:golden,goals:goals,assister:assister,assists:assists,cs:cs,biggest:biggest,pots:(pots||golden),gkName:(gkn||"—")};
+}
+function arcFrom(key,coverKicker,beats,nLo,nHi,ctaKicker){var t=TPL[key];
+ var slides=[{kind:"cover",kicker:coverKicker,head:pick(t.heads),sub:pick(t.subs)}];
+ shuffle(beats).slice(0,rint(nLo,nHi)).forEach(function(bt){slides.push({kind:"point",kicker:bt.k,head:pick(bt.h),body:pick(bt.b)});});
+ slides.push({kind:"cta",kicker:ctaKicker||null,head:pick(CTA_HEADS),cta:pick(t.ctas),url:URL_DEF});return slides;}
+/* ===== PITCH + COLOUR + INTERACTION HELPERS ===== */
+var FORM_POS={
+ "4-3-3":[[.5,.92],[.16,.74],[.38,.78],[.62,.78],[.84,.74],[.3,.52],[.5,.55],[.7,.52],[.22,.27],[.5,.22],[.78,.27]],
+ "4-4-2":[[.5,.92],[.16,.74],[.38,.77],[.62,.77],[.84,.74],[.16,.5],[.38,.52],[.62,.52],[.84,.5],[.36,.25],[.64,.25]],
+ "3-5-2":[[.5,.92],[.28,.76],[.5,.78],[.72,.76],[.12,.54],[.32,.52],[.5,.56],[.68,.52],[.88,.54],[.38,.25],[.62,.25]],
+ "4-2-3-1":[[.5,.92],[.16,.75],[.38,.78],[.62,.78],[.84,.75],[.36,.57],[.64,.57],[.22,.37],[.5,.34],[.78,.37],[.5,.2]],
+ "3-4-3":[[.5,.92],[.28,.76],[.5,.78],[.72,.76],[.16,.52],[.4,.54],[.6,.54],[.84,.52],[.24,.25],[.5,.2],[.76,.25]],
+ "4-1-4-1":[[.5,.92],[.16,.75],[.38,.78],[.62,.78],[.84,.75],[.5,.6],[.18,.42],[.4,.44],[.6,.44],[.82,.42],[.5,.2]],
+ "3-4-2-1":[[.5,.92],[.28,.76],[.5,.78],[.72,.76],[.16,.54],[.4,.56],[.6,.56],[.84,.54],[.34,.3],[.66,.3],[.5,.19]]
+,
+ "4-5-1":[[.5,.92],[.16,.74],[.38,.78],[.62,.78],[.84,.74],[.1,.5],[.3,.54],[.5,.56],[.7,.54],[.9,.5],[.5,.22]],
+ "4-2-4":[[.5,.92],[.16,.74],[.38,.78],[.62,.78],[.84,.74],[.36,.55],[.64,.55],[.14,.27],[.38,.22],[.62,.22],[.86,.27]],
+ "4-3-1-2":[[.5,.92],[.16,.74],[.38,.78],[.62,.78],[.84,.74],[.22,.56],[.5,.58],[.78,.56],[.5,.4],[.38,.23],[.62,.23]],
+ "5-3-2":[[.5,.92],[.1,.74],[.3,.78],[.5,.8],[.7,.78],[.9,.74],[.3,.52],[.5,.55],[.7,.52],[.38,.24],[.62,.24]],
+ "5-4-1":[[.5,.92],[.1,.74],[.3,.78],[.5,.8],[.7,.78],[.9,.74],[.16,.5],[.38,.52],[.62,.52],[.84,.5],[.5,.22]]
+};
+function clubCol(c){return (PXDATA.clubColours&&PXDATA.clubColours[c])||"#3dba6f";}
+function hx(h){h=(h||"#3dba6f").replace("#","");return [parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)];}
+function lumOf(h){var r=hx(h);return (0.299*r[0]+0.587*r[1]+0.114*r[2])/255;}
+function inkOn(h){return lumOf(h)>0.62?"#0b140e":"#ffffff";}
+function teamList(b){if(!b||!b.xi)return "";var o=[];for(var i=0;i<b.xi.length;i++)o.push(surname(b.xi[i].n));return o.join(", ");}
+function drawPitchXI(W,H,A,s){var cx=W*0.085;eyebrowPill(W,H,A,s.kicker||"THE XI",cx,H*0.085);
+ ctx.textBaseline="alphabetic";ctx.textAlign="right";ctx.font="900 "+(W*0.056)+"px Inter,sans-serif";ctx.fillStyle=A.main;ctx.fillText("OVR "+s.ovr,W-cx,H*0.178);
+ ctx.textAlign="left";ctx.fillStyle="#cdd8d2";ctx.font="800 "+(W*0.04)+"px Inter,sans-serif";ctx.fillText(s.form,cx,H*0.178);
+ var m=W*0.055,x0=m,y0=H*0.205,pw=W-2*m,ph=H*0.72;
+ ctx.save();rr(x0,y0,pw,ph,W*0.03);
+ var g=ctx.createLinearGradient(0,y0,0,y0+ph);g.addColorStop(0,"#0e2c1b");g.addColorStop(1,"#091e13");ctx.fillStyle=g;ctx.fill();ctx.clip();
+ ctx.globalAlpha=0.5;for(var st=0;st<6;st++){if(st%2===0){ctx.fillStyle="#0f311e";ctx.fillRect(x0,y0+ph/6*st,pw,ph/6);}}ctx.globalAlpha=1;
+ ctx.strokeStyle="rgba(255,255,255,0.16)";ctx.lineWidth=Math.max(2,W*0.003);
+ ctx.strokeRect(x0+pw*0.02,y0+ph*0.012,pw*0.96,ph*0.976);
+ ctx.beginPath();ctx.moveTo(x0,y0+ph/2);ctx.lineTo(x0+pw,y0+ph/2);ctx.stroke();
+ ctx.beginPath();ctx.arc(x0+pw/2,y0+ph/2,pw*0.12,0,Math.PI*2);ctx.stroke();ctx.restore();
+ var pos=FORM_POS[s.form]||FORM_POS["4-3-3"],R=W*0.044;
+ for(var i=0;i<s.xi.length&&i<pos.length;i++){var p=s.xi[i],px=x0+pos[i][0]*pw,py=y0+pos[i][1]*ph,col=clubCol(p.c);
+  ctx.beginPath();ctx.arc(px,py,R,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();ctx.lineWidth=Math.max(2,W*0.004);ctx.strokeStyle="rgba(255,255,255,0.9)";ctx.stroke();
+  ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle=inkOn(col);ctx.font="900 "+(R*0.92)+"px Inter,sans-serif";ctx.fillText(String(p.r),px,py+R*0.02);
+  ctx.textBaseline="alphabetic";var nm=surname(p.n).toUpperCase();ctx.font="800 "+(W*0.026)+"px Inter,sans-serif";var tw=ctx.measureText(nm).width,pd=W*0.013;
+  ctx.fillStyle="rgba(6,14,10,0.74)";rr(px-tw/2-pd,py+R+W*0.012,tw+pd*2,W*0.05,W*0.013);ctx.fill();
+  ctx.fillStyle="#f4f8f5";ctx.fillText(nm,px,py+R+W*0.012+W*0.037);}
+ ctx.textAlign="left";ctx.textBaseline="alphabetic";}
+function drawQR(W,H,A,text,cxp,topY){if(!window.qrcode||!text)return 0;var url=text.indexOf("http")===0?text:("https://"+text);
+ var qr;try{qr=qrcode(0,"M");qr.addData(url);qr.make();}catch(e){return 0;}
+ var avail=(H-W*0.05)-topY;if(avail<W*0.12)return 0;var size=Math.min(W*0.22,avail-W*0.05);if(size<W*0.12)return 0;
+ var n=qr.getModuleCount(),cell=size/n,x0=cxp-size/2,y0=topY;
+ ctx.fillStyle="#ffffff";rr(x0-cell*2,y0-cell*2,size+cell*4,size+cell*4,W*0.018);ctx.fill();
+ ctx.fillStyle="#06120c";for(var r=0;r<n;r++){for(var c=0;c<n;c++){if(qr.isDark(r,c))ctx.fillRect(x0+c*cell,y0+r*cell,cell+0.7,cell+0.7);}}
+ ctx.textAlign="center";ctx.fillStyle="#9aa8a0";ctx.font="700 "+(W*0.022)+"px Inter,sans-serif";ctx.fillText("SCAN TO PLAY",cxp,y0+size+cell*2+W*0.032);ctx.textAlign="left";return size;}
+var INTERACT=[
+ {k:"YOUR MOVE",h:["DROP YOURS\nBELOW","COMMENT\nYOUR XI","REPLY WITH\nYOUR 11"],b:["Screenshot it, build your own, and drop it in the comments.","Tag a mate who'd pick a worse side. Settle it below.","Your eleven vs this one \u2014 comments are open."]},
+ {k:"RATE IT","h":["SCORE IT\nOUT OF 10","HONEST\nRATINGS","WHAT'S YOUR\nNUMBER?"],b:["Drop your score out of 10 \u2014 no fence-sitting.","Vote in the comments, then go build one better.","9? 6? Be honest and say it louder for the back."]},
+ {k:"PASS IT ON",h:["SEND THIS\nTO A MATE","WHO'D\nDISAGREE?","START AN\nARGUMENT"],b:["Send this to the one who always thinks they know best.","Tag the friend who'll lose this debate.","Repost with your verdict and let them come."]}
+];
+/* ===== USER XI CODE (from the game) ===== */
+var FORM_NORM={"433":"4-3-3","442":"4-4-2","352":"3-5-2","4231":"4-2-3-1","343":"3-4-3","4141":"4-1-4-1","3421":"3-4-2-1","451":"4-5-1","424":"4-2-4","4312":"4-3-1-2","532":"5-3-2","541":"5-4-1"};
+function pxiDecode(code){try{code=(code||"").trim();if(!code)return null;if(code.indexOf("PXI1.")===0)code=code.slice(5);
+ var json=decodeURIComponent(escape(atob(code))),o=JSON.parse(json);if(!o||!o.p||!o.p.length)return null;
+ var xi=[];for(var i=0;i<o.p.length&&i<11;i++){var a=o.p[i];if(!a)continue;var ps=String(a[3]||"MID").toUpperCase();if(ps!=="GK"&&ps!=="DEF"&&ps!=="MID"&&ps!=="ATT")ps="MID";xi.push({n:String(a[0]||"?"),c:String(a[1]||""),r:(parseInt(a[2],10)||80),pos:ps});}
+ if(!xi.length)return null;
+ var ord={GK:0,DEF:1,MID:2,ATT:3};xi.sort(function(a,b){return ord[a.pos]-ord[b.pos];});
+ var ovr=parseInt(o.o,10);if(!ovr){var sum=0;for(var j=0;j<xi.length;j++)sum+=xi[j].r;ovr=Math.round(sum/xi.length);}
+ var f=o.f?String(o.f):"4-3-3";if(!FORM_POS[f])f=FORM_NORM[f]||"4-3-3";
+ var res={xi:xi,ovr:ovr,form:f,label:(o.t?String(o.t).slice(0,22):"MY XI")};if(o.s)res.season=o.s;return res;
+}catch(e){return null;}}
+function getXI(eraKey,form){var b;if(state.userXI){b=state.userXI;}else{b=rdXI(eraKey,form);b.label=(eraKey==="ALL-TIME")?"ALL-TIME":eraKey;}state.lastXI=b;return b;}
+function pickPos(b,pos){var o=[];if(b&&b.xi){for(var i=0;i<b.xi.length;i++)if(b.xi[i].pos===pos)o.push(b.xi[i]);}return o.length?surname(pick(o).n):"";}
+function normSeason(s,b){var W=parseInt(s.w,10)||0,D=parseInt(s.d,10)||0,L=parseInt(s.l,10)||0,gf=parseInt(s.gf,10)||0,ga=parseInt(s.ga,10)||0,pts=3*W+D,gd=gf-ga;
+ var finish=(L===0&&W+D>=38)?"CHAMPIONS":pts>=86?"CHAMPIONS":pts>=70?"TOP FOUR":pts>=50?"MID-TABLE":"BOTTOM HALF";
+ var verdict=(L===0&&W+D>=38)?"INVINCIBLE":finish;
+ var gb=s.gb||[],asn=s.as||[];
+ var golden=gb[0]||pickPos(b,"ATT")||"\u2014",goals=parseInt(gb[1],10)||rint(16,28);
+ var assister=asn[0]||pickPos(b,"MID")||"\u2014",assists=parseInt(asn[1],10)||rint(9,18);
+ var cs=parseInt(s.cs,10)||Math.min(22,Math.max(5,Math.round((W+D)/2-L*0.4)));
+ return{verdict:verdict,P:38,W:W,D:D,L:L,pts:pts,gd:gd,gf:gf,ga:ga,finish:finish,golden:golden,goals:goals,assister:assister,assists:assists,cs:cs,biggest:(s.bw||"5-0"),pots:(s.pots||golden),gkName:(s.gk||pickPos(b,"GK")||"\u2014")};}
+function seasonOf(b){if(state.userSeason)return normSeason(state.userSeason,b);return makeSeason(b);}
+var ARCS={
+ seasonreview:function(){var era=pick(ERAS);var b=getXI(era.k,pick(FORMS_TXT));var form=b.form;var ss=seasonOf(b);var iv=pick(INTERACT);var your=!!state.userXI;var eraTxt=era.k;
+  var cHead=your?pick(["MY XI.\nMY\nSEASON.","I RAN\nMY XI FOR\n38 GAMES.","MY ELEVEN.\nONE FULL\nSEASON."]):pick(["I BUILT\n"+artFor(eraTxt)+" "+eraTxt+"\nXI","MY "+eraTxt+"\nDREAM XI",artFor(eraTxt)+" "+eraTxt+"\nXI FOR\nTHE AGES"]);
+  return[{kind:"cover",kicker:"FIRST \u00b7 PICK A SIDE",head:cHead,sub:(your?"My XI, simulated across a full Premier League season. Here's how it went.":era.line),motif:"formation"},
+   {kind:"pitch",kicker:(your?b.label:eraTxt+" XI"),xi:b.xi,ovr:b.ovr,form:form},
+   {kind:"point",kicker:"THE SEASON",head:pick(["38 GAMES.\nNO RESETS.","ONE SAVE.\nONE SEASON.","38 TO PLAY.\nGO."]),body:pick(SEASON_LINES)},
+   {kind:"review",kicker:"FULL-TIME",verdict:ss.verdict,P:38,W:ss.W,D:ss.D,L:ss.L,pts:ss.pts,gd:ss.gd,finish:ss.finish},
+   {kind:"statgrid",kicker:"THE NUMBERS",head:"THE SEASON\nIN NUMBERS",items:[{k:"GOLDEN BOOT",v:ss.golden+" \u00b7 "+ss.goals},{k:"TOP ASSISTS",v:ss.assister+" \u00b7 "+ss.assists},{k:"CLEAN SHEETS",v:ss.gkName+" \u00b7 "+ss.cs},{k:"BIGGEST WIN",v:ss.biggest},{k:"GOALS / GA",v:ss.gf+" / "+ss.ga},{k:"PLAYER OF SEASON",v:ss.pots}]},
+   {kind:"point",kicker:iv.k,head:pick(iv.h),body:pick(iv.b)},
+   {kind:"cta",head:pick(CTA_HEADS),cta:pick(["Build your season","Try it free","Your turn","Beat my season"]),url:URL_DEF}];},
+ challenge:function(){var slides=arcFrom("challenge","THE GOAL",BEATS.challenge,3,4,null);var iv=pick(INTERACT);slides.splice(slides.length-1,0,{kind:"point",kicker:iv.k,head:pick(iv.h),body:pick(iv.b)});return slides;},
+ dropxi:function(){var b=getXI("ALL-TIME",pick(FORMS_TXT));var form=b.form;var legs=[rdLegend("ALL-TIME","ATT"),rdLegend("2000s","MID"),rdLegend("90s","DEF")];var iv=pick(INTERACT);var your=!!state.userXI;
+  var slides=[{kind:"cover",kicker:"TEAM TALK",head:(your?pick(["THIS IS\nMY XI.\nYOURS?","MY ALL-TIME\nELEVEN.","BEAT\nMY XI."]):pick(TPL.dropxi.heads)),sub:pick(TPL.dropxi.subs),motif:"pitch"},
+   {kind:"pitch",kicker:(your?b.label:"MINE LOOKS LIKE THIS"),xi:b.xi,ovr:b.ovr,form:form}];
+  shuffle(BEATS.dropxi).slice(0,1).forEach(function(bt){slides.push({kind:"point",kicker:bt.k,head:pick(bt.h),body:pick(bt.b)});});
+  slides.push({kind:"point",kicker:"FIRST NAMES IN?",head:"START\nWITH\nLEGENDS",body:"Picks like "+legs[0].n+", "+legs[1].n+" and "+legs[2].n+" are all in the game. Who's first on your sheet?"});
+  slides.push({kind:"point",kicker:iv.k,head:pick(iv.h),body:pick(iv.b)});
+  slides.push({kind:"cta",head:pick(CTA_HEADS),cta:pick(TPL.dropxi.ctas),url:URL_DEF});return slides;},
+ ratexi:function(){var k=pick(["90s","2000s","2010s","2020s","ALL-TIME","ALL-TIME"]);var b=getXI(k,pick(FORMS_TXT));var form=b.form;var your=!!state.userXI;var eraTxt=(k==="ALL-TIME")?"ALL-TIME":k;
+  var cHead=your?pick(["RATE\nMY XI\nOUT OF 10.","HOW GOOD\nIS MY\nXI?","COULD YOU\nBEAT\nMY XI?"]):pick(["RATE THIS\nXI OUT\nOF 10.","HOW GOOD\nIS THIS\n"+eraTxt+" XI?","COULD YOUR\nXI BEAT\nTHIS?"]);
+  var slides=[{kind:"cover",kicker:"RATE THIS XI",head:cHead,sub:pick(TPL.ratexi.subs),motif:"formation"},
+   {kind:"pitch",kicker:(your?b.label:eraTxt+" XI"),xi:b.xi,ovr:b.ovr,form:form},
+   {kind:"lineup",kicker:"THE TEAMSHEET",xi:b.xi,ovr:b.ovr,form:form}];
+  shuffle(BEATS.ratexi).slice(0,1).forEach(function(bt){slides.push({kind:"point",kicker:bt.k,head:pick(bt.h),body:pick(bt.b)});});
+  slides.push({kind:"point",kicker:"NOW YOU",head:"SCORE IT\nOUT OF 10",body:"Drop your rating in the comments \u2014 then build one that beats it."});
+  slides.push({kind:"cta",kicker:"NOW BEAT IT",head:pick(CTA_HEADS),cta:pick(TPL.ratexi.ctas),url:URL_DEF});return slides;},
+ hottake:function(){var slides=arcFrom("hottake","HOT TAKE",BEATS.hottake,2,3,"SO PROVE IT");var iv=pick(INTERACT);slides.splice(slides.length-1,0,{kind:"point",kicker:iv.k,head:pick(iv.h),body:pick(iv.b)});return slides;},
+ stats:function(){var realStats=[{big:""+PXDATA.top.r,label:up(surname(PXDATA.top.n))},{big:""+PXDATA.clubs.length,label:"CLUBS"},{big:fmtCount(PXDATA.count),label:"PLAYERS"},{big:"34",label:"SEASONS"},{big:"48",label:"WORLD CUP NATIONS"},{big:"12",label:"FORMATIONS"}];
+  var picks=shuffle(realStats).slice(0,rint(3,4));
+  var arr=[{kind:"cover",kicker:"INSIDE THE GAME",head:pick(["EVERY ERA.\nEVERY LEGEND.\nONE TEAM.","FROM "+up(surname(rdLegend("90s","ATT").n))+"\nTO "+up(surname(rdLegend("2020s","ATT").n))+".\nALL HERE.",pick(TPL.stats.heads)]),sub:pick(TPL.stats.subs),motif:"minimal"}];
+  picks.forEach(function(p){arr.push({kind:"stat",big:p.big,label:p.label});});
+  arr.push({kind:"point",kicker:"YOUR TURN",head:"BUILD\nYOUR XI",body:"Spin, draft, and post the eleven only you would pick."});
+  arr.push({kind:"cta",head:pick(CTA_HEADS),cta:pick(TPL.stats.ctas),url:URL_DEF});return arr;},
+ worldcup:function(){var nat=rdNation(true);var starN=nat.star?surname(nat.star.n):null;
+  var arr=[{kind:"cover",kicker:"ROAD TO 2026",head:nat.f+"\n"+up(nat.n),sub:starN?("Take "+nat.n+" and "+starN+" all the way \u2014 or build a global World XI."):"Pick a nation or build a global World XI, then chase the trophy.",motif:"formation"}];
+  arr.push({kind:"point",kicker:"GROUP "+nat.g,head:pick(["TOP THE\nGROUP","SURVIVE\nTHE DRAW","WIN YOUR\nGROUP"]),body:nat.n+" are in Group "+nat.g+". One bad day ends it \u2014 balance wins tournaments."});
+  if(starN)arr.push({kind:"point",kicker:"YOUR TALISMAN",head:up(starN),body:nat.star.n+" leads the line, rated "+nat.star.r+" in the game. Build the XI around your star."});
+  arr.push({kind:"point",kicker:"LIFT IT",head:pick(["WIN THE\nFINAL","GO ALL\nTHE WAY","LIFT THE\nTROPHY"]),body:pick(WC_STEPS[2].b)});
+  arr.push({kind:"point",kicker:"WHO YOU GOT?",head:"NAME YOUR\nNATION",body:"Drop the flag of who you're taking to glory in the comments."});
+  arr.push({kind:"cta",head:pick(CTA_HEADS),cta:pick(TPL.worldcup.ctas),url:URL_DEF});return arr;},
+ debate:function(){var d=rdDebatePair();var posTxt={GK:"keeper",DEF:"defender",MID:"midfielder",ATT:"forward"}[d.pos];var thenN=up(surname(d.then.n)),nowN=up(surname(d.now.n));
+  return[{kind:"cover",kicker:"THE DEBATE",head:thenN+"\nvs\n"+nowN,sub:"Same position, different eras. One "+posTxt+", one winner \u2014 build both in Perfect XI.",motif:"pitch"},
+   {kind:"point",kicker:"THE CASE FOR "+d.thenK,head:thenN,body:d.then.c+" \u00b7 rated "+d.then.r+" in the game. "+pick(DEBATE_THEN)},
+   {kind:"point",kicker:"THE CASE FOR "+d.nowK,head:nowN,body:d.now.c+" \u00b7 rated "+d.now.r+" in the game. "+pick(DEBATE_NOW)},
+   {kind:"point",kicker:"CAST YOUR VOTE",head:"WHO\nWINS?",body:"Comment "+thenN+" or "+nowN+" \u2014 majority takes it."},
+   {kind:"cta",kicker:"YOU DECIDE",head:pick(["PICK A\nSIDE.","YOUR\nCALL.","WHO\nWINS?"]),cta:pick(TPL.debate.ctas),url:URL_DEF}];},
+ whowins:function(){var a=rdClub(),bb=rdClub();while(bb===a)bb=rdClub();var ga=rint(0,4),gb=rint(0,4);var line=ga+"-"+gb;var res=ga>gb?(up(a)+"\nWIN IT"):gb>ga?(up(bb)+"\nWIN IT"):"HONOURS\nEVEN";
+  return[{kind:"cover",kicker:"WHO'D WIN?",head:up(a)+"\nvs\n"+up(bb),sub:"All-time best XI vs all-time best XI, simulated in Perfect XI. Swipe for the result.",motif:"pitch"},
+   {kind:"point",kicker:"THE TIE",head:"BUILD\nBOTH XIs",body:"Draft each club's greatest-ever eleven, then let the engine play it out over 90 minutes."},
+   {kind:"stat",big:line,label:"FULL-TIME"},
+   {kind:"point",kicker:"THE VERDICT",head:res,body:(ga===gb?"Honours even \u2014 you'll have to run it back.":((ga>gb?a:bb)+" take a classic. Agree?"))},
+   {kind:"point",kicker:"YOUR CALL",head:"DISAGREE?",body:"Comment your score, or build both sides and prove the engine wrong."},
+   {kind:"cta",head:pick(CTA_HEADS),cta:pick(["Run the match","Build both XIs","Try it free","Settle it"]),url:URL_DEF}];}
+};
+var STORY_DESC={
+ seasonreview:"Pick a side \u2192 the shape \u2192 the season \u2192 a random full-time result \u2192 your turn.",
+ challenge:"The goal \u2192 a random mix of method/trap/fit/re-rolls/stakes \u2192 play.",
+ dropxi:"The prompt \u2192 random rules/shape/twist beats \u2192 play.",
+ stats:"Intro \u2192 a random set of stats \u2192 play.",
+ debate:"The debate \u2192 case for then \u2192 case for now \u2192 you decide.",
+ worldcup:"The pitch \u2192 choose \u2192 survive \u2192 lift it \u2192 play.",
+ hottake:"The take \u2192 random fact/proof/catch beats \u2192 prove it.",
+ ratexi:"The XI \u2192 random spine/balance/x-factor/era beats \u2192 beat it.",
+ whowins:"The matchup \u2192 build both \u2192 full-time score \u2192 the verdict \u2192 your call."
+};
+var HOOKS={
+ seasonreview:["I built an XI and went unbeaten. Can you?","Picked a team, simulated the season \u2014 here's how it ended.","From draft to full-time in two minutes. Watch the run.","My Perfect XI season review. Your turn.","Built a squad, played 38 games. The result? Watch.","Drafted a dream XI and let it ride for 38 games.","This is how my season finished. Beat it.","One save, one season, no resets. Here's the table."],
+ challenge:["No team in Premier League history has ever won all 38. Your move.","38 games. Zero losses. Is a perfect season even possible?","Build your perfect XI, simulate the season, try not to lose a single game.","The Invincibles still drew 12 games. Can your XI do better?","I dare you to go a full season unbeaten. Most people can't.","Can you actually go 38-0? Prove it.","Everyone drops points eventually. Can you?","The perfect season has never happened. Be the first."],
+ dropxi:["Your all-time Premier League XI. Go.","You can only pick 11. Who makes your all-time Prem XI?","Drop your greatest-ever Premier League XI below. I'll wait.","11 players, 30+ years of the Prem. Build your ultimate side.","Mix the 90s legends with today's superstars. What's your XI?","No fence-sitting \u2014 name your eleven.","Build it, screenshot it, defend it in the replies.","Who's the first name on your all-time Prem teamsheet?"],
+ stats:["51 clubs. Over 4,000 players. One perfect eleven to build.","Every Premier League squad since 1992, and you draft from all of them.","From Cantona to Haaland, it's all in here. Build your dream XI.","30+ seasons of the Premier League in one drafting game.","Spin, draft, and build an all-time XI from the entire Prem era.","Thirty years of legends, one team sheet.","Every era of the Prem, one squad. How good can you go?","4,000 players. You only need eleven."],
+ debate:["90s XI vs 2020s XI. Which era actually wins?","Could a team of legends beat today's best? Settle it.","Old school or new school. One pitch, one winner.","Pick a decade, build the XI, simulate the season.","Is football better now or then? Prove it with an XI.","Legends or modern stars \u2014 who'd actually win?","Settle the oldest debate in football with an XI.","Past vs present. Pick your side."],
+ worldcup:["Draft one star from every nation and build the ultimate World XI.","Pick a country or build a global super-team, then win the World Cup.","Best player from a different nation at every position. That's a World XI.","Take any nation to the 2026 World Cup, or invent your own side.","One player per country. Eleven nations. One trophy.","Build a World XI and chase the 2026 trophy.","Your nation or the whole planet \u2014 who lifts the cup?","Group stage to the final. Can your XI go unbeaten?"],
+ hottake:["Hot take: you can't go 38-0. Prove me wrong.","A perfect 38-0 season has never happened in real life.","You think your XI is unbeatable? Simulate it and see.","Everyone thinks they can build a perfect team. Almost no one can.","The greatest sides ever still dropped points. Can yours?","Your dream team would lose. Prove me wrong.","Talk is cheap. The table isn't. Prove it.","Nobody's XI is actually unbeatable. Change my mind."],
+ ratexi:["Rate this XI out of 10. Be honest.","Could your all-time XI beat this one?","Honest ratings only \u2014 then build one better.","How good is this line-up, really? 1 to 10.","I rate this a 9. Change my mind, then build your own.","Score this XI, then go make a better one.","Would your team beat this? One way to find out.","Out of ten \u2014 and could you do better?"],
+ whowins:["Who'd win: each club's all-time best XI? I ran it.","Best XI vs best XI \u2014 the result might start a fight.","Two clubs, their greatest-ever elevens, one simulated match.","Pick two clubs and I'll tell you who wins \u2014 comment a fixture.","The all-time derby nobody agrees on. Here's the result.","Build both sides, run the match, settle the argument."]
+};
+var CTAS=["Build yours free at perfectxi.app","Play free \u2192 perfectxi.app","Try it now: perfectxi.app","Free to play at perfectxi.app","Link in bio \u2014 perfectxi.app","No download \u2014 just perfectxi.app"];
+var FB_Q=["Who's making your XI?","Settle it in the comments.","Tag someone who'd lose this debate.","Drop yours below \u2b07\ufe0f","Let's hear your team.","Agree or disagree?"];
+var SWIPE_NUDGE=["(swipe to the end \u2192)","Swipe through \u2192","Stay to the last slide \u2192","Swipe for the result \u2192"];
+var WATCH_NUDGE=["Watch to the end \u2192","Wait for the result \u2192","Full run below \u2193","Don't skip the ending \u2192"];
+var PLAT={x:{label:"X / Twitter",tags:"#PremierLeague #Football #FantasyFootball"},
+ instagram:{label:"Instagram",tags:"#premierleague #football #fantasyfootball #perfectxi #pldraft #footballhistory #soccer #plfantasy #footballgame #footy #reels"},
+ tiktok:{label:"TikTok",tags:"#football #footballtok #premierleague #fyp #soccer #perfectxi #footy"},
+ facebook:{label:"Facebook",tags:""}};
+function realHooks(tpl){
+ if(tpl==="debate"){var d=rdDebatePair();return[surname(d.then.n)+" vs "+surname(d.now.n)+" \u2014 which era wins? Build both.",d.then.c+"'s "+surname(d.then.n)+" or "+d.now.c+"'s "+surname(d.now.n)+"? Settle it with an XI."];}
+ if(tpl==="worldcup"){var n=rdNation(true);var st=n.star?surname(n.star.n):null;return[(st?("Can "+st+" take "+n.n+" all the way?"):("Can "+n.n+" go all the way?"))+" Build the World XI.","Pick "+n.n+" or build a global super-team for World Cup 2026."];}
+ if(tpl==="ratexi"){var k=pick(["90s","2000s","2010s","2020s","all-time"]);var b=getXI(k==="all-time"?"ALL-TIME":k,pick(FORMS_TXT));return["Rate this "+k+" XI out of 10 \u2014 I make it an OVR "+b.ovr+".",surname(b.xi[0].n)+" in goal, "+surname(b.xi[b.xi.length-1].n)+" up top. Could yours beat it?"];}
+ if(tpl==="dropxi"){var l=rdLegend("ALL-TIME","ATT"),md=rdLegend("2000s","MID");return["Is "+l.n+" the first name on your all-time Prem teamsheet?",surname(l.n)+", "+surname(md.n)+"... who else makes your XI?"];}
+ if(tpl==="seasonreview"){var era=pick(ERAS),l=rdLegend(era.k,"ATT");return["Built a "+era.k+" XI around "+surname(l.n)+" and played 38 games. Here's the table.","My "+era.k+" XI is done \u2014 "+surname(l.n)+" led the line. Beat my season?"];}
+ if(tpl==="stats"){return[PXDATA.clubs.length+" clubs, "+fmtCount(PXDATA.count)+" players, one perfect XI to build.","From "+surname(rdLegend("90s","ATT").n)+" to "+surname(rdLegend("2020s","ATT").n)+" \u2014 every era in one game."];}
+ if(tpl==="whowins"){var a=rdClub(),b2=rdClub();while(b2===a)b2=rdClub();return[a+" vs "+b2+" \u2014 all-time XIs. Who wins? I ran it.","Best ever "+a+" XI vs best ever "+b2+" XI. Comment your score."];}
+ return [];}
+var IACT={x:["Reply with your XI \u2014 best one gets a repost.","QT this with your eleven.","Comment your score out of 10."],
+ instagram:["Vote in the poll \u2b06\ufe0f or drop your XI \u2b07\ufe0f","Save this for your next group-chat debate \ud83d\udcbe","Comment your rating out of 10."],
+ tiktok:["Comment your XI \u2014 I'll duet the best ones \ud83d\udd25","Stitch this with your build.","Drop your score in the comments."],
+ facebook:["Who makes your XI? Comment below.","Tag someone who'd disagree.","Agree or disagree?"]};
+function teamLine(tpl){if(state.lastXI&&(tpl==="ratexi"||tpl==="dropxi"||tpl==="seasonreview"))return "\n\nMy XI: "+teamList(state.lastXI);return "";}
+function buildCaption(tpl,plat,hook,mode){var cta=pick(CTAS),tags=PLAT[plat].tags;
+ var nudge=mode==="story"?("\n"+pick(SWIPE_NUDGE)):mode==="video"?("\n"+pick(WATCH_NUDGE)):"";
+ var ia="\n"+pick(IACT[plat]||IACT.x),tl=teamLine(tpl);
+ if(plat==="x")return hook+nudge+tl+"\n"+ia+"\n\n"+cta+(tags?"\n\n"+tags:"");
+ if(plat==="instagram")return hook+nudge+tl+"\n"+ia+"\n\n"+cta+"\n.\n.\n"+tags;
+ if(plat==="tiktok")return (Math.random()<0.5?"POV: ":"")+hook+nudge+ia+"\n\n"+cta+(tags?"\n"+tags:"");
+ return hook+nudge+tl+"\n\n"+pick(FB_Q)+ia+"\n\n"+cta;}
+var state={tpl:"seasonreview",mode:"single",w:1080,h:1350,acc:"green",motif:"formation",form:"433",plat:"x",vidLen:"full",vidW:1080,vidH:1920,slides:[],idx:0,club:"",lastXI:null,userXI:null,userSeason:null};
+var fmtW=1080,fmtH=1350,videoBlob=null,vidExt="webm",rafId=0;
+var FORMS={
+ "433":[[.5,.93],[.16,.74],[.39,.76],[.61,.76],[.84,.74],[.27,.5],[.5,.52],[.73,.5],[.22,.25],[.5,.22],[.78,.25]],
+ "442":[[.5,.93],[.17,.74],[.39,.76],[.61,.76],[.83,.74],[.17,.48],[.39,.5],[.61,.5],[.83,.48],[.37,.24],[.63,.24]],
+ "352":[[.5,.93],[.3,.76],[.5,.78],[.7,.76],[.13,.52],[.34,.5],[.5,.54],[.66,.5],[.87,.52],[.38,.24],[.62,.24]],
+ "4231":[[.5,.93],[.16,.75],[.39,.77],[.61,.77],[.84,.75],[.36,.56],[.64,.56],[.22,.36],[.5,.34],[.78,.36],[.5,.18]]};
+function accentColors(){if(state.club&&PXDATA.clubColours&&PXDATA.clubColours[state.club]){var ch=PXDATA.clubColours[state.club],cr=hx(ch);return{main:ch,glow:"rgba("+cr[0]+","+cr[1]+","+cr[2]+",",soft:ch};}
+ if(state.acc==="gold")return{main:"#f5c842",glow:"rgba(245,200,66,",soft:"#ffe79a"};
+ if(state.acc==="white")return{main:"#eef3f0",glow:"rgba(180,200,190,",soft:"#ffffff"};return{main:"#3dba6f",glow:"rgba(61,186,111,",soft:"#8fffc4"};}
+var cv=document.getElementById("cv"),ctx=cv.getContext("2d");
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function spaced(t){return t.split("").join("\u2009");}
+function wrap(text,maxW){var w=(text||"").split(/\s+/),L=[],ln="";for(var i=0;i<w.length;i++){var t=ln?ln+" "+w[i]:w[i];if(ctx.measureText(t).width>maxW&&ln){L.push(ln);ln=w[i];}else ln=t;}if(ln)L.push(ln);return L;}
+function fit(lines,maxW,maxH,start,min,weight){for(var s=start;s>=min;s-=2){ctx.font=weight+" "+s+"px Inter,sans-serif";var wd=0;for(var i=0;i<lines.length;i++)wd=Math.max(wd,ctx.measureText(lines[i]).width);if(wd<=maxW&&lines.length*s*1.04<=maxH)return s;}return min;}
+function drawPitch(W,H,A,alpha){var m=W*0.085,x=m,y=H*0.16,pw=W-2*m,ph=H*0.72;ctx.save();ctx.globalAlpha=alpha;ctx.strokeStyle=A.main;ctx.lineWidth=Math.max(2,W*0.0022);
+ rr(x,y,pw,ph,18);ctx.stroke();ctx.beginPath();ctx.moveTo(x,y+ph/2);ctx.lineTo(x+pw,y+ph/2);ctx.stroke();
+ ctx.beginPath();ctx.arc(x+pw/2,y+ph/2,pw*0.13,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.arc(x+pw/2,y+ph/2,W*0.006,0,Math.PI*2);ctx.fillStyle=A.main;ctx.fill();
+ var bw=pw*0.46,bh=ph*0.14,bx=x+(pw-bw)/2;rr(bx,y,bw,bh,4);ctx.stroke();rr(bx,y+ph-bh,bw,bh,4);ctx.stroke();
+ var sw=pw*0.22,sh=ph*0.06,sx=x+(pw-sw)/2;rr(sx,y,sw,sh,3);ctx.stroke();rr(sx,y+ph-sh,sw,sh,3);ctx.stroke();ctx.restore();}
+function drawFormation(W,H,A,pulse){drawPitch(W,H,A,0.16);var m=W*0.085,x=m,y=H*0.16,pw=W-2*m,ph=H*0.72,pts=FORMS[state.form]||FORMS["433"];ctx.save();
+ for(var i=0;i<pts.length;i++){var px=x+pts[i][0]*pw,py=y+pts[i][1]*ph,rad=W*0.013*(1+(pulse||0)*0.12);
+  var g=ctx.createRadialGradient(px,py,0,px,py,rad*3.2);g.addColorStop(0,A.glow+(0.5+(pulse||0)*0.25)+")");g.addColorStop(1,A.glow+"0)");
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(px,py,rad*3.2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=(i===0)?A.main:"#eef3f0";ctx.globalAlpha=0.92;ctx.beginPath();ctx.arc(px,py,rad,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}ctx.restore();}
+function drawBase(W,H,A,motif,t){
+ var bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,"#0c130f");bg.addColorStop(.55,"#0a0f0c");bg.addColorStop(1,"#06090a");ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+ var pulse=t?(0.5+0.5*Math.sin(t*1.6)):0,gy=-H*0.05+(t?Math.sin(t*0.8)*H*0.01:0);
+ var gg=ctx.createRadialGradient(W*0.5,gy,0,W*0.5,gy,H*0.7);gg.addColorStop(0,A.glow+(0.16+pulse*0.06)+")");gg.addColorStop(1,A.glow+"0)");ctx.fillStyle=gg;ctx.fillRect(0,0,W,H);
+ if(motif==="formation")drawFormation(W,H,A,pulse);else if(motif==="pitch")drawPitch(W,H,A,0.20);
+ var sc=ctx.createLinearGradient(0,0,0,H);sc.addColorStop(0,"rgba(6,9,7,.55)");sc.addColorStop(.45,"rgba(6,9,7,.30)");sc.addColorStop(1,"rgba(6,9,7,.80)");ctx.fillStyle=sc;ctx.fillRect(0,0,W,H);
+ var vg=ctx.createRadialGradient(W*0.5,H*0.42,H*0.2,W*0.5,H*0.5,H*0.75);vg.addColorStop(0,"rgba(0,0,0,0)");vg.addColorStop(1,"rgba(0,0,0,.5)");ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);}
+function drawBrand(W,H,A){ctx.textAlign="left";ctx.textBaseline="alphabetic";ctx.font="900 "+(W*0.032)+"px Inter,sans-serif";var cx=W*0.085,by=H*0.085;
+ ctx.fillStyle="#f0f4f1";ctx.fillText("PERFECT ",cx,by);var pw=ctx.measureText("PERFECT ").width;ctx.fillStyle=A.main;ctx.fillText("XI",cx+pw,by);
+ ctx.fillStyle="rgba(255,255,255,.25)";ctx.fillRect(cx,by+W*0.018,W*0.10,2);}
+function drawCounter(W,H,A,i,n){ctx.textAlign="right";ctx.textBaseline="alphabetic";ctx.font="800 "+(W*0.024)+"px Inter,sans-serif";ctx.fillStyle=A.main;ctx.fillText(pad2(i)+" / "+pad2(n),W-W*0.085,H*0.082);ctx.textAlign="left";}
+function drawSwipe(W,H,A,label){ctx.textAlign="center";ctx.textBaseline="alphabetic";ctx.font="800 "+(W*0.026)+"px Inter,sans-serif";ctx.save();ctx.globalAlpha=.65;ctx.fillStyle=A.main;ctx.fillText(label||"SWIPE \u2192",W/2,H-H*0.045);ctx.restore();ctx.textAlign="left";}
+function eyebrowPill(W,H,A,text,x,y){if(!text)return 0;ctx.font="800 "+(W*0.022)+"px Inter,sans-serif";var s=spaced(text.toUpperCase());
+ var ew=ctx.measureText(s).width,ph=W*0.052,pw=ew+W*0.05;ctx.strokeStyle=A.glow+"0.55)";ctx.lineWidth=Math.max(1.5,W*0.0018);ctx.fillStyle=A.glow+"0.10)";
+ rr(x,y,pw,ph,ph/2);ctx.fill();ctx.stroke();ctx.fillStyle=A.main;ctx.textBaseline="middle";ctx.fillText(s,x+W*0.025,y+ph/2+W*0.001);ctx.textBaseline="alphabetic";return ph;}
+function ctaPill(W,A,text,x,y,centered){ctx.font="800 "+(W*0.030)+"px Inter,sans-serif";var t=text.toUpperCase();var cw=ctx.measureText(t).width,cpw=cw+W*0.075,cph=W*0.082;var px=centered?(W-cpw)/2:x;
+ var pg=ctx.createLinearGradient(px,0,px+cpw,0);if(state.acc==="white"){pg.addColorStop(0,"#eef3f0");pg.addColorStop(1,"#cfd9d3");}else{pg.addColorStop(0,A.main);pg.addColorStop(1,A.soft);}
+ ctx.fillStyle=pg;rr(px,y,cpw,cph,cph/2);ctx.fill();ctx.fillStyle="#04140a";ctx.textBaseline="middle";ctx.textAlign="center";ctx.fillText(t,px+cpw/2,y+cph/2+W*0.001);ctx.textBaseline="alphabetic";ctx.textAlign="left";return cph;}
+function drawCover(W,H,A,s){var cx=W*0.085,maxW=W-cx*2,ey=H*0.135;eyebrowPill(W,H,A,s.kicker||s.eyebrow,cx,ey);
+ var lines=(s.head||"").split("\n");var botBound=s.showCta?H*0.70:H*0.78;var size=fit(lines,maxW,botBound-(ey+H*0.07),W*0.115,W*0.045,"900");
+ ctx.font="900 "+size+"px Inter,sans-serif";var lh=size*1.02,sy=(ey+H*0.07)+size*0.86;
+ for(var i=0;i<lines.length;i++){var ln=lines[i];ctx.fillStyle=/^vs$/i.test(ln.trim())?A.main:"#f4f8f5";ctx.fillText(ln,cx,sy+i*lh);}
+ var hb=sy+(lines.length-1)*lh;
+ if(s.sub){ctx.font="500 "+(W*0.030)+"px Inter,sans-serif";ctx.fillStyle="#aeb9b2";var sl=wrap(s.sub,maxW*0.96),slh=W*0.030*1.4,syy=hb+W*0.06;for(var k=0;k<sl.length;k++)ctx.fillText(sl[k],cx,syy+k*slh);}
+ if(s.showCta&&s.cta){var rowY=H-H*0.085;ctaPill(W,A,s.cta,cx,rowY-W*0.05,false);if(s.url){ctx.font="800 "+(W*0.026)+"px Inter,sans-serif";ctx.fillStyle="#dfe7e2";ctx.textAlign="right";ctx.fillText(s.url,W-cx,rowY);ctx.textAlign="left";}}}
+function drawPoint(W,H,A,s){var cx=W*0.085,maxW=W-cx*2;
+ if(s.index){ctx.save();ctx.globalAlpha=0.055;ctx.fillStyle=A.main;ctx.textAlign="right";ctx.textBaseline="alphabetic";ctx.font="900 "+(W*0.66)+"px Inter,sans-serif";ctx.fillText(pad2(s.index),W*1.05,H*1.0);ctx.restore();}
+ ctx.textAlign="left";ctx.textBaseline="alphabetic";var y=H*0.205;
+ if(s.kicker){eyebrowPill(W,H,A,s.kicker,cx,y);y+=W*0.052+H*0.052;}else y+=H*0.03;
+ var hl=wrap(s.head,maxW),hs=fit(hl,maxW,H*0.34,W*0.10,W*0.05,"900");ctx.font="900 "+hs+"px Inter,sans-serif";ctx.fillStyle="#f4f8f5";var hlh=hs*1.04;
+ for(var i=0;i<hl.length;i++)ctx.fillText(hl[i],cx,y+hs*0.85+i*hlh);
+ var by=y+hs*0.85+(hl.length-1)*hlh+W*0.058;
+ if(s.body){ctx.font="500 "+(W*0.038)+"px Inter,sans-serif";ctx.fillStyle="#aeb9b2";var bl=wrap(s.body,maxW*0.96),blh=W*0.038*1.45;for(var j=0;j<bl.length;j++)ctx.fillText(bl[j],cx,by+j*blh);by+=bl.length*blh;}
+ if(s.stat){var sy=Math.max(by+W*0.08,H*0.6);ctx.font="900 "+(W*0.13)+"px Inter,sans-serif";ctx.fillStyle=A.main;ctx.fillText(s.stat.big,cx,sy);ctx.font="800 "+(W*0.032)+"px Inter,sans-serif";ctx.fillStyle="#cdd8d2";ctx.fillText(spaced(s.stat.label),cx,sy+W*0.052);}
+ if(s.foot){var fy=H*0.885;ctx.fillStyle=A.main;rr(cx,fy-W*0.022,W*0.055,W*0.011,W*0.0055);ctx.fill();ctx.font="800 "+(W*0.028)+"px Inter,sans-serif";ctx.fillStyle="#cfdad4";ctx.fillText(s.foot,cx+W*0.078,fy);}
+ ctx.textAlign="left";ctx.textBaseline="alphabetic";}
+function drawStat(W,H,A,s){if(s.index){ctx.save();ctx.globalAlpha=0.05;ctx.fillStyle=A.main;ctx.textAlign="left";ctx.textBaseline="alphabetic";ctx.font="900 "+(W*0.6)+"px Inter,sans-serif";ctx.fillText(pad2(s.index),-W*0.06,H*0.99);ctx.restore();}
+ ctx.textAlign="center";ctx.textBaseline="alphabetic";ctx.font="900 "+(W*0.26)+"px Inter,sans-serif";ctx.fillStyle=A.main;ctx.fillText(s.big,W/2,H*0.50);
+ ctx.font="800 "+(W*0.05)+"px Inter,sans-serif";ctx.fillStyle="#f4f8f5";ctx.fillText(spaced(s.label),W/2,H*0.50+W*0.13);ctx.textAlign="left";}
+function drawReview(W,H,A,s){var cx=W*0.085,maxW=W-cx*2;eyebrowPill(W,H,A,s.kicker,cx,H*0.135);
+ var vl=wrap(s.verdict,maxW),vs=fit(vl,maxW,H*0.16,W*0.10,W*0.045,"900");ctx.textAlign="center";ctx.font="900 "+vs+"px Inter,sans-serif";ctx.fillStyle=A.main;
+ var vlh=vs*1.0,vy=H*0.30;for(var i=0;i<vl.length;i++)ctx.fillText(vl[i],W/2,vy+i*vlh);
+ var cells=[["P",s.P],["W",s.W],["D",s.D],["L",s.L]],rowY=H*0.50,cw=maxW/4;
+ for(var c=0;c<4;c++){var ccx=cx+cw*c+cw/2;ctx.font="900 "+(W*0.075)+"px Inter,sans-serif";ctx.fillStyle="#f4f8f5";ctx.fillText(String(cells[c][1]),ccx,rowY);
+  ctx.font="800 "+(W*0.026)+"px Inter,sans-serif";ctx.fillStyle="#7f8c84";ctx.fillText(cells[c][0],ccx,rowY+W*0.05);}
+ ctx.strokeStyle=A.glow+"0.4)";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx,rowY+W*0.09);ctx.lineTo(cx+maxW,rowY+W*0.09);ctx.stroke();
+ ctx.font="800 "+(W*0.042)+"px Inter,sans-serif";ctx.fillStyle="#dfe7e2";ctx.textAlign="center";ctx.fillText(s.pts+" PTS   \u00b7   GD "+(s.gd>=0?"+":"")+s.gd,W/2,rowY+W*0.175);
+ ctx.font="800 "+(W*0.03)+"px Inter,sans-serif";var ft=spaced(s.finish),fw=ctx.measureText(ft).width,fpw=fw+W*0.06,fph=W*0.058,fx=(W-fpw)/2,fy=rowY+W*0.225;
+ ctx.fillStyle=A.glow+"0.12)";ctx.strokeStyle=A.glow+"0.55)";ctx.lineWidth=2;rr(fx,fy,fpw,fph,fph/2);ctx.fill();ctx.stroke();
+ ctx.fillStyle=A.main;ctx.textBaseline="middle";ctx.fillText(ft,W/2,fy+fph/2+W*0.001);ctx.textBaseline="alphabetic";ctx.textAlign="left";}
+function drawCta(W,H,A,s){var maxW=W-W*0.085*2,lines=(s.head||"").split("\n");if(s.kicker)eyebrowPill(W,H,A,s.kicker,W*0.085,H*0.14);
+ var size=fit(lines,maxW,H*0.26,W*0.13,W*0.06,"900");ctx.textAlign="center";ctx.font="900 "+size+"px Inter,sans-serif";ctx.fillStyle="#f4f8f5";
+ var lh=size*1.02,sy=H*0.34;for(var i=0;i<lines.length;i++)ctx.fillText(lines[i],W/2,sy+i*lh);
+ var pillY=H*0.58;ctaPill(W,A,s.cta,0,pillY,true);ctx.textAlign="center";ctx.font="800 "+(W*0.030)+"px Inter,sans-serif";ctx.fillStyle="#dfe7e2";ctx.fillText(s.url,W/2,pillY+W*0.082+W*0.062);ctx.textAlign="left";drawQR(W,H,A,s.url,W/2,pillY+W*0.082+W*0.062+W*0.04);}
+function drawLineup(W,H,A,s){var cx=W*0.085,maxW=W-cx*2;eyebrowPill(W,H,A,s.kicker||"THE LINE-UP",cx,H*0.115);
+ ctx.textAlign="left";ctx.textBaseline="alphabetic";
+ ctx.font="900 "+(W*0.07)+"px Inter,sans-serif";ctx.fillStyle="#f4f8f5";ctx.fillText(s.form,cx,H*0.225);
+ var ov="OVR "+s.ovr;ctx.textAlign="right";ctx.fillStyle=A.main;ctx.fillText(ov,W-cx,H*0.225);ctx.textAlign="left";
+ var groups=[["GK","GOALKEEPER"],["DEF","DEFENCE"],["MID","MIDFIELD"],["ATT","ATTACK"]];
+ var nRows=s.xi.length,nLabels=0,gi;for(gi=0;gi<groups.length;gi++){for(var q=0;q<s.xi.length;q++){if(s.xi[q].pos===groups[gi][0]){nLabels++;break;}}}
+ var top=H*0.275,bot=H*0.93,avail=bot-top,unit=avail/(nRows+nLabels*0.75),y=top;
+ groups.forEach(function(g){var members=[];for(var i=0;i<s.xi.length;i++){if(s.xi[i].pos===g[0])members.push(s.xi[i]);}if(!members.length)return;
+  ctx.font="800 "+(W*0.021)+"px Inter,sans-serif";ctx.save();ctx.globalAlpha=.75;ctx.fillStyle=A.main;ctx.fillText(spaced(g[1]),cx,y+unit*0.55);ctx.restore();y+=unit*0.75;
+  members.forEach(function(p){var by=y+unit*0.66;
+   ctx.font="800 "+(W*0.038)+"px Inter,sans-serif";ctx.fillStyle="#f4f8f5";var nm=surname(p.n);ctx.fillText(nm,cx,by);
+   var nmw=ctx.measureText(nm).width;ctx.font="600 "+(W*0.025)+"px Inter,sans-serif";var cw=ctx.measureText(p.c).width;
+   if(cx+nmw+W*0.025+cw < W-cx-W*0.12){ctx.fillStyle="#7f8c84";ctx.fillText(p.c,cx+nmw+W*0.025,by-W*0.003);}
+   ctx.font="900 "+(W*0.04)+"px Inter,sans-serif";ctx.fillStyle=A.main;ctx.textAlign="right";ctx.fillText(String(p.r),W-cx,by);ctx.textAlign="left";
+   y+=unit;});
+ });}
+function drawStatGrid(W,H,A,s){var cx=W*0.085,maxW=W-cx*2;eyebrowPill(W,H,A,s.kicker||"THE NUMBERS",cx,H*0.105);
+ ctx.textAlign="left";ctx.textBaseline="alphabetic";
+ if(s.head){var hl=wrap(s.head,maxW),hs=fit(hl,maxW,H*0.11,W*0.072,W*0.045,"900");ctx.font="900 "+hs+"px Inter,sans-serif";ctx.fillStyle="#f4f8f5";for(var k=0;k<hl.length;k++)ctx.fillText(hl[k],cx,H*0.2+k*hs*1.02);}
+ var items=s.items||[],top=H*0.275,bot=H*0.93,rowH=(bot-top)/items.length;
+ for(var i=0;i<items.length;i++){var ry=top+i*rowH,mid=ry+rowH*0.5;
+  ctx.strokeStyle=A.glow+"0.2)";ctx.lineWidth=Math.max(1.5,W*0.0022);ctx.beginPath();ctx.moveTo(cx,ry);ctx.lineTo(cx+maxW,ry);ctx.stroke();
+  ctx.textBaseline="middle";ctx.textAlign="left";ctx.font="800 "+(W*0.03)+"px Inter,sans-serif";ctx.fillStyle="#8c9990";ctx.fillText(items[i].k,cx,mid);
+  var vt=String(items[i].v),vs=W*0.05;ctx.font="900 "+vs+"px Inter,sans-serif";while(ctx.measureText(vt).width>maxW*0.56&&vs>W*0.03){vs-=2;ctx.font="900 "+vs+"px Inter,sans-serif";}
+  ctx.textAlign="right";ctx.fillStyle=A.main;ctx.fillText(vt,cx+maxW,mid);}
+ ctx.textAlign="left";ctx.textBaseline="alphabetic";}
+function drawSlide(s,anim){anim=anim||{a:1,dy:0,t:0};var W=state.w,H=state.h,A=accentColors();cv.width=W;cv.height=H;
+ drawBase(W,H,A,s.motif||"minimal",anim.t);ctx.save();ctx.globalAlpha=anim.a;ctx.translate(0,anim.dy||0);
+ drawBrand(W,H,A);if(s.total&&s.total>1)drawCounter(W,H,A,s.index,s.total);
+ if(s.kind==="stat")drawStat(W,H,A,s);else if(s.kind==="point")drawPoint(W,H,A,s);else if(s.kind==="review")drawReview(W,H,A,s);else if(s.kind==="cta")drawCta(W,H,A,s);else if(s.kind==="lineup")drawLineup(W,H,A,s);else if(s.kind==="pitch")drawPitchXI(W,H,A,s);else if(s.kind==="statgrid")drawStatGrid(W,H,A,s);else drawCover(W,H,A,s);
+ if(s.swipe)drawSwipe(W,H,A,state.mode==="video"?"WATCH \u2192":"SWIPE \u2192");ctx.restore();}
+function randomCopy(){var t=TPL[state.tpl];
+ if(state.tpl==="seasonreview"){var s=state.userXI?seasonOf(state.userXI):makeSeason();return{eyebrow:"FULL-TIME",head:s.verdict+"\nP38 W"+s.W+"\nD"+s.D+" L"+s.L,sub:"Built in Perfect XI \u2014 "+s.finish.toLowerCase()+", "+s.pts+" pts. Beat it?",cta:"Beat my season",url:URL_DEF};}
+ if(state.tpl==="debate"){var d=rdDebatePair();return{eyebrow:"SETTLE IT",head:up(surname(d.then.n))+"\nvs\n"+up(surname(d.now.n)),sub:d.then.c+" vs "+d.now.c+". Same position, different eras \u2014 who wins?",cta:pick(t.ctas),url:URL_DEF};}
+ if(state.tpl==="worldcup"){var nat=rdNation(true);var sn=nat.star?(" and "+surname(nat.star.n)):"";return{eyebrow:"WORLD CUP 2026",head:nat.f+"\n"+up(nat.n),sub:"Take "+nat.n+sn+" all the way \u2014 or build a global World XI.",cta:pick(t.ctas),url:URL_DEF};}
+ if(state.tpl==="ratexi"){var k=pick(["90s","2000s","2010s","2020s","ALL-TIME"]);var b=getXI(k,pick(FORMS_TXT));var nm=surname(b.xi[0].n)+", "+surname(b.xi[b.xi.length-2].n)+", "+surname(b.xi[b.xi.length-1].n);return{eyebrow:"RATE THIS XI",head:"RATE THIS\n"+(k==="ALL-TIME"?"ALL-TIME":k)+"\nXI",sub:nm+"... an OVR "+b.ovr+" side. Out of 10?",cta:pick(t.ctas),url:URL_DEF};}
+ if(state.tpl==="dropxi"){var lg=rdLegend("ALL-TIME","ATT");return{eyebrow:"YOUR ALL-TIME XI",head:pick(t.heads),sub:"Is "+lg.n+" in your eleven? Build it in Perfect XI and post it.",cta:pick(t.ctas),url:URL_DEF};}
+ if(state.tpl==="stats"){return{eyebrow:"THE NUMBERS",head:fmtCount(PXDATA.count)+"\nPLAYERS.\nONE XI.",sub:PXDATA.clubs.length+" clubs, 34 seasons, every era of the Prem in one game.",cta:pick(t.ctas),url:URL_DEF};}
+  if(state.tpl==="whowins"){var a=rdClub(),bb=rdClub();while(bb===a)bb=rdClub();var ga=rint(0,4),gb=rint(0,4);return{eyebrow:"WHO'D WIN?",head:up(a)+"\nvs\n"+up(bb),sub:"All-time best XI vs all-time best XI. Score in Perfect XI: "+ga+"-"+gb+". Agree?",cta:pick(t.ctas),url:URL_DEF};}
+ return{eyebrow:pick(t.eyebrows),head:pick(t.heads),sub:pick(t.subs),cta:pick(t.ctas),url:URL_DEF};}
+function singleSpec(){return{kind:"cover",eyebrow:val("fEyebrow"),head:val("fHead"),sub:val("fSub"),cta:val("fCta"),url:val("fUrl"),motif:state.motif,total:1,showCta:true,swipe:false};}
+var FOOT=["BUILD YOURS FREE \u2192 PERFECTXI.APP","YOUR XI \u00b7 YOUR RULES","SPIN \u00b7 DRAFT \u00b7 DOMINATE","38 GAMES. NO RESETS.","EVERY ERA. ONE TEAM.","FREE TO PLAY \u00b7 NO DOWNLOAD"];
+function finalize(slides){var n=slides.length;slides.forEach(function(s,i){if(!s.motif)s.motif=(s.kind==="cover"||s.kind==="cta")?TPL[state.tpl].motif:"minimal";s.index=i+1;s.total=n;s.swipe=(i<n-1);if(s.kind==="point"&&!s.foot)s.foot=FOOT[i%FOOT.length];if(s.kind==="cta")s.swipe=false;});return slides;}
+function buildStory(){state.slides=finalize(ARCS[state.tpl]());state.idx=0;}
+function val(id){return document.getElementById(id).value;}
+function drawActive(){if(state.mode==="single")drawSlide(singleSpec());else drawSlide(state.slides[state.idx]);}
+function copyToClipboard(t){if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).catch(function(){fbCopy(t);});else fbCopy(t);}
+function fbCopy(t){try{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);}catch(e){}}
+function blobToFile(b,name){try{return new File([b],name,{type:b.type});}catch(e){b.name=name;return b;}}
+function canvasBlob(){return new Promise(function(res){if(cv.toBlob)cv.toBlob(function(b){res(b);},"image/png");else res(null);});}
+function downloadFile(f){var u=URL.createObjectURL(f);var a=document.createElement("a");a.href=u;a.download=f.name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u);},4000);}
+function mediaFiles(){return new Promise(function(res){
+ if(state.mode==="video"){res(videoBlob?[blobToFile(videoBlob,"perfectxi-"+state.tpl+"."+vidExt)]:null);return;}
+ if(state.mode==="story"){var files=[],i=0;(function step(){if(i>=state.slides.length){drawActive();res(files);return;}drawSlide(state.slides[i]);canvasBlob().then(function(b){if(b)files.push(blobToFile(b,"perfectxi-slide-"+pad2(i+1)+".png"));i++;step();});})();return;}
+ drawActive();canvasBlob().then(function(b){res(b?[blobToFile(b,"perfectxi-"+state.tpl+".png")]:null);});});}
+function saveFiles(files,title){if(navigator.canShare&&files&&files.length&&navigator.canShare({files:files})){
+  return navigator.share({files:files,title:title}).then(function(){return true;},function(e){if(e&&e.name==="AbortError")return false;files.forEach(downloadFile);return false;});}
+ if(files)files.forEach(downloadFile);return Promise.resolve(false);}
+function saveSingle(){mediaFiles().then(function(f){if(!f){alert("Saving needs a modern browser \u2014 open in Safari or Chrome.");return;}saveFiles(f,"Perfect XI");});}
+function saveAllSlides(){mediaFiles().then(function(f){saveFiles(f,"Perfect XI carousel");});}
+function intentShare(caption,files){var p=state.plat;
+ if(p==="x"){window.open("https://twitter.com/intent/tweet?text="+encodeURIComponent(caption),"_blank");if(files)files.forEach(downloadFile);}
+ else if(p==="facebook"){window.open("https://www.facebook.com/sharer/sharer.php?u="+encodeURIComponent("https://"+URL_DEF)+"&quote="+encodeURIComponent(caption),"_blank");if(files)files.forEach(downloadFile);}
+ else{if(files)files.forEach(downloadFile);alert("Caption copied and media saved. Open "+(PLAT[p]?PLAT[p].label:"the app")+", start a post, attach the media and paste the caption.");}}
+function shareWithCaption(caption){copyToClipboard(caption);
+ if(state.mode==="video"&&!videoBlob){alert("Generate the video first, then tap Share.");return;}
+ mediaFiles().then(function(files){
+  if(files&&files.length&&navigator.canShare&&navigator.canShare({files:files})){
+   navigator.share({files:files,text:caption,title:"Perfect XI"}).catch(function(e){if(e&&e.name!=="AbortError")intentShare(caption,files);});
+  }else intentShare(caption,files);});}
+function pickMime(){if(!window.MediaRecorder)return null;var t=["video/mp4;codecs=h264","video/mp4","video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"];for(var i=0;i<t.length;i++){try{if(MediaRecorder.isTypeSupported(t[i]))return t[i];}catch(e){}}return null;}
+function slideDur(s){return s.kind==="statgrid"?4.6:s.kind==="pitch"?4.6:s.kind==="lineup"?4.4:s.kind==="review"?3.6:s.kind==="stat"?2.3:s.kind==="cta"?2.9:s.kind==="cover"?2.9:3.0;}
+function easeOut(x){return 1-Math.pow(1-x,3);}
+function animate(onProgress,onDone){var slides=state.slides,f=state.vidLen==="quick"?0.55:1;
+ var durs=slides.map(function(s){return slideDur(s)*f;}),total=durs.reduce(function(a,b){return a+b;},0),tail=state.vidLen==="quick"?0.3:0.5;
+ var tin=state.vidLen==="quick"?0.28:0.45,tout=tin,start=performance.now();
+ function frame(now){var el=(now-start)/1000;
+  if(el>=total+tail){drawSlide(slides[slides.length-1],{a:1,dy:0,t:el});onProgress&&onProgress(1);onDone&&onDone();return;}
+  if(el>=total){drawSlide(slides[slides.length-1],{a:1,dy:0,t:el});onProgress&&onProgress(1);rafId=requestAnimationFrame(frame);return;}
+  var acc=0,i=0;for(;i<slides.length;i++){if(el<acc+durs[i])break;acc+=durs[i];}if(i>=slides.length)i=slides.length-1;
+  var lt=el-acc,d=durs[i],a=1,dy=0;
+  if(lt<tin){var p=easeOut(lt/tin);a=p;dy=(1-p)*46;}else if(lt>d-tout&&i<slides.length-1){var p2=(lt-(d-tout))/tout;a=1-p2;dy=-p2*30;}
+  drawSlide(slides[i],{a:a,dy:dy,t:el});onProgress&&onProgress(el/total);rafId=requestAnimationFrame(frame);}
+ rafId=requestAnimationFrame(frame);}
+function hasWebCodecs(){return !!(window.VideoEncoder&&window.VideoFrame&&window.Mp4Muxer);}
+function vidParams(){var slides=state.slides,f=state.vidLen==="quick"?0.55:1;
+ var durs=slides.map(function(sl){return slideDur(sl)*f;}),total=durs.reduce(function(a,b){return a+b;},0);
+ var tail=state.vidLen==="quick"?0.3:0.5,tin=state.vidLen==="quick"?0.28:0.45;
+ return{slides:slides,durs:durs,total:total,tail:tail,tin:tin,tout:tin};}
+function drawAtTime(el,P){var slides=P.slides,durs=P.durs,total=P.total,tin=P.tin,tout=P.tout;
+ if(el>=total){drawSlide(slides[slides.length-1],{a:1,dy:0,t:el});return;}
+ var acc=0,i=0;for(;i<slides.length;i++){if(el<acc+durs[i])break;acc+=durs[i];}if(i>=slides.length)i=slides.length-1;
+ var lt=el-acc,d=durs[i],a=1,dy=0;
+ if(lt<tin){var p=easeOut(lt/tin);a=p;dy=(1-p)*46;}else if(lt>d-tout&&i<slides.length-1){var p2=(lt-(d-tout))/tout;a=1-p2;dy=-p2*30;}
+ drawSlide(slides[i],{a:a,dy:dy,t:el});}
+function encodeWebCodecs(onProgress){return new Promise(function(resolve,reject){
+ var P=vidParams(),fps=30,totalT=P.total+P.tail,nFrames=Math.max(1,Math.round(totalT*fps)),W=state.w,H=state.h;
+ var muxer,enc;
+ try{muxer=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:"avc",width:W,height:H},fastStart:"in-memory"});}catch(e){reject(e);return;}
+ enc=new VideoEncoder({output:function(chunk,meta){try{muxer.addVideoChunk(chunk,meta);}catch(e){}},error:function(e){reject(e);}});
+ function cfg(codec){return{codec:codec,width:W,height:H,bitrate:9000000,framerate:fps};}
+ var tryCodecs=["avc1.640028","avc1.4D0028","avc1.42E028"],ci=0;
+ function configure(){if(ci>=tryCodecs.length){reject(new Error("no h264 config"));return;}
+  var c=tryCodecs[ci];VideoEncoder.isConfigSupported(cfg(c)).then(function(r){
+   if(r&&r.supported){try{enc.configure(cfg(c));run();}catch(e){ci++;configure();}}else{ci++;configure();}
+  }).catch(function(){ci++;configure();});}
+ function run(){var i=0;
+  function step(){
+   if(i>=nFrames){enc.flush().then(function(){try{muxer.finalize();resolve(new Blob([muxer.target.buffer],{type:"video/mp4"}));}catch(e){reject(e);}}).catch(reject);return;}
+   if(enc.encodeQueueSize>8){setTimeout(step,1);return;}
+   var el=i/fps;drawAtTime(el,P);
+   var frame;try{frame=new VideoFrame(cv,{timestamp:Math.round(i*1000000/fps),duration:Math.round(1000000/fps)});}catch(e){reject(e);return;}
+   try{enc.encode(frame,{keyFrame:(i%60===0)});}catch(e){frame.close();reject(e);return;}
+   frame.close();onProgress&&onProgress(i/nFrames);i++;setTimeout(step,0);
+  }
+  step();}
+ configure();
+});}
+function generateVideo(){
+ buildStory();state.w=state.vidW-(state.vidW%2);state.h=state.vidH-(state.vidH%2);videoBlob=null;
+ var gv=document.getElementById("genVid");gv.disabled=true;
+ document.getElementById("saveVid").style.display="none";document.getElementById("dlVid").style.display="none";
+ document.getElementById("vidWrap").style.display="none";document.getElementById("cvShell").style.display="flex";document.getElementById("prog").style.display="block";
+ var pt=document.getElementById("progTxt");if(pt)pt.textContent="Rendering your video\u2026 keep this tab open";
+ drawSlide(state.slides[0],{a:0,dy:46,t:0});
+ function finishUI(blob,ext){vidExt=ext;videoBlob=blob;document.getElementById("vid").src=URL.createObjectURL(videoBlob);
+  document.getElementById("prog").style.display="none";document.getElementById("cvShell").style.display="none";document.getElementById("vidWrap").style.display="flex";
+  document.getElementById("saveVid").style.display="block";document.getElementById("dlVid").style.display="block";gv.disabled=false;gv.innerHTML="&#8635; Make another video";}
+ function setBar(p){document.getElementById("progBar").style.width=Math.round(Math.min(1,p)*100)+"%";}
+ function recorderPath(){
+  if(!window.MediaRecorder||!cv.captureStream){alert("Video needs a modern browser (Safari 16.4+, Chrome). Use the carousel instead.");gv.disabled=false;document.getElementById("prog").style.display="none";return;}
+  if(pt)pt.textContent="Recording your video\u2026 keep this tab open";
+  var mime=pickMime();vidExt=(mime&&mime.indexOf("mp4")>-1)?"mp4":"webm";
+  var stream=cv.captureStream(30),opts=mime?{mimeType:mime,videoBitsPerSecond:9000000}:{};
+  var rec;try{rec=new MediaRecorder(stream,opts);}catch(e){try{rec=new MediaRecorder(stream);}catch(e2){alert("Recording not supported here. Use the carousel.");gv.disabled=false;document.getElementById("prog").style.display="none";return;}}
+  var chunks=[];rec.ondataavailable=function(e){if(e.data&&e.data.size)chunks.push(e.data);};
+  rec.onstop=function(){finishUI(new Blob(chunks,{type:mime||"video/webm"}),vidExt);};
+  rec.start();animate(function(p){setBar(p);},function(){try{rec.stop();}catch(e){}});
+ }
+ if(hasWebCodecs()){
+  encodeWebCodecs(function(p){setBar(p);}).then(function(blob){if(blob&&blob.size>1000)finishUI(blob,"mp4");else recorderPath();}).catch(function(err){if(window.console)console.warn("WebCodecs failed, falling back:",err);recorderPath();});
+ }else recorderPath();
+}
+function saveVideo(){if(!videoBlob)return;saveFiles([blobToFile(videoBlob,"perfectxi-"+state.tpl+"."+vidExt)],"Perfect XI");}
+function dlVideo(){if(!videoBlob)return;downloadFile(blobToFile(videoBlob,"perfectxi-"+state.tpl+"."+vidExt));}
+function renderCaptions(){var hooks=shuffle((HOOKS[state.tpl]||[]).concat(realHooks(state.tpl))).slice(0,3),list=document.getElementById("capList");list.innerHTML="";
+ if(state.plat==="tiktok"){var tk=document.createElement("div");tk.className="cap";tk.style.borderColor="rgba(61,186,111,.45)";tk.innerHTML="<p style=\"margin:0;font-size:.86rem\"><b>Posting to TikTok:</b> save to your camera roll, open TikTok \u2192 <b>+</b> \u2192 upload it, then paste a caption. Add a trending sound in-app (football / sports / hype audio works). Best times: <b>6\u20139pm</b>.</p>";list.appendChild(tk);}
+ hooks.forEach(function(h){var text=buildCaption(state.tpl,state.plat,h,state.mode);
+  var d=document.createElement("div");d.className="cap";
+  var p=document.createElement("p");p.textContent=text;
+  var row=document.createElement("div");row.className="row";
+  var sb=document.createElement("button");sb.className="shareb";sb.innerHTML="&#10148; Share";sb.onclick=function(){shareWithCaption(text);};
+  var cb=document.createElement("button");cb.className="copy";cb.textContent="Copy";cb.onclick=function(){copyCap(text,cb);};
+  row.appendChild(sb);row.appendChild(cb);d.appendChild(p);d.appendChild(row);list.appendChild(d);});}
+function copyCap(t,btn){copyToClipboard(t);btn.textContent="Copied \u2713";btn.classList.add("done");setTimeout(function(){btn.textContent="Copy";btn.classList.remove("done");},1500);}
+function updateUIForMode(){var m=state.mode;
+ document.getElementById("editBox").style.display=m==="single"?"block":"none";
+ document.getElementById("storyBox").style.display=(m==="story"||m==="video")?"block":"none";
+ document.getElementById("storyDesc").textContent=STORY_DESC[state.tpl]||"";
+ document.getElementById("exSingle").style.display=m==="single"?"block":"none";
+ document.getElementById("exStory").style.display=m==="story"?"block":"none";
+ document.getElementById("exVideo").style.display=m==="video"?"block":"none";
+ document.getElementById("caro").style.display=m==="story"?"flex":"none";
+ document.getElementById("dots").style.display=m==="story"?"flex":"none";
+ document.getElementById("fmtBlock").style.display=m==="video"?"none":"block";
+ document.getElementById("vidLenBlock").style.display=m==="video"?"block":"none";
+ document.getElementById("cvShell").style.display=(m==="video"&&videoBlob)?"none":"flex";
+ document.getElementById("vidWrap").style.display=(m==="video"&&videoBlob)?"flex":"none";
+ document.getElementById("modeHint").textContent=m==="single"?"A single graphic with a caption.":m==="story"?"A multi-slide carousel that tells a story.":"A vertical video for Reels, TikTok and Shorts.";
+ if(m==="video"){state.w=state.vidW;state.h=state.vidH;}else{state.w=fmtW;state.h=fmtH;}
+ if(m==="story"){document.getElementById("cc").textContent="Slide "+(state.idx+1)+" / "+state.slides.length;
+  document.getElementById("prev").disabled=state.idx===0;document.getElementById("next").disabled=state.idx===state.slides.length-1;
+  var dots=document.getElementById("dots");dots.innerHTML="";state.slides.forEach(function(s,i){var d=document.createElement("i");if(i===state.idx)d.className="on";d.onclick=function(){state.idx=i;updateUIForMode();drawActive();};dots.appendChild(d);});}}
+function loadTemplate(key){state.tpl=key;var t=TPL[key];state.motif=t.motif;setSeg("motifSeg","motif",t.motif);
+ document.getElementById("formRow").style.display=(t.motif==="formation")?"block":"none";
+ document.querySelectorAll("#tplGrid .tpl").forEach(function(el){el.classList.toggle("sel",el.dataset.k===key);});
+ if(state.mode==="single"){var c=randomCopy();fillFields(c);}else buildStory();
+ videoBlob=null;document.getElementById("genVid").innerHTML="&#127909; Generate video";updateUIForMode();drawActive();renderCaptions();}
+function fillFields(c){setVal("fEyebrow",c.eyebrow);setVal("fHead",c.head);setVal("fSub",c.sub);setVal("fCta",c.cta);setVal("fUrl",c.url);}
+function setVal(id,v){document.getElementById(id).value=v;}
+function setSeg(id,attr,v){document.querySelectorAll("#"+id+" button").forEach(function(b){b.classList.toggle("sel",b.dataset[attr]===v);});}
+function setSegSel(id,btn){document.querySelectorAll("#"+id+" button").forEach(function(x){x.classList.remove("sel");});btn.classList.add("sel");}
+var grid=document.getElementById("tplGrid");
+Object.keys(TPL).forEach(function(k){var t=TPL[k];var b=document.createElement("button");b.className="tpl";b.dataset.k=k;b.innerHTML="<b>"+t.label+"</b><span>"+t.note+"</span>";b.onclick=function(){loadTemplate(k);};grid.appendChild(b);});
+var capTabs=document.getElementById("capTabs");
+Object.keys(PLAT).forEach(function(p){var b=document.createElement("button");b.textContent=PLAT[p].label;b.dataset.p=p;if(p===state.plat)b.classList.add("sel");b.onclick=function(){state.plat=p;document.querySelectorAll("#capTabs button").forEach(function(x){x.classList.toggle("sel",x.dataset.p===p);});renderCaptions();};capTabs.appendChild(b);});
+(function(){var cs=document.getElementById("clubSel");if(cs){PXDATA.clubs.forEach(function(c){var o=document.createElement("option");o.value=c;o.textContent=c;cs.appendChild(o);});cs.addEventListener("change",function(){state.club=this.value;drawActive();});}})();
+document.getElementById("modeSeg").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;if(rafId)cancelAnimationFrame(rafId);state.mode=b.dataset.mode;setSegSel("modeSeg",b);
+ if(state.mode==="single"){fillFields(randomCopy());}else buildStory();videoBlob=null;document.getElementById("genVid").innerHTML="&#127909; Generate video";updateUIForMode();drawActive();renderCaptions();});
+document.getElementById("fmtSeg").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;fmtW=+b.dataset.w;fmtH=+b.dataset.h;setSegSel("fmtSeg",b);if(state.mode!=="video"){state.w=fmtW;state.h=fmtH;}drawActive();});
+document.getElementById("vidLenSeg").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;state.vidLen=b.dataset.len;setSegSel("vidLenSeg",b);});
+document.getElementById("vidAspSeg").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;state.vidW=+b.dataset.w;state.vidH=+b.dataset.h;setSegSel("vidAspSeg",b);
+ if(state.mode==="video"){if(rafId)cancelAnimationFrame(rafId);videoBlob=null;document.getElementById("genVid").innerHTML="&#127909; Generate video";document.getElementById("vidWrap").style.display="none";document.getElementById("cvShell").style.display="flex";document.getElementById("saveVid").style.display="none";document.getElementById("dlVid").style.display="none";state.w=state.vidW;state.h=state.vidH;drawActive();}});
+document.getElementById("accSeg").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;state.acc=b.dataset.acc;setSegSel("accSeg",b);state.club="";var cs0=document.getElementById("clubSel");if(cs0)cs0.value="";drawActive();});
+document.getElementById("motifSeg").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;state.motif=b.dataset.motif;setSegSel("motifSeg",b);document.getElementById("formRow").style.display=(state.motif==="formation")?"block":"none";if(state.slides.length)state.slides.forEach(function(s){if(s.kind==="cover"||s.kind==="cta")s.motif=state.motif;});drawActive();});
+document.getElementById("formSeg").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;state.form=b.dataset.f;setSegSel("formSeg",b);drawActive();});
+["fEyebrow","fHead","fSub","fCta","fUrl"].forEach(function(id){document.getElementById(id).addEventListener("input",function(){if(state.mode==="single")drawActive();});});
+document.getElementById("prev").onclick=function(){if(state.idx>0){state.idx--;updateUIForMode();drawActive();}};
+document.getElementById("next").onclick=function(){if(state.idx<state.slides.length-1){state.idx++;updateUIForMode();drawActive();}};
+document.getElementById("randomCopy").onclick=function(){fillFields(randomCopy());drawActive();renderCaptions();};
+document.getElementById("newStory").onclick=function(){buildStory();videoBlob=null;document.getElementById("genVid").innerHTML="&#127909; Generate video";if(state.mode==="video"){document.getElementById("vidWrap").style.display="none";document.getElementById("cvShell").style.display="flex";document.getElementById("saveVid").style.display="none";document.getElementById("dlVid").style.display="none";}updateUIForMode();drawActive();renderCaptions();};
+document.getElementById("reshuffle").onclick=renderCaptions;
+document.getElementById("shuffleAll").onclick=function(){var b=document.getElementById(state.mode==="single"?"randomCopy":"newStory");if(b&&b.onclick)b.onclick();};
+document.getElementById("loadXI").onclick=function(){var dec=pxiDecode(val("xiCode"));var st=document.getElementById("xiStatus");
+ if(!dec){st.style.color="#e88a8a";st.textContent="Couldn't read that code \u2014 make sure you copied all of it.";state.userXI=null;state.userSeason=null;return;}
+ state.userXI=dec;state.userSeason=dec.season||null;st.style.color="";
+ st.innerHTML="\u2713 Using your XI: <b>"+dec.label+"</b> \u00b7 OVR "+dec.ovr+". Open <b>Rate This XI</b>, <b>Drop Your XI</b> or <b>Season Review</b>.";
+ loadTemplate(state.tpl);};
+document.getElementById("clearXI").onclick=function(){state.userXI=null;state.userSeason=null;document.getElementById("xiCode").value="";document.getElementById("xiStatus").textContent="Back to random data.";loadTemplate(state.tpl);};
+document.getElementById("surprise").onclick=function(){state.acc=pick(["green","gold","white"]);setSeg("accSeg","acc",state.acc);loadTemplate(pick(Object.keys(TPL)));};
+document.getElementById("dl").onclick=function(){drawActive();try{var a=document.createElement("a");a.download="perfectxi-"+state.tpl+"-"+state.w+"x"+state.h+".png";a.href=cv.toDataURL("image/png");document.body.appendChild(a);a.click();a.remove();}catch(e){alert("Open this file in a browser to download.");}};
+document.getElementById("save").onclick=saveSingle;
+document.getElementById("saveAll").onclick=saveAllSlides;
+document.getElementById("dlAll").onclick=function(){var s=state.slides,i=0;function step(){if(i>=s.length){drawActive();return;}drawSlide(s[i]);try{var a=document.createElement("a");a.download="perfectxi-"+state.tpl+"-slide-"+pad2(i+1)+".png";a.href=cv.toDataURL("image/png");document.body.appendChild(a);a.click();a.remove();}catch(e){drawActive();return;}i++;setTimeout(step,420);}step();};
+document.getElementById("genVid").onclick=generateVideo;
+document.getElementById("saveVid").onclick=saveVideo;
+document.getElementById("dlVid").onclick=dlVideo;
+function planWeek(){var tpls=Object.keys(TPL),chosen=[],caps=[],i=0;
+ for(var z=0;z<7;z++){chosen.push(pick(tpls));}
+ var sW=state.w,sH=state.h,sT=state.tpl,sM=state.mode;state.mode="single";state.w=fmtW;state.h=fmtH;
+ var pw=document.getElementById("planWeek");pw.disabled=true;pw.innerHTML="&#9203; Building\u2026";
+ function step(){
+  if(i>=chosen.length){var blob=new Blob([caps.join("\n\n\u2014\u2014\u2014\u2014\u2014\u2014\n\n")],{type:"text/plain"});
+   downloadFile(blobToFile(blob,"perfectxi-week-captions.txt"));
+   state.w=sW;state.h=sH;state.tpl=sT;state.mode=sM;pw.disabled=false;pw.innerHTML="&#128197; Generate 7 posts";loadTemplate(sT);
+   alert("Saved 7 post graphics + a captions file. Drop them into your scheduler.");return;}
+  state.tpl=chosen[i];fillFields(randomCopy());drawSlide(singleSpec());
+  var hk=pick((HOOKS[state.tpl]||[]).concat(realHooks(state.tpl)));
+  caps.push("DAY "+(i+1)+" \u00b7 "+TPL[state.tpl].label+"\n"+buildCaption(state.tpl,state.plat,hk,"single"));
+  try{var a=document.createElement("a");a.download="perfectxi-week-"+pad2(i+1)+"-"+state.tpl+".png";a.href=cv.toDataURL("image/png");document.body.appendChild(a);a.click();a.remove();}catch(e){}
+  i++;setTimeout(step,550);}
+ step();}
+document.getElementById("planWeek").onclick=planWeek;
+function boot(){loadTemplate("seasonreview");}
+if(document.fonts&&document.fonts.ready){Promise.race([document.fonts.ready,new Promise(function(r){setTimeout(r,1200);})]).then(function(){if(document.fonts.load){try{document.fonts.load("900 100px Inter");document.fonts.load("500 40px Inter");}catch(e){}}boot();setTimeout(drawActive,200);});}else boot();
+boot();
+</script>
+<script src="/app-config.js"></script>
+<script src="/app-banner.js" defer></script>
+</body>
+</html>

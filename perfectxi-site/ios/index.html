@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Perfect XI for iPhone &ndash; Coming Soon</title>
+<meta name="description" content="Perfect XI is coming to iPhone. Draft real Premier League players, run a dynasty across decades, play the Champions League and the World Cup. No account, plays offline. Free.">
+<link rel="canonical" href="https://perfectxi.app/ios">
+<meta name="theme-color" content="#0F8D5B">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Perfect XI">
+<meta property="og:title" content="Perfect XI for iPhone &ndash; Coming Soon">
+<meta property="og:description" content="Draft real Premier League players from 1992/93 to 2026/27. Coming to iPhone. Play free in your browser today.">
+<meta property="og:url" content="https://perfectxi.app/ios">
+<meta property="og:image" content="https://perfectxi.app/og-image.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Perfect XI for iPhone &ndash; Coming Soon">
+<meta name="twitter:description" content="Draft real Premier League players. Coming to iPhone.">
+<meta name="twitter:image" content="https://perfectxi.app/og-image.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":["VideoGame","MobileApplication"],
+"name":"Perfect XI","operatingSystem":"iOS","applicationCategory":"GameApplication",
+"url":"https://perfectxi.app/ios","description":"Draft real Premier League players from 1992/93 to 2026/27, build your XI, simulate a 38-game season and run a multi-season career.",
+"offers":{"@type":"Offer","price":"0","priceCurrency":"GBP"},
+"author":{"@type":"Person","name":"Mo"}}
+</script>
+<style>
+:root{--bg:#0A0F0C;--s1:#101713;--s2:#17211B;--s3:#1F2C24;
+--bd:rgba(255,255,255,.08);--hi:rgba(255,255,255,.06);
+--t1:#E6EDE9;--t2:#A9B7AF;--t3:#6E7E74;--ac:#1FC57E;--gd:#D6B25E}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--t1);font-family:Inter,system-ui,sans-serif;
+ -webkit-font-smoothing:antialiased;line-height:1.6}
+body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+ background:radial-gradient(120% 80% at 50% -10%,rgba(31,197,126,.10),transparent 60%)}
+.wrap{max-width:760px;margin:0 auto;padding:28px 20px 70px}
+a{color:var(--ac)}
+.back{display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:11px;
+ background:var(--s2);border:1px solid var(--bd);color:var(--t2);text-decoration:none;
+ font-size:.86rem;font-weight:600}
+.badge{display:inline-block;margin:26px 0 12px;padding:7px 15px;border-radius:999px;
+ background:rgba(214,178,94,.12);border:1px solid rgba(214,178,94,.32);color:var(--gd);
+ font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem;
+ letter-spacing:.12em;text-transform:uppercase}
+h1{font-family:Anton,sans-serif;font-weight:400;letter-spacing:.01em;line-height:1.02;
+ font-size:clamp(2.4rem,1.7rem+3vw,4rem);margin:0 0 14px}
+h1 span{color:var(--ac)}
+.lede{font-size:clamp(1.02rem,.98rem+.3vw,1.2rem);color:var(--t2);max-width:56ch;margin:0 0 30px}
+.card{background:linear-gradient(180deg,var(--s2),var(--s1));border:1px solid var(--bd);
+ box-shadow:inset 0 1px 0 var(--hi),0 2px 10px rgba(0,0,0,.4);border-radius:18px;
+ padding:24px;margin:0 0 20px}
+.card h2{font-family:'Barlow Condensed',sans-serif;font-size:1.42rem;margin:0 0 6px;letter-spacing:.01em}
+.card p{margin:0 0 16px;color:var(--t2);font-size:.96rem}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+input[type=email]{flex:1 1 220px;min-width:0;padding:15px 16px;border-radius:12px;font-size:16px;
+ background:var(--bg);border:1px solid var(--bd);color:var(--t1);font-family:inherit}
+input[type=email]::placeholder{color:var(--t3)}
+input[type=email]:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 3px rgba(31,197,126,.2)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:15px 24px;
+ border:0;border-radius:12px;background:var(--ac);color:#04120B;font-weight:800;font-size:1rem;
+ font-family:inherit;cursor:pointer;text-decoration:none;min-height:52px}
+.btn:hover{filter:brightness(1.07)}
+.btn.alt{background:var(--s3);color:var(--t1);border:1px solid var(--bd)}
+.btn.wide{width:100%}
+.ok{display:none;margin-top:14px;padding:13px 15px;border-radius:11px;
+ background:rgba(31,197,126,.1);border:1px solid rgba(31,197,126,.3);color:var(--ac);font-size:.92rem}
+
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 22px}
+.nums div{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:16px 10px;text-align:center}
+.nums b{display:block;font-family:Anton,sans-serif;font-size:1.75rem;color:var(--ac);font-weight:400}
+.nums span{font-size:.74rem;color:var(--t3);text-transform:uppercase;letter-spacing:.09em;font-weight:600}
+.note{font-size:.85rem;color:var(--t3);margin-top:12px}
+footer{margin-top:34px;padding-top:20px;border-top:1px solid var(--bd);font-size:.87rem;color:var(--t3)}
+footer a{color:var(--t2);text-decoration:none;margin-right:15px}
+
+.sec{font-family:'Barlow Condensed',sans-serif;font-size:1.42rem;margin:34px 0 14px;
+ letter-spacing:.01em;color:var(--t1)}
+.sec:first-of-type{margin-top:30px}
+.feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));
+ gap:12px;margin:0 0 6px}
+.feat div{background:linear-gradient(180deg,var(--s1),#0D130F);border:1px solid var(--bd);
+ border-radius:14px;padding:17px 18px;box-shadow:inset 0 1px 0 var(--hi)}
+.feat b{display:block;font-family:'Barlow Condensed',sans-serif;font-size:1.14rem;
+ font-weight:700;margin-bottom:4px;color:var(--t1);letter-spacing:.01em}
+.feat span{color:var(--t2);font-size:.9rem;line-height:1.5;display:block}
+</style>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-title" content="Perfect XI">
+<meta name="msapplication-TileColor" content="#0F8D5B">
+</head>
+<body>
+<div class="wrap">
+<a class="back" href="/">&#8249; Play in your browser</a>
+
+<img src="/apple-touch-icon.png" alt="Perfect XI" width="88" height="88" style="display:block;border-radius:20px;margin:30px 0 0;box-shadow:0 10px 34px rgba(31,197,126,.30)"><div class="badge" id="pxBadge">Coming soon to iPhone</div>
+<h1>Perfect XI is coming to <span>iPhone</span></h1>
+<p class="lede">Everything you play here, plus Dynasty across decades, the Champions League, the World Cup and a cup of all-time squads. No account, plays offline. It is with Apple now.</p>
+
+<div class="nums">
+  <div><b>2,978</b><span>Players</span></div>
+  <div><b>712</b><span>Squads</span></div>
+  <div><b>51</b><span>Clubs</span></div>
+</div>
+
+<div class="card" id="pxNotify">
+  <h2>Get told when it lands</h2>
+  <p>One email on launch day. Nothing else, ever.</p>
+  <form class="row" id="pxForm" novalidate>
+    <input type="email" id="pxEmail" placeholder="you@email.com" autocomplete="email" required>
+    <button class="btn" type="submit">Notify me</button>
+  </form>
+  <div class="ok" id="pxOk">Done. You will hear from us the day it goes live.</div>
+  <p class="note">No account, no spam, unsubscribe in one click.</p>
+</div>
+
+<div class="card" id="pxLive" style="display:none">
+  <h2>Perfect XI is out</h2>
+  <p>Free on the App Store.</p>
+  <a class="btn wide" id="pxGet" href="#">Download for iPhone</a>
+</div>
+
+<h2 class="sec">What you can play</h2><div class="feat"><div><b>The draft</b><span>Eleven spins, five real footballers each time, one pick. Same club and same era play better together.</span></div><div><b>A full season</b><span>Thirty eight games on a real match engine, watched minute by minute or skipped to the table.</span></div><div><b>Dynasty</b><span>One club across decades. Ageing, retirements, transfers, contracts, an academy, staff, the stadium, the books and a board losing patience. Three careers kept apart.</span></div><div><b>The Champions League</b><span>The real thirty six team league phase, the play-off, two legged ties and a final. Playable on the website too.</span></div><div><b>The World Cup</b><span>Forty eight nations, the real 2026 format.</span></div><div><b>The Cup</b><span>Sixteen club seasons from any era in one bracket. The Invincibles against Guardiola's City.</span></div><div><b>The Daily</b><span>One draft a day, the same players for everybody, one attempt.</span></div><div><b>Duel a friend</b><span>A code you send them. Same players, same rules, best score wins.</span></div><div><b>The album</b><span>Eleven thousand cards, packs, sets and a hundred and eleven achievements.</span></div><div><b>The hall and the cabinet</b><span>Every season you have played, ranked, and the silverware you won doing it.</span></div></div><h2 class="sec">And the rest</h2><div class="feat"><div><b>Plays offline</b><span>The whole game, no signal needed.</span></div><div><b>No account</b><span>No sign in, no email, nothing to create.</span></div><div><b>Back it all up to a file</b><span>One tap saves everything, one tap puts it back on a new phone.</span></div><div><b>Haptics and sound</b><span>On every pick, every goal and every trophy.</span></div><div><b>Built for iPad</b><span>Turn it sideways and the pitch and the board sit side by side.</span></div><div><b>Share a finished XI</b><span>As an image.</span></div><div><b>The database</b><span>706 club seasons, 2,978 players, 51 clubs, 1992 to 2026.</span></div></div>
+
+<div class="card">
+  <h2>Play it right now, free</h2>
+  <p>The browser version is the full game and it is not going anywhere. Draft an XI in about three minutes.</p>
+  <a class="btn alt wide" href="/">Open Perfect XI</a>
+</div>
+
+<footer>
+  <a href="/">Game</a><a href='/how-to-play'>How to play</a><a href='/faq'>FAQ</a><a href="/press">Press</a><a href="/app-privacy">App privacy</a>
+  <p style="margin-top:14px">Unofficial fan project. Not affiliated with the Premier League or any club.</p>
+</footer>
+</div>
+
+<script src="/app-config.js"></script>
+<script>
+(function(){
+  var A=window.PXI_APP||{};
+  if(A.LIVE){
+    document.getElementById('pxNotify').style.display='none';
+    document.getElementById('pxLive').style.display='';
+    document.getElementById('pxBadge').textContent='Out now on iPhone';
+    document.getElementById('pxGet').href=window.pxiStoreLink('ios_page');
+  }
+  var f=document.getElementById('pxForm');
+  if(f) f.addEventListener('submit',function(e){
+    e.preventDefault();
+    var em=document.getElementById('pxEmail').value.trim();
+    if(!em||em.indexOf('@')<1) return;
+    /* remember locally so the site can greet them on launch day even if
+       the form endpoint is not configured yet */
+    try{localStorage.setItem('pxi_notify','1');}catch(err){}
+    if(A.NOTIFY_ENDPOINT){
+      fetch(A.NOTIFY_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json',
+        'Accept':'application/json'},body:JSON.stringify({email:em,source:'ios_page'})}).catch(function(){});
+    }
+    f.style.display='none';
+    document.getElementById('pxOk').style.display='block';
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- Google AdSense: replace ca-pub-4069943095077854 with your real publisher ID -->
+<meta name="google-adsense-account" content="ca-pub-4069943095077854">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4069943095077854" crossorigin="anonymous"></script>
+<title>How to Play Perfect XI – Full Guide & Tips</title>
+<meta name="description" content="A complete step-by-step guide to Perfect XI: spinning for a club, drafting your all-time XI, simulating a 38-game season, the game modes, and beginner tips.">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#0F8D5B">
+<meta name="author" content="Perfect XI">
+<link rel="canonical" href="https://perfectxi.app/how-to-play.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Perfect XI">
+<meta property="og:title" content="How to Play Perfect XI – Full Guide &amp; Tips">
+<meta property="og:description" content="A complete step-by-step guide to Perfect XI: spinning for a club, drafting your all-time XI, simulating a 38-game season, the game modes, and beginner tips.">
+<meta property="og:url" content="https://perfectxi.app/how-to-play.html">
+<meta property="og:image" content="https://perfectxi.app/og-image.png">
+<meta property="og:locale" content="en_GB">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@perfectxigame">
+<meta name="twitter:title" content="How to Play Perfect XI – Full Guide &amp; Tips">
+<meta name="twitter:description" content="A complete step-by-step guide to Perfect XI: spinning for a club, drafting your all-time XI, simulating a 38-game season, the game modes, and beginner tips.">
+<meta name="twitter:image" content="https://perfectxi.app/og-image.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a1610;--bg2:#0e1c14;--card:#12211a;--card2:#16281f;
+  --b1:#243a2c;--b2:#2f4c3a;--t1:#f5f7fa;--t2:#a9b1bf;--t3:#646d7c;
+  --green:#1fc57e;--gbg:rgba(255,255,255,.035);--gold:#d6b25e;--blue:#5b8bf5;--red:#ee4f63;
+  --pill:999px;--r2:10px;--r3:14px;--r4:18px;
+  --disp:"Barlow Condensed",'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--t1);
+  line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(120% 60% at 50% -12%,rgba(31,197,126,.10),transparent 55%),
+             linear-gradient(180deg,#0a120d 0%,#070d09 56%,#0d0f13 100%)}
+a{color:var(--green);text-decoration:none}
+a:hover{text-decoration:underline}
+::selection{background:rgba(31,197,126,.3)}
+/* header */
+.hdr{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:13px 20px;background:rgba(5,9,7,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--b1)}
+.hdr::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(31,197,126,.55),transparent);pointer-events:none}
+.brand{font-family:var(--disp);font-weight:800;letter-spacing:.05em;text-transform:uppercase;font-size:1.15rem;color:var(--t1);line-height:1}
+.brand span{color:var(--green);text-shadow:0 0 22px rgba(31,197,126,.35)}
+.brand:hover{text-decoration:none}
+.nav{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.nav a{color:var(--t2);font-size:.76rem;font-weight:700;padding:7px 11px;border-radius:var(--pill);
+  text-transform:uppercase;letter-spacing:.05em;transition:color .14s,background .14s}
+.nav a:hover{color:var(--t1);background:rgba(255,255,255,.05);text-decoration:none}
+.nav a.play{color:var(--green);border:1px solid rgba(31,197,126,.45)}
+.nav a.active{color:var(--t1);background:rgba(255,255,255,.06)}
+/* layout */
+.wrap{max-width:760px;margin:0 auto;padding:32px 20px 72px}
+@keyframes pgRise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.wrap>*{animation:pgRise .45s cubic-bezier(.2,.7,.3,1) both}
+.wrap>*:nth-child(2){animation-delay:.05s}
+.wrap>*:nth-child(3){animation-delay:.1s}
+.wrap>*:nth-child(4){animation-delay:.15s}
+.wrap>*:nth-child(n+5){animation-delay:.18s}
+.eyebrow{display:inline-block;font-family:var(--disp);font-size:.78rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--green);border:1px solid rgba(31,197,126,.45);border-radius:var(--pill);padding:6px 15px;margin-bottom:18px}
+h1{font-family:var(--disp);font-size:clamp(2.9rem,10vw,4.4rem);font-weight:800;line-height:.94;letter-spacing:.01em;
+  text-transform:uppercase;margin-bottom:16px}
+h1 span{color:var(--green);text-shadow:0 0 30px rgba(31,197,126,.3)}
+.lead{font-size:1.06rem;color:var(--t2);max-width:640px;margin-bottom:28px}
+.crumb{font-size:.72rem;color:var(--t3);margin-bottom:22px;letter-spacing:.02em}
+.crumb a{color:var(--t3)}
+/* cards */
+.sec{background:var(--card);border:1px solid var(--b1);border-radius:var(--r4);padding:24px 22px;margin-bottom:16px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.sec h2{font-family:var(--disp);font-size:1.7rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+  margin-bottom:14px;color:var(--t1);position:relative;padding-bottom:10px}
+.sec h2::after{content:'';position:absolute;left:0;bottom:0;width:42px;height:2px;background:var(--green);
+  border-radius:1px;box-shadow:0 0 12px rgba(31,197,126,.5)}
+.sec h3{font-size:1.02rem;font-weight:700;margin:18px 0 8px;color:var(--t1)}
+.sec p{color:var(--t2);margin-bottom:13px;font-size:.95rem}
+.sec p:last-child{margin-bottom:0}
+.sec ul,.sec ol{color:var(--t2);font-size:.95rem;margin:0 0 13px 1.1em}
+.sec li{margin-bottom:7px}
+.sec strong{color:var(--t1);font-weight:700}
+/* steps */
+.step{display:flex;gap:14px;align-items:flex-start;background:rgba(255,255,255,.02);border:1px solid var(--b1);
+  border-radius:var(--r3);padding:15px 16px;margin-bottom:10px;transition:border-color .14s}
+.step:hover{border-color:var(--b2)}
+.step-n{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--green);color:#06130c;
+  font-family:var(--disp);font-weight:800;font-size:1.05rem;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 16px rgba(31,197,126,.3)}
+.step h3{margin:0 0 4px;font-size:.96rem}
+.step p{margin:0;font-size:.88rem}
+/* accordions */
+details{border:1px solid var(--b1);border-radius:var(--r3);margin-bottom:10px;background:var(--card);overflow:hidden;
+  transition:border-color .14s}
+details:hover{border-color:var(--b2)}
+details[open]{border-color:rgba(31,197,126,.35)}
+summary{cursor:pointer;list-style:none;padding:15px 16px;font-weight:700;font-size:.95rem;color:var(--t1);
+  display:flex;justify-content:space-between;align-items:center;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'+';color:var(--green);font-family:var(--disp);font-weight:800;font-size:1.35rem;flex-shrink:0;line-height:1}
+details[open] summary::after{content:'\2212'}
+details .a{padding:0 16px 16px;color:var(--t2);font-size:.92rem}
+details .a p{margin-bottom:10px}
+details .a p:last-child{margin-bottom:0}
+/* buttons & chips */
+.cta{display:inline-flex;align-items:center;gap:8px;background:var(--green);color:#06130c;
+  font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.05em;
+  font-size:1.1rem;padding:13px 28px;border-radius:var(--pill);margin-top:6px;
+  box-shadow:0 6px 22px rgba(31,197,126,.28),inset 0 1px 0 rgba(255,255,255,.28);
+  transition:transform .12s,filter .12s}
+.cta:hover{text-decoration:none;filter:brightness(1.07)}
+.cta:active{transform:translateY(1px)}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 2px}
+.tag{font-size:.72rem;font-weight:700;color:var(--t2);background:var(--card2);border:1px solid var(--b1);
+  border-radius:var(--pill);padding:5px 12px}
+.note{font-size:.82rem;color:var(--t3);background:rgba(255,255,255,.02);border:1px solid var(--b1);
+  border-left:3px solid var(--gold);border-radius:var(--r2);padding:12px 14px;margin:14px 0}
+/* tables */
+table.gl{width:100%;border-collapse:collapse;font-size:.9rem;margin-bottom:6px;font-variant-numeric:tabular-nums}
+table.gl td{border-bottom:1px solid var(--b1);padding:10px 8px;color:var(--t2);vertical-align:top}
+table.gl td:first-child{color:var(--t1);font-weight:700;white-space:nowrap;width:34%}
+/* footer */
+.foot{border-top:1px solid var(--b1);background:#081209;padding:34px 20px 46px;position:relative}
+.foot::before{content:'';position:absolute;left:0;right:0;top:-1px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(31,197,126,.35),transparent)}
+.foot-in{max-width:760px;margin:0 auto}
+.foot-brand{font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--t1);
+  font-size:1.05rem;margin-bottom:14px}
+.foot-brand span{color:var(--green)}
+.foot-cols{display:flex;flex-wrap:wrap;gap:26px 50px;margin-bottom:22px}
+.foot-col h4{font-family:var(--disp);font-size:.76rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--t3);margin-bottom:10px}
+.foot-col a{display:block;color:var(--t2);font-size:.86rem;margin-bottom:8px}
+.foot-col a:hover{color:var(--t1)}
+.disclaimer{font-size:.74rem;color:var(--t3);line-height:1.6;border-top:1px solid var(--b1);padding-top:18px;margin-top:4px}
+.copy{font-size:.74rem;color:var(--t3);margin-top:12px}
+:focus-visible{outline:2px solid var(--green);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.wrap>*{animation:none}}
+@media (max-width:560px){.nav a{padding:6px 8px;font-size:.72rem}.wrap{padding:24px 16px 56px}h1{font-size:clamp(2.6rem,13vw,3.6rem)}}
+
+/* SEASON 26/27 REFRESH */
+body::before{background:
+ radial-gradient(85% 46% at 50% -12%, rgba(46,190,130,.22), transparent 62%),
+ linear-gradient(180deg,#12291e 0%,#0d1d15 48%,#081209 100%)}
+h1 span{text-shadow:none}
+.sec h2::after{box-shadow:none;width:28px}
+.step-n{box-shadow:none}
+.cta{box-shadow:0 1px 0 rgba(255,255,255,.12) inset;border-radius:12px}
+.eyebrow{border-color:#2f4c3a;color:#a9b1bf;letter-spacing:.14em}
+.hdr::after,.foot::before{background:linear-gradient(90deg,transparent,rgba(31,197,126,.22),transparent)}
+.sec,details,.step{border-radius:14px}
+
+/* ===== S27-E: BACKGROUND ON BODY (the fix) ===== */
+html{background:#081209}
+body{background:
+ radial-gradient(85% 46% at 50% -12%, rgba(46,190,130,.22), transparent 62%),
+ linear-gradient(180deg,#12291e 0%,#0d1d15 48%,#081209 100%) !important}
+body::before{content:none!important;display:none!important}
+
+/* ===== S28 DESIGN SYSTEM (site pages) ===== */
+:root{--bg:#0A0F0C;--surface-1:#101713;--surface-2:#17211B;--border:rgba(255,255,255,.08);
+--border-strong:rgba(255,255,255,.14);--border-top-hi:rgba(255,255,255,.06);
+--t1:#E6EDE9;--t2:#A9B7AF;--t3:#6E7E74;--green:#1FC57E;--gold:#D6B25E;
+--e2:0 1px 2px rgba(0,0,0,.5),0 4px 8px rgba(3,10,6,.4);--focus-ring:0 0 0 3px rgba(31,197,126,.45);}
+html{background:#080C0A}
+body{background:radial-gradient(120% 90% at 50% -10%,#14201A 0%,#0A0F0C 60%),linear-gradient(180deg,#0C1310,#080C0A)!important;color:#E6EDE9}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.035;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E")}
+.wrap,.hdr,.foot{position:relative;z-index:1}
+.hdr{background:rgba(10,15,12,.72)!important;backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);
+ border-bottom:1px solid var(--border)!important;padding-top:calc(13px + env(safe-area-inset-top))!important}
+.sec,details,.step{background:linear-gradient(180deg,#101713,#0D1410)!important;border:1px solid var(--border)!important;
+ box-shadow:inset 0 1px 0 var(--border-top-hi),var(--e2)!important;border-radius:20px!important}
+.cta{background:linear-gradient(180deg,#26D086,#15B270)!important;color:#062A18!important;border:0!important;
+ min-height:52px;border-radius:14px!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -1px 0 rgba(0,0,0,.18),0 1px 2px rgba(0,0,0,.5),0 6px 16px rgba(21,178,112,.28)!important;
+ transition:transform .1s cubic-bezier(0,0,.2,1),box-shadow .15s ease,filter .15s ease}
+.cta:hover{filter:brightness(1.06);text-decoration:none}
+.cta:active{transform:translateY(1px) scale(.985)}
+a:focus-visible,button:focus-visible{outline:0;box-shadow:var(--focus-ring)}
+table.gl td{font-variant-numeric:tabular-nums lining-nums;border-bottom:1px solid var(--border)!important}
+.tag{background:var(--surface-2)!important;border:1px solid var(--border)!important}
+.eyebrow{border-color:var(--border-strong)!important;color:var(--t2)!important;letter-spacing:.14em!important}
+h1 span{color:var(--green)}
+html{-webkit-text-size-adjust:100%}
+body{touch-action:manipulation}
+input,select,textarea{font-size:16px}
+</style>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "HowTo", "name": "How to play Perfect XI", "description": "A step-by-step guide to playing Perfect XI, the free Premier League draft-and-simulation game.", "step": [{"@type": "HowToStep", "position": 1, "name": "Choose your settings", "text": "Pick a formation and a range of seasons, then start the run."}, {"@type": "HowToStep", "position": 2, "name": "Spin for a club and season", "text": "A wheel lands on a real club from a real season for you to draft from."}, {"@type": "HowToStep", "position": 3, "name": "Draft a player", "text": "Pick one player from that squad into an open position they actually played."}, {"@type": "HowToStep", "position": 4, "name": "Complete your eleven", "text": "Repeat until all eleven positions are filled."}, {"@type": "HowToStep", "position": 5, "name": "Simulate the season", "text": "Run a full 38-game season and read your finish, points, odds and results."}]}</script>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-title" content="Perfect XI">
+<meta name="msapplication-TileColor" content="#0F8D5B">
+</head>
+<body>
+<header class="hdr"><a class="brand" href="/">PERFECT <span>XI</span></a><nav class="nav" aria-label="Primary"><a href="/" class="play">Play</a><a class='active' href='/how-to-play'>How to Play</a><a href='/guides'>Guides</a><a href='/faq'>FAQ</a><a href='/about'>About</a><a href='/contact'>Contact</a></nav></header>
+<main class="wrap">
+
+<p class="crumb"><a href="/">Home</a> / How to Play</p>
+<span class="eyebrow">Beginner's guide</span>
+<h1>How to play <span>Perfect XI</span></h1>
+<p class="lead">A complete walkthrough of a single run — from your first spin to reading your simulated season.
+The whole loop takes a couple of minutes, and you'll have it memorised after one game.</p>
+<div class="sec"><h2>Beyond your first season</h2>
+<p>Once you’ve finished a season, the game opens up. Start a <a href='/guides/dynasty-guide'><strong>Dynasty</strong></a> from the results screen to carry your XI into a multi-season career with ages, transfers and a demanding board. Play the one-attempt <a href='/guides/daily-duels'><strong>Daily Challenge</strong></a> on the same seeded spins as everyone else, send a <strong>duel code</strong> to settle arguments head-to-head, or take on the <strong>weekly event</strong>’s rule twist. Building smart matters everywhere: <a href='/guides/chemistry'><strong>chemistry links</strong></a> between club-mates and era-mates are worth up to +3 OVR every match.</p></div>
+<a class="cta" href="/">▶ Play Perfect XI free</a>
+
+<div class="sec">
+<h2>The core loop in five steps</h2>
+<div class="step"><div class="step-n">1</div><div><h3>Choose your settings</h3>
+<p>Pick a formation (the game offers seven classic shapes) and, if you like, narrow the range of seasons you'll
+draft from. Then start the run.</p></div></div>
+<div class="step"><div class="step-n">2</div><div><h3>Spin for a club and season</h3>
+<p>A wheel lands on a real club from a real campaign — say Arsenal's Invincibles, Newcastle in the 1990s, or
+Manchester City under Guardiola. Stronger squads come up more often, never filler. You get a limited number of
+re-rolls for the whole game, so save them for a spin you genuinely can't use.</p></div></div>
+<div class="step"><div class="step-n">3</div><div><h3>Draft a player into a position</h3>
+<p>From the squad you landed on, pick one player and slot them into an open position in your formation. Players
+can only fill positions they actually played, so a winger won't go in goal. Each choice is a trade-off: take a
+world-class name now, or hold out and hope a better fit for an empty slot comes along.</p></div></div>
+<div class="step"><div class="step-n">4</div><div><h3>Complete your eleven</h3>
+<p>Repeat until all eleven positions are filled. As your XI takes shape you'll see a running overall rating, so
+you can tell whether you're building a relegation scrap or a genuine title challenger.</p></div></div>
+<div class="step"><div class="step-n">5</div><div><h3>Simulate the season</h3>
+<p>Lock in your XI and the engine plays a full 38-game league season against the rest of the division. You'll get
+a final league position, a points total, a full results grid, and a set of awards — then you decide whether to
+chase something better.</p></div></div>
+</div>
+
+<div class="sec">
+<h2>Reading your result</h2>
+<p>After the simulation you get several things to chew on:</p>
+<ul>
+<li><strong>Overall rating</strong> — your headline number, based on the ratings of your eleven and how well each
+player fits the position you placed them in. A balanced team scores better than one carried by a couple of stars.</li>
+<li><strong>Projected finish and points</strong> — where your XI is expected to land in the table and how many
+points it should take.</li>
+<li><strong>Season odds</strong> — your rough chances of winning the league, going unbeaten, or achieving the
+perfect 38-0.</li>
+<li><strong>Results and fixtures</strong> — a game-by-game grid of wins, draws and losses, so you can see exactly
+where a perfect run slipped away.</li>
+<li><strong>Awards</strong> — top scorer, standout performers, and other highlights from your simulated season.</li>
+</ul>
+</div>
+
+<div class="sec">
+<h2>Modes</h2>
+<h3>Normal vs Expert</h3>
+<p>In Normal mode, ratings are shown as you build, so you always know how strong a pick is. In Expert mode the
+numbers are hidden — you see only names and positions and draft purely on football knowledge, with the ratings and
+final record revealed at the end. Expert is the connoisseur's challenge.</p>
+<h3>World Cup mode</h3>
+<p>Build a World XI by drafting one player from each nation you roll, then take your mixed eleven through the
+tournament — or pick a single country and try to win it all. A different twist on the same satisfying draft loop.</p>
+<h3>Versus</h3>
+<p>Draft two teams and play them head-to-head in a single match, with a shareable code so a friend can take on your
+exact line-up.</p>
+</div>
+
+<div class="sec">
+<h2>Tips for your first few runs</h2>
+<ul>
+<li>Build the <strong>spine</strong> first — a strong goalkeeper, centre-backs, a central midfielder and a striker
+matter more than a fourth flair player.</li>
+<li>Don't hoard attackers. A season is won down the middle, and an unbalanced XI is punished by the engine.</li>
+<li>Spend re-rolls on spins you truly can't use, not on a squad that's merely "not your favourite".</li>
+<li>Mind position fit — a great player out of position drags your rating down.</li>
+</ul>
+<p>Want to go deeper? Read the <a href='/guides/unbeaten-xi'>38-0 strategy guide</a> and the
+<a href='/guides/formations'>formations guide</a>.</p>
+</div>
+
+<div class="sec">
+<h2>Key terms</h2>
+<table class="gl">
+<tr><td>Spin / wheel</td><td>The draw that lands you on a real club and season to draft from.</td></tr>
+<tr><td>Draft</td><td>Choosing one player from the squad you landed on for an open position.</td></tr>
+<tr><td>Re-roll / swap</td><td>A limited token to skip a spin you can't use (club swap or era swap).</td></tr>
+<tr><td>Overall (OVR)</td><td>Your team's headline rating, weighted by position fit and balance.</td></tr>
+<tr><td>Spine</td><td>The central core of the team — goalkeeper, centre-backs, central midfield, striker.</td></tr>
+<tr><td>38-0</td><td>A perfect season: 38 games, 38 wins, no draws and no defeats.</td></tr>
+<tr><td>Expert mode</td><td>Drafting with ratings hidden, on football knowledge alone.</td></tr>
+</table>
+</div>
+
+</main>
+<footer class="foot"><p style="margin:16px 0 0;font-size:.9rem;color:#A9B7AF">Perfect XI is coming to iPhone. <a href="/ios" style="color:#1FC57E">Get told when it lands</a>.</p><div class="foot-in">
+<div class="foot-brand">PERFECT <span>XI</span></div>
+<div class="foot-cols">
+<div class="foot-col"><h4>Play</h4>
+<a href="/">Premier League draft</a><a href='/how-to-play'>How to play</a><a href='/guides'>Strategy guides</a></div>
+<div class="foot-col"><h4>Learn</h4>
+<a href='/guides/unbeaten-xi'>The 38-0 guide</a><a href='/guides/formations'>Formations guide</a><a href='/faq'>FAQ</a></div>
+<div class="foot-col"><h4>Site</h4>
+<a href='/about'>About</a><a href='/contact'>Contact</a><a href='/changelog'>Updates</a><a href='/privacy'>Privacy policy</a><a href='/terms'>Terms of use</a></div>
+<div class="foot-col"><h4>Contact</h4>
+<a href="mailto:perfectxigame@gmail.com">perfectxigame@gmail.com</a><a href="https://x.com/perfectxigame" rel="noopener">@perfectxigame on X</a></div>
+</div>
+<p class="disclaimer">Perfect XI is an unofficial, independent, fan-made game. It is not affiliated with,
+endorsed by, sponsored by, or associated with the Premier League, FIFA, any football club, competition,
+or official ratings provider. Club names, competition names and player names are the property of their
+respective owners and are used here for identification and editorial purposes only. Player and team ratings
+are a fan interpretation created for gameplay, derived from a public football dataset, and are not official.</p>
+<p class="copy">&copy; 2026 Perfect XI. All rights reserved.</p>
+</div><p class="disclaimer" style="margin-top:14px">Perfect XI is an unofficial, independent fan project. It is not affiliated with, endorsed by, or connected to the Premier League, the Football Association, UEFA, FIFA, or any football club or player. Club and player names are used descriptively for the purposes of a factual football database. No club crests, kits, badges or player images are used.</p></footer>
+<script src="/app-config.js"></script>
+<script src="/app-banner.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+# Perfect XI
+
+User-agent: *
+Allow: /
+
+# Google Search: must be able to fetch JS/CSS to render the game
+User-agent: Googlebot
+Allow: /
+Allow: /*.js$
+Allow: /*.css$
+
+# AdSense crawler only obeys rules named for it
+User-agent: Mediapartners-Google
+Allow: /
+
+User-agent: AdsBot-Google
+Allow: /
+
+User-agent: AdsBot-Google-Mobile
+Allow: /
+
+Sitemap: https://perfectxi.app/sitemap.xml

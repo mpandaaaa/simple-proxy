@@ -1,0 +1,29 @@
+PERFECT XI — "unavailable players not greying out" fix
+======================================================
+
+THE BUG
+-------
+Player cards use class .pc, which runs a reveal animation:
+  .pc{animation:pcReveal .32s ... both;}
+That animation ends at opacity:1 with fill-mode "both", and a CSS animation
+overrides the normal opacity declaration in:
+  .pc.grey{opacity:.3;cursor:not-allowed;}
+So unavailable players (.grey) were forced back to full opacity and looked
+tappable. The draft logic was already correct — only the styling was overridden.
+
+THE FIX (2 lines of CSS)
+------------------------
+In your LIVE index.html, find this exact line (it appears once):
+
+  .pc{animation:pcReveal .32s cubic-bezier(.22,1,.36,1) both;}
+
+…and paste these lines immediately AFTER it:
+
+  .pc.grey{animation:none;opacity:.32;pointer-events:none;cursor:not-allowed;filter:saturate(.7);}
+  .pc.grey::after{display:none;}
+
+That's it. This cancels the reveal animation on unavailable cards (so the dim
+sticks), makes them non-interactive (pointer-events:none), and removes the
+shine sweep on greyed rows. It fixes greying in ALL modes at once — the
+Premier League draft, World Cup nations draft, and Versus — because they all
+render cards with the same `'pc' + (canPlay ? '' : ' grey')` class.

@@ -1,0 +1,7 @@
+# Perfect XI ads.txt
+# ------------------------------------------------------------------
+# Replace pub-4069943095077854 with YOUR AdSense publisher ID (digits
+# only, no "ca-" prefix here) after you are approved. It must match the
+# ca-pub-4069943095077854 used in the page <head> script.
+# ------------------------------------------------------------------
+google.com, pub-4069943095077854, DIRECT, f08c47fec0942fa0

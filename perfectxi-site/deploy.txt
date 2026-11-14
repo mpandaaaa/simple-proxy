@@ -1,0 +1,28 @@
+PERFECT XI - SEASON 26/27 : PREMIUM UPDATE (v15)
+================================================
+Deploy the whole folder. Service worker cache is bumped (pxi-s27-15),
+so returning players get the update on their second visit.
+Hard-refresh once yourself after deploying.
+
+NEW IN THIS BUILD
+  Match engine   Dixon-Coles bivariate Poisson (home advantage 1.31x,
+                 low-score correction rho -0.13), expected goals tracked
+                 per season. Validated: 2.75 goals/game, champions ~90pts,
+                 mid-table ~52, relegation ~30 - real Premier League shape.
+  Progression    XP + levels, coins, 3 daily + 2 weekly missions (seeded,
+                 same for everyone each day), daily streak with bonuses.
+  Ascension      6 escalating difficulty tiers, unlocked by winning titles.
+  Collection     Tracks every club-season seen and every player drafted.
+  Unlocks        Coin shop: badges, kit themes, extra reroll, titles.
+  Game feel      Web Audio match sounds with pitch variation, screen shake,
+                 number pop, particle bursts, haptics.
+  Accessibility  Colourblind modes (deuter/prot/trit), reduced motion,
+                 text scaling, sound toggle - all in Progress > Settings.
+  Progress hub   New home screen entry with everything above.
+
+POST-DEPLOY CHECK
+  1. Hard refresh -> What's New card appears.
+  2. Home: new "Progress - Level 1" row. Open it: missions, collection,
+     ascension, unlocks, settings all render.
+  3. Play a season: sounds fire, XP/coins awarded at full time.
+  4. Progress > Settings: toggle reduced motion and colourblind mode.
