@@ -369,6 +369,8 @@ export type SeasonResult = {
   /** as "4-0", or null if the season contained no win at all */
   biggestWin: string | null;
   playerStats: Record<string, PlayerStat>;
+  /** points taken off for the books, once it has been applied. Dynasty only */
+  ded?: number;
 };
 
 const GOAL_WEIGHT: Record<Position, number> = {

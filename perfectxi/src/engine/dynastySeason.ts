@@ -1,5 +1,5 @@
 import { mulberry32, type Rng } from './rng';
-import type { SeasonResult } from './sim';
+import { seasonGrade, type SeasonResult } from './sim';
 import {
   ageOne,
   careerSeed,
@@ -129,16 +129,49 @@ function clamp(v: number, a: number, b: number): number {
 }
 
 /**
+ * Take a points deduction off a season that has been played.
+ *
+ * A summer that breaks the spending rules says the points come off next
+ * season, and this is where they do: the club's points go down, the table
+ * is sorted again, and the finish and the grade follow from the table that
+ * results. Everything downstream, the objective, Europe and relegation,
+ * reads the finish, so all of it feels the deduction.
+ *
+ * Safe to call more than once. A result that already carries its
+ * deduction comes back as it is, which matters because the season screen
+ * and the summer both show the same result.
+ */
+export function applyDeduction(result: SeasonResult, points: number): SeasonResult {
+  if (result.ded !== undefined) return result;
+  const ded = Math.max(0, Math.min(Math.round(points || 0), result.pts));
+  if (!ded) return { ...result, ded: 0 };
+  const pts = result.pts - ded;
+  const table = result.table.map((r) => (r.isYou ? { ...r, pts } : r));
+  table.sort((a, b) => b.pts - a.pts || b.gf - b.ga - (a.gf - a.ga) || b.gf - a.gf);
+  const position = table.findIndex((r) => r.isYou) + 1;
+  return {
+    ...result,
+    table,
+    pts,
+    position,
+    grade: seasonGrade(position, pts, result.losses),
+    ded,
+  };
+}
+
+/**
  * Everything that happens between the last whistle and the first day of
  * pre-season.
  *
  * `result` is the league season the match engine just played with this
  * squad. The dynasty comes back changed, with a report of what changed.
+ * Any deduction announced last summer is taken off it first.
  */
 export function processSeasonEnd(
   d: Dynasty,
-  result: SeasonResult,
+  played: SeasonResult,
 ): { dynasty: Dynasty; report: SummerReport } {
+  const result = applyDeduction(played, d.psrHit);
   const rnd: Rng = mulberry32(careerSeed(d.seed, d.year + 1000));
   const next: Dynasty = {
     ...d,
@@ -267,7 +300,7 @@ export function processSeasonEnd(
     met,
     rev: ledger.rev,
     profit: ledger.profit,
-    ded: ledger.deduction,
+    ded: result.ded ?? 0,
   };
   // The season screen already banked this year the moment the last whistle
   // went, so that closing the app between the final match and the summer

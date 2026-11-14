@@ -14,7 +14,7 @@ export { matchRating, expectedRating, perfBeta, development, seasonRatings } fro
 export { STYLES, MENTALITIES, FIT, tacticDeltas, posFit, canFill, slotAccepts, placeName, benchCover, effectiveRating, misfits, setPieceShare, learnTactic, changeShape, } from './dynastyTactics.js';
 export { STAFF, STAR_NAMES, staffCost, staffUpgradeCost, staffWages, devMultiplier, injuryMultiplier, trainingMultiplier, SEAT_COST, STADIUM_STEP, ticketYield, matchdayRevenue, stadiumCost, stadiumPayback, wageBill as clubWageBill, amortTotal, revenue, closeBooks, nextBudget, baseBudget, RETAIL_COST, FAN_FLOOR, FAN_CEIL, startingFans, fanChange, nextFans, retailMultiplier, merchRevenue, } from './dynastyClub.js';
 export { seasonInjuries, makeYouth, intakeSize, scoutRange, renewalTerms, expiring, autoRenews, market, sign, sell, promote, releaseYouth, emptySlots, tidySquad, } from './dynastySquad.js';
-export { processSeasonEnd } from './dynastySeason.js';
+export { applyDeduction, processSeasonEnd } from './dynastySeason.js';
 export { EMPTY_TACTIC, EMPTY_STAFF } from './dynasty.js';
 export { MORALE_BASE, MORALE_UNHAPPY, moraleFit, moraleWord, moraleAfterSeason, offersFor, spendCap, acceptOffer, rejectOffer, seasonCards, LOAN_CLUBS, LOAN_LIMIT, loanClubFor, loanSeason, autoLoanPicks, averageWage, reputation, jobOffers, jobAsk, } from './dynastyPeople.js';
 export { styleOf, playerStyle, styleFit, squadStyleFit, styleMisfits, STYLE_EDGE, } from './dynastyStyles.js';

@@ -36,6 +36,7 @@ import { sfx } from '../../src/ui/sound';
 import {
   leagueFor,
   clubColour,
+  applyDeduction,
   asSquad,
   chemBonus,
   livePosition,
@@ -96,7 +97,12 @@ export default function DynastySeason() {
     if (xi.length < 11) return null;
     const rnd = mulberry32((career.seed ^ Math.imul(career.year, 0x9e3779b1)) >>> 0);
     const squad = asSquad(xi);
-    return simulateSeason(squad, career.tactic.form, chemBonus(squad), rnd, career.club, career.league);
+    /* Any deduction from last summer comes off here, so the table, the
+       finish and the points on this screen are the ones the summer uses. */
+    return applyDeduction(
+      simulateSeason(squad, career.tactic.form, chemBonus(squad), rnd, career.club, career.league),
+      career.psrHit,
+    );
   }, [career?.seed, career?.year]);
 
   const total = result ? result.matches.length : 38;
@@ -120,7 +126,9 @@ export default function DynastySeason() {
       else if (m.oc === 'draw') d++;
       else l++;
     }
-    const pts = w * 3 + d;
+    /* The deduction comes off as you go, never below nothing. By the last
+       match this is the same number the table holds. */
+    const pts = Math.max(0, w * 3 + d - (result?.ded ?? 0));
     return {
       w,
       d,
@@ -186,7 +194,7 @@ export default function DynastySeason() {
               met: result.position <= d.objective.target,
               rev: 0,
               profit: 0,
-              ded: 0,
+              ded: result.ded ?? 0,
             },
           ],
     }));

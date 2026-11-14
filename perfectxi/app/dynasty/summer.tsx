@@ -35,6 +35,7 @@ import {
   livePosition,
   mulberry32,
   ordinal,
+  applyDeduction,
   processSeasonEnd,
   simulateSeason,
   starters,
@@ -167,7 +168,12 @@ export default function Summer() {
        once: this runs on the way into the summer, not on every render. */
     awardDynasty(out.dynasty);
     clearSeasonResult();
-    setState({ report: out.report, result, before: career, after: out.dynasty });
+    setState({
+      report: out.report,
+      result: applyDeduction(result, career.psrHit),
+      before: career,
+      after: out.dynasty,
+    });
 
     haptic(out.report.sacked ? 'error' : out.report.met ? 'success' : 'warning');
     sfx(

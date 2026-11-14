@@ -163,7 +163,7 @@ export {
   expiring, autoRenews, market, sign, sell, promote, releaseYouth, emptySlots, tidySquad,
 } from './dynastySquad';
 export type { Listing, RenewalTerms } from './dynastySquad';
-export { processSeasonEnd } from './dynastySeason';
+export { applyDeduction, processSeasonEnd } from './dynastySeason';
 export type { SummerReport } from './dynastySeason';
 export type { Tactic, Staff, Infra, Ledger, SeasonRow, AllTime, InboxItem } from './dynasty';
 export { EMPTY_TACTIC, EMPTY_STAFF } from './dynasty';
