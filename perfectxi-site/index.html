@@ -3676,25 +3676,36 @@ body{min-height:100%}
 <meta name="msapplication-TileColor" content="#0F8D5B">
 <meta name="msapplication-TileImage" content="/icon-192.png">
 <script src="/kovakits.js"></script>
+<link rel="stylesheet" href="/s27.css">
 </head>
 <body>
 
 <div id="home" class="screen active">
-<div class="hp-wrap">
-  <div class="hp-hero n27">
-  <div class="n27-top">
-    <div class="n27-brand">PERFECT <span>XI</span></div>
-    <button class="n27-season" id="pxSeasonChip" onclick="pxWhatsNew(true)">SEASON 26/27</button>
-  </div>
-  <div class="n27-cap">&#9733; Unofficial fan draft game &middot; free to play</div>
-  <div class="hp-btns n27-stack">
-
-<button class="n27-hero" onclick="show('ss')">
-<div class="n27-hero-k">All-Time Premier League</div>
-<div class="n27-hero-t">START A DRAFT</div>
-<div class="n27-hero-s">Spin real club-seasons &middot; build your XI &middot; simulate 38 games</div>
-<span class="n27-hero-arr">&#8250;</span></button>
-
+<div class="hp-wrap s27-home">
+  <div class="hp-hero s27">
+  <nav class="s27-top" aria-label="Perfect XI">
+    <a class="s27-brand" href="/" aria-label="Perfect XI home">PERFECT <span>XI</span></a>
+    <div class="s27-links"><a href="/how-to-play">How to play</a><a href="/guides">Guides</a><a href="/faq">FAQ</a><a href="/ios">iPhone app</a></div>
+    <button class="s27-season" id="pxSeasonChip" onclick="pxWhatsNew(true)">Season 26/27</button>
+  </nav>
+  <section class="s27-hero">
+    <div class="s27-copy">
+      <div class="s27-pill"><i></i>1992 to 2026 &middot; 35 seasons &middot; 51 clubs</div>
+      <h1 class="s27-h1">Build the <em>perfect XI</em></h1>
+      <p class="s27-lede">Spin a real club season and sign one player from it. Do it eleven times, then play all 38 games and see where your XI finishes.</p>
+      <div class="s27-ctas">
+        <button class="s27-cta" onclick="show('ss')">Start a draft<span aria-hidden="true">&#8250;</span></button>
+        <button class="s27-cta2" onclick="PXDAILY.open()">Today&rsquo;s Daily</button>
+      </div>
+      <div class="s27-note">&#9733; Unofficial fan game &middot; free to play in your browser</div>
+    </div>
+    <div class="s27-art" aria-hidden="true">
+      <div class="s27-card c1"><b>92</b><small>ATT</small><div class="w">AS</div><strong>Shearer</strong><span>Blackburn 94/95</span></div>
+      <div class="s27-card c2"><b>95</b><small>ATT</small><div class="w">TH</div><strong>Henry</strong><span>Arsenal 04/05</span></div>
+      <div class="s27-card c3"><b>93</b><small>ATT</small><div class="w">EH</div><strong>Haaland</strong><span>Man City 23/24</span></div>
+    </div>
+  </section>
+  <div class="hp-btns s27-grid">
 <button class="mp-flag" onclick="mpEnter()">
 <span class="mp-flag-top"><span class="mp-flag-dot"></span>Live multiplayer</span>
 <span class="mp-flag-t">PLAY YOUR MATES</span>
@@ -3788,7 +3799,7 @@ body{min-height:100%}
 </div>
 </div>
 </div>
-<div class="px-statstrip"><div><b>51</b><span>Clubs</span></div><div><b>712</b><span>Squads</span></div><div><b>2,978</b><span>Players</span></div><div><b>35</b><span>Seasons</span></div></div>
+<div class="px-statstrip"><div><b>51</b><span>Clubs</span></div><div><b>708</b><span>Squads</span></div><div><b>2,978</b><span>Players</span></div><div><b>35</b><span>Seasons</span></div></div>
   </div>
 </div>
 
@@ -3796,7 +3807,7 @@ body{min-height:100%}
 
   <div class="hp-sec">
     <h2 class="hp-sec-title">What is Perfect XI?</h2>
-    <p class="hp-body">Perfect XI is a free English top-flight draft game where you build an all-time XI from 11,077 player seasons spanning every Premier League campaign from 1992 to 2026.</p>
+    <p class="hp-body">Perfect XI is a free English top-flight draft game where you build an all-time XI from 11,052 player seasons spanning every Premier League campaign from 1992 to 2026.</p>
     <p class="hp-body">Spin the wheel to land on a real Premier League club from a specific season, draft players from that squad, and build your team one position at a time. Mix modern superstars with legends from the 90s, 2000s, 2010s and beyond to create your ultimate XI.</p>
     <p class="hp-body">Once your squad is complete, simulate a full 38-game season and see how far your XI can go. Matches are simulated with a Dixon-Coles model &mdash; the same statistical framework used in professional football analytics &mdash; with attack and defence ratings, home advantage and expected goals, so the results behave like real football rather than dice rolls. Can you go the season unbeaten?</p>
     <p class="hp-body">Want a different challenge? Jump into <strong>World Cup 2026</strong> mode and take a nation &mdash; or a hand-picked World XI &mdash; through a group stage and knockouts all the way to the trophy.</p>
