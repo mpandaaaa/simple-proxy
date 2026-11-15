@@ -1,0 +1,225 @@
+/* =====================================================================
+   PERFECT XI HOME, SEASON 26/27
+   Play first: the draft and your mates sit at the top on a phone, every
+   mode one tap below. Dark surfaces, one green accent, mode colour only
+   as a hint (an icon, a label, an edge). On a big screen the home page
+   becomes a proper two column board instead of a stretched phone.
+   Everything is scoped to #home .x27 so the game screens are untouched.
+   ===================================================================== */
+
+#home .x27{
+  --x-ink:#F3F7F5; --x-mute:#A6B4AC; --x-dim:#6B7A72;
+  --x-line:rgba(255,255,255,.075); --x-line2:rgba(255,255,255,.13);
+  --x-card:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.018));
+  --x-green:#1FC57E; --x-green-hi:#45E3A0;
+  --x-r:20px;
+  width:100%; max-width:1200px; margin-inline:auto; padding:0 16px 64px;
+}
+#home .x27 *{box-sizing:border-box}
+#home .x27 .x27-grid>.hm-card,#home .x27 .x27-side>.hm-card{margin:0}
+
+/* ---------- top bar ---------- */
+#home .x27-hero{padding:0}
+#home .x27-top{display:flex;align-items:center;gap:12px;padding:16px 0 18px}
+#home .x27-brand{display:flex;align-items:center;gap:10px;text-decoration:none;
+  font-family:var(--disp);font-weight:800;font-size:1.42rem;letter-spacing:.05em;color:var(--x-ink);line-height:1}
+#home .x27-brand img{width:30px;height:30px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.5)}
+#home .x27-brand b{color:var(--x-green);font-weight:800}
+#home .x27-nav{display:none}
+#home .x27-season{margin-left:auto;display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+  font-family:var(--disp);font-weight:700;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--x-ink);background:rgba(31,197,126,.08);border:1px solid rgba(31,197,126,.35);
+  border-radius:999px;padding:8px 14px;min-height:36px}
+#home .x27-season i{width:7px;height:7px;border-radius:50%;background:var(--x-green);
+  box-shadow:0 0 0 3px rgba(31,197,126,.18)}
+#home .x27-season:hover{border-color:var(--x-green)}
+
+/* ---------- the board: one column on a phone ---------- */
+#home .x27-board{display:flex;flex-direction:column;align-items:stretch;gap:12px;max-width:none;margin:0}
+#home .x27-board>*,#home .x27-main>*,#home .x27-side>*{width:auto;align-self:stretch}
+#home .x27-main,#home .x27-side{display:contents}
+#home .x27-main>*{order:4}
+#home .x27-side>*{order:5}
+#home .x27-play{order:1}
+#home .x27-mates{order:2}
+#home .x27-side>#pxDailyHome{order:3}
+#home .x27-board>*{margin:0}
+#home #pxDailyHome:empty{display:none}
+
+/* ---------- START A DRAFT: the pitch ---------- */
+#home .x27-play{position:relative;overflow:hidden;isolation:isolate;display:block;width:100%;
+  text-align:left;cursor:pointer;color:var(--x-ink);font:inherit;
+  min-height:232px;padding:22px 20px 20px;border-radius:24px;
+  border:1px solid rgba(69,227,160,.32);
+  background:
+    radial-gradient(120% 90% at 100% 0%,rgba(69,227,160,.30),transparent 55%),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.028) 0 38px,transparent 38px 76px),
+    linear-gradient(165deg,#178553 0%,#0E5634 48%,#093822 100%);
+  box-shadow:0 1px 0 rgba(255,255,255,.14) inset,0 24px 48px -24px rgba(31,197,126,.55),0 2px 6px rgba(0,0,0,.35);
+  transition:transform .18s cubic-bezier(.2,.8,.3,1),box-shadow .18s}
+#home .x27-play:hover{box-shadow:0 1px 0 rgba(255,255,255,.16) inset,0 28px 56px -22px rgba(31,197,126,.7),0 2px 6px rgba(0,0,0,.35)}
+#home .x27-play:active{transform:scale(.985)}
+#home .x27-play:focus-visible,#home .x27-mates:focus-visible{outline:2px solid var(--x-green-hi);outline-offset:3px}
+#home .x27-pitch{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+#home .x27-pitch *{fill:none;stroke:rgba(255,255,255,.11);stroke-width:2}
+#home .x27-play-copy{position:relative;display:flex;flex-direction:column;align-items:flex-start}
+/* on a phone the cards sit beside the title, the words run full width under them */
+#home .x27-play-k,#home .x27-play-t{max-width:54%}
+#home .x27-play-s{margin-top:22px!important}
+#home .x27-play-k{font-family:var(--disp);font-weight:700;font-size:.72rem;letter-spacing:.2em;
+  text-transform:uppercase;color:rgba(214,255,234,.78)}
+#home .x27-play-t{font-family:'Anton',var(--disp);font-weight:400;text-transform:uppercase;
+  font-size:2.6rem;line-height:.92;letter-spacing:.005em;color:#fff;margin-top:8px;
+  text-shadow:0 2px 14px rgba(0,0,0,.25)}
+#home .x27-play-s{font-size:.86rem;line-height:1.45;color:rgba(232,255,244,.82);margin-top:10px}
+#home .x27-play-cta{display:inline-flex;align-items:center;gap:8px;margin-top:16px;
+  font-family:var(--disp);font-weight:800;font-size:1rem;letter-spacing:.06em;text-transform:uppercase;
+  color:#05150D;background:#fff;border-radius:999px;padding:11px 18px 11px 20px;
+  box-shadow:0 6px 18px -6px rgba(0,0,0,.45)}
+#home .x27-play-cta svg{width:16px;height:16px;transition:transform .18s}
+#home .x27-play:hover .x27-play-cta svg{transform:translateX(3px)}
+
+/* three real cards, fanned like a hand */
+#home .x27-fan{position:absolute;right:-8px;top:10px;width:168px;height:150px;pointer-events:none}
+#home .x27-pc{position:absolute;left:50%;top:50%;width:84px;height:116px;margin:-58px 0 0 -42px;
+  border-radius:14px;padding:9px 8px 8px;display:flex;flex-direction:column;align-items:center;
+  font-family:var(--disp);color:#EAF6EF;
+  background:linear-gradient(170deg,#1B2B22,#0D1712);border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 14px 28px -10px rgba(0,0,0,.65)}
+#home .x27-pc b{align-self:flex-start;font-family:var(--num,var(--disp));font-weight:800;font-size:1.5rem;line-height:1;color:var(--x-green-hi)}
+#home .x27-pc i{align-self:flex-start;font-style:normal;font-weight:700;font-size:.58rem;letter-spacing:.14em;opacity:.7;margin-top:1px}
+#home .x27-pc em{font-style:normal;width:34px;height:34px;border-radius:50%;margin-top:-4px;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.82rem;letter-spacing:.04em;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+#home .x27-pc strong{font-weight:800;font-size:.86rem;letter-spacing:.03em;text-transform:uppercase;margin-top:6px;line-height:1;white-space:nowrap}
+#home .x27-pc small{font-family:Inter,sans-serif;font-size:.54rem;font-weight:600;opacity:.66;margin-top:3px;white-space:nowrap}
+#home .x27-pc.pc-l{transform:translate(-40px,10px) rotate(-11deg)}
+#home .x27-pc.pc-r{transform:translate(40px,10px) rotate(11deg)}
+#home .x27-pc.pc-c{transform:translateY(-8px);color:#2A1F07;
+  background:linear-gradient(165deg,#FBE7A6 0%,#E3BF62 46%,#B48A34 100%);border-color:rgba(255,240,190,.8);
+  box-shadow:0 18px 34px -10px rgba(0,0,0,.7),0 0 0 1px rgba(0,0,0,.15),0 0 30px -6px rgba(240,200,100,.45)}
+#home .x27-pc.pc-c b{color:#2A1F07}
+#home .x27-pc.pc-c em{background:rgba(42,31,7,.1);border-color:rgba(42,31,7,.18)}
+#home .x27-play:hover .pc-l{transform:translate(-46px,8px) rotate(-14deg)}
+#home .x27-play:hover .pc-r{transform:translate(46px,8px) rotate(14deg)}
+#home .x27-play:hover .pc-c{transform:translateY(-12px)}
+#home .x27-pc{transition:transform .3s cubic-bezier(.2,.8,.3,1)}
+
+/* ---------- PLAY YOUR MATES ---------- */
+#home .x27-mates{position:relative;overflow:hidden;isolation:isolate;display:flex;flex-direction:column;gap:16px;
+  width:100%;text-align:left;cursor:pointer;font:inherit;color:var(--x-ink);
+  padding:22px 20px 20px;border-radius:24px;border:1px solid rgba(229,72,77,.28);
+  background:
+    radial-gradient(90% 120% at 0% 0%,rgba(229,72,77,.20),transparent 60%),
+    linear-gradient(180deg,#1A1012,#120B0D);
+  box-shadow:0 1px 0 rgba(255,255,255,.07) inset,0 18px 40px -26px rgba(229,72,77,.6);
+  transition:transform .18s cubic-bezier(.2,.8,.3,1),border-color .18s}
+#home .x27-mates:hover{border-color:rgba(229,72,77,.6)}
+#home .x27-mates:active{transform:scale(.988)}
+#home .x27-mates-copy{display:flex;flex-direction:column;align-items:flex-start}
+#home .x27-live{display:inline-flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:700;
+  font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:#FF7A7E}
+#home .x27-live i{width:8px;height:8px;border-radius:50%;background:#E5484D;animation:x27pulse 1.8s ease-out infinite}
+@keyframes x27pulse{0%{box-shadow:0 0 0 0 rgba(229,72,77,.65)}70%{box-shadow:0 0 0 9px rgba(229,72,77,0)}100%{box-shadow:0 0 0 0 rgba(229,72,77,0)}}
+#home .x27-mates-t{font-family:'Anton',var(--disp);text-transform:uppercase;font-size:2.1rem;line-height:.95;color:#FFF4F4;margin-top:8px}
+#home .x27-mates-s{font-size:.86rem;line-height:1.5;color:#CDB4B6;margin-top:9px;max-width:46ch}
+#home .x27-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+#home .x27-chips span{font-size:.7rem;font-weight:700;letter-spacing:.03em;color:#FFD0D1;
+  padding:6px 11px;border-radius:999px;background:rgba(229,72,77,.12);border:1px solid rgba(229,72,77,.28)}
+#home .x27-mates-side{display:flex;flex-direction:column;gap:12px}
+#home .x27-mates-cta{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 18px;border-radius:14px;
+  font-family:var(--disp);font-weight:800;font-size:1.02rem;letter-spacing:.06em;text-transform:uppercase;
+  color:#fff;background:#E5484D;box-shadow:0 8px 20px -8px rgba(229,72,77,.7),0 1px 0 rgba(255,255,255,.2) inset}
+#home .x27-mates:hover .x27-mates-cta{background:#EE5459}
+
+/* ---------- section labels ---------- */
+#home .x27-sec{display:flex;align-items:center;gap:12px;margin:14px 2px 0;
+  font-family:var(--disp);font-weight:700;font-size:.74rem;letter-spacing:.2em;text-transform:uppercase;color:var(--x-dim)}
+#home .x27-sec::after{content:'';flex:1;height:1px;background:var(--x-line)}
+
+/* ---------- mode cards: the original shape, refined ---------- */
+#home .x27-grid{display:grid;grid-template-columns:1fr;gap:10px}
+#home .x27 .hm-card{border-radius:18px;background:var(--x-card);border:1px solid var(--x-line);
+  box-shadow:0 1px 0 rgba(255,255,255,.04) inset;padding:15px 16px;gap:14px;
+  transition:border-color .18s,background .18s,transform .18s cubic-bezier(.2,.8,.3,1)}
+#home .x27 .hm-card::before{opacity:.35}
+#home .x27 .hm-card:hover{border-color:var(--edge,var(--x-line2));
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.025))}
+#home .x27 .hm-card:hover .hm-arr{transform:translateX(3px)}
+#home .x27 .hm-arr{transition:transform .18s}
+#home .x27 .hm-t{font-size:1.22rem}
+#home .x27 .hm-s{font-size:.82rem;color:var(--x-mute)}
+
+/* ---------- stats ---------- */
+#home .x27 .px-statstrip{margin:6px 0 0}
+#home .x27 .px-statstrip div{background:var(--x-card);border-color:var(--x-line)}
+
+/* ---------- the reading below the board ---------- */
+#home .x27>.hp-sec,#home .x27>.hp-divider,#home .x27>.hp-footer-cta,#home .x27>.hp-community{max-width:760px;margin-left:auto;margin-right:auto}
+
+/* a phone shows two cards, so the words underneath have room */
+@media (max-width:719px){
+  #home .x27-fan{top:0;right:4px;width:150px}
+  #home .x27-pc.pc-l{display:none}
+  #home .x27-pc.pc-r{transform:translate(28px,-2px) rotate(9deg)}
+  #home .x27-pc.pc-c{transform:translate(-14px,-6px) rotate(-4deg)}
+  #home .x27-play:hover .pc-r{transform:translate(32px,-4px) rotate(11deg)}
+  #home .x27-play:hover .pc-c{transform:translate(-14px,-10px) rotate(-5deg)}
+}
+
+/* =====================================================================
+   TABLET AND UP
+   ===================================================================== */
+@media (min-width:720px){
+  #home .x27{padding:0 28px 80px}
+  #home .x27-top{padding:22px 0 24px}
+  #home .x27-nav{display:flex;gap:4px;margin-left:28px}
+  #home .x27-nav a{color:var(--x-mute);text-decoration:none;font-size:.88rem;font-weight:600;padding:8px 12px;border-radius:10px}
+  #home .x27-nav a:hover{color:var(--x-ink);background:rgba(255,255,255,.05)}
+  #home .x27-play{min-height:300px;padding:34px 34px 30px;border-radius:28px}
+  #home .x27-play-t{font-size:4rem}
+  #home .x27-play-s{font-size:.98rem;max-width:40ch}
+  #home .x27-play-copy{max-width:58%}
+  #home .x27-play-k,#home .x27-play-t{max-width:none}
+  #home .x27-play-s{margin-top:12px!important}
+  #home .x27-fan{right:4%;top:50%;width:280px;height:280px;transform:translateY(-50%)}
+  #home .x27-pc{width:124px;height:172px;margin:-86px 0 0 -62px;border-radius:18px;padding:12px 10px 10px}
+  #home .x27-pc b{font-size:2.1rem}
+  #home .x27-pc i{font-size:.66rem}
+  #home .x27-pc em{width:48px;height:48px;font-size:1.05rem;margin-top:-2px}
+  #home .x27-pc strong{font-size:1.12rem;margin-top:9px}
+  #home .x27-pc small{font-size:.66rem}
+  #home .x27-pc.pc-l{transform:translate(-62px,14px) rotate(-11deg)}
+  #home .x27-pc.pc-r{transform:translate(62px,14px) rotate(11deg)}
+  #home .x27-play:hover .pc-l{transform:translate(-70px,10px) rotate(-14deg)}
+  #home .x27-play:hover .pc-r{transform:translate(70px,10px) rotate(14deg)}
+  #home .x27-mates{flex-direction:row;align-items:flex-end;justify-content:space-between;gap:24px;padding:28px 28px 26px;border-radius:28px}
+  #home .x27-mates-t{font-size:2.6rem}
+  #home .x27-mates-side{flex:0 0 240px}
+  #home .x27-grid.g2{grid-template-columns:1fr 1fr}
+}
+
+/* =====================================================================
+   DESKTOP: a two column board
+   ===================================================================== */
+@media (min-width:1080px){
+  #home .x27{padding:0 40px 96px}
+  #home .x27-board{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+  #home .x27-main,#home .x27-side{display:flex;flex-direction:column;gap:12px;min-width:0}
+  #home .x27-main>*,#home .x27-side>*,#home .x27-side>#pxDailyHome{order:0}
+  #home .x27-sec:first-child{margin-top:0}
+  #home .x27-play{min-height:340px}
+  #home .x27-play-t{font-size:4.6rem}
+  #home .x27-grid.g3{grid-template-columns:repeat(3,1fr)}
+  /* three across: stack the card so nothing is cut short */
+  #home .x27-grid.g3 .hm-card{flex-direction:column;align-items:flex-start;gap:12px;padding:18px}
+  #home .x27-grid.g3 .hm-b{width:100%}
+  #home .x27-grid.g3 .hm-s{white-space:normal}
+  #home .x27-grid.g3 .hm-arr{position:absolute;right:16px;top:20px}
+  #home .x27-side .hm-s,#home .x27-grid.g2 .hm-s,#home .x27-side .px-more-t{white-space:normal}
+  #home .x27-side .px-statstrip{grid-template-columns:repeat(2,1fr)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  #home .x27 *{transition:none!important;animation:none!important}
+}

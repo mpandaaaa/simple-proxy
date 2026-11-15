@@ -1,5 +1,5 @@
 /* Perfect XI — offline service worker */
-var CACHE='pxi-s67-1';
+var CACHE='pxi-s68-1';
 var CORE=['/','/index.html','/manifest.json','/icon-192.png','/icon-512.png','/about.html','/contact.html','/how-to-play.html','/guides.html','/faq.html',
   '/favicon.ico',
   '/favicon-16x16.png',

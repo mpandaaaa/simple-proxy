@@ -1,0 +1,34 @@
+/* =====================================================================
+   PERFECT XI, SEASON 26/27: THE READING PAGES
+   Guides, FAQ, how to play, about, contact, legal and press pages share
+   the home page's header and display type. Loaded after each page's own
+   styles.
+   ===================================================================== */
+
+/* the header: the logo and the name on one line, the menu on one row */
+.hdr{gap:16px!important;padding:12px max(16px,calc((100% - 1120px)/2))!important;
+  background:rgba(8,13,10,.84)!important;border-bottom:1px solid rgba(255,255,255,.075)!important}
+.hdr .brand{display:inline-flex!important;align-items:center;gap:9px;white-space:nowrap;flex:0 0 auto;
+  font-size:1.2rem!important;letter-spacing:.05em!important}
+.hdr .brand::before{content:'';width:28px;height:28px;border-radius:8px;flex:0 0 auto;
+  background:url(/favicon-96x96.png) center/cover no-repeat;box-shadow:0 2px 10px rgba(0,0,0,.5)}
+.hdr .brand span{text-shadow:none!important}
+.hdr .nav{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;min-width:0;
+  -webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
+.hdr .nav::-webkit-scrollbar{display:none}
+.hdr .nav a{white-space:nowrap;flex:0 0 auto;text-transform:none!important;letter-spacing:0!important;
+  font-size:.84rem!important;font-weight:600!important;padding:8px 12px!important;border-radius:10px!important}
+.hdr .nav a.play{order:-1;color:#04170D!important;background:#1FC57E!important;border:none!important;
+  font-weight:800!important;border-radius:999px!important;padding:8px 16px!important;margin-right:4px}
+.hdr .nav a.play:hover{background:#2AD68B!important}
+@media (min-width:720px){
+  .hdr .nav{-webkit-mask-image:none;mask-image:none;overflow:visible}
+  .hdr .nav a.play{order:9;margin-left:6px}
+}
+
+/* titles in the home page's display face */
+h1{font-family:'Anton','Barlow Condensed',sans-serif!important;font-weight:400!important;letter-spacing:.005em!important;line-height:.98!important}
+h1 span{text-shadow:none!important}
+
+/* buttons and cards follow the home page */
+.btn,.cta,a.cta{border-radius:999px}

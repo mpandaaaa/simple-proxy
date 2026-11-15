@@ -1,0 +1,142 @@
+/* =====================================================================
+   PERFECT XI, SEASON 26/27: EVERY SCREEN
+   The same language as the home page, carried through the whole game:
+   one header bar, one back button, one primary button, the same dark
+   surfaces and hairlines, green for go, a mode's own colour as a hint.
+   On a big screen each screen sits in a proper column, and the draft
+   and the season use two columns instead of stretching edge to edge.
+   Loaded after the game's own styles, so it wins where it has to.
+   ===================================================================== */
+
+:root{
+  --x-ink:#F3F7F5; --x-mute:#A6B4AC; --x-dim:#6B7A72;
+  --x-line:rgba(255,255,255,.075); --x-line2:rgba(255,255,255,.13);
+  --x-panel:#0F1813; --x-panel2:#141F19;
+  --x-card:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.018));
+  --x-green:#1FC57E; --x-green-hi:#45E3A0; --x-red:#E5484D;
+  --x-col:760px;
+}
+
+/* ---------- 1. the header bar, the same on every screen ---------- */
+.screen:not(#home) .hdr,.screen .sv-hdr{
+  position:sticky!important;top:0!important;z-index:40!important;
+  width:100%!important;box-sizing:border-box!important;margin:0!important;
+  min-height:60px;padding:10px max(16px,calc((100% - var(--x-col))/2))!important;
+  display:flex;align-items:center;gap:12px;
+  background:rgba(8,13,10,.82)!important;
+  -webkit-backdrop-filter:blur(16px) saturate(150%)!important;backdrop-filter:blur(16px) saturate(150%)!important;
+  border-bottom:1px solid var(--x-line)!important;box-shadow:none!important}
+.screen:not(#home) .hdr .hr-row,.screen .sv-hdr .hr-row{margin-left:auto}
+
+/* back / home: one quiet pill everywhere */
+.screen .home-btn,.screen .back-btn,.screen .hdr .ib:first-child:not(:only-child){
+  display:inline-flex!important;align-items:center!important;gap:6px!important;
+  height:38px!important;min-height:38px!important;padding:0 15px 0 12px!important;margin:0!important;
+  border-radius:999px!important;background:rgba(255,255,255,.05)!important;
+  border:1px solid var(--x-line2)!important;box-shadow:none!important;
+  color:var(--x-ink)!important;font:600 .86rem/1 Inter,system-ui,sans-serif!important;
+  letter-spacing:0!important;text-transform:none!important;white-space:nowrap;cursor:pointer;
+  transition:background .15s,border-color .15s}
+.screen .home-btn:hover,.screen .back-btn:hover{background:rgba(255,255,255,.09)!important;border-color:rgba(255,255,255,.22)!important}
+.screen .back-btn{position:sticky;top:0;z-index:40;align-self:flex-start;margin:12px 16px 0!important}
+.screen .ib{width:38px!important;height:38px!important;min-height:38px!important;border-radius:50%!important;
+  background:rgba(255,255,255,.05)!important;border:1px solid var(--x-line2)!important;box-shadow:none!important;
+  color:var(--x-ink)!important;display:inline-flex!important;align-items:center;justify-content:center;padding:0!important}
+
+/* the screen title in the bar */
+.screen .hdr .hl-l,.screen .sv-hdr .hl-l{font-family:var(--disp)!important;font-weight:700!important;font-size:.66rem!important;
+  letter-spacing:.2em!important;text-transform:uppercase;color:var(--x-dim)!important}
+.screen .hdr .hl-v,.screen .sv-hdr .hl-v{font-family:var(--disp)!important;font-weight:800!important;font-size:1.06rem!important;
+  letter-spacing:.03em!important;color:var(--x-ink)!important;text-transform:uppercase}
+
+/* ---------- 2. one primary button ---------- */
+.screen .cta,.ov .cta,.screen .plhub-play,.mo .cta{
+  background:linear-gradient(180deg,#2AD68B,#18B571)!important;color:#04170D!important;
+  border:none!important;border-radius:16px!important;
+  box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 10px 26px -12px rgba(31,197,126,.75)!important;
+  font-family:var(--disp)!important;font-weight:800!important;letter-spacing:.08em!important;text-transform:uppercase!important}
+.screen .cta:hover,.screen .plhub-play:hover{filter:brightness(1.06)}
+.screen .cta:active,.screen .plhub-play:active{transform:scale(.985)}
+
+/* ---------- 3. the pop-ups and sheets ---------- */
+.ov .mo{background:linear-gradient(180deg,#141F19,#0C1410)!important;
+  border:1px solid rgba(255,255,255,.09)!important;
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.8),0 1px 0 rgba(255,255,255,.06) inset!important}
+.ov{background:rgba(3,7,5,.66)!important}
+
+/* ---------- 4. the season in progress: green for go, not pink ---------- */
+#sv .plhub-hero{background:radial-gradient(120% 120% at 50% 0%,rgba(31,197,126,.22),transparent 60%),var(--x-card)!important;
+  border:1px solid rgba(69,227,160,.22)!important;box-shadow:0 1px 0 rgba(255,255,255,.05) inset!important}
+#sv .plhub-bar-fill{background:linear-gradient(90deg,#1FC57E,#45E3A0)!important}
+#sv .plhub-sim{background:rgba(255,255,255,.04)!important;border:1px solid var(--x-line2)!important;color:var(--x-ink)!important;border-radius:14px!important}
+
+/* buttons that turned green need dark words to be readable */
+.vs-sim,.vs-pick-go,.wcm-modal.pl .wcm-cont{color:#04170D!important}
+.vs-sim{box-shadow:0 10px 26px -12px rgba(31,197,126,.75)!important}
+
+/* ---------- 5. the setup screen: a full size pitch ---------- */
+#ss .mpit{width:100%!important;max-height:none!important;aspect-ratio:6/5!important;border-radius:20px!important;margin-top:14px!important;
+  background:repeating-linear-gradient(180deg,rgba(255,255,255,.03) 0 12.5%,transparent 12.5% 25%),linear-gradient(180deg,#14532F,#0F4426 50%,#0C3A20)!important;
+  border:1px solid rgba(69,227,160,.22)!important}
+#ss .mpit-dot{width:36px!important;height:36px!important;font-size:.6rem!important}
+#ss .mpit-cc{width:64px!important;height:64px!important}
+#ss .s-big{font-family:'Anton',var(--disp)!important;font-weight:400!important;letter-spacing:.01em!important}
+#ss .fp{border-radius:12px!important;transition:border-color .15s,background .15s}
+
+/* ---------- 6. big screen titles share the home page display face ---------- */
+.r-ti,.wc-title,.sc-title{font-family:'Anton',var(--disp)!important;font-weight:400!important;letter-spacing:.01em!important}
+
+/* ---------- 7. the get in touch block: a slim footer, not a wall ---------- */
+.screen:not(#home) .hp-community{margin:28px auto 8px!important;padding:20px 16px!important;width:100%;box-sizing:border-box;
+  border-top:1px solid var(--x-line);opacity:.92}
+.screen:not(#home) .hp-community-title{font-size:1rem!important}
+.screen:not(#home) .hp-community-sub{font-size:.8rem!important}
+
+/* =====================================================================
+   BIG SCREENS: every screen gets a proper column
+   ===================================================================== */
+@media (min-width:720px){
+  .screen:not(#home)>*:not(.hdr):not(.sv-hdr):not(.back-btn):not(.x27-sdL):not(.x27-sdR){
+    width:100%;max-width:var(--x-col)!important;margin-left:auto!important;margin-right:auto!important;box-sizing:border-box}
+  #ss .s-body{max-width:var(--x-col)!important}
+}
+
+@media (min-width:1080px){
+  /* game screens get the wide board, reading screens stay a comfortable width */
+  #ss,#sd,#sv,#wcHome,#wcTour,#wcResult,#wcSummary,#ucl,#dyHub,#dyMarket{--x-col:1120px}
+  #ss .back-btn{margin-left:max(16px,calc((100% - var(--x-col))/2))!important}
+  /* the result screen's share bar sits in the column, not across the whole screen */
+  .sr-bar{padding-left:max(16px,calc((100vw - 760px)/2))!important;padding-right:max(16px,calc((100vw - 760px)/2))!important}
+  /* a taller pitch on a big screen so the slots read clearly */
+  #sd .dpit{height:auto!important;aspect-ratio:7/6}
+  #sd .dpit .dpit-m,#sd .dpit .dpit-rows{height:100%!important}
+
+  /* setup: formation and pitch on the left, every other choice on the right */
+  #ss .s-body{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:40px;row-gap:22px;align-items:start;padding-top:8px}
+  #ss .s-body>*{grid-column:2;margin:0!important}
+  #ss .s-body>:first-child{grid-column:1;grid-row:1/span 7;position:sticky;top:76px}
+  #ss .s-body>.hp-community{grid-column:1/-1}
+  #ss .mpit{aspect-ratio:9/10!important}
+  #ss .s-hero{padding-bottom:16px}
+
+  /* draft: the pitch stays in view on the left, picking happens on the right */
+  #sd.active{display:grid!important;grid-template-columns:minmax(16px,1fr) minmax(0,660px) 420px minmax(16px,1fr);column-gap:24px;align-content:start}
+  #sd.active>*{grid-column:2/4}
+  #sd.active>.hdr{grid-column:1/-1}
+  #sd .x27-sdL{grid-column:2;position:sticky;top:76px;align-self:start;display:flex;flex-direction:column;gap:12px;padding-top:12px}
+  #sd .x27-sdR{grid-column:3;align-self:start;padding-top:12px;min-width:0}
+  #sd .x27-sdL>*,#sd .x27-sdR>*{margin-left:0!important;margin-right:0!important;max-width:none!important}
+  #sd .x27-sdR .plist,#sd .x27-sdR .pick-hdr{padding-left:0!important;padding-right:0!important}
+  #sd.active>.hp-community{grid-column:2/4}
+
+  /* season: your team and the buttons on the left, the fixtures on the right */
+  #sv .sv-body{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:repeat(5,auto) 1fr;
+    column-gap:28px;align-items:start}
+  #sv .sv-body>*{grid-column:1;min-width:0}
+  #sv .sv-body>.plhub-sect{grid-column:2;grid-row:1;margin-top:6px}
+  #sv .sv-body>.plhub-fix{grid-column:2;grid-row:2/span 6;max-height:calc(100vh - 150px);overflow:auto;
+    position:sticky;top:120px;padding-right:6px;scrollbar-width:thin}
+}
+@media (max-width:1079px){
+  #sd .x27-sdL,#sd .x27-sdR{display:contents}
+}

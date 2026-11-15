@@ -1204,21 +1204,21 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 .wct-stat b{color:#fff;font-weight:900;}
 
 /* ===== PL-THEMED LIVE MATCH MODAL ===== */
-.wcm-modal.pl .wcm-card{border-color:rgba(233,0,82,.32);}
-.wcm-modal.pl .wcm-top{background:linear-gradient(160deg,#2a0a3d 0%,#37003c 55%,#1c0726 100%);border-bottom-color:rgba(233,0,82,.4);}
-.wcm-modal.pl .wcm-rnd{color:#ff2d78;}
+.wcm-modal.pl .wcm-card{border-color:rgba(31,197,126,.32);}
+.wcm-modal.pl .wcm-top{background:linear-gradient(160deg,#0C2A1C 0%,#0F3524 55%,#08170F 100%);border-bottom-color:rgba(31,197,126,.4);}
+.wcm-modal.pl .wcm-rnd{color:#45E3A0;}
 .wcm-modal.pl .wcm-clock{color:#00ff85;}
-.wcm-modal.pl .wcm-clock.ft{color:#ff2d78;}
-.wcm-modal.pl .wcm-cont{background:linear-gradient(100deg,#e90052,#ff2d78);color:#fff;}
-.wcm-modal.pl .wcm-ev.goal.me{background:rgba(233,0,82,.10);}
+.wcm-modal.pl .wcm-clock.ft{color:#45E3A0;}
+.wcm-modal.pl .wcm-cont{background:linear-gradient(100deg,#17B26F,#45E3A0);color:#fff;}
+.wcm-modal.pl .wcm-ev.goal.me{background:rgba(31,197,126,.10);}
 .wcm-modal.pl .wcm-ev.goal.opp{background:rgba(0,255,133,.05);}
-.fix2-watch{flex-shrink:0;margin-left:10px;width:30px;height:30px;border-radius:50%;border:1px solid rgba(233,0,82,.4);background:rgba(233,0,82,.12);color:#ff2d78;font-size:.66rem;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;padding-left:2px;}
+.fix2-watch{flex-shrink:0;margin-left:10px;width:30px;height:30px;border-radius:50%;border:1px solid rgba(31,197,126,.4);background:rgba(31,197,126,.12);color:#45E3A0;font-size:.66rem;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;padding-left:2px;}
 .fix2-watch:active{opacity:.7;}
 
 /* ===== VERSUS MODE ===== */
 .cta-ghost{display:block;width:100%;margin-top:10px;padding:14px;background:var(--card);border:1px solid var(--b1);border-radius:var(--r2);color:var(--t2);font-size:.92rem;font-weight:700;font-family:inherit;cursor:pointer;}
 .cta-ghost:active{background:var(--card2);opacity:.9;}
-.vs-save{border-color:rgba(233,0,82,.32);color:#ff2d78;}
+.vs-save{border-color:rgba(31,197,126,.32);color:#45E3A0;}
 .vs-body{padding:16px 14px 60px;max-width:560px;margin:0 auto;width:100%;}
 .vs-intro{margin-bottom:16px;}
 .vs-intro-t{font-size:1.15rem;font-weight:900;color:var(--t1);}
@@ -1226,19 +1226,19 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 .vs-arena{display:flex;align-items:stretch;gap:8px;margin-bottom:18px;}
 .vs-team{flex:1;min-width:0;background:radial-gradient(120% 120% at 50% 0%,rgba(255,255,255,.05),transparent 62%),var(--card);border:1.5px solid var(--b1);border-radius:18px;padding:18px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;min-height:148px;transition:border-color .15s,transform .1s;text-align:center;}
 .vs-team:active{transform:scale(.985);}
-.vs-team.a.filled{border-color:rgba(233,0,82,.5);background:radial-gradient(120% 120% at 50% 0%,rgba(233,0,82,.14),transparent 62%),var(--card);}
+.vs-team.a.filled{border-color:rgba(31,197,126,.5);background:radial-gradient(120% 120% at 50% 0%,rgba(31,197,126,.14),transparent 62%),var(--card);}
 .vs-team.b.filled{border-color:rgba(91,143,255,.5);background:radial-gradient(120% 120% at 50% 0%,rgba(91,143,255,.14),transparent 62%),var(--card);}
 .vs-team-plus{width:42px;height:42px;border-radius:50%;border:2px dashed var(--b2);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:300;color:var(--t3);}
 .vs-team-empty{font-size:.82rem;font-weight:700;color:var(--t3);}
 .vs-team-badge{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;font-weight:900;color:#fff;background:var(--card2);border:1px solid var(--b2);}
-.vs-team.a.filled .vs-team-badge{background:rgba(233,0,82,.18);border-color:rgba(233,0,82,.4);color:#ff5b94;}
+.vs-team.a.filled .vs-team-badge{background:rgba(31,197,126,.18);border-color:rgba(31,197,126,.4);color:#ff5b94;}
 .vs-team.b.filled .vs-team-badge{background:rgba(91,143,255,.18);border-color:rgba(91,143,255,.4);color:#82a8ff;}
 .vs-team-n{font-size:.95rem;font-weight:800;color:var(--t1);line-height:1.2;word-break:break-word;}
 .vs-team-meta{font-size:.66rem;color:var(--t3);font-weight:600;}
 .vs-team-change{font-size:.6rem;color:var(--t3);opacity:.7;margin-top:2px;text-transform:uppercase;letter-spacing:.04em;}
 .vs-mid{display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .vs-vs{font-size:.9rem;font-weight:900;color:var(--t3);letter-spacing:.05em;}
-.vs-sim{width:100%;padding:16px;border:none;border-radius:16px;background:linear-gradient(100deg,#e90052,#ff2d78);color:#fff;font-size:1rem;font-weight:900;letter-spacing:.02em;text-transform:uppercase;cursor:pointer;font-family:inherit;box-shadow:0 6px 22px rgba(233,0,82,.3);}
+.vs-sim{width:100%;padding:16px;border:none;border-radius:16px;background:linear-gradient(100deg,#17B26F,#45E3A0);color:#fff;font-size:1rem;font-weight:900;letter-spacing:.02em;text-transform:uppercase;cursor:pointer;font-family:inherit;box-shadow:0 6px 22px rgba(31,197,126,.3);}
 .vs-sim:active{opacity:.92;}
 .vs-sim.off{background:var(--card);color:var(--t3);box-shadow:none;border:1px solid var(--b1);cursor:default;}
 .vs-result{margin-top:20px;background:radial-gradient(130% 100% at 50% 0%,rgba(255,255,255,.05),transparent 60%),var(--card);border:1px solid var(--b1);border-radius:18px;padding:18px 16px;}
@@ -1266,7 +1266,7 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 .vs-cmp-mid{flex:1;min-width:0;}
 .vs-cmp-lbl{font-size:.6rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--t3);text-align:center;margin-bottom:4px;}
 .vs-cmp-track{display:flex;height:6px;border-radius:4px;overflow:hidden;background:var(--card2);}
-.vs-cmp-fill.a{background:#e90052;}
+.vs-cmp-fill.a{background:#17B26F;}
 .vs-cmp-fill.b{background:#5b8bf5;}
 .vs-again{width:100%;margin-top:16px;padding:12px;background:var(--card2);border:1px solid var(--b1);border-radius:12px;color:var(--t2);font-size:.85rem;font-weight:700;font-family:inherit;cursor:pointer;}
 .vs-again:active{opacity:.9;}
@@ -1283,7 +1283,7 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 .vs-pick-meta{font-size:.66rem;color:var(--t3);margin-top:2px;}
 .vs-code{display:inline-flex;align-items:center;gap:5px;margin-top:7px;font-family:ui-monospace,'SFMono-Regular',Menlo,monospace;font-size:.74rem;font-weight:800;letter-spacing:.04em;color:var(--gold);background:rgba(214,178,94,.1);border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:4px 9px;cursor:pointer;max-width:100%;}
 .vs-code:active{opacity:.75;}
-.vs-pick-go{padding:8px 14px;background:#e90052;border:none;border-radius:9px;color:#fff;font-size:.78rem;font-weight:800;font-family:inherit;cursor:pointer;flex-shrink:0;}
+.vs-pick-go{padding:8px 14px;background:#17B26F;border:none;border-radius:9px;color:#fff;font-size:.78rem;font-weight:800;font-family:inherit;cursor:pointer;flex-shrink:0;}
 .vs-pick-go:active{opacity:.9;}
 .vs-pick-ic{width:34px;height:34px;border-radius:9px;background:var(--card2);border:1px solid var(--b1);font-size:.85rem;cursor:pointer;flex-shrink:0;padding:0;}
 .vs-pick-ic.del{color:#ee4f63;}
@@ -1294,8 +1294,8 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 /* ===== PL SEASON HUB (WC-style, PL colours) ===== */
 .lb-btn{border-color:rgba(214,178,94,.3);color:#d6b25e;}
 .lb-btn:active{background:rgba(255,255,255,.025);}
-.vs-btn{border-color:rgba(233,0,82,.32);color:#ff2d78;flex-basis:100%;}
-.vs-btn:active{background:rgba(233,0,82,.08);}
+.vs-btn{border-color:rgba(31,197,126,.32);color:#45E3A0;flex-basis:100%;}
+.vs-btn:active{background:rgba(31,197,126,.08);}
 .lb-scroll{max-height:calc(82vh - 64px);max-height:calc(82dvh - 64px);overflow-y:auto;padding:2px 14px 16px;padding-bottom:calc(16px + env(safe-area-inset-bottom));}
 .lb-tabs{display:flex;gap:8px;padding:4px 14px 10px;}
 .lb-tab{flex:1;padding:10px;background:var(--card2);border:1px solid var(--b1);border-radius:11px;color:var(--t3);font-size:.82rem;font-weight:800;font-family:inherit;cursor:pointer;}
@@ -1345,24 +1345,24 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 .hist-tab.active{background:rgba(91,143,255,.16);border-color:rgba(91,143,255,.5);color:#fff;}
 .hist-tab:active{opacity:.8;}
 .wcs-note{font-size:.66rem;color:var(--t3);text-align:center;line-height:1.5;margin:9px 6px 2px;}
-.plhub-hero{text-align:center;padding:20px 16px 14px;border-radius:18px;margin-bottom:12px;background:radial-gradient(130% 100% at 50% 0%,rgba(233,0,82,.20),rgba(55,0,60,.5) 48%,#12001a 82%);border:1px solid rgba(233,0,82,.28);}
+.plhub-hero{text-align:center;padding:20px 16px 14px;border-radius:18px;margin-bottom:12px;background:radial-gradient(130% 100% at 50% 0%,rgba(31,197,126,.20),rgba(55,0,60,.5) 48%,#12001a 82%);border:1px solid rgba(31,197,126,.28);}
 .plhub-crest{font-size:2.4rem;line-height:1;margin-bottom:4px;}
 .plhub-name{font-size:1.7rem;font-weight:900;color:#fff;letter-spacing:-.01em;}
 .plhub-meta{font-size:.68rem;font-weight:600;color:rgba(255,255,255,.55);margin-top:5px;}
-.plhub-prog{font-size:.72rem;font-weight:800;color:#ff2d78;margin-top:9px;letter-spacing:.02em;}
+.plhub-prog{font-size:.72rem;font-weight:800;color:#45E3A0;margin-top:9px;letter-spacing:.02em;}
 .plhub-bar{height:6px;border-radius:999px;background:var(--b1);overflow:hidden;margin:12px 2px 4px;}
-.plhub-bar-fill{height:100%;background:linear-gradient(90deg,#e90052,#ff2d78);border-radius:999px;transition:width .4s ease;}
+.plhub-bar-fill{height:100%;background:linear-gradient(90deg,#17B26F,#45E3A0);border-radius:999px;transition:width .4s ease;}
 .plhub-ctrls{display:flex;gap:9px;margin:14px 0 4px;}
-.plhub-play{flex:2;padding:15px;border:none;border-radius:15px;background:linear-gradient(100deg,#e90052,#ff2d78);color:#fff;font-size:.92rem;font-weight:900;letter-spacing:.03em;text-transform:uppercase;cursor:pointer;font-family:inherit;box-shadow:0 6px 18px rgba(233,0,82,.3);}
+.plhub-play{flex:2;padding:15px;border:none;border-radius:15px;background:linear-gradient(100deg,#17B26F,#45E3A0);color:#fff;font-size:.92rem;font-weight:900;letter-spacing:.03em;text-transform:uppercase;cursor:pointer;font-family:inherit;box-shadow:0 6px 18px rgba(31,197,126,.3);}
 .plhub-sim{flex:1;padding:15px 8px;border:1px solid var(--b1);border-radius:15px;background:rgba(255,255,255,.06);color:var(--t1);font-size:.82rem;font-weight:800;cursor:pointer;font-family:inherit;}
 .plhub-play:active,.plhub-sim:active{opacity:.85;}
 .plhub-sect{font-size:.6rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin:18px 0 9px;}
 .plhub-fix{padding-bottom:8px;}
-.wct-row.pl.next{border-color:rgba(233,0,82,.5);background:rgba(233,0,82,.07);}
+.wct-row.pl.next{border-color:rgba(31,197,126,.5);background:rgba(31,197,126,.07);}
 .wct-row.pl.won{border-color:rgba(0,255,133,.3);}
 .wct-row.pl.lost{border-color:rgba(238,79,99,.28);}
 .wct-row.pl.drew{border-color:rgba(255,255,255,.09);}
-.wct-play.pl{background:linear-gradient(100deg,#e90052,#ff2d78);color:#fff;}
+.wct-play.pl{background:linear-gradient(100deg,#17B26F,#45E3A0);color:#fff;}
 
 
 /* ============================================================
@@ -3676,73 +3676,73 @@ body{min-height:100%}
 <meta name="msapplication-TileColor" content="#0F8D5B">
 <meta name="msapplication-TileImage" content="/icon-192.png">
 <script src="/kovakits.js"></script>
-<link rel="stylesheet" href="/s27.css">
+<link rel="stylesheet" href="/x27.css">
+<link rel="stylesheet" href="/x27-app.css">
 </head>
 <body>
 
 <div id="home" class="screen active">
-<div class="hp-wrap s27-home">
-  <div class="hp-hero s27">
-  <nav class="s27-top" aria-label="Perfect XI">
-    <a class="s27-brand" href="/" aria-label="Perfect XI home">PERFECT <span>XI</span></a>
-    <div class="s27-links"><a href="/how-to-play">How to play</a><a href="/guides">Guides</a><a href="/faq">FAQ</a><a href="/ios">iPhone app</a></div>
-    <button class="s27-season" id="pxSeasonChip" onclick="pxWhatsNew(true)">Season 26/27</button>
-  </nav>
-  <section class="s27-hero">
-    <div class="s27-copy">
-      <div class="s27-pill"><i></i>1992 to 2026 &middot; 35 seasons &middot; 51 clubs</div>
-      <h1 class="s27-h1">Build the <em>perfect XI</em></h1>
-      <p class="s27-lede">Spin a real club season and sign one player from it. Do it eleven times, then play all 38 games and see where your XI finishes.</p>
-      <div class="s27-ctas">
-        <button class="s27-cta" onclick="show('ss')">Start a draft<span aria-hidden="true">&#8250;</span></button>
-        <button class="s27-cta2" onclick="PXDAILY.open()">Today&rsquo;s Daily</button>
-      </div>
-      <div class="s27-note">&#9733; Unofficial fan game &middot; free to play in your browser</div>
-    </div>
-    <div class="s27-art" aria-hidden="true">
-      <div class="s27-card c1"><b>92</b><small>ATT</small><div class="w">AS</div><strong>Shearer</strong><span>Blackburn 94/95</span></div>
-      <div class="s27-card c2"><b>95</b><small>ATT</small><div class="w">TH</div><strong>Henry</strong><span>Arsenal 04/05</span></div>
-      <div class="s27-card c3"><b>93</b><small>ATT</small><div class="w">EH</div><strong>Haaland</strong><span>Man City 23/24</span></div>
-    </div>
-  </section>
-  <div class="hp-btns s27-grid">
-<button class="mp-flag" onclick="mpEnter()">
-<span class="mp-flag-top"><span class="mp-flag-dot"></span>Live multiplayer</span>
-<span class="mp-flag-t">PLAY YOUR MATES</span>
-<span class="mp-flag-s">Everyone drafts at once against the clock. All the squads go into one league and you watch the same season play out.</span>
-<span class="mp-flag-row">
-<span class="mp-flag-chip">Up to 8</span>
-<span class="mp-flag-chip">3 min draft</span>
-<span class="mp-flag-chip">Head to head</span>
-</span>
-<span class="mp-flag-cta" id="mpFlagCta">Host or join a game &#8250;</span>
-</button>
-<div id="pxDailyHome"></div>
-<div class="hm-sec">Tournaments</div>
+<div class="hp-wrap x27">
+  <div class="hp-hero x27-hero">
+  <header class="x27-top">
+    <a class="x27-brand" href="/" aria-label="Perfect XI home"><img src="/favicon-96x96.png" alt="" width="30" height="30">PERFECT <b>XI</b></a>
+    <nav class="x27-nav" aria-label="Site"><a href="/how-to-play">How to play</a><a href="/guides">Guides</a><a href="/faq">FAQ</a><a href="/ios">iPhone app</a></nav>
+    <button class="x27-season" id="pxSeasonChip" onclick="pxWhatsNew(true)"><i aria-hidden="true"></i>Season 26/27</button>
+  </header>
+  <div class="hp-btns x27-board">
+  <div class="x27-main">
 
+<button class="x27-play" onclick="show('ss')">
+<svg class="x27-pitch" viewBox="0 0 600 340" preserveAspectRatio="xMaxYMid slice" aria-hidden="true"><circle cx="560" cy="170" r="92"/><line x1="560" y1="-10" x2="560" y2="350"/><circle cx="560" cy="170" r="4" style="fill:rgba(255,255,255,.14)"/><rect x="-10" y="70" width="70" height="200"/></svg>
+<span class="x27-play-copy">
+<span class="x27-play-k">All-Time Premier League</span>
+<span class="x27-play-t">Start a draft</span>
+<span class="x27-play-s">Spin a real club season and sign one player from it. Do it eleven times, then play all 38 games.</span>
+<span class="x27-play-cta">Spin your first club<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h9M8.5 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</span>
+<span class="x27-fan" aria-hidden="true">
+<span class="x27-pc pc-l"><b>92</b><i>ATT</i><em>AS</em><strong>Shearer</strong><small>Blackburn 94/95</small></span>
+<span class="x27-pc pc-r"><b>93</b><i>MID</i><em>KD</em><strong>De Bruyne</strong><small>Man City 20/21</small></span>
+<span class="x27-pc pc-c"><b>95</b><i>ATT</i><em>TH</em><strong>Henry</strong><small>Arsenal 04/05</small></span>
+</span>
+</button>
+
+<button class="x27-mates" onclick="mpEnter()">
+<span class="x27-mates-copy">
+<span class="x27-live"><i></i>Live multiplayer</span>
+<span class="x27-mates-t">Play your mates</span>
+<span class="x27-mates-s">Everyone drafts at once against the clock. All the squads go into one league and you watch the same season play out.</span>
+<span class="x27-chips"><span>Up to 8</span><span>3 min draft</span><span>Head to head</span></span>
+</span>
+<span class="x27-mates-side">
+<span class="x27-mates-cta" id="mpFlagCta">Host or join a game &#8250;</span>
+</span>
+</button>
+
+<div class="x27-sec">Tournaments</div>
+<div class="x27-grid g2">
 <button class="hm-card c-gold" onclick="showWCHome()">
 <span class="hm-ic" id="icWC"></span>
 <span class="hm-b"><span class="hm-k">Tournament</span>
 <span class="hm-t">World Cup 2026</span>
 <span class="hm-s" id="pxWCSub">Pick a nation or build a World XI &middot; win the cup</span></span>
 <span class="hm-arr">&#8250;</span></button>
-
 <button class="hm-card c-blue" onclick="uclEnter()">
 <span class="hm-ic" id="icUCL">&#11088;</span>
 <span class="hm-b"><span class="hm-k">Tournament</span>
 <span class="hm-t">Champions League</span>
 <span class="hm-s" id="uclTileSub">Your XI in the real 36 team league phase</span></span>
 <span class="hm-arr">&#8250;</span></button>
+</div>
 
-<div class="hm-sec">Your game</div>
-
+<div class="x27-sec">Your game</div>
+<div class="x27-grid g3">
 <button class="hm-card c-purple" id="pxDynBtn" onclick="pxDynastyEntry()">
 <span class="hm-ic" id="icDyn"></span>
 <span class="hm-b"><span class="hm-k">Career</span>
 <span class="hm-t" id="pxDynT">Dynasty</span>
 <span class="hm-s" id="pxDynS">A career across seasons &mdash; ages, transfers, the board</span></span>
 <span class="hm-arr">&#8250;</span></button>
-
 <button class="hm-card c-violet" id="pxProgBtn" onclick="pxProgRender();show('pxProg')">
 <span class="hm-ic" id="icProg"></span>
 <span class="hm-b"><span class="hm-k">Collect</span>
@@ -3750,22 +3750,25 @@ body{min-height:100%}
 <span class="hm-s" id="pxProgS">Level, missions, collection, unlocks</span>
 <span class="hm-bar"><i id="pxProgBar" style="width:0%"></i></span></span>
 <span class="hm-arr">&#8250;</span></button>
-
 <button class="hm-card c-amber" id="pxHofBtn" onclick="pxHallOfFame()">
 <span class="hm-ic" id="icHof"></span>
 <span class="hm-b"><span class="hm-k">Records</span>
 <span class="hm-t">Hall of Fame</span>
 <span class="hm-s">Your greatest seasons, ranked</span></span>
 <span class="hm-arr">&#8250;</span></button>
-
-<div class="hm-sec">This week</div><button class="hm-card c-gold" onclick="pxStartWeekly()"><span class="hm-ic">&#11088;</span><span class="hm-b"><span class="hm-k">Event</span><span class="hm-t" id="pxEventTitle">Weekly Event</span><span class="hm-s" id="pxEventSub">A new twist every week</span></span><span class="hm-arr">&#8250;</span></button><div id="kkHome"></div>
+</div>
+  </div>
+  <aside class="x27-side">
+<div id="pxDailyHome"></div>
+<div class="x27-sec">This week</div>
+<button class="hm-card c-gold" onclick="pxStartWeekly()"><span class="hm-ic">&#11088;</span><span class="hm-b"><span class="hm-k">Event</span><span class="hm-t" id="pxEventTitle">Weekly Event</span><span class="hm-s" id="pxEventSub">A new twist every week</span></span><span class="hm-arr">&#8250;</span></button>
+<div id="kkHome"></div>
 <a class="hm-card c-app" href="/ios" id="pxiHpCard">
 <img src="/favicon-96x96.png" alt="" width="44" height="44" class="hm-ic hm-ic-img">
 <span class="hm-b"><span class="hm-k" id="pxiHpK">Coming soon</span>
 <span class="hm-t" id="pxiHpT">Perfect XI for iPhone</span>
 <span class="hm-s" id="pxiHpS">Offline, instant, on your home screen</span></span>
 <span class="hm-arr">&#8250;</span></a>
-
 <div class="px-more" id="pxMore">
 <button class="px-more-h" type="button" onclick="pxToggleMore()" aria-expanded="false" aria-controls="pxMoreBody">
 <span class="px-more-ic">&#9733;</span>
@@ -3800,8 +3803,9 @@ body{min-height:100%}
 </div>
 </div>
 <div class="px-statstrip"><div><b>51</b><span>Clubs</span></div><div><b>708</b><span>Squads</span></div><div><b>2,978</b><span>Players</span></div><div><b>35</b><span>Seasons</span></div></div>
+  </aside>
   </div>
-</div>
+  </div>
 
 <div class="hp-divider"></div>
 
@@ -3860,7 +3864,7 @@ body{min-height:100%}
       </div>
       <div class="hp-faq-item">
         <button class="hp-faq-q" onclick="hpFaq(this)">Which clubs and players are included?<span class="hp-faq-icon">+</span></button>
-        <div class="hp-faq-a">All 51 clubs that have appeared in the Premier League from 1992 to 2026 are included, across 712 squad-seasons and 11,077 player seasons. Everyone from Thierry Henry to Erling Haaland.</div>
+        <div class="hp-faq-a">All 51 clubs that have appeared in the Premier League from 1992 to 2026 are included, across 708 squad-seasons and 11,052 player seasons. Everyone from Thierry Henry to Erling Haaland.</div>
       </div>
       <div class="hp-faq-item">
         <button class="hp-faq-q" onclick="hpFaq(this)">Is Perfect XI free?<span class="hp-faq-icon">+</span></button>
@@ -4029,6 +4033,7 @@ body{min-height:100%}
     <div class="hl"><button class="home-btn" onclick="askRestart()">&#8592; Home</button></div>
     <div class="hr-row"><button class="sfx-btn" id="sfxBtn" onclick="toggleSfx()" title="Sound">&#128266;</button><span style="font-size:.78rem;font-weight:600;color:var(--t2)" id="dCount">0/11</span><span class="hl-l" id="spT" style="font-size:.65rem;"></span><span id="dFm" style="display:none">4-3-3</span></div>
   </div>
+  <div class="x27-sdL">
   <div class="draft-overall">
     <div class="do-score" id="doScore">-</div>
     <div class="do-bars">
@@ -4039,6 +4044,8 @@ body{min-height:100%}
     </div>
   </div>
   <div class="dpit" id="dpit"><div class="dpit-m"><div class="dpit-cc"></div><div class="dpit-cs"></div><div class="dpit-ml"></div><div class="dpit-tb"></div><div class="dpit-ti"></div><div class="dpit-bb"></div><div class="dpit-bi"></div></div><div id="dpitFm" style="position:absolute;top:10px;left:12px;z-index:3;font-size:.75rem;font-weight:900;color:#fff;background:rgba(0,0,0,.62);border-radius:8px;padding:5px 11px;letter-spacing:.05em;text-transform:uppercase;box-shadow:0 2px 8px rgba(0,0,0,.4);"></div><div class="dpit-legend"><div class="dpit-leg-item"><div class="dpit-leg-dot" style="background:#e8a623"></div><span class="dpit-leg-lbl">GK</span></div><div class="dpit-leg-item"><div class="dpit-leg-dot" style="background:#4a8fe8"></div><span class="dpit-leg-lbl">DEF</span></div><div class="dpit-leg-item"><div class="dpit-leg-dot" style="background:#1fc57e"></div><span class="dpit-leg-lbl">MID</span></div><div class="dpit-leg-item"><div class="dpit-leg-dot" style="background:#e84040"></div><span class="dpit-leg-lbl">ATT</span></div></div><div class="dpit-rows" id="dpitR"></div></div>
+  </div>
+  <div class="x27-sdR">
   <div class="sp-sec" id="spSec">
     <div class="wheel-wrap" id="wheelWrap" style="display:none!important;visibility:hidden;position:absolute;">
       <div class="wheel-track">
@@ -4056,6 +4063,7 @@ body{min-height:100%}
     <div id="startSpinWrap" style="display:none;margin-top:6px;"><button class="start-spin-btn" onclick="beginDraft()">&#9654; Start Spinning</button></div><div id="shareRerollWrap"><button class="share-reroll-btn" id="shareRerollBtn" onclick="doShareReroll()">&#128279; Share for +1 reroll</button></div>
   </div>
   <div class="pick-hdr"><span class="pick-hdr-title">Pick a player</span><span class="pick-hdr-count" id="pickCount"></span></div><div class="plist-wrap"><div class="plist" id="plist"></div></div>
+  </div>
   <div class="move-bar" id="moveBar"><button class="move-done-btn" onclick="cancelMove()">&#8644; Done moving</button><div class="move-instr" id="moveInstr">Tap a player, then tap a green slot. Empty = moves there · Filled = swap.</div></div><div class="hp-community">
     <div class="hp-community-title">Get in touch</div>
     <div class="hp-community-sub">Feedback, bugs or share your best XI &mdash; reach out anytime.</div>
