@@ -60,12 +60,12 @@
 #home .x27-play:hover{box-shadow:0 1px 0 rgba(255,255,255,.16) inset,0 28px 56px -22px rgba(31,197,126,.7),0 2px 6px rgba(0,0,0,.35)}
 #home .x27-play:active{transform:scale(.985)}
 #home .x27-play:focus-visible,#home .x27-mates:focus-visible{outline:2px solid var(--x-green-hi);outline-offset:3px}
-#home .x27-pitch{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+#home .x27-pitch{display:none;position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
 #home .x27-pitch *{fill:none;stroke:rgba(255,255,255,.11);stroke-width:2}
 #home .x27-play-copy{position:relative;display:flex;flex-direction:column;align-items:flex-start}
 /* on a phone the cards sit beside the title, the words run full width under them */
-#home .x27-play-k,#home .x27-play-t{max-width:54%}
-#home .x27-play-s{margin-top:22px!important}
+#home .x27-play-k,#home .x27-play-t,#home .x27-play-s{max-width:calc(100% - 140px)}
+#home .x27-play-s{margin-top:12px!important}
 #home .x27-play-k{font-family:var(--disp);font-weight:700;font-size:.72rem;letter-spacing:.2em;
   text-transform:uppercase;color:rgba(214,255,234,.78)}
 #home .x27-play-t{font-family:'Anton',var(--disp);font-weight:400;text-transform:uppercase;
@@ -79,31 +79,52 @@
 #home .x27-play-cta svg{width:16px;height:16px;transition:transform .18s}
 #home .x27-play:hover .x27-play-cta svg{transform:translateX(3px)}
 
-/* three real cards, fanned like a hand */
-#home .x27-fan{position:absolute;right:-8px;top:10px;width:168px;height:150px;pointer-events:none}
-#home .x27-pc{position:absolute;left:50%;top:50%;width:84px;height:116px;margin:-58px 0 0 -42px;
-  border-radius:14px;padding:9px 8px 8px;display:flex;flex-direction:column;align-items:center;
-  font-family:var(--disp);color:#EAF6EF;
-  background:linear-gradient(170deg,#1B2B22,#0D1712);border:1px solid rgba(255,255,255,.14);
-  box-shadow:0 14px 28px -10px rgba(0,0,0,.65)}
-#home .x27-pc b{align-self:flex-start;font-family:var(--num,var(--disp));font-weight:800;font-size:1.5rem;line-height:1;color:var(--x-green-hi)}
-#home .x27-pc i{align-self:flex-start;font-style:normal;font-weight:700;font-size:.58rem;letter-spacing:.14em;opacity:.7;margin-top:1px}
-#home .x27-pc em{font-style:normal;width:34px;height:34px;border-radius:50%;margin-top:-4px;
-  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.82rem;letter-spacing:.04em;
-  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
-#home .x27-pc strong{font-weight:800;font-size:.86rem;letter-spacing:.03em;text-transform:uppercase;margin-top:6px;line-height:1;white-space:nowrap}
-#home .x27-pc small{font-family:Inter,sans-serif;font-size:.54rem;font-weight:600;opacity:.66;margin-top:3px;white-space:nowrap}
-#home .x27-pc.pc-l{transform:translate(-40px,10px) rotate(-11deg)}
-#home .x27-pc.pc-r{transform:translate(40px,10px) rotate(11deg)}
-#home .x27-pc.pc-c{transform:translateY(-8px);color:#2A1F07;
-  background:linear-gradient(165deg,#FBE7A6 0%,#E3BF62 46%,#B48A34 100%);border-color:rgba(255,240,190,.8);
-  box-shadow:0 18px 34px -10px rgba(0,0,0,.7),0 0 0 1px rgba(0,0,0,.15),0 0 30px -6px rgba(240,200,100,.45)}
-#home .x27-pc.pc-c b{color:#2A1F07}
-#home .x27-pc.pc-c em{background:rgba(42,31,7,.1);border-color:rgba(42,31,7,.18)}
-#home .x27-play:hover .pc-l{transform:translate(-46px,8px) rotate(-14deg)}
-#home .x27-play:hover .pc-r{transform:translate(46px,8px) rotate(14deg)}
-#home .x27-play:hover .pc-c{transform:translateY(-12px)}
-#home .x27-pc{transition:transform .3s cubic-bezier(.2,.8,.3,1)}
+/* the draft playing itself: a reel and a pitch that fills, eleven times */
+#home .x27-demo{position:absolute;right:14px;top:16px;width:128px;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+#home .xd-reel{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 6px 5px;border-radius:11px;text-align:center;overflow:hidden;
+  background:rgba(3,18,10,.58);border:1px solid rgba(255,255,255,.14);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:border-color .2s,box-shadow .2s}
+#home .xd-reel-k{font-family:var(--disp);font-weight:700;font-size:.5rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(214,255,234,.62);line-height:1.2}
+#home .xd-reel-v{font-family:var(--disp);font-weight:800;font-size:.74rem;letter-spacing:.03em;text-transform:uppercase;color:#fff;white-space:nowrap;line-height:1.15;
+  font-variant-numeric:tabular-nums;transition:opacity .06s}
+#home .xd-reel-p{font-family:var(--disp);font-weight:700;font-size:.66rem;letter-spacing:.03em;color:var(--x-green-hi);white-space:nowrap;line-height:1.15;
+  font-variant-numeric:tabular-nums}
+#home .x27-demo.spinning .xd-reel-v{opacity:.5;filter:blur(.3px)}
+#home .x27-demo.landed .xd-reel,#home .x27-demo.done .xd-reel{border-color:rgba(69,227,160,.55);box-shadow:0 0 0 3px rgba(69,227,160,.12)}
+#home .xd-pitch{position:relative;display:block;width:100%;aspect-ratio:100/110;border-radius:11px;overflow:hidden;
+  background:linear-gradient(180deg,rgba(0,0,0,.16),rgba(0,0,0,.30));border:1px solid rgba(255,255,255,.13)}
+#home .xd-lines{position:absolute;inset:0;width:100%;height:100%}
+#home .xd-lines *{fill:none;stroke:rgba(255,255,255,.17);stroke-width:1;vector-effect:non-scaling-stroke}
+#home .xd-slots{position:absolute;inset:0;transition:opacity .4s}
+#home .x27-demo.fade .xd-slots{opacity:0}
+#home .xd-chip{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.26)}
+#home .xd-chip em{font-style:normal;font-family:var(--disp);font-weight:800;font-size:.54rem;letter-spacing:.02em;color:#05150D;opacity:0}
+#home .xd-chip b{display:none}
+#home .xd-chip.on{background:#F3FFF8;border:1px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.4)}
+#home .xd-chip.on em{opacity:1}
+#home .xd-chip.new{background:var(--x-green-hi);border-color:var(--x-green-hi);animation:xdDrop .42s cubic-bezier(.2,.9,.3,1.3)}
+#home .xd-chip.new::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:2px solid var(--x-green-hi);animation:xdRing .6s ease-out forwards}
+#home .x27-demo.done .xd-chip.on{box-shadow:0 0 0 2px rgba(69,227,160,.35),0 3px 8px rgba(0,0,0,.4)}
+@keyframes xdDrop{0%{transform:translateY(-16px) scale(1.5);opacity:0}100%{transform:none;opacity:1}}
+@keyframes xdRing{0%{transform:scale(.8);opacity:1}100%{transform:scale(2.1);opacity:0}}
+
+/* the countdown on the Daily card */
+#home .hm-cd{display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-family:var(--disp);font-weight:700;
+  font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--x-dim)}
+#home .hm-cd::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--x-green);box-shadow:0 0 0 3px rgba(31,197,126,.16)}
+#home .hm-cd b{font-family:var(--disp);font-weight:800;font-size:.86rem;letter-spacing:.04em;color:var(--x-ink);font-variant-numeric:tabular-nums}
+
+/* every mode card looks the same: neutral surface, the mode's colour only on its icon */
+#home .x27 .hm-card::before{display:none}
+#home .x27 .hm-k{color:var(--x-dim)}
+#home .x27 .hm-arr{color:var(--x-dim)}
+#home .x27 .hm-bar i{background:var(--x-green)}
+#home .x27 .hm-card:hover{border-color:rgba(255,255,255,.16)!important;transform:translateY(-2px);
+  background:radial-gradient(120% 140% at 0% 0%,rgba(31,197,126,.06),transparent 60%),linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.025))}
+#home .x27 .hm-card:hover .hm-arr{color:var(--x-ink)}
+#home .x27 .hm-card:active{transform:scale(.986)}
 
 /* ---------- PLAY YOUR MATES ---------- */
 #home .x27-mates{position:relative;overflow:hidden;isolation:isolate;display:flex;flex-direction:column;gap:16px;
@@ -157,16 +178,6 @@
 /* ---------- the reading below the board ---------- */
 #home .x27>.hp-sec,#home .x27>.hp-divider,#home .x27>.hp-footer-cta,#home .x27>.hp-community{max-width:760px;margin-left:auto;margin-right:auto}
 
-/* a phone shows two cards, so the words underneath have room */
-@media (max-width:719px){
-  #home .x27-fan{top:0;right:4px;width:150px}
-  #home .x27-pc.pc-l{display:none}
-  #home .x27-pc.pc-r{transform:translate(28px,-2px) rotate(9deg)}
-  #home .x27-pc.pc-c{transform:translate(-14px,-6px) rotate(-4deg)}
-  #home .x27-play:hover .pc-r{transform:translate(32px,-4px) rotate(11deg)}
-  #home .x27-play:hover .pc-c{transform:translate(-14px,-10px) rotate(-5deg)}
-}
-
 /* =====================================================================
    TABLET AND UP
    ===================================================================== */
@@ -182,21 +193,20 @@
   #home .x27-play-copy{max-width:58%}
   #home .x27-play-k,#home .x27-play-t{max-width:none}
   #home .x27-play-s{margin-top:12px!important}
-  #home .x27-fan{right:4%;top:50%;width:280px;height:280px;transform:translateY(-50%)}
-  #home .x27-pc{width:124px;height:172px;margin:-86px 0 0 -62px;border-radius:18px;padding:12px 10px 10px}
-  #home .x27-pc b{font-size:2.1rem}
-  #home .x27-pc i{font-size:.66rem}
-  #home .x27-pc em{width:48px;height:48px;font-size:1.05rem;margin-top:-2px}
-  #home .x27-pc strong{font-size:1.12rem;margin-top:9px}
-  #home .x27-pc small{font-size:.66rem}
-  #home .x27-pc.pc-l{transform:translate(-62px,14px) rotate(-11deg)}
-  #home .x27-pc.pc-r{transform:translate(62px,14px) rotate(11deg)}
-  #home .x27-play:hover .pc-l{transform:translate(-70px,10px) rotate(-14deg)}
-  #home .x27-play:hover .pc-r{transform:translate(70px,10px) rotate(14deg)}
   #home .x27-mates{flex-direction:row;align-items:flex-end;justify-content:space-between;gap:24px;padding:28px 28px 26px;border-radius:28px}
   #home .x27-mates-t{font-size:2.6rem}
   #home .x27-mates-side{flex:0 0 240px}
   #home .x27-grid.g2{grid-template-columns:1fr 1fr}
+  #home .x27-demo{right:30px;top:50%;transform:translateY(-50%);width:176px;gap:8px}
+  #home .xd-reel{padding:9px 10px 8px;border-radius:14px}
+  #home .xd-reel-k{font-size:.6rem}
+  #home .xd-reel-v{font-size:1.02rem}
+  #home .xd-reel-p{font-size:.86rem}
+  #home .xd-pitch{border-radius:14px}
+  #home .xd-chip{width:32px;height:32px;margin:-16px 0 0 -16px}
+  #home .xd-chip em{font-size:.74rem}
+  #home .xd-chip b{display:block;position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:2px;font-family:var(--disp);font-weight:800;font-size:.6rem;line-height:1;color:var(--x-green-hi);opacity:0;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+  #home .xd-chip.on b{opacity:1}
 }
 
 /* =====================================================================
@@ -210,6 +220,7 @@
   #home .x27-sec:first-child{margin-top:0}
   #home .x27-play{min-height:340px}
   #home .x27-play-t{font-size:4.6rem}
+  #home .x27-demo{width:212px;right:40px}
   #home .x27-grid.g3{grid-template-columns:repeat(3,1fr)}
   /* three across: stack the card so nothing is cut short */
   #home .x27-grid.g3 .hm-card{flex-direction:column;align-items:flex-start;gap:12px;padding:18px}

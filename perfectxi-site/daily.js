@@ -276,18 +276,41 @@
     var r = saved(), n = PXP.streak || 0;
     var k = r ? 'Played today' : 'Today’s draft';
     var sub = r
-      ? 'You finished ' + ordinal(r.fin) + ' on ' + r.pts + ' pts. Next one in ' +
-        (typeof pxpNextResetTxt === 'function' ? pxpNextResetTxt() : 'the morning') + '.'
+      ? 'You finished ' + ordinal(r.fin) + ' on ' + r.pts + ' pts.'
       : 'The same spins for every player in the world. One go.';
     host.innerHTML =
       '<button class="hm-card c-daily" onclick="PXDAILY.open()">' +
       '<span class="hm-ic">' + (r ? '✅' : '📅') + '</span>' +
       '<span class="hm-b"><span class="hm-k">' + k + '</span>' +
       '<span class="hm-t">Daily #' + no() + '</span>' +
-      '<span class="hm-s">' + sub + '</span></span>' +
+      '<span class="hm-s">' + sub + '</span>' +
+      '<span class="hm-cd">' + (r ? 'Next Daily in ' : 'Ends in ') +
+      '<b id="pxDailyCd">' + countdown() + '</b></span></span>' +
       (n ? '<span class="hm-streak">🔥' + n + '</span>'
          : '<span class="hm-arr">&#8250;</span>') +
       '</button>';
+    tick();
+  }
+
+  /* the countdown to local midnight, when the next Daily unlocks */
+  var cdTimer = null, cdDay = 0;
+  function countdown(){
+    var t = new Date(), mid = new Date(t.getFullYear(), t.getMonth(), t.getDate() + 1);
+    var s = Math.max(0, Math.floor((mid - t) / 1000));
+    var h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+    return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m + ':' + (x < 10 ? '0' : '') + x;
+  }
+  function tick(){
+    cdDay = day();
+    if(cdTimer) return;
+    cdTimer = setInterval(function(){
+      var el = document.getElementById('pxDailyCd');
+      if(!el){ clearInterval(cdTimer); cdTimer = null; return; }
+      if(document.hidden) return;
+      /* midnight passed: a new Daily, so draw the card again */
+      if(day() !== cdDay){ homeCard(); return; }
+      el.textContent = countdown();
+    }, 1000);
   }
 
   /* ------------------------------------------- the season-review addition */
